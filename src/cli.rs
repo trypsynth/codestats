@@ -2,16 +2,11 @@ use clap::Parser;
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(version, about, long_about = None)]
+#[command(version, about)]
 pub struct Cli {
     #[arg(help = "The path to analyze.")]
     pub path: PathBuf,
-    #[arg(
-        short,
-        long,
-        default_value_t = false,
-        help = "Show much more verbose output."
-    )]
+    #[arg(short, long, help = "Show much more verbose output.")]
     pub verbose: bool,
     #[arg(
         short,
