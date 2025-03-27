@@ -7,7 +7,6 @@ struct Language {
     associated_filenames: Option<&'static [&'static str]>,
 }
 
-// Macro to create a Language struct and insert it into the map
 macro_rules! insert_language {
     ($map:expr, $name:expr, $extensions:expr, $associated_filenames:expr) => {
         $map.insert(
