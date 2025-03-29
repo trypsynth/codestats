@@ -23,12 +23,15 @@ macro_rules! insert_language {
 lazy_static! {
     static ref LANGUAGES: HashMap<&'static str, Language> = {
         let mut map = HashMap::new();
+        insert_language!(map, "Ada", &["adb", "ads"], None);
         insert_language!(map, "AngelScript", &["as", "angelscript"], None);
+        insert_language!(map, "APL", &["apl"], None);
         insert_language!(map, "AppleScript", &["scpt", "applescript"], None);
         insert_language!(map, "Assembly", &["asm", "s", "nasm"], None);
         insert_language!(map, "AsciiDoc", &["adoc", "asciidoc"], None);
         insert_language!(map, "AutoHotkey", &["ahk", "ahkl"], None);
         insert_language!(map, "AutoIt", &["au3"], None);
+        insert_language!(map, "AWK", &["awk", "gawk", "nawk"], None);
         insert_language!(map, "BASIC", &["bas", "bi"], None);
         insert_language!(map, "Batch Script", &["bat", "cmd"], None);
         insert_language!(
@@ -49,8 +52,10 @@ lazy_static! {
             None
         );
         insert_language!(map, "C#", &["cs", "csx", "cake"], None);
+        insert_language!(map, "Chapel", &["chpl"], None);
         insert_language!(map, "Clojure", &["clj", "cljs", "cljc", "edn"], None);
         insert_language!(map, "CMake", &["cmake"], Some(&["CMakeLists.txt"]));
+        insert_language!(map, "COBOL", &["cbl", "cob", "cpy"], None);
         insert_language!(map, "CoffeeScript", &["coffee"], None);
         insert_language!(map, "Crystal", &["cr"], None);
         insert_language!(map, "CSON", &["cson"], None);
@@ -64,14 +69,25 @@ lazy_static! {
             map,
             "Dockerfile",
             &["dockerfile"],
-            Some(&["Dockerfile", "docker-compose.yml"])
+            Some(&[
+                "Dockerfile",
+                "docker-compose.yml",
+                "docker-compose.override.yml"
+            ])
         );
         insert_language!(map, "EDN", &["edn"], None);
+        insert_language!(map, "Eiffel", &["e"], None);
         insert_language!(map, "EJS", &["ejs"], None);
         insert_language!(map, "Elixir", &["ex", "exs"], None);
         insert_language!(map, "Emacs Lisp", &["el"], None);
-        insert_language!(map, "Erlang", &["erl", "hrl"], None);
+        insert_language!(
+            map,
+            "Erlang",
+            &["erl", "hrl"],
+            Some(&["rebar.config", "rebar.lock"])
+        );
         insert_language!(map, "F#", &["fs", "fsi", "fsx"], None);
+        insert_language!(map, "Forth", &["4th", "fth", "frt"], None);
         insert_language!(map, "Fortran", &["f", "for", "f90", "f95"], None);
         insert_language!(
             map,
@@ -79,9 +95,10 @@ lazy_static! {
             &["glsl", "vert", "frag", "geom", "tesc", "tese", "comp"],
             None
         );
-        insert_language!(map, "Go", &["go"], Some(&["go.mod"]));
+        insert_language!(map, "Go", &["go"], Some(&["go.mod", "go.sum"]));
         insert_language!(map, "Gradle", &["gradle"], Some(&["gradle.properties"]));
         insert_language!(map, "Groovy", &["groovy", "gvy", "gy", "gsh"], None);
+        insert_language!(map, "Hack", &["hh", "hhi", "hack"], None);
         insert_language!(map, "HAML", &["haml"], None);
         insert_language!(map, "Handlebars", &["hbs", "handlebars"], None);
         insert_language!(
@@ -92,6 +109,7 @@ lazy_static! {
         );
         insert_language!(map, "HLSL", &["hlsl", "fx", "fxh", "hlsli"], None);
         insert_language!(map, "HTML", &["html", "htm", "xht", "xhtml"], None);
+        insert_language!(map, "Interface Definition Language", &["idl", "widl"], None);
         insert_language!(
             map,
             "INI",
@@ -99,6 +117,7 @@ lazy_static! {
             Some(&[".editorconfig", ".gitconfig", "buildozer.spec"])
         );
         insert_language!(map, "Inno Setup", &["iss"], None);
+        insert_language!(map, "J", &["ijs"], None);
         insert_language!(map, "Java", &["java"], None);
         insert_language!(map, "Java Server Pages", &["jsp"], None);
         insert_language!(
@@ -111,6 +130,7 @@ lazy_static! {
             Some(&[".babelrc", ".eslintrc", ".prettierc"])
         );
         insert_language!(map, "JAWS Script", &["jss", "jsh"], None);
+        insert_language!(map, "Jinja2", &["j2"], None);
         insert_language!(map, "JSON", &["json"], None);
         insert_language!(map, "Julia", &["jl"], None);
         insert_language!(map, "Kotlin", &["kt", "kts"], None);
@@ -149,7 +169,7 @@ lazy_static! {
         insert_language!(map, "Meson", &[], Some(&["meson.build"]));
         insert_language!(map, "moo", &["moo"], None);
         insert_language!(map, "Mustache", &["mustache"], None);
-        insert_language!(map, "Nim", &["nim"], None);
+        insert_language!(map, "Nim", &["nim"], SOme(&["nim.cfg"]));
         insert_language!(map, "NSIS", &["nsi", "nsh"], None);
         insert_language!(map, "NVGT", &["nvgt"], Some(&[".nvgtrc"]));
         insert_language!(map, "Objective-C", &["m"], None);
@@ -166,7 +186,13 @@ lazy_static! {
             map,
             "Perl",
             &["pl", "al", "perl", "plx", "pm"],
-            Some(&["Makefile.pl", "rexfile", "ack", "cpanfile"])
+            Some(&[
+                "Makefile.pl",
+                "rexfile",
+                "ack",
+                "cpanfile",
+                "cpanfile.snapshot"
+            ])
         );
         insert_language!(map, "Pony", &["pony"], None);
         insert_language!(map, "PowerShell", &["ps1", "psd1", "psm1"], None);
@@ -175,7 +201,17 @@ lazy_static! {
             map,
             "Python",
             &["py", "pyw", "py2", "py3", "pip"],
-            Some(&[".gclient", "SConscript", "SConstruct", "Snakefile"])
+            Some(&[
+                ".gclient",
+                "SConscript",
+                "SConstruct",
+                "Snakefile",
+                "requirements.txt",
+                "pyproject.toml  ",
+                "tox.ini  ",
+                "Pipfile  ",
+                "Pipfile.lock"
+            ])
         );
         insert_language!(map, "R", &["r", "rmd"], Some(&[".Rprofile"]));
         insert_language!(map, "Racket", &["rkt"], None);
@@ -231,7 +267,7 @@ lazy_static! {
                 "Thorfile"
             ])
         );
-        insert_language!(map, "Rust", &["rs"], Some(&["Cargo.toml"]));
+        insert_language!(map, "Rust", &["rs"], Some(&["Cargo.toml", "Cargo.lock"]));
         insert_language!(map, "Scala", &["scala", "sc"], Some(&["build.sbt"]));
         insert_language!(map, "Scheme", &["scm", "ss"], None);
         insert_language!(
@@ -261,7 +297,7 @@ lazy_static! {
             &["tf", "hcl"],
             Some(&["terraform.tfvars"])
         );
-        insert_language!(map, "TeX/LaTeX", &["tex", "sty"], None);
+        insert_language!(map, "TeX/LaTeX", &["tex", "sty"], Some(&[".latexmkrc"]));
         insert_language!(map, "TOML", &["toml"], None);
         insert_language!(map, "Txt2tags", &["t2t"], None);
         insert_language!(map, "TypeScript", &["ts", "tsx"], Some(&["tsconfig.json"]));
@@ -278,7 +314,7 @@ lazy_static! {
         insert_language!(map, "Windows Registry Entry", &["reg"], None);
         insert_language!(map, "XML", &["xml"], None);
         insert_language!(map, "WebAssembly", &["wat", "wasm"], None);
-        insert_language!(map, "YAML", &["yaml", "yml"], None);
+        insert_language!(map, "YAML", &["yaml", "yml"], SOme(&[".yamllint"]));
         insert_language!(map, "Zig", &["zig"], None);
         map
     };
