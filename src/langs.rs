@@ -169,7 +169,7 @@ lazy_static! {
         insert_language!(map, "Meson", &[], Some(&["meson.build"]));
         insert_language!(map, "moo", &["moo"], None);
         insert_language!(map, "Mustache", &["mustache"], None);
-        insert_language!(map, "Nim", &["nim"], SOme(&["nim.cfg"]));
+        insert_language!(map, "Nim", &["nim"], Some(&["nim.cfg"]));
         insert_language!(map, "NSIS", &["nsi", "nsh"], None);
         insert_language!(map, "NVGT", &["nvgt"], Some(&[".nvgtrc"]));
         insert_language!(map, "Objective-C", &["m"], None);
@@ -314,7 +314,7 @@ lazy_static! {
         insert_language!(map, "Windows Registry Entry", &["reg"], None);
         insert_language!(map, "XML", &["xml"], None);
         insert_language!(map, "WebAssembly", &["wat", "wasm"], None);
-        insert_language!(map, "YAML", &["yaml", "yml"], SOme(&[".yamllint"]));
+        insert_language!(map, "YAML", &["yaml", "yml"], Some(&[".yamllint"]));
         insert_language!(map, "Zig", &["zig"], None);
         map
     };
