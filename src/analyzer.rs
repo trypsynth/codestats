@@ -1,4 +1,6 @@
-use std::{collections::HashMap, path::PathBuf};
+use crate::cli::Cli;
+use ignore::WalkBuilder;
+use std::collections::HashMap;
 
 struct LangStats {
     files: u64,
@@ -6,22 +8,28 @@ struct LangStats {
     size: f64,
 }
 
-pub struct Analyzer {
+pub struct CodeAnalyzer<'a> {
+    args: &'a Cli,
     total_files: u64,
     total_lines: u64,
     total_size: f64,
-    verbose: bool,
     lang_stats: HashMap<&'static str, LangStats>,
 }
 
-impl Analyzer {
-    fn new(path: &PathBuf, verbose: bool) -> Self {
-        Analyzer {
+impl<'a> CodeAnalyzer<'a> {
+    pub fn new(args: &'a Cli) -> Self {
+        CodeAnalyzer {
+            args,
             total_files: 0,
             total_lines: 0,
             total_size: 0.0,
-            verbose,
-            lang_stats: HashMap::new(),
+            lang_stats: HashMap::new(),        }
+    }
+
+    pub fn analyze(&self) {
+        if self.args.verbose {
+            println!("Analyzing directory {}", self.args.path.display());
         }
+        let walker = WalkBuilder::new(self.args.path.clone());
     }
 }
