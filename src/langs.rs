@@ -19,13 +19,13 @@ macro_rules! define_languages {
 }
 
 define_languages!(
-    "Ada" => &["*.adb", "*.ads"],
+    "Ada" => &["*.ada", "*.adb", "*.ads"],
     "AngelScript" => &["*.as", "*.angelscript"],
-    "APL" => &["*.apl"],
+    "APL" => &["*.apl", "*.dyalog"],
     "AppleScript" => &["*.scpt", "*.applescript"],
     "Assembly" => &["*.asm", "*.s", "*.nasm"],
-    "AsciiDoc" => &["*.adoc", "*.asciidoc"],
-    "AutoHotkey" => &["*.ahk", "*.ahkl"],
+    "AsciiDoc" => &["*.adoc", "*.asciidoc", "*.asc"],
+    "AutoHotkey" => &["*.ahk", "*.ahkl", "*.ah2"],
     "AutoIt" => &["*.au3"],
     "AWK" => &["*.awk", "*.gawk", "*.nawk"],
     "BASIC" => &["*.bas", "*.bi"],
@@ -48,9 +48,9 @@ define_languages!(
     "CoffeeScript" => &["*.coffee"],
     "Crystal" => &["*.cr"],
     "CSON" => &["*.cson"],
-    "CSS" => &["*.css", "*.sass", "*.scss"],
+    "CSS" => &["*.css", "*.sass", "*.scss", "*.postcss"],
     "CSV" => &["*.csv"],
-    "CUDA" => &["*.cu", "*.cuh"],
+    "CUDA" => &["*.cu", "*.cuh", "*.ptx"],
     "Cython" => &["*.pyx", "*.pxd", "*.pyi"],
     "D" => &["*.d", "*.di"],
     "Dart" => &["*.dart", "pubspec.yaml"],
@@ -69,8 +69,9 @@ define_languages!(
         &["*.erl", "*.hrl", "rebar.config", "rebar.lock"],
     "F#" => &["*.fs", "*.fsi", "*.fsx"],
     "Forth" => &["*.4th", "*.fth", "*.frt"],
-    "Fortran" => &["*.f", "*.for", "*.f90", "*.f95"],
-        "GLSL" =>
+    "Fortran" => &["*.f", "*.for", "*.f77", "*.f90", "*.f95", "*.f03"],
+    "GDScript" => &["*.gd"],
+    "GLSL" =>
         &[
             "*.glsl", "*.vert", "*.frag", "*.geom", "*.tesc", "*.tese", "*.comp"
         ],
@@ -80,11 +81,11 @@ define_languages!(
     "Hack" => &["*.hh", "*.hhi", "*.hack"],
     "HAML" => &["*.haml"],
     "Handlebars" => &["*.hbs", "*.handlebars"],
-    "Haskell" => &["*.hs", "*.lhs", ".ghci", "stack.yaml"],
+    "Haskell" => &["*.hs", "*.lhs", "*.hs-boot", ".ghci", "stack.yaml"],
     "HLSL" => &["*.hlsl", "*.fx", "*.fxh", "*.hlsli"],
     "HTML" => &["*.html", "*.htm", "*.xht", "*.xhtml"],
     "IDL" => &["*.idl", "*.widl"],
-        "INI" =>
+    "INI" =>
         &[
             "*.ini",
             "*.cfg",
@@ -96,9 +97,9 @@ define_languages!(
         ],
     "Inno Setup" => &["*.iss"],
     "J" => &["*.ijs"],
-    "Java" => &["*.java"],
+    "Java" => &["*.java", "*.jav"],
     "Java Server Pages" => &["*.jsp"],
-        "JavaScript" =>
+    "JavaScript" =>
         &[
             "*.js",
             "*.cjs",
@@ -117,12 +118,12 @@ define_languages!(
             ".prettierc"
         ],
     "JAWS Script" => &["*.jss", "*.jsh"],
-    "Jinja2" => &["*.j2"],
-    "JSON" => &["*.json"],
+    "Jinja2" => &["*.j2", "*.jinja", "*.jinja2"],
+    "JSON" => &["*.json", "*.geojson", "*.jsonc"],
     "Julia" => &["*.jl"],
     "Kotlin" => &["*.kt", "*.kts"],
     "Less" => &["*.less"],
-    "Lua" => &["*.lua", "*.wlua"],
+    "Lua" => &["*.lua", "*.wlua", ".luacheckrc"],
         "Makefile" =>
         &[
             "*.mak",
@@ -168,7 +169,7 @@ define_languages!(
     "OCaml" => &["*.ml", "*.mli"],
     "Pascal" => &["*.pas", "*.pp", "*.p", "*.inc"],
         "PHP" =>
-        &["*.php", "*.php3", "*.php4", "*.php5", "*.phps", "*.phpt"],
+        &["*.php", "*.php3", "*.php4", "*.php5", "*.phps", "*.phpt", "*.phtml"],
         "Perl" =>
         &[
             "*.pl",
@@ -182,7 +183,7 @@ define_languages!(
             "cpanfile.snapshot"
         ],
     "Pony" => &["*.pony"],
-    "PowerShell" => &["*.ps1", "*.psd1", "*.psm1"],
+    "PowerShell" => &["*.ps1", "*.psd1", "*.psm1", "*.ps1xml"],
     "PureBasic" => &["*.pb", "*.pbi", "*.pbf", "*.pbp"],
         "Python" =>
         &[
@@ -199,7 +200,8 @@ define_languages!(
             "pyproject.toml  ",
             "tox.ini  ",
             "Pipfile  ",
-            "Pipfile.lock"
+            "Pipfile.lock",
+            ".pythonrc", "py.typed",
         ],
     "R" => &["*.r", "*.rmd", ".Rprofile"],
     "Racket" => &["*.rkt"],
@@ -272,7 +274,8 @@ define_languages!(
             ".zlogout",
             ".zprofile",
             ".zshenv",
-            ".zshrc"
+            ".zshrc",
+            ".bash_aliases"
         ],
     "SpiderBasic" => &["*.sb", "*.sbi", "*.sbf", "*.sbp"],
     "SQL" => &["*.sql"],
@@ -282,8 +285,9 @@ define_languages!(
     "TeX/LaTeX" => &["*.tex", "*.sty", ".latexmkrc"],
     "TOML" => &["*.toml"],
     "Txt2tags" => &["*.t2t"],
-    "TypeScript" => &["*.ts", "*.tsx", "tsconfig.json"],
+    "TypeScript" => &["*.ts", "*.tsx", "*.cts", "*.mts", "tsconfig.json"],
     "V" => &["*.v"],
+    "Vala" => &["*.vala", "*.vapi"],
     "Verilog" => &["*.v", "*.vh", "*.sv", "*.svh"],
     "VHDL" => &["*.vhd", "*.vhdl"],
     "Vim script" => &["*.vim"],
