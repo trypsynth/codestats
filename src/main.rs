@@ -1,8 +1,8 @@
 mod analyzer;
 mod cli;
 mod langs;
-use anyhow::{Result, bail};
 use crate::analyzer::CodeAnalyzer;
+use anyhow::{Result, bail};
 
 fn main() -> Result<()> {
     let args = cli::parse_cli();

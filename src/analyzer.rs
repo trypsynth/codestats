@@ -23,7 +23,8 @@ impl<'a> CodeAnalyzer<'a> {
             total_files: 0,
             total_lines: 0,
             total_size: 0.0,
-            lang_stats: HashMap::new(),        }
+            lang_stats: HashMap::new(),
+        }
     }
 
     pub fn analyze(&self) {

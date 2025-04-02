@@ -348,16 +348,15 @@ lazy_static! {
 }
 
 fn detect_language(filename: &str) -> Option<&'static str> {
-    for language in LANGUAGES.values() {
-        if language.file_patterns.iter().any(|&pattern| {
-            if let Some(filename) = pattern.strip_prefix('*') {                                                                 
-            filename.ends_with(&pattern[1..])
+    LANGUAGES.values().find_map(|language| {
+        language.file_patterns.iter().find_map(|&pattern| {
+            if let Some(suffix) = pattern.strip_prefix('*') {
+                (filename.ends_with(suffix)).then_some(language.name)
+            } else if filename == pattern {
+                Some(language.name)
             } else {
-                filename == pattern
+                None
             }
-        }) {
-            return Some(language.name);
-        }
-    }
-    None
+        })
+    })
 }
