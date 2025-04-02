@@ -11,7 +11,7 @@ edition = "2024"
 anyhow = "1.0.97"
 clap = { version = "4.5.34", features = ["derive"] }
 ignore = "0.4.23"
-lazy_static = "1.5.0"
+phf = { version = "0.11.3", features = ["macros"] }
 
 [profile.release]
 strip = true
