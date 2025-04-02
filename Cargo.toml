@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Quin Gillespie <TheQuinbox@gmail.com>"]
 description = "Presents information about programming language usage in a project."
 repository = "https://github.com/trypsynth/codestats"
-license = "zlib"
+license = "Zlib"
 edition = "2024"
 
 [dependencies]

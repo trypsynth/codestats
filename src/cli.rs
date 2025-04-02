@@ -12,12 +12,14 @@ pub struct Cli {
         short,
         long,
         default_value_t = true,
-        help = "Respect .gitignore files."
+        help = "Respect .gitignore/.ignore files."
     )]
-    pub gitignores: bool,
+    pub ignores: bool,
+    #[arg(short, long, help = "Follow symlinks, if encountered.")]
+    symlinks: bool,
 }
 
-// Wrapper function to avoid needing to use clap::Parser in main.rs.
+// Wrapper function to avoid needing to `use clap::Parser;` in `main.rs`.
 pub fn parse_cli() -> Cli {
     Cli::parse()
 }
