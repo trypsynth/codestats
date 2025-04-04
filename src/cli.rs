@@ -16,7 +16,9 @@ pub struct Cli {
     )]
     pub ignores: bool,
     #[arg(short, long, help = "Follow symlinks, if encountered.")]
-    symlinks: bool,
+    pub symlinks: bool,
+    #[arg(short, long, help = "Ignore hidden files.", default_value_t = true)]
+    pub no_hidden: bool,
 }
 
 // Wrapper function to avoid needing to `use clap::Parser;` in `main.rs`.

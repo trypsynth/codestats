@@ -31,6 +31,10 @@ impl<'a> CodeAnalyzer<'a> {
         if self.args.verbose {
             println!("Analyzing directory {}", self.args.path.display());
         }
-        let walker = WalkBuilder::new(self.args.path.clone());
+        let walker = WalkBuilder::new(&self.args.path)
+            .follow_links(self.args.symlinks)
+            .git_ignore(self.args.ignores)
+            .hidden(self.args.no_hidden)
+            .build();
     }
 }
