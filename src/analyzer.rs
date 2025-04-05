@@ -9,14 +9,12 @@ use std::{
     path::Path,
 };
 
-#[derive(Debug)]
 struct LangStats {
     files: u64,
     lines: u64,
     size: u64,
 }
 
-#[derive(Debug)]
 pub struct CodeAnalyzer<'a> {
     args: &'a Cli,
     total_files: u64,

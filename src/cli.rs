@@ -1,7 +1,7 @@
 use clap::Parser;
 use std::path::PathBuf;
 
-#[derive(Parser, Debug)]
+#[derive(Parser)]
 #[command(version, about)]
 pub struct Cli {
     #[arg(help = "The path to analyze.")]
