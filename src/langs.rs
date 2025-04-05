@@ -123,6 +123,7 @@ define_languages!(
     "Julia" => &["*.jl"],
     "Kotlin" => &["*.kt", "*.kts"],
     "Less" => &["*.less"],
+    "Liquid Templates" => &["*.liquid"],
     "Lua" => &["*.lua", "*.wlua", ".luacheckrc"],
         "Makefile" =>
         &[
@@ -163,6 +164,7 @@ define_languages!(
     "Mustache" => &["*.mustache"],
     "Nim" => &["*.nim", "nim.cfg"],
     "NSIS" => &["*.nsi", "*.nsh"],
+    "Nunjucks Templates" => &["*.njk"],
     "NVGT" => &["*.nvgt", ".nvgtrc"],
     "Objective-C" => &["*.m"],
     "Objective-C++" => &["*.mm"],
@@ -197,9 +199,9 @@ define_languages!(
             "SConstruct",
             "Snakefile",
             "requirements.txt",
-            "pyproject.toml  ",
-            "tox.ini  ",
-            "Pipfile  ",
+            "pyproject.toml",
+            "tox.ini",
+            "Pipfile",
             "Pipfile.lock",
             ".pythonrc", "py.typed",
         ],
@@ -214,7 +216,7 @@ define_languages!(
             "*.pl6",
             "*.p6"
         ],
-    "Re-structured Text" => &["*.rst"],
+    "reStructuredText" => &["*.rst"],
         "Ruby" =>
         &[
             "*.rb",
@@ -286,7 +288,6 @@ define_languages!(
     "TOML" => &["*.toml"],
     "Txt2tags" => &["*.t2t"],
     "TypeScript" => &["*.ts", "*.tsx", "*.cts", "*.mts", "tsconfig.json"],
-    "V" => &["*.v"],
     "Vala" => &["*.vala", "*.vapi"],
     "Verilog" => &["*.v", "*.vh", "*.sv", "*.svh"],
     "VHDL" => &["*.vhd", "*.vhdl"],
@@ -296,22 +297,25 @@ define_languages!(
             "*.vb", "*.cls", "*.frm", "*.frx", "*.vba", "*.vbhtml", "*.vbs"
         ],
     "Windows Registry Entry" => &["*.reg"],
-    "XML" => &["*.xml"],
+    "XML" => &["*.xml", "*.svg"],
     "WebAssembly" => &["*.wat", "*.wasm"],
-    "YAML" => &["*.yaml", "*.yml", ".yamllint"],
+    "YAML" => &["*.yaml", "*.yml", "*.yaml.tmpl", ".yamllint"],
     "Zig" => &["*.zig"],
 );
 
 pub fn detect_language(filename: &str) -> Option<&'static str> {
     LANGUAGES.values().find_map(|language| {
         language.file_patterns.iter().find_map(|&pattern| {
-            if let Some(suffix) = pattern.strip_prefix('*') {
-                (filename.ends_with(suffix)).then_some(language.name)
-            } else if filename == pattern {
-                Some(language.name)
-            } else {
-                None
-            }
+            pattern.strip_prefix('*').map_or_else(
+                || {
+                    if filename == pattern {
+                        Some(language.name)
+                    } else {
+                        None
+                    }
+                },
+                |suffix| filename.ends_with(suffix).then_some(language.name),
+            )
         })
     })
 }

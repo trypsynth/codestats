@@ -11,6 +11,6 @@ fn main() -> Result<()> {
     }
     let mut analyzer = CodeAnalyzer::new(&args);
     analyzer.analyze();
-    println!("{:#?}", analyzer);
+    analyzer.print_stats();
     Ok(())
 }

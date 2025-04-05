@@ -13,7 +13,7 @@ use std::{
 struct LangStats {
     files: u64,
     lines: u64,
-    size: f64,
+    size: u64,
 }
 
 #[derive(Debug)]
@@ -21,7 +21,7 @@ pub struct CodeAnalyzer<'a> {
     args: &'a Cli,
     total_files: u64,
     total_lines: u64,
-    total_size: f64,
+    total_size: u64,
     lang_stats: HashMap<&'static str, LangStats>,
 }
 
@@ -31,7 +31,7 @@ impl<'a> CodeAnalyzer<'a> {
             args,
             total_files: 0,
             total_lines: 0,
-            total_size: 0.0,
+            total_size: 0,
             lang_stats: HashMap::new(),
         }
     }
@@ -48,7 +48,7 @@ impl<'a> CodeAnalyzer<'a> {
             .build()
         {
             match result {
-                Ok(entry) if entry.file_type().map_or(false, |ft| ft.is_file()) => {
+                Ok(entry) if entry.file_type().is_some_and(|ft| ft.is_file()) => {
                     if let Err(e) = self.process_file(entry.path()) {
                         eprintln!("Error processing file {:?}: {}", entry.path(), e);
                     }
@@ -57,6 +57,10 @@ impl<'a> CodeAnalyzer<'a> {
                 Err(e) => eprintln!("Error accessing entry: {e}"),
             }
         }
+    }
+
+    pub fn print_stats(&self) {
+        println!("Codestats for {}", self.args.path.display());
     }
 
     fn process_file(&mut self, file_path: &Path) -> Result<()> {
@@ -73,15 +77,15 @@ impl<'a> CodeAnalyzer<'a> {
         let line_count = reader.lines().count() as u64;
         self.total_files += 1;
         self.total_lines += line_count;
-        self.total_size += file_size as f64;
+        self.total_size += file_size;
         let stats = self.lang_stats.entry(language).or_insert(LangStats {
             files: 0,
             lines: 0,
-            size: 0.0,
+            size: 0,
         });
         stats.files += 1;
         stats.lines += line_count;
-        stats.size += file_size as f64;
+        stats.size += file_size;
         Ok(())
     }
 }
