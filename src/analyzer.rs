@@ -1,6 +1,7 @@
 use crate::cli::Cli;
 use crate::langs;
 use anyhow::{Result, anyhow};
+use human_bytes::human_bytes;
 use ignore::WalkBuilder;
 use std::{
     collections::HashMap,
@@ -59,6 +60,9 @@ impl<'a> CodeAnalyzer<'a> {
 
     pub fn print_stats(&self) {
         println!("Codestats for {}", self.args.path.display());
+        println!("Total number of files counted: {}", self.total_files);
+        println!("Total number of lines: {}", self.total_lines);
+        println!("Total size: {}", human_bytes(self.total_size as f64));
     }
 
     fn process_file(&mut self, file_path: &Path) -> Result<()> {
