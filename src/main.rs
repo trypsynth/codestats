@@ -9,7 +9,8 @@ fn main() -> Result<()> {
     if !args.path.exists() {
         bail!("Path `{}` not found", args.path.display());
     }
-    let analyzer = CodeAnalyzer::new(&args);
+    let mut analyzer = CodeAnalyzer::new(&args);
     analyzer.analyze();
+    println!("{:#?}", analyzer);
     Ok(())
 }

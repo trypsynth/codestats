@@ -302,7 +302,7 @@ define_languages!(
     "Zig" => &["*.zig"],
 );
 
-fn detect_language(filename: &str) -> Option<&'static str> {
+pub fn detect_language(filename: &str) -> Option<&'static str> {
     LANGUAGES.values().find_map(|language| {
         language.file_patterns.iter().find_map(|&pattern| {
             if let Some(suffix) = pattern.strip_prefix('*') {

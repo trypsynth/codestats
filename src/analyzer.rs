@@ -1,13 +1,22 @@
 use crate::cli::Cli;
+use crate::langs;
+use anyhow::{Result, anyhow};
 use ignore::WalkBuilder;
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    fs::{self, File},
+    io::{BufRead, BufReader},
+    path::Path,
+};
 
+#[derive(Debug)]
 struct LangStats {
     files: u64,
     lines: u64,
     size: f64,
 }
 
+#[derive(Debug)]
 pub struct CodeAnalyzer<'a> {
     args: &'a Cli,
     total_files: u64,
@@ -27,14 +36,51 @@ impl<'a> CodeAnalyzer<'a> {
         }
     }
 
-    pub fn analyze(&self) {
+    pub fn analyze(&mut self) {
         if self.args.verbose {
             println!("Analyzing directory {}", self.args.path.display());
         }
-        let walker = WalkBuilder::new(&self.args.path)
+        for result in WalkBuilder::new(&self.args.path)
             .follow_links(self.args.symlinks)
+            .ignore(self.args.ignores)
             .git_ignore(self.args.ignores)
             .hidden(self.args.no_hidden)
-            .build();
+            .build()
+        {
+            match result {
+                Ok(entry) if entry.file_type().map_or(false, |ft| ft.is_file()) => {
+                    if let Err(e) = self.process_file(entry.path()) {
+                        eprintln!("Error processing file {:?}: {}", entry.path(), e);
+                    }
+                }
+                Ok(_) => {}
+                Err(e) => eprintln!("Error accessing entry: {e}"),
+            }
+        }
+    }
+
+    fn process_file(&mut self, file_path: &Path) -> Result<()> {
+        let filename = file_path.file_name()
+            .and_then(|name| name.to_str())
+            .ok_or_else(|| anyhow!("Invalid UTF-8 in file name: {:?}", file_path))?;
+        let language = langs::detect_language(filename)
+            .ok_or_else(|| anyhow!("Unknown language for {:?}", file_path))?;
+        let metadata = fs::metadata(file_path)?;
+        let file_size = metadata.len();
+        let file = File::open(file_path)?;
+        let reader = BufReader::new(file);
+        let line_count = reader.lines().count() as u64;
+        self.total_files += 1;
+        self.total_lines += line_count;
+        self.total_size += file_size as f64;
+        let stats = self.lang_stats.entry(language).or_insert(LangStats {
+            files: 0,
+            lines: 0,
+            size: 0.0,
+        });
+        stats.files += 1;
+        stats.lines += line_count;
+        stats.size += file_size as f64;
+        Ok(())
     }
 }
