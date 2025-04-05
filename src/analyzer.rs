@@ -60,7 +60,8 @@ impl<'a> CodeAnalyzer<'a> {
     }
 
     fn process_file(&mut self, file_path: &Path) -> Result<()> {
-        let filename = file_path.file_name()
+        let filename = file_path
+            .file_name()
             .and_then(|name| name.to_str())
             .ok_or_else(|| anyhow!("Invalid UTF-8 in file name: {:?}", file_path))?;
         let language = langs::detect_language(filename)
