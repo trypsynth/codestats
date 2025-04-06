@@ -38,7 +38,7 @@ define_languages!(
     "C" => &["*.c", "*.h"],
     "C++" =>
         &[
-            "*.cpp", "*.c++", "*.cc", "*.cxx", "*.hpp", "*.h++", "*.hxx", "*.ino"
+            "*.cpp", "*.c++", "*.cc", "*.cxx", "*.hpp", "*.h++", "*.hxx", "*.ino", "*.ipp"
         ],
     "C#" => &["*.cs", "*.csx", "*.cake"],
     "Chapel" => &["*.chpl"],
@@ -75,7 +75,7 @@ define_languages!(
         &[
             "*.glsl", "*.vert", "*.frag", "*.geom", "*.tesc", "*.tese", "*.comp"
         ],
-    "Go" => &["*.go", "go.mod", "go.sum"],
+    "Go" => &["*.go", "*.tmpl", "go.mod"],
     "Gradle" => &["*.gradle", "gradle.properties"],
     "Groovy" => &["*.groovy", "*.gvy", "*.gy", "*.gsh"],
     "Hack" => &["*.hh", "*.hhi", "*.hack"],
@@ -95,7 +95,7 @@ define_languages!(
             ".gitconfig",
             "buildozer.spec"
         ],
-    "Inno Setup" => &["*.iss"],
+    "Inno Setup" => &["*.iss", "*.ish"],
     "J" => &["*.ijs"],
     "Java" => &["*.java", "*.jav"],
     "Java Server Pages" => &["*.jsp"],
@@ -158,9 +158,9 @@ define_languages!(
             "*.workbook"
         ],
     "Maven" => &["pom.xml"],
-    "MesagePack" => &["*.msgpack"],
+    "MessagePack" => &["*.msgpack"],
     "Meson" => &["meson.build"],
-    "moo" => &["*.moo"],
+    "Moo" => &["*.moo"],
     "Mustache" => &["*.mustache"],
     "Nim" => &["*.nim", "nim.cfg"],
     "NSIS" => &["*.nsi", "*.nsh"],
@@ -263,6 +263,7 @@ define_languages!(
             "*.ksh",
             "*.tmux",
             "*.zsh",
+            "*.fish",
             ".bash_logout",
             ".bash_profile",
             ".bashrc",
@@ -282,7 +283,7 @@ define_languages!(
     "Terraform" => &["*.tf", "*.hcl", "terraform.tfvars"],
     "TeX/LaTeX" => &["*.tex", "*.sty", ".latexmkrc"],
     "TOML" => &["*.toml"],
-    "Txt2tags" => &["*.t2t"],
+    "txt2tags" => &["*.t2t"],
     "TypeScript" => &["*.ts", "*.tsx", "*.cts", "*.mts"],
     "Vala" => &["*.vala", "*.vapi"],
     "Verilog" => &["*.v", "*.vh", "*.sv", "*.svh"],
@@ -295,7 +296,7 @@ define_languages!(
     "Windows Registry Entry" => &["*.reg"],
     "XML" => &["*.xml", "*.svg"],
     "WebAssembly" => &["*.wat", "*.wasm"],
-    "YAML" => &["*.yaml", "*.yml", "*.yaml.tmpl", ".yamllint"],
+    "YAML" => &["*.yaml", "*.yml", "*.yaml.tmpl", "*.yaml-tmlp", ".yamllint"],
     "Zig" => &["*.zig"],
 );
 
