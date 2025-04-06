@@ -1,8 +1,8 @@
 [package]
 name = "codestats"
 version = "0.1.0"
-authors = ["Quin Gillespie <TheQuinbox@gmail.com>"]
-description = "Presents information about programming language usage in a project."
+authors = ["Quin Gillespie <trypsynth@gmail.com>"]
+description = "CLI tool to provide a per-language breakdown of a folder of sourcecode, optionally respecting things like gitignores, hidden files, and symlinks."
 repository = "https://github.com/trypsynth/codestats"
 license = "Zlib"
 edition = "2024"
