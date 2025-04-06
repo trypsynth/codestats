@@ -4,7 +4,6 @@ use anyhow::{Context, Result};
 use human_bytes::human_bytes;
 use ignore::WalkBuilder;
 use std::{
-    cmp::Reverse,
     collections::HashMap,
     fs::{self, File},
     io::{BufRead, BufReader},
@@ -62,9 +61,9 @@ impl<'a> CodeAnalyzer<'a> {
     }
 
     pub fn print_stats(&self) {
-        println!("Codestats for directory {}", self.args.path.display());
         println!(
-            "Analyzed a total of {} {}, containing {} {} of code, with a total size of {}.",
+            "Stats for {}: {} {}, {} {}, {} total",
+            self.args.path.display(),
             self.total_files,
             if self.total_files == 1 {
                 "file"
@@ -77,29 +76,27 @@ impl<'a> CodeAnalyzer<'a> {
             } else {
                 "lines"
             },
-            human_bytes(self.total_size as f64),
+            human_bytes(self.total_size as f64)
         );
         if self.lang_stats.is_empty() {
-            println!("No source code languages were detected in the scanned files.");
+            println!("No recognized programming languages found.");
             return;
         }
-        println!("Breakdown by detected programming language:\n");
+        println!("Language breakdown:");
         let mut stats_vec: Vec<_> = self.lang_stats.iter().collect();
-        stats_vec.sort_by_key(|(_, stat)| Reverse(stat.lines));
+        stats_vec.sort_by_key(|(lang, _)| *lang);
         for (lang, stats) in stats_vec {
             let file_pct = (stats.files as f64 / self.total_files as f64) * 100.0;
             let line_pct = (stats.lines as f64 / self.total_lines as f64) * 100.0;
             let size_pct = (stats.size as f64 / self.total_size as f64) * 100.0;
-            let file_word = if stats.files == 1 { "file" } else { "files" };
-            let line_word = if stats.lines == 1 { "line" } else { "lines" };
             println!(
-                "- {}: {} {} ({:.1}% of all files), {} {} ({:.1}% of all lines), taking up {} ({:.1}% of total size).",
+                "{}: {} {} ({:.1}%), {} {} ({:.1}%), {} ({:.1}%)",
                 lang,
                 stats.files,
-                file_word,
+                if stats.files == 1 { "file" } else { "files" },
                 file_pct,
                 stats.lines,
-                line_word,
+                if stats.lines == 1 { "line" } else { "lines" },
                 line_pct,
                 human_bytes(stats.size as f64),
                 size_pct
