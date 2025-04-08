@@ -17,7 +17,7 @@ pub struct Cli {
     pub ignores: bool,
     #[arg(short, long, help = "Follow symlinks")]
     pub symlinks: bool,
-    #[arg(short, long, help = default_value_t = true, "Ignore hidden files")]
+    #[arg(short, long, default_value_t = true, help = "Ignore hidden files")]
     pub no_hidden: bool,
 }
 
