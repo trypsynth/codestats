@@ -7,6 +7,12 @@ repository = "https://github.com/trypsynth/codestats"
 license = "Zlib"
 edition = "2024"
 
+[package.metadata.wix]
+upgrade-guid = "2D37F986-8D58-4D94-BF38-8A918A5D653F"
+path-guid = "539B4712-915B-4E42-89A0-62FAF12343FD"
+license = false
+eula = false
+
 [dependencies]
 anyhow = "1.0.97"
 clap = { version = "4.5.34", features = ["derive"] }
@@ -20,3 +26,8 @@ opt-level = "z"
 lto = true
 panic = "abort"
 codegen-units = 1
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
