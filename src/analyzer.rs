@@ -62,7 +62,7 @@ impl<'a> CodeAnalyzer<'a> {
 
     pub fn print_stats(&self) {
         println!(
-            "Stats for {}: {} {}, {} {}, {} total",
+            "Codestats for {}: {} {}, {} {}, {} total",
             self.args.path.display(),
             self.total_files,
             if self.total_files == 1 {
