@@ -1,18 +1,12 @@
 [package]
 name = "codestats"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Quin Gillespie <trypsynth@gmail.com>"]
 description = "CLI tool to provide a per-language breakdown of a folder of sourcecode, optionally respecting things like gitignores, hidden files, and symlinks."
 keywords = ["code", "analysis", "cli", "tool"]
 repository = "https://github.com/trypsynth/codestats"
 license = "Zlib"
 edition = "2024"
-
-[package.metadata.wix]
-upgrade-guid = "2D37F986-8D58-4D94-BF38-8A918A5D653F"
-path-guid = "539B4712-915B-4E42-89A0-62FAF12343FD"
-license = false
-eula = false
 
 [dependencies]
 anyhow = "1.0.97"
