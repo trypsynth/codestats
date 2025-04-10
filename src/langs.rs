@@ -19,7 +19,10 @@ macro_rules! define_languages {
 }
 
 define_languages!(
+    "ABAP" => &["*.abap"],
     "Ada" => &["*.ada", "*.adb", "*.ads"],
+    "Agda" => &["*.agda", "*.lagda"],
+    "Alloy" => &["*.als"],
     "AngelScript" => &["*.as", "*.angelscript"],
     "APL" => &["*.apl", "*.dyalog"],
     "AppleScript" => &["*.scpt", "*.applescript"],
@@ -28,27 +31,35 @@ define_languages!(
     "AutoHotkey" => &["*.ahk", "*.ahkl", "*.ah2"],
     "AutoIt" => &["*.au3"],
     "AWK" => &["*.awk", "*.gawk", "*.nawk"],
-    "BASIC" => &["*.bas", "*.bi"],
+    "Ballerina" => &["*.bal"],
+    "BCX/FreeBASIC " => &["*.bas", "*.bi"],
     "Batch Script" => &["*.bat", "*.cmd"],
-    "Bazel" => &["BUILD", "BUILD.bazel", "WORKSPACE"],
+    "Bazel" => &["*.bzl", "*.star", "BUILD", "BUILD.bazel", "WORKSPACE", "MODULE.bazel"],
     "BGT" => &["*.bgt"],
+    "Bicep" => &["*.bicep"],
+    "BlitzBasic" => &["*.bb", "*.decls", "*.bb2"],
+    "Boo" => &["*.boo"],
     "Brainfuck" => &["*.bf", "*.b"],
+    "BrightScript" => &["*.brs"],
     "BSON" => &["*.bson"],
     "Buck" => &["BUCK"],
     "C" => &["*.c", "*.h"],
     "C++" =>
         &[
-            "*.cpp", "*.c++", "*.cc", "*.cxx", "*.hpp", "*.h++", "*.hxx", "*.ino", "*.ipp"
+            "*.cpp", "*.hpp", "*.c++", "*.h++", "*.cc", "*.cxx", "*.hxx", "*.ino", "*.ipp", "*.pde", "*.cppm", "*.ixx", "*.c++m"
         ],
     "C#" => &["*.cs", "*.csx", "*.cake"],
+    "Cabal" => &["*.cabal"],
+    "ChaiScript" => &["*.chai"],
     "Chapel" => &["*.chpl"],
     "Clojure" => &["*.clj", "*.cljs", "*.cljc", "*.edn"],
-    "CMake" => &["*.cmake", "CMakeLists.txt"],
+    "CMake" => &["*.cmake", "*.cmake.in", "*.cmake.rule", "CMakeLists.txt"],
     "COBOL" => &["*.cbl", "*.cob", "*.cpy"],
     "CoffeeScript" => &["*.coffee"],
+    "Common Lisp" => &["*.lisp", "*.asd", "*.cl"],
     "Crystal" => &["*.cr"],
     "CSON" => &["*.cson"],
-    "CSS" => &["*.css", "*.sass", "*.scss", "*.postcss"],
+    "CSS" => &["*.css", "*.sass", "*.scss", "*.postcss", "*.styl"],
     "CSV" => &["*.csv"],
     "CUDA" => &["*.cu", "*.cuh", "*.ptx"],
     "Cython" => &["*.pyx", "*.pxd", "*.pyi"],
@@ -61,10 +72,13 @@ define_languages!(
             "docker-compose.yml",
             "docker-compose.override.yml"
         ],
+    "EBNF" => &["*.ebnf"],
     "Eiffel" => &["*.e"],
     "EJS" => &["*.ejs"],
     "Elixir" => &["*.ex", "*.exs"],
+    "Elm" => &["*.elm"],
     "Emacs Lisp" => &["*.el"],
+    "EmberScript" => &["*.em"],
         "Erlang" =>
         &["*.erl", "*.hrl", "rebar.config", "rebar.lock"],
     "F#" => &["*.fs", "*.fsi", "*.fsx"],
@@ -75,7 +89,7 @@ define_languages!(
         &[
             "*.glsl", "*.vert", "*.frag", "*.geom", "*.tesc", "*.tese", "*.comp"
         ],
-    "Go" => &["*.go", "*.tmpl", "go.mod"],
+    "Go" => &["*.go", "*.tmpl", "*.gohtml", "*.gotmpl", "go.mod"],
     "GraphQL" => &["*.graphql", "*.gql"],
     "Gradle" => &["*.gradle", "gradle.properties"],
     "Groovy" => &["*.groovy", "*.gvy", "*.gy", "*.gsh"],
@@ -86,6 +100,7 @@ define_languages!(
     "HLSL" => &["*.hlsl", "*.fx", "*.fxh", "*.hlsli"],
     "HTML" => &["*.html", "*.htm", "*.xht", "*.xhtml"],
     "IDL" => &["*.idl", "*.widl"],
+    "Inform 7" => &["*.ni", "*.i7x"],
     "INI" =>
         &[
             "*.ini",
@@ -113,18 +128,22 @@ define_languages!(
             "*.ssjs",
             "*.xsjs",
             "*.xsjslib",
+            "*.es",
+            "*.es6",
+            "*.jake",
             ".babelrc",
             ".eslintrc",
             ".prettierc"
         ],
     "JAWS Script" => &["*.jss", "*.jsh"],
     "Jinja2" => &["*.j2", "*.jinja", "*.jinja2"],
-    "JSON" => &["*.json", "*.geojson", "*.jsonc"],
+    "JSON" => &["*.json", "*.geojson", "*.jsonc", "*.jsonl", "*.ndjson"],
     "Julia" => &["*.jl"],
-    "Kotlin" => &["*.kt", "*.kts"],
+    "Kotlin" => &["*.kt", "*.kts", "*.ktm"],
     "Less" => &["*.less"],
+    "LilyPond" => &["*.ly", "*.ily"],
     "Liquid Templates" => &["*.liquid"],
-    "Lua" => &["*.lua", "*.wlua", "*.luau", ".luacheckrc"],
+    "Lua" => &["*.lua", "*.wlua", "*.luau", "*.rockspec", ".luacheckrc"],
         "Makefile" =>
         &[
             "*.mak",
@@ -149,6 +168,7 @@ define_languages!(
         &[
             "*.md",
             "*.markdown",
+            "*.mdx",
             "*.mdown",
             "*.mdwn",
             "*.mkd",
@@ -160,6 +180,7 @@ define_languages!(
     "Maven" => &["pom.xml"],
     "MessagePack" => &["*.msgpack"],
     "Meson" => &["meson.build"],
+    "Modula-2/3" => &["*.m3", "*.mi", "*.mod"],
     "Moo" => &["*.moo"],
     "Mustache" => &["*.mustache"],
     "Nim" => &["*.nim", "nim.cfg"],
@@ -168,9 +189,12 @@ define_languages!(
     "NVGT" => &["*.nvgt", ".nvgtrc"],
     "Objective-C" => &["*.m"],
     "Objective-C++" => &["*.mm"],
+    "Objective-J" => &["*.j", "*.sj"],
     "OCaml" => &["*.ml", "*.mli", "*.cmx", "*.cmxa", "*.mll", "*.mly"],
+    "OpenSCAD" => &["*.scad"],
+    "Oz" => &["*.oz"],
     "Pascal" => &["*.pas", "*.pp", "*.p", "*.inc"],
-        "PHP" =>
+    "PHP" =>
         &["*.php", "*.php3", "*.php4", "*.php5", "*.phps", "*.phpt", "*.phtml"],
         "Perl" =>
         &[
@@ -184,9 +208,11 @@ define_languages!(
             "cpanfile",
             "cpanfile.snapshot"
         ],
+    "PogoScript" => &["*.pogo"],
     "Pony" => &["*.pony"],
     "PowerShell" => &["*.ps1", "*.psd1", "*.psm1", "*.ps1xml"],
     "Protocol Buffers" => &["*.proto"],
+    "Pug" => &["*.pug", "*.jade"],
     "PureBasic" => &["*.pb", "*.pbi", "*.pbf", "*.pbp"],
         "Python" =>
         &[
@@ -194,7 +220,7 @@ define_languages!(
             "*.pyw",
             "*.py2",
             "*.py3",
-            "*.pip",
+            "*.pip", "*.pyz", "*.pyzw",
             ".gclient",
             "SConscript",
             "SConstruct",
@@ -203,6 +229,8 @@ define_languages!(
             "Pipfile",
             ".pythonrc", "py.typed",
         ],
+    "Q#" => &["*.qs"],
+    "QML" => &["*.qml"],
     "R" => &["*.r", "*.rmd", ".Rprofile"],
     "Racket" => &["*.rkt", "*.rktd", "*.rktl", "*.rktm"],
         "Raku" =>
@@ -215,6 +243,7 @@ define_languages!(
             "*.p6"
         ],
     "reStructuredText" => &["*.rst"],
+    "Robot Framework" => &["*.robot"],
         "Ruby" =>
         &[
             "*.rb",
@@ -254,9 +283,10 @@ define_languages!(
             "Snapfile",
             "Thorfile"
         ],
-    "Rust" => &["*.rs"],
+    "Rust" => &["*.rs", "*.rs.in", "*.rslib", "*.rlib"],
     "Scala" => &["*.scala", "*.sc", "build.sbt"],
     "Scheme" => &["*.scm", "*.ss"],
+    "Sed" => &["*.sed"],
         "Shell Script" =>
         &[
             "*.sh",
@@ -264,7 +294,7 @@ define_languages!(
             "*.ksh",
             "*.tmux",
             "*.zsh",
-            "*.fish",
+            "*.fish", "*.csh", "*.tcsh",
             ".bash_logout",
             ".bash_profile",
             ".bashrc",
@@ -277,16 +307,22 @@ define_languages!(
             ".zshrc",
             ".bash_aliases"
         ],
+    "Smalltalk" => &["*.st"],
     "SpiderBasic" => &["*.sb", "*.sbi", "*.sbf", "*.sbp"],
     "SQL" => &["*.sql"],
+    "Squirrel" => &["*.nut"],
+    "Stan" => &["*.stan"],
     "Svelte" => &["*.stelte"],
     "Swift" => &["*.swift", "*.swiftpm"],
     "Tcl" => &["*.tcl", "*.tk"],
     "Terraform" => &["*.tf", "*.hcl", "terraform.tfvars"],
     "TeX/LaTeX" => &["*.tex", "*.sty", ".latexmkrc"],
+    "Textile" => &["*.textile"],
     "TOML" => &["*.toml"],
     "txt2tags" => &["*.t2t"],
+    "Twig" => &["*.twig"],
     "TypeScript" => &["*.ts", "*.tsx", "*.cts", "*.mts"],
+    "UnrealScript" => &["*.uc"],
     "Vala" => &["*.vala", "*.vapi"],
     "Verilog" => &["*.v", "*.vh", "*.sv", "*.svh"],
     "VHDL" => &["*.vhd", "*.vhdl"],
