@@ -76,12 +76,13 @@ define_languages!(
             "*.glsl", "*.vert", "*.frag", "*.geom", "*.tesc", "*.tese", "*.comp"
         ],
     "Go" => &["*.go", "*.tmpl", "go.mod"],
+    "GraphQL" => &["*.graphql", "*.gql"],
     "Gradle" => &["*.gradle", "gradle.properties"],
     "Groovy" => &["*.groovy", "*.gvy", "*.gy", "*.gsh"],
     "Hack" => &["*.hh", "*.hhi", "*.hack"],
     "HAML" => &["*.haml"],
     "Handlebars" => &["*.hbs", "*.handlebars"],
-    "Haskell" => &["*.hs", "*.lhs", "*.hs-boot", ".ghci", "stack.yaml"],
+    "Haskell" => &["*.hs", "*.lhs", "*.hsc", "*.hs-boot", ".ghci", "stack.yaml"],
     "HLSL" => &["*.hlsl", "*.fx", "*.fxh", "*.hlsli"],
     "HTML" => &["*.html", "*.htm", "*.xht", "*.xhtml"],
     "IDL" => &["*.idl", "*.widl"],
@@ -103,7 +104,6 @@ define_languages!(
         &[
             "*.js",
             "*.cjs",
-            "*.vue",
             "*.jsx",
             "*.jscad",
             "*.jsfl",
@@ -124,7 +124,7 @@ define_languages!(
     "Kotlin" => &["*.kt", "*.kts"],
     "Less" => &["*.less"],
     "Liquid Templates" => &["*.liquid"],
-    "Lua" => &["*.lua", "*.wlua", ".luacheckrc"],
+    "Lua" => &["*.lua", "*.wlua", "*.luau", ".luacheckrc"],
         "Makefile" =>
         &[
             "*.mak",
@@ -168,7 +168,7 @@ define_languages!(
     "NVGT" => &["*.nvgt", ".nvgtrc"],
     "Objective-C" => &["*.m"],
     "Objective-C++" => &["*.mm"],
-    "OCaml" => &["*.ml", "*.mli"],
+    "OCaml" => &["*.ml", "*.mli", "*.cmx", "*.cmxa", "*.mll", "*.mly"],
     "Pascal" => &["*.pas", "*.pp", "*.p", "*.inc"],
         "PHP" =>
         &["*.php", "*.php3", "*.php4", "*.php5", "*.phps", "*.phpt", "*.phtml"],
@@ -186,6 +186,7 @@ define_languages!(
         ],
     "Pony" => &["*.pony"],
     "PowerShell" => &["*.ps1", "*.psd1", "*.psm1", "*.ps1xml"],
+    "Protocol Buffers" => &["*.proto"],
     "PureBasic" => &["*.pb", "*.pbi", "*.pbf", "*.pbp"],
         "Python" =>
         &[
@@ -203,7 +204,7 @@ define_languages!(
             ".pythonrc", "py.typed",
         ],
     "R" => &["*.r", "*.rmd", ".Rprofile"],
-    "Racket" => &["*.rkt"],
+    "Racket" => &["*.rkt", "*.rktd", "*.rktl", "*.rktm"],
         "Raku" =>
         &[
             "*.raku",
@@ -278,7 +279,8 @@ define_languages!(
         ],
     "SpiderBasic" => &["*.sb", "*.sbi", "*.sbf", "*.sbp"],
     "SQL" => &["*.sql"],
-    "Swift" => &["*.swift"],
+    "Svelte" => &["*.stelte"],
+    "Swift" => &["*.swift", "*.swiftpm"],
     "Tcl" => &["*.tcl", "*.tk"],
     "Terraform" => &["*.tf", "*.hcl", "terraform.tfvars"],
     "TeX/LaTeX" => &["*.tex", "*.sty", ".latexmkrc"],
@@ -293,6 +295,8 @@ define_languages!(
         &[
             "*.vb", "*.cls", "*.frm", "*.frx", "*.vba", "*.vbhtml", "*.vbs"
         ],
+    "Vue" => &["*.vue"],
+    "Windows Resource File" => &["*.rc"],
     "Windows Registry Entry" => &["*.reg"],
     "XML" => &["*.xml", "*.svg"],
     "WebAssembly" => &["*.wat", "*.wasm"],
