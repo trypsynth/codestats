@@ -56,6 +56,7 @@ define_languages!(
     "CMake" => &["*.cmake", "*.cmake.in", "*.cmake.rule", "CMakeLists.txt"],
     "COBOL" => &["*.cbl", "*.cob", "*.cpy"],
     "CoffeeScript" => &["*.coffee"],
+    "ColdFusion" => &["*.cfm", "*.cfc"],
     "Common Lisp" => &["*.lisp", "*.asd", "*.cl"],
     "Crystal" => &["*.cr"],
     "CSON" => &["*.cson"],
@@ -184,6 +185,7 @@ define_languages!(
     "Moo" => &["*.moo"],
     "Mustache" => &["*.mustache"],
     "Nim" => &["*.nim", "nim.cfg"],
+    "Ninja" => &["build.ninja"],
     "NSIS" => &["*.nsi", "*.nsh"],
     "Nunjucks Templates" => &["*.njk"],
     "NVGT" => &["*.nvgt", ".nvgtrc"],
@@ -284,6 +286,7 @@ define_languages!(
             "Thorfile"
         ],
     "Rust" => &["*.rs", "*.rs.in", "*.rslib", "*.rlib"],
+    "SageMath" => &["*.sage", "*.sagews"],
     "Scala" => &["*.scala", "*.sc", "build.sbt"],
     "Scheme" => &["*.scm", "*.ss"],
     "Sed" => &["*.sed"],
@@ -307,7 +310,9 @@ define_languages!(
             ".zshrc",
             ".bash_aliases"
         ],
+    "Slim" => &["*.slim"],
     "Smalltalk" => &["*.st"],
+    "Smarty" => &["*.tpl"],
     "SpiderBasic" => &["*.sb", "*.sbi", "*.sbf", "*.sbp"],
     "SQL" => &["*.sql"],
     "Squirrel" => &["*.nut"],
