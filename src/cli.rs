@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{ArgAction, Parser};
 use std::path::PathBuf;
 
 #[derive(Parser)]
@@ -6,19 +6,24 @@ use std::path::PathBuf;
 pub struct Cli {
     #[arg(help = "The path to analyze")]
     pub path: PathBuf,
-    #[arg(short, long, help = "Show much more verbose output")]
+    #[arg(short, long, help = "Enable verbose output")]
     pub verbose: bool,
     #[arg(
-        short,
         long,
         default_value_t = true,
+        action = ArgAction::Set,
         help = "Respect .gitignore/.ignore files"
     )]
-    pub ignores: bool,
+    pub gitignore: bool,
+    #[arg(
+        long,
+        default_value_t = true,
+        action = ArgAction::Set,
+        help = "Ignore hidden files"
+    )]
+    pub hidden: bool,
     #[arg(short, long, help = "Follow symlinks")]
     pub symlinks: bool,
-    #[arg(short, long, default_value_t = true, help = "Ignore hidden files")]
-    pub no_hidden: bool,
 }
 
 // Wrapper function to avoid needing to `use clap::Parser;` in `main.rs`.

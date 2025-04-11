@@ -41,9 +41,9 @@ impl<'a> CodeAnalyzer<'a> {
         }
         for result in WalkBuilder::new(&self.args.path)
             .follow_links(self.args.symlinks)
-            .ignore(self.args.ignores)
-            .git_ignore(self.args.ignores)
-            .hidden(self.args.no_hidden)
+            .ignore(self.args.gitignore)
+            .git_ignore(self.args.gitignore)
+            .hidden(!self.args.hidden)
             .build()
         {
             if let Ok(entry) = result {
