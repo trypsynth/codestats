@@ -339,6 +339,7 @@ define_languages!(
     "Vue" => &["*.vue"],
     "Windows Resource File" => &["*.rc"],
     "Windows Registry Entry" => &["*.reg"],
+    "WiX" => &["*.wxs"],
     "XML" => &["*.xml", "*.svg"],
     "WebAssembly" => &["*.wat", "*.wasm"],
     "YAML" => &["*.yaml", "*.yml", "*.yaml.tmpl", "*.yaml-tmlp", ".yamllint"],
