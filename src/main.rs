@@ -2,13 +2,11 @@ mod analyzer;
 mod cli;
 mod langs;
 use crate::analyzer::CodeAnalyzer;
-use anyhow::{Result, bail};
+use anyhow::{Result, ensure};
 
 fn main() -> Result<()> {
     let args = cli::parse_cli();
-    if !args.path.exists() {
-        bail!("Path `{}` not found", args.path.display());
-    }
+    ensure!(args.path.exists(), "Path `{}` not found", args.path.display());
     let mut analyzer = CodeAnalyzer::new(&args);
     analyzer.analyze();
     analyzer.print_stats();
