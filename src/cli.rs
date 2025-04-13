@@ -26,7 +26,7 @@ pub struct Cli {
     pub symlinks: bool,
 }
 
-// Wrapper function to avoid needing to `use clap::Parser;` in `main.rs`.
+/// Wrapper function to avoid needing to `use `clap::Parser` in `main.rs`.
 pub fn parse_cli() -> Cli {
     Cli::parse()
 }

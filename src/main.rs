@@ -1,10 +1,10 @@
-mod analyzer;
-mod cli;
-mod langs;
+pub mod analyzer;
+pub mod cli;
+pub mod langs;
 use crate::analyzer::CodeAnalyzer;
 use anyhow::{Result, ensure};
 
-fn main() -> Result<()> {
+pub fn main() -> Result<()> {
     let args = cli::parse_cli();
     ensure!(
         args.path.exists(),

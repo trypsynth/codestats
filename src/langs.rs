@@ -1,5 +1,8 @@
 use phf::phf_map;
 
+/// Holds information about a programming language, such as its name and associated file patterns.
+///
+/// File patterns can be wildcards (e.g. `*.cs`), or full filenames (e.g. `makefile`).
 struct Language {
     name: &'static str,
     file_patterns: &'static [&'static str],
