@@ -1,0 +1,456 @@
+[
+    {
+        "name": "ABAP",
+        "file_patterns": ["*.abap"]
+    },
+    {
+        "name": "Ada"
+        "file_patterns": ["*.ada", "*.adb", "*.ads"],
+        "line_comment": ["--"]
+    },
+    {
+        "name": "Agda",
+        "file_patterns": ["*.agda", "*.lagda"],
+        "line_comment": ["--"],
+        "block_comment": ["{-", "-}"]
+    },
+    {
+        "name": "Alloy",
+        "file_patterns": ["*.als"],
+        "line_comment": ["//", "--"],
+        "block_comment": ["/*", "*/"]
+    },
+    {
+        "name": "AngelScript",
+        "file_patterns": ["*.as", "*.angelscript"],
+        "line_comment": ["//"],
+        "block_comment": ["/*", "*/"]
+    },
+    {
+        "name": "APL",
+        "file_patterns": ["*.apl", "*.dyalog"],
+        "line_comment": "⍝"
+    },
+    {
+        "name": "AppleScript",
+        "file_patterns": ["*.scpt", "*.applescript"],
+        "line_comment": ["--", "#"]
+    },
+    {
+        "name": "Assembly",
+        "file_patterns": ["*.asm", "*.s", "*.nasm"],
+        "line_comment": [";", "#"],
+        "block_comment": ["/*", "*/"]
+    },
+    {
+        "name": "AsciiDoc",
+        "file_patterns": ["*.adoc", "*.asciidoc", "*.asc"],
+        "line_comment": ["//"],
+        "block_comment": ["////", "////"]
+    },
+    {
+        "name": "AutoHotkey",
+        "file_patterns": ["*.ahk", "*.ahkl", "*.ah2"],
+        "line_comment": [";"],
+        "block_comment": ["/*", "*/"]
+    },
+    {
+        "name": "AutoIt",
+        "file_patterns": ["*.au3"],
+        "line_comment": [";"]
+    },
+    {
+        "name": "AWK",
+        "file_patterns": ["*.awk", "*.gawk", "*.nawk"],
+        "line_comment": ["#"]
+    },
+    {
+        "name": "Ballerina",
+        "file_patterns": ["*.bal"],
+        "line_comment": ["//"],
+        "block_comment": ["/*", "*/"]
+    },
+    {
+        "name": "BCX/FreeBASIC",
+        "file_patterns": ["*.bas", "*.bi"],
+        "line_comment": ["'", "rem"],
+        "block_comment": ["$comment", "$comment"]
+    },
+    {
+        "name": "Batch Script",
+        "file_patterns": ["*.bat", "*.cmd"],
+        "line_comment": ["rem"]
+    },
+    {
+        "name": "Bazel",
+        "file_patterns": ["*.bzl", "*.star", "BUILD", "BUILD.bazel", "WORKSPACE", "MODULE.bazel"],
+        "line_comment": ["#"]
+    },
+    {
+        "name": "BGT",
+        "file_patterns": ["*.bgt"],
+        "line_comment": ["//"],
+        "block_comment": ["/*", "*/"]
+    },
+    {
+        "name": "Bicep",
+        "file_ppatterns": ["*.bicep"],
+        "line_comment": ["//"],
+        "block_comment": ["/*", "*/"]
+    },
+    {
+        "name": "BlitzBasic",
+        "file_patterns": ["*.bb", "*.decls", "*.bb2"],
+        "line_comment": [";"]
+    },
+    {
+        "name": "Boo",
+        "file_patterns": ["*.boo"],
+        "line_comment": ["#"]
+    },
+    {
+        "name": "Brainfuck",
+        "file_patterns": ["*.bf", "*.b"]
+    },
+    {
+        "name": "BrightScript",
+        "file_patterns": ["*.brs"],
+        "line_comment": ["'", "rem"]
+    },
+    {
+        "name": "Buck", 
+        "file_patterns": ["BUCK"],
+        "line_comment": ["#"]
+    },
+    {
+        "name": "C",
+        "file_patterns": ["*.c", "*.h"],
+        "line_comment": ["//"],
+        "block_comment": ["/*", "*/"]
+    },
+    {
+        "name": "C++",
+        "file_patterns": ["*.cpp", "*.hpp", "*.c++", "*.h++", "*.cc", "*.cxx", "*.hxx", "*.ino", "*.ipp", "*.pde", "*.cppm", "*.ixx", "*.c++m"],
+        "line_comment": ["//"],
+        "block_comment": ["/*", "*/"]
+    },
+    {
+        "name": "C#",
+        "file_patterns": ["*.cs", "*.csx", "*.cake"],
+        "line_comment": ["//"],
+        "block_comment": ["/*", "*/"]
+    },
+    {
+        "name": "Cabal",
+        "file_patterns": ["*.cabal", "cabal.project", "cabal.project.freeze"],
+        "line_comment": ["--"]
+    },
+    {
+        "name": "ChaiScript",
+        "file_patterns": ["*.chai"],
+        "line_comment": ["//"],
+        "block_comment": ["/*", "*/"]
+    },
+    {
+        "name": "Chapel",
+        "file_patterns": ["*.chpl"],
+        "line_comment": ["//"],
+        "block_comment": ["/*", "*/"]
+    },
+    "Clojure", ["*.clj", "*.cljs", "*.cljc", "*.edn"],
+    "CMake", ["*.cmake", "*.cmake.in", "*.cmake.rule", "CMakeLists.txt"],
+    "COBOL", ["*.cbl", "*.cob", "*.cpy"],
+    "CoffeeScript", ["*.coffee"],
+    "ColdFusion", ["*.cfm", "*.cfc"],
+    "Common Lisp", ["*.lisp", "*.asd", "*.cl"],
+    "Crystal", ["*.cr"],
+    "CSON", ["*.cson"],
+    "CSS", ["*.css", "*.sass", "*.scss", "*.postcss", "*.styl"],
+    "CSV", ["*.csv"],
+    "CUDA", ["*.cu", "*.cuh", "*.ptx"],
+    "Cython", ["*.pyx", "*.pxd", "*.pyi"],
+    "D", ["*.d", "*.di"],
+    "Dart", ["*.dart"],
+        "Dockerfile" =>
+        &[
+            "*.dockerfile",
+            "Dockerfile",
+            "docker-compose.yml",
+            "docker-compose.override.yml"
+        ],
+    "EBNF", ["*.ebnf"],
+    "Eiffel", ["*.e"],
+    "EJS", ["*.ejs"],
+    "Elixir", ["*.ex", "*.exs"],
+    "Elm", ["*.elm"],
+    "Emacs Lisp", ["*.el"],
+    "EmberScript", ["*.em"],
+        "Erlang" =>
+        &["*.erl", "*.hrl", "rebar.config", "rebar.lock"],
+    "F#", ["*.fs", "*.fsi", "*.fsx"],
+    "Forth", ["*.4th", "*.fth", "*.frt"],
+    "Fortran", ["*.f", "*.for", "*.f77", "*.f90", "*.f95", "*.f03"],
+    "GDScript", ["*.gd"],
+    "GLSL" =>
+        &[
+            "*.glsl", "*.vert", "*.frag", "*.geom", "*.tesc", "*.tese", "*.comp"
+        ],
+    "Go", ["*.go", "*.tmpl", "*.gohtml", "*.gotmpl", "go.mod"],
+    "GraphQL", ["*.graphql", "*.gql"],
+    "Gradle", ["*.gradle", "gradle.properties"],
+    "Groovy", ["*.groovy", "*.gvy", "*.gy", "*.gsh"],
+    "Hack", ["*.hh", "*.hhi", "*.hack"],
+    "HAML", ["*.haml"],
+    "Handlebars", ["*.hbs", "*.handlebars"],
+    "Haskell", ["*.hs", "*.lhs", "*.hsc", "*.hs-boot", ".ghci", "stack.yaml"],
+    "HLSL", ["*.hlsl", "*.fx", "*.fxh", "*.hlsli"],
+    "HTML", ["*.html", "*.htm", "*.xht", "*.xhtml"],
+    "IDL", ["*.idl", "*.widl"],
+    "Inform 7", ["*.ni", "*.i7x"],
+    "INI" =>
+        &[
+            "*.ini",
+            "*.cfg",
+            "*.prefs",
+            "*.properties",
+            ".editorconfig",
+            ".gitconfig",
+            "buildozer.spec"
+        ],
+    "Inno Setup", ["*.iss", "*.ish"],
+    "J", ["*.ijs"],
+    "Java", ["*.java", "*.jav"],
+    "Java Server Pages", ["*.jsp"],
+    "JavaScript" =>
+        &[
+            "*.js",
+            "*.cjs",
+            "*.jsx",
+            "*.jscad",
+            "*.jsfl",
+            "*.mjs",
+            "*.njs",
+            "*.sjs",
+            "*.ssjs",
+            "*.xsjs",
+            "*.xsjslib",
+            "*.es",
+            "*.es6",
+            "*.jake",
+            ".babelrc",
+            ".eslintrc",
+            ".prettierc"
+        ],
+    "JAWS Script", ["*.jss", "*.jsh"],
+    "Jinja2", ["*.j2", "*.jinja", "*.jinja2"],
+    "JSON", ["*.json", "*.geojson", "*.jsonc", "*.jsonl", "*.ndjson"],
+    "Julia", ["*.jl"],
+    "Kotlin", ["*.kt", "*.kts", "*.ktm"],
+    "Less", ["*.less"],
+    "LilyPond", ["*.ly", "*.ily"],
+    "Liquid Templates", ["*.liquid"],
+    "Lua", ["*.lua", "*.wlua", "*.luau", "*.rockspec", ".luacheckrc"],
+        "Makefile" =>
+        &[
+            "*.mak",
+            "*.make",
+            "*.mk",
+            "*.mkfile",
+            "BSDmakefile",
+            "GNUmakefile",
+            "Kbuild",
+            "Makefile",
+            "Makefile.am",
+            "Makefile.boot",
+            "Makefile.frag",
+            "Makefile.in",
+            "Makefile.inc",
+            "Makefile.wat",
+            "makefile",
+            "makefile.sco",
+            "mkfile"
+        ],
+        "Markdown" =>
+        &[
+            "*.md",
+            "*.markdown",
+            "*.mdx",
+            "*.mdown",
+            "*.mdwn",
+            "*.mkd",
+            "*.mkdn",
+            "*.mkdown",
+            "*.ronn",
+            "*.workbook"
+        ],
+    "Maven", ["pom.xml"],
+    "MessagePack", ["*.msgpack"],
+    "Meson", ["meson.build"],
+    "Modula-2/3", ["*.m3", "*.mi", "*.mod"],
+    "Moo", ["*.moo"],
+    "Mustache", ["*.mustache"],
+    "Nim", ["*.nim", "nim.cfg"],
+    "Ninja", ["build.ninja"],
+    "NSIS", ["*.nsi", "*.nsh"],
+    "Nunjucks Templates", ["*.njk"],
+    "NVGT", ["*.nvgt", ".nvgtrc"],
+    "Objective-C", ["*.m"],
+    "Objective-C++", ["*.mm"],
+    "Objective-J", ["*.j", "*.sj"],
+    "OCaml", ["*.ml", "*.mli", "*.cmx", "*.cmxa", "*.mll", "*.mly"],
+    "OpenSCAD", ["*.scad"],
+    "Oz", ["*.oz"],
+    "Pascal", ["*.pas", "*.pp", "*.p", "*.inc"],
+    "PHP" =>
+        &["*.php", "*.php3", "*.php4", "*.php5", "*.phps", "*.phpt", "*.phtml"],
+        "Perl" =>
+        &[
+            "*.pl",
+            "*.al",
+            "*.perl",
+            "*.plx",
+            "*.pm",
+            "rexfile",
+            "ack",
+            "cpanfile",
+            "cpanfile.snapshot"
+        ],
+    "PogoScript", ["*.pogo"],
+    "Pony", ["*.pony"],
+    "PowerShell", ["*.ps1", "*.psd1", "*.psm1", "*.ps1xml"],
+    "Protocol Buffers", ["*.proto"],
+    "Pug", ["*.pug", "*.jade"],
+    "PureBasic", ["*.pb", "*.pbi", "*.pbf", "*.pbp"],
+        "Python" =>
+        &[
+            "*.py",
+            "*.pyw",
+            "*.py2",
+            "*.py3",
+            "*.pip", "*.pyz", "*.pyzw",
+            ".gclient",
+            "SConscript",
+            "SConstruct",
+            "Snakefile",
+            "requirements.txt",
+            "Pipfile",
+            ".pythonrc", "py.typed",
+        ],
+    "Q#", ["*.qs"],
+    "QML", ["*.qml"],
+    "R", ["*.r", "*.rmd", ".Rprofile"],
+    "Racket", ["*.rkt", "*.rktd", "*.rktl", "*.rktm"],
+        "Raku" =>
+        &[
+            "*.raku",
+            "*.rakumod",
+            "*.rakutest",
+            "*.pm6",
+            "*.pl6",
+            "*.p6"
+        ],
+    "reStructuredText", ["*.rst"],
+    "Robot Framework", ["*.robot"],
+        "Ruby" =>
+        &[
+            "*.rb",
+            "*.builder",
+            "*.eye",
+            "*.gemspec",
+            "*.god",
+            "*.jbuilder",
+            "*.mspec",
+            "*.pluginspec",
+            "*.podspec",
+            "*.rabl",
+            "*.rake",
+            "*.rbuild",
+            "*.rbw",
+            "*.rbx",
+            "*.ruby",
+            "*.thor",
+            "*.watchr",
+            ".irbrc",
+            ".pryrc",
+            "Appraisals",
+            "Berksfile",
+            "Brewfile",
+            "Buildfile",
+            "Capfile",
+            "Dangerfile",
+            "Deliverfile",
+            "Fastfile",
+            "Gemfile",
+            "Guardfile",
+            "Jarfile",
+            "Mavenfile",
+            "Podfile",
+            "Puppetfile",
+            "Rakefile",
+            "Snapfile",
+            "Thorfile"
+        ],
+    "Rust", ["*.rs", "*.rs.in", "*.rslib", "*.rlib"],
+    "SageMath", ["*.sage", "*.sagews"],
+    "Scala", ["*.scala", "*.sc", "build.sbt"],
+    "Scheme", ["*.scm", "*.ss"],
+    "Sed", ["*.sed"],
+        "Shell Script" =>
+        &[
+            "*.sh",
+            "*.bash",
+            "*.ksh",
+            "*.tmux",
+            "*.zsh",
+            "*.fish", "*.csh", "*.tcsh",
+            ".bash_logout",
+            ".bash_profile",
+            ".bashrc",
+            ".login",
+            ".profile",
+            ".zlogin",
+            ".zlogout",
+            ".zprofile",
+            ".zshenv",
+            ".zshrc",
+            ".bash_aliases"
+        ],
+    "Slim", ["*.slim"],
+    "Smalltalk", ["*.st"],
+    "Smarty", ["*.tpl"],
+    "SpiderBasic", ["*.sb", "*.sbi", "*.sbf", "*.sbp"],
+    "SQL", ["*.sql"],
+    "Squirrel", ["*.nut"],
+    "Stan", ["*.stan"],
+    "Svelte", ["*.stelte"],
+    "Swift", ["*.swift", "*.swiftpm"],
+    "Tcl", ["*.tcl", "*.tk"],
+    "Terraform", ["*.tf", "*.hcl", "terraform.tfvars"],
+    "TeX/LaTeX", ["*.tex", "*.sty", ".latexmkrc"],
+    "Textile", ["*.textile"],
+    "TOML", ["*.toml"],
+    "txt2tags", ["*.t2t"],
+    "Twig", ["*.twig"],
+    "TypeScript", ["*.ts", "*.tsx", "*.cts", "*.mts"],
+    "UnrealScript", ["*.uc"],
+    "Vala", ["*.vala", "*.vapi"],
+    "Verilog", ["*.v", "*.vh", "*.sv", "*.svh"],
+    "VHDL", ["*.vhd", "*.vhdl"],
+    "Vim script", ["*.vim"],
+        "Visual Basic/Visual Basic .NET" =>
+        &[
+            "*.vb", "*.cls", "*.frm", "*.frx", "*.vba", "*.vbhtml", "*.vbs"
+        ],
+    "Vue", ["*.vue"],
+    "Windows Resource File", ["*.rc"],
+    "Windows Registry Entry", ["*.reg"],
+    "WiX", ["*.wxs"],
+    "XML", ["*.xml", "*.svg"],
+    "WebAssembly", ["*.wat", "*.wasm"],
+    "YAML", ["*.yaml", "*.yml", "*.yaml.tmpl", "*.yaml-tmlp", ".yamllint"],
+    {
+        "name": "Zig",
+        "file_patterns": ["*.zig"],
+        "line_comment": ["//", "///", "//!"]
+    }
+]
