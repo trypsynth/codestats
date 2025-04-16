@@ -35,7 +35,7 @@ define_languages!(
     "AutoIt" => &["*.au3"],
     "AWK" => &["*.awk", "*.gawk", "*.nawk"],
     "Ballerina" => &["*.bal"],
-    "BCX/FreeBASIC " => &["*.bas", "*.bi"],
+    "BCX/FreeBASIC" => &["*.bas", "*.bi"],
     "Batch Script" => &["*.bat", "*.cmd"],
     "Bazel" => &["*.bzl", "*.star", "BUILD", "BUILD.bazel", "WORKSPACE", "MODULE.bazel"],
     "BGT" => &["*.bgt"],
@@ -68,7 +68,7 @@ define_languages!(
     "CUDA" => &["*.cu", "*.cuh", "*.ptx"],
     "Cython" => &["*.pyx", "*.pxd", "*.pyi"],
     "D" => &["*.d", "*.di"],
-    "Dart" => &["*.dart", "pubspec.yaml"],
+    "Dart" => &["*.dart"],
         "Dockerfile" =>
         &[
             "*.dockerfile",
@@ -335,7 +335,7 @@ define_languages!(
     "Verilog" => &["*.v", "*.vh", "*.sv", "*.svh"],
     "VHDL" => &["*.vhd", "*.vhdl"],
     "Vim script" => &["*.vim"],
-        "Visual Basic" =>
+        "Visual Basic/Visual Basic .NET" =>
         &[
             "*.vb", "*.cls", "*.frm", "*.frx", "*.vba", "*.vbhtml", "*.vbs"
         ],
