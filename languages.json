@@ -283,15 +283,39 @@
         "file_patterns": ["*.erl", "*.hrl", "rebar.config", "rebar.lock"],
         "line_comments": ["%"]
     },
-    "F#", ["*.fs", "*.fsi", "*.fsx"],
-    "Forth", ["*.4th", "*.fth", "*.frt"],
-    "Fortran", ["*.f", "*.for", "*.f77", "*.f90", "*.f95", "*.f03"],
-    "GDScript", ["*.gd"],
-    "GLSL" =>
-        &[
-            "*.glsl", "*.vert", "*.frag", "*.geom", "*.tesc", "*.tese", "*.comp"
-        ],
-    "Go", ["*.go", "*.tmpl", "*.gohtml", "*.gotmpl", "go.mod"],
+    {
+        "name": "F#",
+        "languages": ["*.fs", "*.fsi", "*.fsx"],
+        "line_comments": ["//"],
+        "block_comments": [["(*", "()"]
+    },
+    {
+        "name": "Forth",
+        "file_patterns": ["*.4th", "*.fth", "*.frt"],
+        "line_comments": ["\\"]
+    },
+    {
+        "name": "Fortran",
+        "file_patterns": ["*.f", "*.for", "*.f77", "*.f90", "*.f95", "*.f03"],
+        "line_comments": ["!"]
+    },
+    {
+        "name": "GDScript",
+        "file_patterns": ["*.gd"],
+        "line_comments": ["#"]
+    },
+    {
+        "name": "GLSL",
+        "file_patterns": ["*.glsl", "*.vert", "*.frag", "*.geom", "*.tesc", "*.tese", "*.comp"],
+        "line_comments": ["//"],
+        "block_comments": [["/*", "*/"]]
+    },
+    {
+        "name": "Go",
+        "file_patterns": ["*.go", "*.tmpl", "*.gohtml", "*.gotmpl", "go.mod"],
+        "line_comments": ["//"],
+        "block_comments": [["/*", "*/"]]
+    },
     "GraphQL", ["*.graphql", "*.gql"],
     "Gradle", ["*.gradle", "gradle.properties"],
     "Groovy", ["*.groovy", "*.gvy", "*.gy", "*.gsh"],
@@ -303,40 +327,12 @@
     "HTML", ["*.html", "*.htm", "*.xht", "*.xhtml"],
     "IDL", ["*.idl", "*.widl"],
     "Inform 7", ["*.ni", "*.i7x"],
-    "INI" =>
-        &[
-            "*.ini",
-            "*.cfg",
-            "*.prefs",
-            "*.properties",
-            ".editorconfig",
-            ".gitconfig",
-            "buildozer.spec"
-        ],
+    "INI", ["*.ini", "*.cfg", "*.prefs", "*.properties", ".editorconfig", ".gitconfig", "buildozer.spec"],
     "Inno Setup", ["*.iss", "*.ish"],
     "J", ["*.ijs"],
     "Java", ["*.java", "*.jav"],
     "Java Server Pages", ["*.jsp"],
-    "JavaScript" =>
-        &[
-            "*.js",
-            "*.cjs",
-            "*.jsx",
-            "*.jscad",
-            "*.jsfl",
-            "*.mjs",
-            "*.njs",
-            "*.sjs",
-            "*.ssjs",
-            "*.xsjs",
-            "*.xsjslib",
-            "*.es",
-            "*.es6",
-            "*.jake",
-            ".babelrc",
-            ".eslintrc",
-            ".prettierc"
-        ],
+    "JavaScript", ["*.js", "*.cjs", "*.jsx", "*.jscad", "*.jsfl", "*.mjs", "*.njs", "*.sjs", "*.ssjs", "*.xsjs", "*.xsjslib", "*.es", "*.es6", "*.jake", ".babelrc", ".eslintrc", ".prettierc"],
     "JAWS Script", ["*.jss", "*.jsh"],
     "Jinja2", ["*.j2", "*.jinja", "*.jinja2"],
     "JSON", ["*.json", "*.geojson", "*.jsonc", "*.jsonl", "*.ndjson"],
@@ -346,39 +342,8 @@
     "LilyPond", ["*.ly", "*.ily"],
     "Liquid Templates", ["*.liquid"],
     "Lua", ["*.lua", "*.wlua", "*.luau", "*.rockspec", ".luacheckrc"],
-        "Makefile" =>
-        &[
-            "*.mak",
-            "*.make",
-            "*.mk",
-            "*.mkfile",
-            "BSDmakefile",
-            "GNUmakefile",
-            "Kbuild",
-            "Makefile",
-            "Makefile.am",
-            "Makefile.boot",
-            "Makefile.frag",
-            "Makefile.in",
-            "Makefile.inc",
-            "Makefile.wat",
-            "makefile",
-            "makefile.sco",
-            "mkfile"
-        ],
-        "Markdown" =>
-        &[
-            "*.md",
-            "*.markdown",
-            "*.mdx",
-            "*.mdown",
-            "*.mdwn",
-            "*.mkd",
-            "*.mkdn",
-            "*.mkdown",
-            "*.ronn",
-            "*.workbook"
-        ],
+    "Makefile", ["*.mak", "*.make", "*.mk", "*.mkfile", "BSDmakefile", "GNUmakefile", "Kbuild", "Makefile", "Makefile.am", "Makefile.boot", "Makefile.frag", "Makefile.in", "Makefile.inc", "Makefile.wat", "makefile", "makefile.sco", "mkfile"],
+    "Markdown", ["*.md", "*.markdown", "*.mdx", "*.mdown", "*.mdwn", "*.mkd", "*.mkdn", "*.mkdown", "*.ronn", "*.workbook"],
     "Maven", ["pom.xml"],
     "MessagePack", ["*.msgpack"],
     "Meson", ["meson.build"],
@@ -397,120 +362,29 @@
     "OpenSCAD", ["*.scad"],
     "Oz", ["*.oz"],
     "Pascal", ["*.pas", "*.pp", "*.p", "*.inc"],
-    "PHP" =>
-        &["*.php", "*.php3", "*.php4", "*.php5", "*.phps", "*.phpt", "*.phtml"],
-        "Perl" =>
-        &[
-            "*.pl",
-            "*.al",
-            "*.perl",
-            "*.plx",
-            "*.pm",
-            "rexfile",
-            "ack",
-            "cpanfile",
-            "cpanfile.snapshot"
-        ],
+    "PHP", ["*.php", "*.php3", "*.php4", "*.php5", "*.phps", "*.phpt", "*.phtml"],
+    "Perl", ["*.pl", "*.al", "*.perl", "*.plx", "*.pm", "rexfile", "ack", "cpanfile", "cpanfile.snapshot"],
     "PogoScript", ["*.pogo"],
     "Pony", ["*.pony"],
     "PowerShell", ["*.ps1", "*.psd1", "*.psm1", "*.ps1xml"],
     "Protocol Buffers", ["*.proto"],
     "Pug", ["*.pug", "*.jade"],
     "PureBasic", ["*.pb", "*.pbi", "*.pbf", "*.pbp"],
-        "Python" =>
-        &[
-            "*.py",
-            "*.pyw",
-            "*.py2",
-            "*.py3",
-            "*.pip", "*.pyz", "*.pyzw",
-            ".gclient",
-            "SConscript",
-            "SConstruct",
-            "Snakefile",
-            "requirements.txt",
-            "Pipfile",
-            ".pythonrc", "py.typed",
-        ],
+    "Python", ["*.py", "*.pyw", "*.py2", "*.py3", "*.pip", "*.pyz", "*.pyzw", ".gclient", "SConscript", "SConstruct", "Snakefile", "requirements.txt", "Pipfile", ".pythonrc", "py.typed"],
     "Q#", ["*.qs"],
     "QML", ["*.qml"],
     "R", ["*.r", "*.rmd", ".Rprofile"],
     "Racket", ["*.rkt", "*.rktd", "*.rktl", "*.rktm"],
-        "Raku" =>
-        &[
-            "*.raku",
-            "*.rakumod",
-            "*.rakutest",
-            "*.pm6",
-            "*.pl6",
-            "*.p6"
-        ],
+    "Raku", ["*.raku", "*.rakumod", "*.rakutest", "*.pm6", "*.pl6", "*.p6"],
     "reStructuredText", ["*.rst"],
     "Robot Framework", ["*.robot"],
-        "Ruby" =>
-        &[
-            "*.rb",
-            "*.builder",
-            "*.eye",
-            "*.gemspec",
-            "*.god",
-            "*.jbuilder",
-            "*.mspec",
-            "*.pluginspec",
-            "*.podspec",
-            "*.rabl",
-            "*.rake",
-            "*.rbuild",
-            "*.rbw",
-            "*.rbx",
-            "*.ruby",
-            "*.thor",
-            "*.watchr",
-            ".irbrc",
-            ".pryrc",
-            "Appraisals",
-            "Berksfile",
-            "Brewfile",
-            "Buildfile",
-            "Capfile",
-            "Dangerfile",
-            "Deliverfile",
-            "Fastfile",
-            "Gemfile",
-            "Guardfile",
-            "Jarfile",
-            "Mavenfile",
-            "Podfile",
-            "Puppetfile",
-            "Rakefile",
-            "Snapfile",
-            "Thorfile"
-        ],
+    "Ruby", ["*.rb", "*.builder", "*.eye", "*.gemspec", "*.god", "*.jbuilder", "*.mspec", "*.pluginspec", "*.podspec", "*.rabl", "*.rake", "*.rbuild", "*.rbw", "*.rbx", "*.ruby", "*.thor", "*.watchr", ".irbrc", ".pryrc", "Appraisals", "Berksfile", "Brewfile", "Buildfile", "Capfile", "Dangerfile", "Deliverfile", "Fastfile", "Gemfile", "Guardfile", "Jarfile", "Mavenfile", "Podfile", "Puppetfile", "Rakefile", "Snapfile", "Thorfile"],
     "Rust", ["*.rs", "*.rs.in", "*.rslib", "*.rlib"],
     "SageMath", ["*.sage", "*.sagews"],
     "Scala", ["*.scala", "*.sc", "build.sbt"],
     "Scheme", ["*.scm", "*.ss"],
     "Sed", ["*.sed"],
-        "Shell Script" =>
-        &[
-            "*.sh",
-            "*.bash",
-            "*.ksh",
-            "*.tmux",
-            "*.zsh",
-            "*.fish", "*.csh", "*.tcsh",
-            ".bash_logout",
-            ".bash_profile",
-            ".bashrc",
-            ".login",
-            ".profile",
-            ".zlogin",
-            ".zlogout",
-            ".zprofile",
-            ".zshenv",
-            ".zshrc",
-            ".bash_aliases"
-        ],
+    "Shell Script", ["*.sh", "*.bash", "*.ksh", "*.tmux", "*.zsh", "*.fish", "*.csh", "*.tcsh", ".bash_logout", ".bash_profile", ".bashrc", ".login", ".profile", ".zlogin", ".zlogout", ".zprofile", ".zshenv", ".zshrc", ".bash_aliases"],
     "Slim", ["*.slim"],
     "Smalltalk", ["*.st"],
     "Smarty", ["*.tpl"],
@@ -533,17 +407,49 @@
     "Verilog", ["*.v", "*.vh", "*.sv", "*.svh"],
     "VHDL", ["*.vhd", "*.vhdl"],
     "Vim script", ["*.vim"],
-        "Visual Basic/Visual Basic .NET" =>
-        &[
-            "*.vb", "*.cls", "*.frm", "*.frx", "*.vba", "*.vbhtml", "*.vbs"
-        ],
-    "Vue", ["*.vue"],
-    "Windows Resource File", ["*.rc"],
-    "Windows Registry Entry", ["*.reg"],
-    "WiX", ["*.wxs"],
-    "XML", ["*.xml", "*.svg"],
-    "WebAssembly", ["*.wat", "*.wasm"],
-    "YAML", ["*.yaml", "*.yml", "*.yaml.tmpl", "*.yaml-tmlp", ".yamllint"],
+    {
+        "name": "Visual Basic/Visual Basic .NET"
+        "file_patterns": ["*.vb", "*.cls", "*.frm", "*.frx", "*.vba", "*.vbhtml", "*.vbs"],
+        "line_comments": ["'"]
+    },
+    {
+        "name": "Vue",
+        "file_patterns": ["*.vue"],
+        "line_comments": ["//"],
+        "block_comments": [["<!--", "-->"], ["/*", "*/"]]
+    },
+    {
+        "name": "Windows Resource File",
+        "file_patterns": ["*.rc"],
+        "line_comments": ["//"],
+        "block_comments": [["/*", "*/"]]
+    },
+    {
+        "name": "Windows Registry Entry",
+        "file_patterns": ["*.reg"],
+        "line_comments": [";", "#"]
+    },
+    {
+        "name": "WiX",
+        "file_patterns": ["*.wxs"],
+        "block_comments": [["<!--", "-->"]]
+    },
+    {
+        "name": "XML",
+        "file_patterns": ["*.xml"],
+        "block_comments": [["<!--", "-->"]]
+    },
+    {
+        "name": "WebAssembly",
+        "file_patterns": ["*.wat", "*.wasm"],
+        "line_comments": [";;"],
+        "block_comments": [["(;", ";)"]]
+    },
+    {
+        "name": "YAML",
+        "file_patterns": ["*.yaml", "*.yml", "*.yaml.tmpl", "*.yaml-tmlp", ".yamllint"],
+        "line_comments": ["#"]
+    },
     {
         "name": "Zig",
         "file_patterns": ["*.zig"],
