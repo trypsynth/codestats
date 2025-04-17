@@ -6,107 +6,107 @@
     {
         "name": "Ada"
         "file_patterns": ["*.ada", "*.adb", "*.ads"],
-        "line_comment": ["--"]
+        "line_commentss": ["--"]
     },
     {
         "name": "Agda",
         "file_patterns": ["*.agda", "*.lagda"],
-        "line_comment": ["--"],
-        "block_comment": ["{-", "-}"]
+        "line_comments": ["--"],
+        "block_comments": [["{-", "-}"]]
     },
     {
         "name": "Alloy",
         "file_patterns": ["*.als"],
-        "line_comment": ["//", "--"],
-        "block_comment": ["/*", "*/"]
+        "line_comments": ["//", "--"],
+        "block_comments": [["/*", "*/"]]
     },
     {
         "name": "AngelScript",
         "file_patterns": ["*.as", "*.angelscript"],
-        "line_comment": ["//"],
-        "block_comment": ["/*", "*/"]
+        "line_comments": ["//"],
+        "block_comments": [["/*", "*/"]]
     },
     {
         "name": "APL",
         "file_patterns": ["*.apl", "*.dyalog"],
-        "line_comment": "⍝"
+        "line_comments": "⍝"
     },
     {
         "name": "AppleScript",
         "file_patterns": ["*.scpt", "*.applescript"],
-        "line_comment": ["--", "#"]
+        "line_comments": ["--", "#"]
     },
     {
         "name": "Assembly",
         "file_patterns": ["*.asm", "*.s", "*.nasm"],
-        "line_comment": [";", "#"],
-        "block_comment": ["/*", "*/"]
+        "line_comments": [";", "#"],
+        "block_comments": [["/*", "*/"]]
     },
     {
         "name": "AsciiDoc",
         "file_patterns": ["*.adoc", "*.asciidoc", "*.asc"],
-        "line_comment": ["//"],
-        "block_comment": ["////", "////"]
+        "line_comments": ["//"],
+        "block_comments": [["////", "////"]]
     },
     {
         "name": "AutoHotkey",
         "file_patterns": ["*.ahk", "*.ahkl", "*.ah2"],
-        "line_comment": [";"],
-        "block_comment": ["/*", "*/"]
+        "line_comments": [";"],
+        "block_comments": [["/*", "*/"]]
     },
     {
         "name": "AutoIt",
         "file_patterns": ["*.au3"],
-        "line_comment": [";"]
+        "line_comments": [";"]
     },
     {
         "name": "AWK",
         "file_patterns": ["*.awk", "*.gawk", "*.nawk"],
-        "line_comment": ["#"]
+        "line_comments": ["#"]
     },
     {
         "name": "Ballerina",
         "file_patterns": ["*.bal"],
-        "line_comment": ["//"],
-        "block_comment": ["/*", "*/"]
+        "line_comments": ["//"],
+        "block_comments": [["/*", "*/"]]
     },
     {
         "name": "BCX/FreeBASIC",
         "file_patterns": ["*.bas", "*.bi"],
-        "line_comment": ["'", "rem"],
-        "block_comment": ["$comment", "$comment"]
+        "line_comments": ["'", "rem"],
+        "block_comments": [["$comment", "$comment"]]
     },
     {
         "name": "Batch Script",
         "file_patterns": ["*.bat", "*.cmd"],
-        "line_comment": ["rem"]
+        "line_comments": ["rem"]
     },
     {
         "name": "Bazel",
         "file_patterns": ["*.bzl", "*.star", "BUILD", "BUILD.bazel", "WORKSPACE", "MODULE.bazel"],
-        "line_comment": ["#"]
+        "line_comments": ["#"]
     },
     {
         "name": "BGT",
         "file_patterns": ["*.bgt"],
-        "line_comment": ["//"],
-        "block_comment": ["/*", "*/"]
+        "line_comments": ["//"],
+        "block_comments": [["/*", "*/"]]
     },
     {
         "name": "Bicep",
         "file_ppatterns": ["*.bicep"],
-        "line_comment": ["//"],
-        "block_comment": ["/*", "*/"]
+        "line_comments": ["//"],
+        "block_comments": [["/*", "*/"]]
     },
     {
         "name": "BlitzBasic",
         "file_patterns": ["*.bb", "*.decls", "*.bb2"],
-        "line_comment": [";"]
+        "line_comments": [";"]
     },
     {
         "name": "Boo",
         "file_patterns": ["*.boo"],
-        "line_comment": ["#"]
+        "line_comments": ["#"]
     },
     {
         "name": "Brainfuck",
@@ -115,57 +115,96 @@
     {
         "name": "BrightScript",
         "file_patterns": ["*.brs"],
-        "line_comment": ["'", "rem"]
+        "line_comments": ["'", "rem"]
     },
     {
         "name": "Buck", 
         "file_patterns": ["BUCK"],
-        "line_comment": ["#"]
+        "line_comments": ["#"]
     },
     {
         "name": "C",
         "file_patterns": ["*.c", "*.h"],
-        "line_comment": ["//"],
-        "block_comment": ["/*", "*/"]
+        "line_comments": ["//"],
+        "block_comments": [["/*", "*/"]]
     },
     {
         "name": "C++",
         "file_patterns": ["*.cpp", "*.hpp", "*.c++", "*.h++", "*.cc", "*.cxx", "*.hxx", "*.ino", "*.ipp", "*.pde", "*.cppm", "*.ixx", "*.c++m"],
-        "line_comment": ["//"],
-        "block_comment": ["/*", "*/"]
+        "line_comments": ["//"],
+        "block_comments": [["/*", "*/"]]
     },
     {
         "name": "C#",
         "file_patterns": ["*.cs", "*.csx", "*.cake"],
-        "line_comment": ["//"],
-        "block_comment": ["/*", "*/"]
+        "line_comments": ["//"],
+        "block_comments": [["/*", "*/"]]
     },
     {
         "name": "Cabal",
         "file_patterns": ["*.cabal", "cabal.project", "cabal.project.freeze"],
-        "line_comment": ["--"]
+        "line_comments": ["--"]
     },
     {
         "name": "ChaiScript",
         "file_patterns": ["*.chai"],
-        "line_comment": ["//"],
-        "block_comment": ["/*", "*/"]
+        "line_comments": ["//"],
+        "block_comments": [["/*", "*/"]]
     },
     {
         "name": "Chapel",
         "file_patterns": ["*.chpl"],
-        "line_comment": ["//"],
-        "block_comment": ["/*", "*/"]
+        "line_comments": ["//"],
+        "block_comments": [["/*", "*/"]]
     },
-    "Clojure", ["*.clj", "*.cljs", "*.cljc", "*.edn"],
-    "CMake", ["*.cmake", "*.cmake.in", "*.cmake.rule", "CMakeLists.txt"],
-    "COBOL", ["*.cbl", "*.cob", "*.cpy"],
-    "CoffeeScript", ["*.coffee"],
-    "ColdFusion", ["*.cfm", "*.cfc"],
-    "Common Lisp", ["*.lisp", "*.asd", "*.cl"],
-    "Crystal", ["*.cr"],
-    "CSON", ["*.cson"],
-    "CSS", ["*.css", "*.sass", "*.scss", "*.postcss", "*.styl"],
+    {
+        "name": "Clojure",
+        "file_patterns": ["*.clj", "*.cljs", "*.cljc", "*.edn"],
+        "line_comments": [";"],
+        "block_comments": [["(comment", ")"]]
+    },
+    {
+        "name": "CMake",
+        "file_patterns": ["*.cmake", "*.cmake.in", "*.cmake.rule", "CMakeLists.txt"],
+        "line_comments": ["3"]
+    },
+    {
+        "name": "COBOL",
+        "file_patterns": ["*.cbl", "*.cob", "*.cpy"],
+        "line_comments": ["*>"]
+    },
+    {
+        "name": "CoffeeScript",
+        "file_patterns": ["*.coffee"],
+        "line_comments": ["#"],
+        "block_comments": [["###", "###"]]
+    },
+    {
+        "name": "ColdFusion",
+        "file_patterns": ["*.cfm", "*.cfc"],
+        "line_comments": ["//"],
+        "block_comments": [["<!---", "--->"], ["/*", "*/"]]
+    },
+    {
+        "name": "Common Lisp",
+        "file_patterns": ["*.lisp", "*.asd", "*.cl"],
+        "line_comments": [";"],
+        "block_comments": ["#|", "|#"]
+    },
+    {
+        "name": "Crystal",
+        "file_patterns": ["*.cr"],
+        "line_comments": ["#"]
+    },
+    {
+        "name": "CSON",
+        "file_patterns": ["*.cson"],
+        "line_comments": ["#"],
+        "block_comments": ["###", "###"]
+    },
+    {
+        "name": "CSS",
+        "file_patterns": ["*.css", "*.sass", "*.scss", "*.postcss", "*.styl"],
     "CSV", ["*.csv"],
     "CUDA", ["*.cu", "*.cuh", "*.ptx"],
     "Cython", ["*.pyx", "*.pxd", "*.pyi"],
@@ -451,6 +490,6 @@
     {
         "name": "Zig",
         "file_patterns": ["*.zig"],
-        "line_comment": ["//", "///", "//!"]
+        "line_comments": ["//", "///", "//!"]
     }
 ]

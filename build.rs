@@ -8,8 +8,8 @@ fn main() {
     let mut output = String::from("pub struct Language {\n");
     output.push_str("    pub name: &'static str,\n");
     output.push_str("    pub file_patterns: &'static [&'static str],\n");
-    output.push_str("    pub line_comment: Option<&'static str>,\n");
-    output.push_str("    pub block_comment: Option<(&'static str, &'static str)>,\n");
+    output.push_str("    pub line_comments: Option<&'static [&'static str]>,\n");
+    output.push_str("    pub block_comments: Option<((&'static str, &'static str))>,\n");
     output.push_str("}\n\n");
     output.push_str("pub static LANGUAGES: &[Language] = &[\n");
     for lang in parsed.as_array().expect("Expected array") {
