@@ -205,27 +205,84 @@
     {
         "name": "CSS",
         "file_patterns": ["*.css", "*.sass", "*.scss", "*.postcss", "*.styl"],
-    "CSV", ["*.csv"],
-    "CUDA", ["*.cu", "*.cuh", "*.ptx"],
-    "Cython", ["*.pyx", "*.pxd", "*.pyi"],
-    "D", ["*.d", "*.di"],
-    "Dart", ["*.dart"],
-        "Dockerfile" =>
-        &[
-            "*.dockerfile",
-            "Dockerfile",
-            "docker-compose.yml",
-            "docker-compose.override.yml"
-        ],
-    "EBNF", ["*.ebnf"],
-    "Eiffel", ["*.e"],
-    "EJS", ["*.ejs"],
-    "Elixir", ["*.ex", "*.exs"],
-    "Elm", ["*.elm"],
-    "Emacs Lisp", ["*.el"],
-    "EmberScript", ["*.em"],
-        "Erlang" =>
-        &["*.erl", "*.hrl", "rebar.config", "rebar.lock"],
+        "block_comments": [["/*", "*/"]]
+    },
+    {
+        "name": "CSV",
+        "file_patterns": ["*.csv"]
+    },
+    {
+        "name": "CUDA",
+        "file_patterns": ["*.cu", "*.cuh", "*.ptx"],
+        "line_comments": [["//"]],
+        "block_comments": [["/*", "*/"]]
+    },
+    {
+        "name": "Cython",
+        "file_patterns": ["*.pyx", "*.pxd", "*.pyi"],
+        "line_comments": [["#"]]
+    },
+    {
+        "name": "D",
+        "file_patterns": ["*.d", "*.di"],
+        "line_comments": [["//"]],
+        "block_comments": [["/*", "*/"], ["/+", "+/"]]
+    },
+    {
+        "name": "Dart",
+        "file_patterns": ["*.dart"],
+        "line_comments": ["//", "///"],
+        "block_comments": [["/*", "*/"]]
+    },
+    {
+        "name": "Dockerfile",
+        "file_patterns": ["*.dockerfile", "Dockerfile"],
+        "line_comments": [["#"]]
+    },
+    {
+        "name": "EBNF",
+        "file_patterns": ["*.ebnf"],
+        "line_comments": [["//"]],
+        "block_comments": [["(*", "*)"]]
+    },
+    {
+        "name": "Eiffel",
+        "file_patterns": ["*.e"],
+        "line_comments": [["--"]]
+    },
+    {
+        "name": "EJS",
+        "file_patterns": ["*.ejs"],
+        "line_comments": [["//"]],
+        "block_comments": [["/*", "*/"], ["<!--", "-->"]]
+    },
+    {
+        "name": "Elixir",
+        "file_patterns": ["*.ex", "*.exs"],
+        "line_comments": ["#"]
+    },
+    {
+        "name": "Elm",
+        "file_patterns": ["*.elm"],
+        "line_comments": ["--"],
+        "block_comments": [["{-", "-}"]]
+    },
+    {
+        "name": "Emacs Lisp",
+        "file_patterns": ["*.el"],
+        "line_comments": [";"]
+    },
+    {
+        "name": "EmberScript",
+        "file_patterns": ["*.em"],
+        "line_comments": ["#"],
+        "block_comments": [["###", "###"]]
+    },
+    {
+        "name": "Erlang",
+        "file_patterns": ["*.erl", "*.hrl", "rebar.config", "rebar.lock"],
+        "line_comments": ["%"]
+    },
     "F#", ["*.fs", "*.fsi", "*.fsx"],
     "Forth", ["*.4th", "*.fth", "*.frt"],
     "Fortran", ["*.f", "*.for", "*.f77", "*.f90", "*.f95", "*.f03"],
