@@ -316,14 +316,51 @@
         "line_comments": ["//"],
         "block_comments": [["/*", "*/"]]
     },
-    "GraphQL", ["*.graphql", "*.gql"],
-    "Gradle", ["*.gradle", "gradle.properties"],
-    "Groovy", ["*.groovy", "*.gvy", "*.gy", "*.gsh"],
-    "Hack", ["*.hh", "*.hhi", "*.hack"],
-    "HAML", ["*.haml"],
-    "Handlebars", ["*.hbs", "*.handlebars"],
-    "Haskell", ["*.hs", "*.lhs", "*.hsc", "*.hs-boot", ".ghci", "stack.yaml"],
-    "HLSL", ["*.hlsl", "*.fx", "*.fxh", "*.hlsli"],
+    {
+        "name": "GraphQL",
+        "file_patterns": ["*.graphql", "*.gql"],
+        "line_comments": ["#"]
+    }
+    {
+        "name": "Gradle",
+        "file_patterns": ["*.gradle", "gradle.properties"],
+        "line_comments": ["//"],
+        "block_comments": [["/*", "*/"]]
+    },
+    {
+        "name": "Groovy",
+        "file_patterns": ["*.groovy", "*.gvy", "*.gy", "*.gsh"],
+        "line_comments": ["//"],
+        "block_comments": [["/*", "*/"]]
+    },
+    {
+        "name": "Hack",
+        "file_patterns": ["*.hh", "*.hhi", "*.hack"],
+        "line_comments": ["//", "#"],
+        "block_comments": [["/*", "*/"]]
+    },
+    {
+        "name": "HAML",
+        "file_patterns": ["*.haml"],
+        "line_comments": ["-#"]
+    },
+    {
+        "name": "Handlebars",
+        "file_patterns": ["*.hbs", "*.handlebars"],
+        "block_comments": [["{{!--", "--}}"]
+    },
+    {
+        "name": "Haskell",
+        "file_patterns": ["*.hs", "*.lhs", "*.hsc", "*.hs-boot", ".ghci"],
+        "line_comments": ["--"],
+        "block_comments": [["{-", "-}"]]
+    },
+    {
+        "name": "HLSL",
+        "file_patterns": ["*.hlsl", "*.fx", "*.fxh", "*.hlsli"],
+        "line_comments": ["//"],
+        "block_comments": [["/*", "*/"]]
+    },
     "HTML", ["*.html", "*.htm", "*.xht", "*.xhtml"],
     "IDL", ["*.idl", "*.widl"],
     "Inform 7", ["*.ni", "*.i7x"],
@@ -406,7 +443,11 @@
     "Vala", ["*.vala", "*.vapi"],
     "Verilog", ["*.v", "*.vh", "*.sv", "*.svh"],
     "VHDL", ["*.vhd", "*.vhdl"],
-    "Vim script", ["*.vim"],
+    {
+        "name": "Vim script",
+        "file_patterns": ["*.vim"],
+        "line_comments": ["\""]
+    },
     {
         "name": "Visual Basic/Visual Basic .NET"
         "file_patterns": ["*.vb", "*.cls", "*.frm", "*.frx", "*.vba", "*.vbhtml", "*.vbs"],
