@@ -1,6 +1,7 @@
 use clap::{ArgAction, Parser};
 use std::path::PathBuf;
 
+/// Represents the command-line arguments supported by Codestats.
 #[derive(Parser)]
 #[command(version, about)]
 pub struct Cli {
@@ -26,7 +27,7 @@ pub struct Cli {
     pub symlinks: bool,
 }
 
-/// Wrapper function to avoid needing to `use clap::Parser;` in `main.rs`.
+/// Wrapper function to avoid needing to use `clap::Parser` in `main.rs`.
 #[must_use]
 pub fn parse_cli() -> Cli {
     Cli::parse()

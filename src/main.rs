@@ -4,6 +4,7 @@ pub mod langs;
 use crate::analyzer::CodeAnalyzer;
 use anyhow::{Result, ensure};
 
+/// Codestats entrypoint.
 pub fn main() -> Result<()> {
     let args = cli::parse_cli();
     ensure!(
