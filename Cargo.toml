@@ -1,6 +1,6 @@
 [package]
 name = "codestats"
-version = "0.1.1"
+version = "0.2.0"
 authors = ["Quin Gillespie <trypsynth@gmail.com>"]
 description = "CLI tool to provide a per-language breakdown of a folder of sourcecode, optionally respecting things like gitignores, hidden files, and symlinks."
 keywords = ["code", "analysis", "cli", "tool"]
