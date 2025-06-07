@@ -18,6 +18,7 @@ fn get_languages() -> &'static Vec<Language> {
     })
 }
 
+#[must_use]
 pub fn detect_language(filename: &str) -> Option<String> {
     get_languages().iter().find_map(|language| {
         language.file_patterns.iter().find_map(|pattern| {

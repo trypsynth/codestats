@@ -1,5 +1,4 @@
-use crate::cli::Cli;
-use crate::langs;
+use crate::{cli::Cli, langs};
 use anyhow::{Context, Result};
 use human_bytes::human_bytes;
 use ignore::WalkBuilder;
@@ -25,6 +24,7 @@ pub struct CodeAnalyzer<'a> {
 }
 
 impl<'a> CodeAnalyzer<'a> {
+    #[must_use]
     pub fn new(args: &'a Cli) -> Self {
         CodeAnalyzer {
             args,
@@ -47,10 +47,10 @@ impl<'a> CodeAnalyzer<'a> {
             .build()
         {
             if let Ok(entry) = result {
-                if entry.file_type().map_or(false, |ft| ft.is_file()) {
+                if entry.file_type().is_some_and(|ft| ft.is_file()) {
                     if let Err(e) = self.process_file(entry.path()) {
                         if self.args.verbose {
-                            eprintln!("Error processing file {:?}: {}", entry.path(), e);
+                            eprintln!("Error processing file {}: {}", entry.path().display(), e);
                         }
                     }
                 }
