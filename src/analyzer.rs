@@ -21,7 +21,7 @@ pub struct CodeAnalyzer<'a> {
     total_files: u64,
     total_lines: u64,
     total_size: u64,
-    lang_stats: HashMap<&'static str, LangStats>,
+    lang_stats: HashMap<String, LangStats>,
 }
 
 impl<'a> CodeAnalyzer<'a> {
