@@ -9,17 +9,27 @@ use std::{
     path::Path,
 };
 
+/// holds statistics about a programming language's usage throughout a project/folder.
 struct LangStats {
+    /// The total number of files.
     files: u64,
+    /// The total number of lines.
     lines: u64,
+    /// The total size (in bytes).
     size: u64,
 }
 
+/// The heart of codestats, this structure performs all the analysis of a codebase/folder and prints statistics about it.
 pub struct CodeAnalyzer<'a> {
+    /// Holds the command-line arguments passed to the program.
     args: &'a Cli,
+    /// The total number of code files counted.
     total_files: u64,
+    /// The total number of lines of code found.
     total_lines: u64,
+    /// The total size of all the analyzed code (in bytes).
     total_size: u64,
+    /// Holds per-language statistics.
     lang_stats: HashMap<String, LangStats>,
 }
 
