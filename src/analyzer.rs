@@ -7,6 +7,7 @@ use std::{
     fs::{self, File},
     io::{BufRead, BufReader},
     path::Path,
+    sync::{Arc, Mutex},
 };
 
 /// Holds statistics about a programming language's usage throughout a project/folder.
@@ -21,10 +22,31 @@ struct LangStats {
 }
 
 impl LangStats {
-    fn add_file(&mut self, lines: u64, size: u64) {
+    const fn add_file(&mut self, lines: u64, size: u64) {
         self.files += 1;
         self.lines += lines;
         self.size += size;
+    }
+}
+
+/// Thread-safe statistics collector
+#[derive(Debug, Default)]
+struct StatsCollector {
+    total_files: u64,
+    total_lines: u64,
+    total_size: u64,
+    lang_stats: HashMap<String, LangStats>,
+}
+
+impl StatsCollector {
+    fn add_file_stats(&mut self, language: String, lines: u64, size: u64) {
+        self.total_files += 1;
+        self.total_lines += lines;
+        self.total_size += size;
+        self.lang_stats
+            .entry(language)
+            .or_default()
+            .add_file(lines, size);
     }
 }
 
@@ -32,14 +54,8 @@ impl LangStats {
 pub struct CodeAnalyzer<'a> {
     /// Holds the command-line arguments passed to the program.
     args: &'a Cli,
-    /// The total number of code files counted.
-    total_files: u64,
-    /// The total number of lines of code found.
-    total_lines: u64,
-    /// The total size of all the analyzed code (in bytes).
-    total_size: u64,
-    /// Holds per-language statistics.
-    lang_stats: HashMap<String, LangStats>,
+    /// Thread-safe statistics collector
+    stats: Arc<Mutex<StatsCollector>>,
 }
 
 impl<'a> CodeAnalyzer<'a> {
@@ -47,10 +63,7 @@ impl<'a> CodeAnalyzer<'a> {
     pub fn new(args: &'a Cli) -> Self {
         Self {
             args,
-            total_files: 0,
-            total_lines: 0,
-            total_size: 0,
-            lang_stats: HashMap::new(),
+            stats: Arc::new(Mutex::new(StatsCollector::default())),
         }
     }
 
@@ -58,65 +71,85 @@ impl<'a> CodeAnalyzer<'a> {
         if self.args.verbose {
             println!("Analyzing directory {}", self.args.path.display());
         }
-        let walker = WalkBuilder::new(&self.args.path)
+        let stats = Arc::clone(&self.stats);
+        let verbose = self.args.verbose;
+        WalkBuilder::new(&self.args.path)
             .follow_links(self.args.symlinks)
             .ignore(self.args.gitignore)
             .git_ignore(self.args.gitignore)
             .hidden(!self.args.hidden)
-            .build();
-        for entry in walker.flatten() {
-            if entry.file_type().is_some_and(|ft| ft.is_file()) {
-                if let Err(e) = self.process_file(entry.path()) {
-                    if self.args.verbose {
-                        eprintln!("Error processing file {}: {e}", entry.path().display());
+            .build_parallel()
+            .run(|| {
+                let stats = Arc::clone(&stats);
+                Box::new(move |entry_result| {
+                    match entry_result {
+                        Ok(entry) => {
+                            if entry.file_type().is_some_and(|ft| ft.is_file()) {
+                                if let Err(e) = Self::process_file_concurrent(entry.path(), &stats)
+                                {
+                                    if verbose {
+                                        eprintln!(
+                                            "Error processing file {}: {e}",
+                                            entry.path().display()
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            if verbose {
+                                eprintln!("Error walking directory: {e}");
+                            }
+                        }
                     }
-                }
-            }
-        }
+                    ignore::WalkState::Continue
+                })
+            });
         Ok(())
     }
 
     pub fn print_stats(&self) {
-        self.print_summary();
-        if self.lang_stats.is_empty() {
+        let stats = self.stats.lock().unwrap();
+        self.print_summary(&stats);
+        if stats.lang_stats.is_empty() {
             println!("No recognized programming languages found.");
             return;
         }
-        self.print_language_breakdown();
+        self.print_language_breakdown(&stats);
     }
 
-    fn print_summary(&self) {
-        let file_word = pluralize(self.total_files, "file", "files");
-        let line_word = pluralize(self.total_lines, "line", "lines");
+    fn print_summary(&self, stats: &StatsCollector) {
+        let file_word = pluralize(stats.total_files, "file", "files");
+        let line_word = pluralize(stats.total_lines, "line", "lines");
         println!(
             "Codestats for {}: {} {file_word}, {} {line_word}, {} total",
             self.args.path.display(),
-            self.total_files,
-            self.total_lines,
-            human_bytes(self.total_size as f64)
+            stats.total_files,
+            stats.total_lines,
+            human_bytes(stats.total_size as f64)
         );
     }
 
-    fn print_language_breakdown(&self) {
+    fn print_language_breakdown(&self, stats: &StatsCollector) {
         println!("Language breakdown:");
-        let mut stats_vec: Vec<_> = self.lang_stats.iter().collect();
+        let mut stats_vec: Vec<_> = stats.lang_stats.iter().collect();
         stats_vec.sort_by_key(|(lang, _)| *lang);
-        for (lang, stats) in stats_vec {
-            let file_pct = percentage(stats.files, self.total_files);
-            let line_pct = percentage(stats.lines, self.total_lines);
-            let size_pct = percentage(stats.size, self.total_size);
-            let file_word = pluralize(stats.files, "file", "files");
-            let line_word = pluralize(stats.lines, "line", "lines");
+        for (lang, lang_stats) in stats_vec {
+            let file_pct = percentage(lang_stats.files, stats.total_files);
+            let line_pct = percentage(lang_stats.lines, stats.total_lines);
+            let size_pct = percentage(lang_stats.size, stats.total_size);
+            let file_word = pluralize(lang_stats.files, "file", "files");
+            let line_word = pluralize(lang_stats.lines, "line", "lines");
             println!(
                 "{lang}: {} {file_word} ({file_pct:.1}%), {} {line_word} ({line_pct:.1}%), {} ({size_pct:.1}%)",
-                stats.files,
-                stats.lines,
-                human_bytes(stats.size as f64),
+                lang_stats.files,
+                lang_stats.lines,
+                human_bytes(lang_stats.size as f64),
             );
         }
     }
 
-    fn process_file(&mut self, file_path: &Path) -> Result<()> {
+    fn process_file_concurrent(file_path: &Path, stats: &Arc<Mutex<StatsCollector>>) -> Result<()> {
         let filename = file_path
             .file_name()
             .and_then(|name| name.to_str())
@@ -126,30 +159,19 @@ impl<'a> CodeAnalyzer<'a> {
         let metadata = fs::metadata(file_path)
             .with_context(|| format!("Failed to retrieve metadata for {}", file_path.display()))?;
         let file_size = metadata.len();
-        let line_count = self.count_lines(file_path)?;
-        self.update_totals(line_count, file_size);
-        self.update_language_stats(language, line_count, file_size);
+        let line_count = Self::count_lines(file_path)?;
+        {
+            let mut stats_guard = stats.lock().unwrap();
+            stats_guard.add_file_stats(language, line_count, file_size);
+        }
         Ok(())
     }
 
-    fn count_lines(&self, file_path: &Path) -> Result<u64> {
+    fn count_lines(file_path: &Path) -> Result<u64> {
         let file = File::open(file_path)
             .with_context(|| format!("Failed to open file {}", file_path.display()))?;
         let reader = BufReader::new(file);
         Ok(reader.lines().count() as u64)
-    }
-
-    fn update_totals(&mut self, line_count: u64, file_size: u64) {
-        self.total_files += 1;
-        self.total_lines += line_count;
-        self.total_size += file_size;
-    }
-
-    fn update_language_stats(&mut self, language: String, line_count: u64, file_size: u64) {
-        self.lang_stats
-            .entry(language)
-            .or_default()
-            .add_file(line_count, file_size);
     }
 }
 
