@@ -13,7 +13,8 @@
         "name": "Agda",
         "file_patterns": ["*.agda", "*.lagda"],
         "line_comments": ["--"],
-        "block_comments": [["{-", "-}"]]
+        "block_comments": [["{-", "-}"]],
+        "nested_blocks": true
     },
     {
         "name": "Alloy",
@@ -190,7 +191,8 @@
         "name": "Common Lisp",
         "file_patterns": ["*.lisp", "*.asd", "*.cl"],
         "line_comments": [";"],
-        "block_comments": [["#|", "|#"]]
+        "block_comments": [["#|", "|#"]],
+        "nested_blocks": true
     },
     {
         "name": "Crystal",
@@ -227,7 +229,8 @@
         "name": "D",
         "file_patterns": ["*.d", "*.di"],
         "line_comments": ["//"],
-        "block_comments": [["/*", "*/"], ["/+", "+/"]]
+        "block_comments": [["/*", "*/"], ["/+", "+/"]],
+        "nested_blocks": true
     },
     {
         "name": "Dart",
@@ -266,7 +269,8 @@
         "name": "Elm",
         "file_patterns": ["*.elm"],
         "line_comments": ["--"],
-        "block_comments": [["{-", "-}"]]
+        "block_comments": [["{-", "-}"]],
+        "nested_blocks": true
     },
     {
         "name": "Emacs Lisp",
@@ -288,7 +292,8 @@
         "name": "F#",
         "file_patterns": ["*.fs", "*.fsi", "*.fsx"],
         "line_comments": ["//"],
-        "block_comments": [["(*", "*)"]]
+        "block_comments": [["(*", "*)"]],
+        "nested_blocks": true
     },
     {
         "name": "Forth",
@@ -354,7 +359,8 @@
         "name": "Haskell",
         "file_patterns": ["*.hs", "*.lhs", "*.hsc", "*.hs-boot", ".ghci"],
         "line_comments": ["--"],
-        "block_comments": [["{-", "-}"]]
+        "block_comments": [["{-", "-}"]],
+        "nested_blocks": true
     },
     {
         "name": "HLSL",
@@ -426,13 +432,14 @@
     },
     {
         "name": "JSON",
-        "file_patterns": ["*.json", "*.geojson", "*.jsonc", "*.jsonl", "*.ndjson"]
+        "file_patterns": ["*.json", "*.geojson", "*.jsonc", "*.ndjson", "*.jsonl"]
     },
     {
         "name": "Julia",
         "file_patterns": ["*.jl"],
         "line_comments": ["#"],
-        "block_comments": [["#=", "=#"]]
+        "block_comments": [["#=", "=#"]],
+        "nested_blocks": true
     },
     {
         "name": "Kotlin",
@@ -490,7 +497,8 @@
     {
         "name": "Modula-2/3",
         "file_patterns": ["*.m3", "*.mi"],
-        "block_comments": [["(*", "*)"]]
+        "block_comments": [["(*", "*)"]],
+        "nested_blocks": true
     },
     {
         "name": "Moo",
@@ -507,7 +515,8 @@
         "name": "Nim",
         "file_patterns": ["*.nim"],
         "line_comments": ["#"],
-        "block_comments": [["#[", "]#"]]
+        "block_comments": [["#[", "]#"]],
+        "nested_blocks": true
     },
     {
         "name": "Ninja",
@@ -552,7 +561,8 @@
     {
         "name": "OCaml",
         "file_patterns": ["*.ml", "*.mli", "*.cmx", "*.cmxa", "*.mll", "*.mly"],
-        "block_comments": [["(*", "*)"]]
+        "block_comments": [["(*", "*)"]],
+        "nested_blocks": true
     },
     {
         "name": "OpenSCAD",
@@ -570,7 +580,8 @@
         "name": "Pascal",
         "file_patterns": ["*.pas", "*.pp", "*.p", "*.inc"],
         "line_comments": ["//"],
-        "block_comments": [["(*", "*)"], ["{", "}"]]
+        "block_comments": [["(*", "*)"], ["{", "}"]],
+        "nested_blocks": true
     },
     {
         "name": "PHP",
@@ -645,7 +656,8 @@
         "name": "Racket",
         "file_patterns": ["*.rkt", "*.rktd", "*.rktl", "*.rktm"],
         "line_comments": [";"],
-        "block_comments": [["#|", "|#"]]
+        "block_comments": [["#|", "|#"]],
+        "nested_blocks": true
     },
     {
         "name": "Raku",
@@ -673,7 +685,8 @@
         "name": "Rust",
         "file_patterns": ["*.rs", "*.rs.in", "*.rslib", "*.rlib"],
         "line_comments": ["//", "///", "//!"],
-        "block_comments": [["/*", "*/"], ["/**", "*/"], ["/*!", "*/"]]
+        "block_comments": [["/*", "*/"], ["/**", "*/"], ["/*!", "*/"]],
+        "nested_blocks": true
     },
     {
         "name": "SageMath",
@@ -691,7 +704,8 @@
         "name": "Scheme",
         "file_patterns": ["*.scm", "*.ss"],
         "line_comments": [";"],
-        "block_comments": [["#|", "|#"]]
+        "block_comments": [["#|", "|#"]],
+        "nested_blocks": true
     },
     {
         "name": "Sed",
@@ -751,7 +765,8 @@
         "name": "Swift",
         "file_patterns": ["*.swift", "*.swiftpm"],
         "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
+        "block_comments": [["/*", "*/"]],
+        "nested_blocks": true
     },
     {
         "name": "Tcl",
@@ -762,7 +777,8 @@
         "name": "Terraform",
         "file_patterns": ["*.tf", "*.hcl", "terraform.tfvars"],
         "line_comments": ["#", "//"],
-        "block_comments": [["/*", "*/"]]
+        "block_comments": [["/*", "*/"]],
+        "nested_blocks": true
     },
     {
         "name": "TeX/LaTeX",
@@ -792,25 +808,29 @@
         "name": "TypeScript",
         "file_patterns": ["*.ts", "*.tsx", "*.cts", "*.mts"],
         "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
+        "block_comments": [["/*", "*/"]],
+        "nested_blocks": true
     },
     {
         "name": "UnrealScript",
         "file_patterns": ["*.uc"],
         "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
+        "block_comments": [["/*", "*/"]],
+        "nested_blocks": true
     },
     {
         "name": "Vala",
         "file_patterns": ["*.vala", "*.vapi"],
         "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
+        "block_comments": [["/*", "*/"]],
+        "nested_blocks": true
     },
     {
         "name": "Verilog",
         "file_patterns": ["*.v", "*.vh", "*.sv", "*.svh"],
         "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
+        "block_comments": [["/*", "*/"]],
+        "nested_blocks": true
     },
     {
         "name": "VHDL",
@@ -831,19 +851,22 @@
         "name": "Vue",
         "file_patterns": ["*.vue"],
         "line_comments": ["//"],
-        "block_comments": [["<!--", "-->"], ["/*", "*/"]]
+        "block_comments": [["<!--", "-->"], ["/*", "*/"]],
+        "nested_blocks": true
     },
     {
         "name": "WebAssembly",
         "file_patterns": ["*.wat", "*.wasm"],
         "line_comments": [";;"],
-        "block_comments": [["(;", ";)"]]
+        "block_comments": [["(;", ";)"]],
+        "nested_blocks": true
     },
     {
         "name": "Windows Resource File",
         "file_patterns": ["*.rc"],
         "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
+        "block_comments": [["/*", "*/"]],
+        "nested_blocks": true
     },
     {
         "name": "Windows Registry Entry",

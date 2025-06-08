@@ -12,6 +12,8 @@ pub struct Language {
     pub line_comments: Option<Vec<String>>,
     /// A nested list of character sequences (if any) to be interpreted as block-style comments.
     pub block_comments: Option<Vec<Vec<String>>>,
+    /// Does this programming language support nested block comments?
+    pub nested_blocks: Option<bool>,
 }
 
 static LANGUAGES_JSON: &str = include_str!("languages.json");
