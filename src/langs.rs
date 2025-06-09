@@ -56,18 +56,112 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_detect_language() {
-        assert_eq!(detect_language("test.rs"), Some("Rust".to_string()));
-        assert_eq!(detect_language("test.py"), Some("Python".to_string()));
-        assert_eq!(detect_language("test.unknown"), None);
+    fn test_detect_language_known_extensions() {
+        let cases = vec![
+            ("test.rs", Some("Rust")),
+            ("main.py", Some("Python")),
+            ("script.js", Some("JavaScript")),
+            ("index.html", Some("HTML")),
+            ("style.css", Some("CSS")),
+            ("main.cpp", Some("C++")),
+            ("hello.c", Some("C")),
+            ("program.java", Some("Java")),
+            ("module.go", Some("Go")),
+            ("unknownfile.xyz", None),
+        ];
+        for (input, expected) in cases {
+            let detected = detect_language(input);
+            assert_eq!(
+                detected.as_deref(),
+                expected,
+                "Expected {:?} for file {:?}, got {:?}",
+                expected,
+                input,
+                detected
+            );
+        }
     }
 
     #[test]
-    fn test_exact_match() {
-        assert_eq!(detect_language("Makefile"), Some("Makefile".to_string()));
-        assert_eq!(
-            detect_language("Dockerfile"),
-            Some("Dockerfile".to_string())
+    fn test_detect_language_exact_match_special_filenames() {
+        let cases = vec![
+            ("Makefile", Some("Makefile")),
+            ("Dockerfile", Some("Dockerfile")),
+            ("Rakefile", Some("Ruby")),
+            ("build.gradle", Some("Gradle")),
+            ("CMakeLists.txt", Some("CMake")),
+        ];
+        for (input, expected) in cases {
+            let detected = detect_language(input);
+            assert_eq!(
+                detected.as_deref(),
+                expected,
+                "Expected {:?} for special file {:?}, got {:?}",
+                expected,
+                input,
+                detected
+            );
+        }
+    }
+
+    #[test]
+    fn test_detect_language_case_sensitivity() {
+        let cases = vec![
+            ("makefile", Some("Makefile")),
+            ("MAKEFILE", None),
+            ("Dockerfile", Some("Dockerfile")),
+        ];
+        for (input, expected) in cases {
+            let detected = detect_language(input);
+            assert_eq!(
+                detected.as_deref(),
+                expected,
+                "Expected {:?} for case test file {:?}, got {:?}",
+                expected,
+                input,
+                detected
+            );
+        }
+    }
+
+    #[test]
+    fn test_detect_language_edge_cases() {
+        let cases = vec![
+            ("", None),
+            (".hidden", None),
+            ("weird.file.name.rs", Some("Rust")),
+            ("tricky.rs.txt", None),
+        ];
+        for (input, expected) in cases {
+            let detected = detect_language(input);
+            assert_eq!(
+                detected.as_deref(),
+                expected,
+                "Expected {:?} for edge case file {:?}, got {:?}",
+                expected,
+                input,
+                detected
+            );
+        }
+    }
+
+    #[test]
+    fn test_languages_json_is_valid() {
+        let langs = get_languages();
+        assert!(
+            !langs.is_empty(),
+            "Expected at least one language in languages.json"
         );
+        for lang in langs {
+            assert!(
+                !lang.name.is_empty(),
+                "Found language entry with empty name"
+            );
+            assert!(
+                !lang.file_patterns.is_empty(),
+                "Language '{}' has no file patterns",
+                lang.name
+            );
+        }
     }
 }
