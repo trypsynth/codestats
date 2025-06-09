@@ -115,7 +115,7 @@ impl<'a> CodeAnalyzer<'a> {
             println!("No recognized programming languages found.");
             return;
         }
-        self.print_language_breakdown(&stats);
+        CodeAnalyzer::print_language_breakdown(&stats);
     }
 
     fn print_summary(&self, stats: &StatsCollector) {
@@ -130,7 +130,7 @@ impl<'a> CodeAnalyzer<'a> {
         );
     }
 
-    fn print_language_breakdown(&self, stats: &StatsCollector) {
+    fn print_language_breakdown(stats: &StatsCollector) {
         println!("Language breakdown:");
         let mut stats_vec: Vec<_> = stats.lang_stats.iter().collect();
         stats_vec.sort_by_key(|(lang, _)| *lang);
@@ -175,7 +175,7 @@ impl<'a> CodeAnalyzer<'a> {
     }
 }
 
-fn pluralize<'a>(count: u64, singular: &'a str, plural: &'a str) -> &'a str {
+const fn pluralize<'a>(count: u64, singular: &'a str, plural: &'a str) -> &'a str {
     if count == 1 { singular } else { plural }
 }
 
