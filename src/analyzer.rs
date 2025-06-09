@@ -186,3 +186,89 @@ fn percentage(part: u64, total: u64) -> f64 {
         (part as f64 / total as f64) * 100.0
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn pluralize_singular_and_plural() {
+        assert_eq!(pluralize(1, "file", "files"), "file");
+        assert_eq!(pluralize(0, "file", "files"), "files");
+        assert_eq!(pluralize(2, "line", "lines"), "lines");
+    }
+
+    #[test]
+    fn percentage_normal_cases() {
+        assert_eq!(percentage(0, 100), 0.0);
+        assert_eq!(percentage(1, 2), 50.0);
+        assert_eq!(percentage(25, 100), 25.0);
+        assert_eq!(percentage(3, 4), 75.0);
+    }
+
+    #[test]
+    fn percentage_zero_total() {
+        assert_eq!(percentage(10, 0), 0.0);
+    }
+
+    #[test]
+    fn lang_stats_add_file_accumulates() {
+        let mut stats = LangStats::default();
+        stats.add_file(10, 1000);
+        assert_eq!(stats.files, 1);
+        assert_eq!(stats.lines, 10);
+        assert_eq!(stats.size, 1000);
+        stats.add_file(5, 500);
+        assert_eq!(stats.files, 2);
+        assert_eq!(stats.lines, 15);
+        assert_eq!(stats.size, 1500);
+    }
+
+    #[test]
+    fn stats_collector_add_file_stats_accumulates() {
+        let mut collector = StatsCollector::default();
+        collector.add_file_stats("Rust".into(), 100, 2000);
+        collector.add_file_stats("Rust".into(), 200, 1000);
+        collector.add_file_stats("C++".into(), 300, 500);
+        assert_eq!(collector.total_files, 3);
+        assert_eq!(collector.total_lines, 600);
+        assert_eq!(collector.total_size, 3500);
+        let rust_stats = collector.lang_stats.get("Rust").unwrap();
+        assert_eq!(rust_stats.files, 2);
+        assert_eq!(rust_stats.lines, 300);
+        assert_eq!(rust_stats.size, 3000);
+        let cpp_stats = collector.lang_stats.get("C++").unwrap();
+        assert_eq!(cpp_stats.files, 1);
+        assert_eq!(cpp_stats.lines, 300);
+        assert_eq!(cpp_stats.size, 500);
+    }
+
+    #[test]
+    fn stats_collector_handles_multiple_languages() {
+        let mut collector = StatsCollector::default();
+        collector.add_file_stats("Rust".into(), 10, 100);
+        collector.add_file_stats("Python".into(), 20, 200);
+        collector.add_file_stats("Go".into(), 30, 300);
+        assert_eq!(collector.lang_stats.len(), 3);
+        assert_eq!(collector.total_files, 3);
+        assert_eq!(collector.total_lines, 60);
+        assert_eq!(collector.total_size, 600);
+    }
+
+    #[test]
+    fn stats_collector_defaults_to_empty() {
+        let collector = StatsCollector::default();
+        assert_eq!(collector.total_files, 0);
+        assert_eq!(collector.total_lines, 0);
+        assert_eq!(collector.total_size, 0);
+        assert!(collector.lang_stats.is_empty());
+    }
+
+    #[test]
+    fn lang_stats_default_is_zeroed() {
+        let stats = LangStats::default();
+        assert_eq!(stats.files, 0);
+        assert_eq!(stats.lines, 0);
+        assert_eq!(stats.size, 0);
+    }
+}
