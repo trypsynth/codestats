@@ -46,3 +46,51 @@ pub struct Cli {
 pub fn parse_cli() -> Cli {
     Cli::parse()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_default_flags() {
+        let cli = Cli::try_parse_from(["codestats", "some/path"]).unwrap();
+        assert_eq!(cli.path, PathBuf::from("some/path"));
+        assert!(cli.gitignore);
+        assert!(cli.hidden);
+        assert!(!cli.verbose);
+        assert!(!cli.symlinks);
+    }
+
+    #[test]
+    fn test_disable_gitignore_and_hidden() {
+        let cli = Cli::try_parse_from([
+            "codestats",
+            "src",
+            "--gitignore",
+            "false",
+            "--hidden",
+            "false",
+            "--verbose",
+            "--symlinks",
+        ])
+        .unwrap();
+        assert_eq!(cli.path, PathBuf::from("src"));
+        assert!(!cli.gitignore);
+        assert!(!cli.hidden);
+        assert!(cli.verbose);
+        assert!(cli.symlinks);
+    }
+
+    #[test]
+    fn test_short_flags() {
+        let cli = Cli::try_parse_from(["codestats", "src", "-v", "-s"]).unwrap();
+        assert!(cli.verbose);
+        assert!(cli.symlinks);
+    }
+
+    #[test]
+    fn test_missing_path_fails() {
+        let result = Cli::try_parse_from(["codestats"]);
+        assert!(result.is_err());
+    }
+}
