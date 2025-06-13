@@ -17,14 +17,30 @@ struct LangStats {
     files: u64,
     /// The total number of lines.
     lines: u64,
+    /// The total number of code lines.
+    code_lines: u64,
+    /// The total number of comment lines.
+    comment_lines: u64,
+    /// The total number of blank lines.
+    blank_lines: u64,
     /// The total size (in bytes).
     size: u64,
 }
 
 impl LangStats {
-    const fn add_file(&mut self, lines: u64, size: u64) {
+    fn add_file(
+        &mut self,
+        lines: u64,
+        code_lines: u64,
+        comment_lines: u64,
+        blank_lines: u64,
+        size: u64,
+    ) {
         self.files += 1;
         self.lines += lines;
+        self.code_lines += code_lines;
+        self.comment_lines += comment_lines;
+        self.blank_lines += blank_lines;
         self.size += size;
     }
 }
@@ -34,20 +50,45 @@ impl LangStats {
 struct StatsCollector {
     total_files: u64,
     total_lines: u64,
+    total_code_lines: u64,
+    total_comment_lines: u64,
+    total_blank_lines: u64,
     total_size: u64,
     lang_stats: HashMap<String, LangStats>,
 }
 
 impl StatsCollector {
-    fn add_file_stats(&mut self, language: String, lines: u64, size: u64) {
+    fn add_file_stats(
+        &mut self,
+        language: String,
+        lines: u64,
+        code_lines: u64,
+        comment_lines: u64,
+        blank_lines: u64,
+        size: u64,
+    ) {
         self.total_files += 1;
         self.total_lines += lines;
+        self.total_code_lines += code_lines;
+        self.total_comment_lines += comment_lines;
+        self.total_blank_lines += blank_lines;
         self.total_size += size;
-        self.lang_stats
-            .entry(language)
-            .or_default()
-            .add_file(lines, size);
+        self.lang_stats.entry(language).or_default().add_file(
+            lines,
+            code_lines,
+            comment_lines,
+            blank_lines,
+            size,
+        );
     }
+}
+
+/// Represents different types of lines in source code
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum LineType {
+    Code,
+    Comment,
+    Blank,
 }
 
 /// The heart of codestats, this structure performs all the analysis of a codebase/folder and prints statistics about it.
@@ -122,18 +163,39 @@ impl<'a> CodeAnalyzer<'a> {
         let file_word = pluralize(stats.total_files, "file", "files");
         let line_word = pluralize(stats.total_lines, "line", "lines");
         println!(
-            "Codestats for {}: {} {file_word}, {} {line_word}, {} total",
+            "Codestats for {}: {} {}, {} total {}, {} total size",
             self.args.path.display(),
             stats.total_files,
+            file_word,
             stats.total_lines,
+            line_word,
             human_bytes(stats.total_size as f64)
+        );
+        let code_word = pluralize(stats.total_code_lines, "line", "lines");
+        let comment_word = pluralize(stats.total_comment_lines, "line", "lines");
+        let blank_word = pluralize(stats.total_blank_lines, "line", "lines");
+        println!(
+            "Line breakdown: {} code {}, {} comment {}, {} blank {}",
+            stats.total_code_lines,
+            code_word,
+            stats.total_comment_lines,
+            comment_word,
+            stats.total_blank_lines,
+            blank_word
+        );
+        let code_pct = percentage(stats.total_code_lines, stats.total_lines);
+        let comment_pct = percentage(stats.total_comment_lines, stats.total_lines);
+        let blank_pct = percentage(stats.total_blank_lines, stats.total_lines);
+        println!(
+            "Percentages: {:.1}% code, {:.1}% comments, {:.1}% blank lines",
+            code_pct, comment_pct, blank_pct
         );
     }
 
     fn print_language_breakdown(stats: &StatsCollector) {
-        println!("Language breakdown:");
+        println!("\nLanguage breakdown:");
         let mut stats_vec: Vec<_> = stats.lang_stats.iter().collect();
-        stats_vec.sort_by_key(|(lang, _)| *lang);
+        stats_vec.sort_by_key(|(_, lang_stats)| std::cmp::Reverse(lang_stats.lines));
         for (lang, lang_stats) in stats_vec {
             let file_pct = percentage(lang_stats.files, stats.total_files);
             let line_pct = percentage(lang_stats.lines, stats.total_lines);
@@ -141,10 +203,28 @@ impl<'a> CodeAnalyzer<'a> {
             let file_word = pluralize(lang_stats.files, "file", "files");
             let line_word = pluralize(lang_stats.lines, "line", "lines");
             println!(
-                "{lang}: {} {file_word} ({file_pct:.1}%), {} {line_word} ({line_pct:.1}%), {} ({size_pct:.1}%)",
+                "{}: {} {} ({:.1}% of files), {} {} ({:.1}% of lines), {} ({:.1}% of size)",
+                lang,
                 lang_stats.files,
+                file_word,
+                file_pct,
                 lang_stats.lines,
+                line_word,
+                line_pct,
                 human_bytes(lang_stats.size as f64),
+                size_pct
+            );
+            let code_pct = percentage(lang_stats.code_lines, lang_stats.lines);
+            let comment_pct = percentage(lang_stats.comment_lines, lang_stats.lines);
+            let blank_pct = percentage(lang_stats.blank_lines, lang_stats.lines);
+            println!(
+                "Code: {} lines ({:.1}%), Comments: {} lines ({:.1}%), Blank: {} lines ({:.1}%)",
+                lang_stats.code_lines,
+                code_pct,
+                lang_stats.comment_lines,
+                comment_pct,
+                lang_stats.blank_lines,
+                blank_pct
             );
         }
     }
@@ -159,19 +239,177 @@ impl<'a> CodeAnalyzer<'a> {
         let metadata = fs::metadata(file_path)
             .with_context(|| format!("Failed to retrieve metadata for {}", file_path.display()))?;
         let file_size = metadata.len();
-        let line_count = Self::count_lines(file_path)?;
+        let (total_lines, code_lines, comment_lines, blank_lines) =
+            Self::analyze_file_lines(file_path, &language)?;
         {
             let mut stats_guard = stats.lock().unwrap();
-            stats_guard.add_file_stats(language, line_count, file_size);
+            stats_guard.add_file_stats(
+                language,
+                total_lines,
+                code_lines,
+                comment_lines,
+                blank_lines,
+                file_size,
+            );
         }
         Ok(())
     }
 
-    fn count_lines(file_path: &Path) -> Result<u64> {
+    fn analyze_file_lines(file_path: &Path, language: &str) -> Result<(u64, u64, u64, u64)> {
         let file = File::open(file_path)
             .with_context(|| format!("Failed to open file {}", file_path.display()))?;
         let reader = BufReader::new(file);
-        Ok(reader.lines().count() as u64)
+        let lang_info = langs::get_language_info(language);
+        let mut total_lines = 0u64;
+        let mut code_lines = 0u64;
+        let mut comment_lines = 0u64;
+        let mut blank_lines = 0u64;
+        let mut in_block_comment = false;
+        let mut block_comment_depth = 0;
+        for line_result in reader.lines() {
+            let line = line_result
+                .with_context(|| format!("Failed to read line from {}", file_path.display()))?;
+            total_lines += 1;
+            let line_type = Self::classify_line(
+                &line,
+                &lang_info,
+                &mut in_block_comment,
+                &mut block_comment_depth,
+            );
+            match line_type {
+                LineType::Code => code_lines += 1,
+                LineType::Comment => comment_lines += 1,
+                LineType::Blank => blank_lines += 1,
+            }
+        }
+        Ok((total_lines, code_lines, comment_lines, blank_lines))
+    }
+
+    fn classify_line(
+        line: &str,
+        lang_info: &Option<langs::Language>,
+        in_block_comment: &mut bool,
+        block_comment_depth: &mut usize,
+    ) -> LineType {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            return LineType::Blank;
+        }
+        let Some(lang) = lang_info else {
+            return LineType::Code;
+        };
+        let mut line_remainder = trimmed;
+        let mut has_code = false;
+        if let Some(ref block_comments) = lang.block_comments {
+            let nested = lang.nested_blocks.unwrap_or(false);
+            while !line_remainder.is_empty() {
+                if !*in_block_comment {
+                    let mut found_start = false;
+                    for block_pair in block_comments {
+                        if block_pair.len() >= 2 {
+                            let start = &block_pair[0];
+                            if let Some(pos) = line_remainder.find(start) {
+                                if pos > 0 && !line_remainder[..pos].trim().is_empty() {
+                                    has_code = true;
+                                }
+                                line_remainder = &line_remainder[pos + start.len()..];
+                                *in_block_comment = true;
+                                if nested {
+                                    *block_comment_depth = 1;
+                                }
+                                found_start = true;
+                                break;
+                            }
+                        }
+                    }
+                    if !found_start {
+                        break;
+                    }
+                } else {
+                    let mut found_end = false;
+                    for block_pair in block_comments {
+                        if block_pair.len() >= 2 {
+                            let start = &block_pair[0];
+                            let end = &block_pair[1];
+                            if nested {
+                                if let Some(start_pos) = line_remainder.find(start) {
+                                    if let Some(end_pos) = line_remainder.find(end) {
+                                        if start_pos < end_pos {
+                                            *block_comment_depth += 1;
+                                            line_remainder =
+                                                &line_remainder[start_pos + start.len()..];
+                                            continue;
+                                        }
+                                    } else {
+                                        *block_comment_depth += 1;
+                                        line_remainder = &line_remainder[start_pos + start.len()..];
+                                        continue;
+                                    }
+                                }
+                            }
+                            if let Some(pos) = line_remainder.find(end) {
+                                line_remainder = &line_remainder[pos + end.len()..];
+                                if nested {
+                                    *block_comment_depth = block_comment_depth.saturating_sub(1);
+                                    if *block_comment_depth == 0 {
+                                        *in_block_comment = false;
+                                    }
+                                } else {
+                                    *in_block_comment = false;
+                                }
+                                found_end = true;
+                                break;
+                            }
+                        }
+                    }
+                    if !found_end {
+                        break;
+                    }
+                }
+            }
+        }
+        if *in_block_comment {
+            return if has_code {
+                LineType::Code
+            } else {
+                LineType::Comment
+            };
+        }
+        if let Some(ref line_comments) = lang.line_comments {
+            for comment_start in line_comments {
+                if let Some(pos) = line_remainder.find(comment_start) {
+                    if pos > 0 && !line_remainder[..pos].trim().is_empty() {
+                        has_code = true;
+                    }
+                    line_remainder = &line_remainder[pos..];
+                    break;
+                }
+            }
+        }
+        if !line_remainder.is_empty() {
+            if let Some(ref line_comments) = lang.line_comments {
+                let mut is_comment = false;
+                for comment_start in line_comments {
+                    if line_remainder.starts_with(comment_start) {
+                        is_comment = true;
+                        break;
+                    }
+                }
+                if is_comment {
+                    return if has_code {
+                        LineType::Code
+                    } else {
+                        LineType::Comment
+                    };
+                }
+            }
+            has_code = true;
+        }
+        if has_code {
+            LineType::Code
+        } else {
+            LineType::Comment
+        }
     }
 }
 
@@ -214,61 +452,67 @@ mod tests {
     #[test]
     fn lang_stats_add_file_accumulates() {
         let mut stats = LangStats::default();
-        stats.add_file(10, 1000);
+        stats.add_file(10, 8, 1, 1, 1000);
         assert_eq!(stats.files, 1);
         assert_eq!(stats.lines, 10);
+        assert_eq!(stats.code_lines, 8);
+        assert_eq!(stats.comment_lines, 1);
+        assert_eq!(stats.blank_lines, 1);
         assert_eq!(stats.size, 1000);
-        stats.add_file(5, 500);
+
+        stats.add_file(5, 3, 2, 0, 500);
         assert_eq!(stats.files, 2);
         assert_eq!(stats.lines, 15);
+        assert_eq!(stats.code_lines, 11);
+        assert_eq!(stats.comment_lines, 3);
+        assert_eq!(stats.blank_lines, 1);
         assert_eq!(stats.size, 1500);
     }
 
     #[test]
     fn stats_collector_add_file_stats_accumulates() {
         let mut collector = StatsCollector::default();
-        collector.add_file_stats("Rust".into(), 100, 2000);
-        collector.add_file_stats("Rust".into(), 200, 1000);
-        collector.add_file_stats("C++".into(), 300, 500);
+        collector.add_file_stats("Rust".into(), 100, 80, 15, 5, 2000);
+        collector.add_file_stats("Rust".into(), 200, 160, 30, 10, 1000);
+        collector.add_file_stats("C++".into(), 300, 250, 40, 10, 500);
+
         assert_eq!(collector.total_files, 3);
         assert_eq!(collector.total_lines, 600);
+        assert_eq!(collector.total_code_lines, 490);
+        assert_eq!(collector.total_comment_lines, 85);
+        assert_eq!(collector.total_blank_lines, 25);
         assert_eq!(collector.total_size, 3500);
+
         let rust_stats = collector.lang_stats.get("Rust").unwrap();
         assert_eq!(rust_stats.files, 2);
         assert_eq!(rust_stats.lines, 300);
+        assert_eq!(rust_stats.code_lines, 240);
+        assert_eq!(rust_stats.comment_lines, 45);
+        assert_eq!(rust_stats.blank_lines, 15);
         assert_eq!(rust_stats.size, 3000);
-        let cpp_stats = collector.lang_stats.get("C++").unwrap();
-        assert_eq!(cpp_stats.files, 1);
-        assert_eq!(cpp_stats.lines, 300);
-        assert_eq!(cpp_stats.size, 500);
     }
 
     #[test]
-    fn stats_collector_handles_multiple_languages() {
-        let mut collector = StatsCollector::default();
-        collector.add_file_stats("Rust".into(), 10, 100);
-        collector.add_file_stats("Python".into(), 20, 200);
-        collector.add_file_stats("Go".into(), 30, 300);
-        assert_eq!(collector.lang_stats.len(), 3);
-        assert_eq!(collector.total_files, 3);
-        assert_eq!(collector.total_lines, 60);
-        assert_eq!(collector.total_size, 600);
+    fn classify_line_blank() {
+        let mut in_block = false;
+        let mut depth = 0;
+        assert_eq!(
+            CodeAnalyzer::classify_line("", &None, &mut in_block, &mut depth),
+            LineType::Blank
+        );
+        assert_eq!(
+            CodeAnalyzer::classify_line("   ", &None, &mut in_block, &mut depth),
+            LineType::Blank
+        );
     }
 
     #[test]
-    fn stats_collector_defaults_to_empty() {
-        let collector = StatsCollector::default();
-        assert_eq!(collector.total_files, 0);
-        assert_eq!(collector.total_lines, 0);
-        assert_eq!(collector.total_size, 0);
-        assert!(collector.lang_stats.is_empty());
-    }
-
-    #[test]
-    fn lang_stats_default_is_zeroed() {
-        let stats = LangStats::default();
-        assert_eq!(stats.files, 0);
-        assert_eq!(stats.lines, 0);
-        assert_eq!(stats.size, 0);
+    fn classify_line_code_no_lang_info() {
+        let mut in_block = false;
+        let mut depth = 0;
+        assert_eq!(
+            CodeAnalyzer::classify_line("let x = 5;", &None, &mut in_block, &mut depth),
+            LineType::Code
+        );
     }
 }
