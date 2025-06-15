@@ -1,11 +1,11 @@
-pub mod analyzer;
-pub mod cli;
-pub mod langs;
+pub(crate) mod analyzer;
+pub(crate) mod cli;
+pub(crate) mod langs;
 use crate::analyzer::CodeAnalyzer;
 use anyhow::{Result, ensure};
 
 /// Codestats entrypoint.
-pub fn main() -> Result<()> {
+pub(crate) fn main() -> Result<()> {
     let args = cli::parse_cli();
     ensure!(
         args.path.exists(),

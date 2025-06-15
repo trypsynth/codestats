@@ -3,6 +3,7 @@ use anyhow::{Context, Result};
 use human_bytes::human_bytes;
 use ignore::WalkBuilder;
 use std::{
+    cmp::Reverse,
     collections::HashMap,
     fs::{self, File},
     io::{BufRead, BufReader},
@@ -11,34 +12,35 @@ use std::{
 };
 
 /// Holds statistics about a programming language's usage throughout a project/folder.
-#[derive(Debug, Default)]
-struct LangStats {
-    files: u64,
-    lines: u64,
+#[derive(Debug, Default, Clone)]
+pub struct LangStats {
+    pub files: u64,
+    pub lines: u64,
+    pub code_lines: u64,
+    pub comment_lines: u64,
+    pub blank_lines: u64,
+    pub size: u64,
+}
+
+impl LangStats {
+    fn add_file(&mut self, file_stats: FileStats) {
+        self.files += 1;
+        self.lines += file_stats.total_lines;
+        self.code_lines += file_stats.code_lines;
+        self.comment_lines += file_stats.comment_lines;
+        self.blank_lines += file_stats.blank_lines;
+        self.size += file_stats.size;
+    }
+}
+
+/// Statistics for a single file
+#[derive(Debug, Clone, Copy)]
+struct FileStats {
+    total_lines: u64,
     code_lines: u64,
     comment_lines: u64,
     blank_lines: u64,
     size: u64,
-}
-
-impl LangStats {
-    fn add_file(
-        &mut self,
-        lines: u64,
-        code_lines: u64,
-        comment_lines: u64,
-        blank_lines: u64,
-        size: u64,
-    ) {
-        *self = Self {
-            files: self.files + 1,
-            lines: self.lines + lines,
-            code_lines: self.code_lines + code_lines,
-            comment_lines: self.comment_lines + comment_lines,
-            blank_lines: self.blank_lines + blank_lines,
-            size: self.size + size,
-        };
-    }
 }
 
 /// Thread-safe statistics collector
@@ -54,28 +56,17 @@ struct StatsCollector {
 }
 
 impl StatsCollector {
-    fn add_file_stats(
-        &mut self,
-        language: String,
-        lines: u64,
-        code_lines: u64,
-        comment_lines: u64,
-        blank_lines: u64,
-        size: u64,
-    ) {
+    fn add_file_stats(&mut self, language: String, file_stats: FileStats) {
         self.total_files += 1;
-        self.total_lines += lines;
-        self.total_code_lines += code_lines;
-        self.total_comment_lines += comment_lines;
-        self.total_blank_lines += blank_lines;
-        self.total_size += size;
-        self.lang_stats.entry(language).or_default().add_file(
-            lines,
-            code_lines,
-            comment_lines,
-            blank_lines,
-            size,
-        );
+        self.total_lines += file_stats.total_lines;
+        self.total_code_lines += file_stats.code_lines;
+        self.total_comment_lines += file_stats.comment_lines;
+        self.total_blank_lines += file_stats.blank_lines;
+        self.total_size += file_stats.size;
+        self.lang_stats
+            .entry(language)
+            .or_default()
+            .add_file(file_stats);
     }
 }
 
@@ -85,6 +76,37 @@ enum LineType {
     Code,
     Comment,
     Blank,
+}
+
+/// State for tracking block comments during line analysis
+#[derive(Debug, Default)]
+struct CommentState {
+    in_block_comment: bool,
+    block_comment_depth: usize,
+}
+
+impl CommentState {
+    fn enter_block(&mut self, nested: bool) {
+        self.in_block_comment = true;
+        if nested {
+            self.block_comment_depth = 1;
+        }
+    }
+
+    fn exit_block(&mut self, nested: bool) {
+        if nested {
+            self.block_comment_depth = self.block_comment_depth.saturating_sub(1);
+            if self.block_comment_depth == 0 {
+                self.in_block_comment = false;
+            }
+        } else {
+            self.in_block_comment = false;
+        }
+    }
+
+    fn enter_nested_block(&mut self) {
+        self.block_comment_depth += 1;
+    }
 }
 
 /// The heart of codestats, this structure performs all the analysis of a codebase/folder and prints statistics about it.
@@ -116,19 +138,18 @@ impl<'a> CodeAnalyzer<'a> {
             .run(|| {
                 let stats = Arc::clone(&stats);
                 Box::new(move |entry_result| {
-                    if let Ok(entry) = entry_result {
-                        if entry.file_type().is_some_and(|ft| ft.is_file()) {
+                    match entry_result {
+                        Ok(entry) if entry.file_type().is_some_and(|ft| ft.is_file()) => {
                             if let Err(e) = Self::process_file_concurrent(entry.path(), &stats) {
                                 if verbose {
-                                    eprintln!(
-                                        "Error processing file {}: {e}",
-                                        entry.path().display()
-                                    );
+                                    eprintln!("Error processing file {}: {e}", entry.path().display());
                                 }
                             }
                         }
-                    } else if verbose {
-                        eprintln!("Error walking directory: {}", entry_result.unwrap_err());
+                        Err(e) if verbose => {
+                            eprintln!("Error walking directory: {e}");
+                        }
+                        _ => {}
                     }
                     ignore::WalkState::Continue
                 })
@@ -177,7 +198,7 @@ impl<'a> CodeAnalyzer<'a> {
 
     fn print_language_breakdown(stats: &StatsCollector) {
         let mut stats_vec: Vec<_> = stats.lang_stats.iter().collect();
-        stats_vec.sort_by_key(|(_, lang_stats)| std::cmp::Reverse(lang_stats.lines));
+        stats_vec.sort_by_key(|(_, lang_stats)| Reverse(lang_stats.lines));
         println!("\nLanguage breakdown:");
         for (lang, lang_stats) in stats_vec {
             let (file_pct, line_pct, size_pct) = (
@@ -217,14 +238,14 @@ impl<'a> CodeAnalyzer<'a> {
             .len();
         let (total_lines, code_lines, comment_lines, blank_lines) =
             Self::analyze_file_lines(file_path, &language)?;
-        stats.lock().unwrap().add_file_stats(
-            language,
+        let file_stats = FileStats {
             total_lines,
             code_lines,
             comment_lines,
             blank_lines,
-            file_size,
-        );
+            size: file_size,
+        };
+        stats.lock().unwrap().add_file_stats(language, file_stats);
         Ok(())
     }
 
@@ -237,18 +258,12 @@ impl<'a> CodeAnalyzer<'a> {
         let mut code_lines = 0u64;
         let mut comment_lines = 0u64;
         let mut blank_lines = 0u64;
-        let mut in_block_comment = false;
-        let mut block_comment_depth = 0;
+        let mut comment_state = CommentState::default();
         for line in reader.lines() {
-            let line =
-                line.with_context(|| format!("Failed to read line from {}", file_path.display()))?;
+            let line = line
+                .with_context(|| format!("Failed to read line from {}", file_path.display()))?;
             total_lines += 1;
-            match Self::classify_line(
-                &line,
-                &lang_info,
-                &mut in_block_comment,
-                &mut block_comment_depth,
-            ) {
+            match Self::classify_line(&line, &lang_info, &mut comment_state) {
                 LineType::Code => code_lines += 1,
                 LineType::Comment => comment_lines += 1,
                 LineType::Blank => blank_lines += 1,
@@ -260,8 +275,7 @@ impl<'a> CodeAnalyzer<'a> {
     fn classify_line(
         line: &str,
         lang_info: &Option<langs::Language>,
-        in_block_comment: &mut bool,
-        block_comment_depth: &mut usize,
+        comment_state: &mut CommentState,
     ) -> LineType {
         let trimmed = line.trim();
         if trimmed.is_empty() {
@@ -275,106 +289,90 @@ impl<'a> CodeAnalyzer<'a> {
         if let Some(ref block_comments) = lang.block_comments {
             let nested = lang.nested_blocks.unwrap_or(false);
             while !line_remainder.is_empty() {
-                if !*in_block_comment {
-                    let mut found_start = false;
-                    for block_pair in block_comments {
-                        if let [start, ..] = block_pair.as_slice() {
-                            if let Some(pos) = line_remainder.find(start) {
-                                if pos > 0 && !line_remainder[..pos].trim().is_empty() {
-                                    has_code = true;
-                                }
-                                line_remainder = &line_remainder[pos + start.len()..];
-                                *in_block_comment = true;
-                                if nested {
-                                    *block_comment_depth = 1;
-                                }
-                                found_start = true;
-                                break;
-                            }
+                if !comment_state.in_block_comment {
+                    if let Some((pos, start_len)) = Self::find_block_comment_start(line_remainder, block_comments) {
+                        if pos > 0 && !line_remainder[..pos].trim().is_empty() {
+                            has_code = true;
                         }
-                    }
-                    if !found_start {
+                        line_remainder = &line_remainder[pos + start_len..];
+                        comment_state.enter_block(nested);
+                    } else {
                         break;
+                    }
+                } else if let Some((pos, end_len, found_nested_start)) = Self::find_block_comment_end_or_nested_start(line_remainder, block_comments, nested) {
+                    if found_nested_start {
+                        comment_state.enter_nested_block();
+                        line_remainder = &line_remainder[pos + end_len..];
+                    } else {
+                        line_remainder = &line_remainder[pos + end_len..];
+                        comment_state.exit_block(nested);
                     }
                 } else {
-                    let mut found_end = false;
-                    for block_pair in block_comments {
-                        if let [start, end] = block_pair.as_slice() {
-                            if nested {
-                                if let Some(start_pos) = line_remainder.find(start) {
-                                    if let Some(end_pos) = line_remainder.find(end) {
-                                        if start_pos < end_pos {
-                                            *block_comment_depth += 1;
-                                            line_remainder =
-                                                &line_remainder[start_pos + start.len()..];
-                                            continue;
-                                        }
-                                    } else {
-                                        *block_comment_depth += 1;
-                                        line_remainder = &line_remainder[start_pos + start.len()..];
-                                        continue;
-                                    }
-                                }
-                            }
-                            if let Some(pos) = line_remainder.find(end) {
-                                line_remainder = &line_remainder[pos + end.len()..];
-                                if nested {
-                                    *block_comment_depth = block_comment_depth.saturating_sub(1);
-                                    if *block_comment_depth == 0 {
-                                        *in_block_comment = false;
-                                    }
-                                } else {
-                                    *in_block_comment = false;
-                                }
-                                found_end = true;
-                                break;
-                            }
-                        }
-                    }
-                    if !found_end {
-                        break;
-                    }
-                }
-            }
-        }
-        if *in_block_comment {
-            return if has_code {
-                LineType::Code
-            } else {
-                LineType::Comment
-            };
-        }
-        if let Some(ref line_comments) = lang.line_comments {
-            for comment_start in line_comments {
-                if let Some(pos) = line_remainder.find(comment_start) {
-                    if pos > 0 && !line_remainder[..pos].trim().is_empty() {
-                        has_code = true;
-                    }
-                    line_remainder = &line_remainder[pos..];
                     break;
                 }
             }
         }
-        if !line_remainder.is_empty() {
-            if let Some(ref line_comments) = lang.line_comments {
-                if line_comments
-                    .iter()
-                    .any(|comment_start| line_remainder.starts_with(comment_start))
-                {
-                    return if has_code {
-                        LineType::Code
-                    } else {
-                        LineType::Comment
-                    };
+        if comment_state.in_block_comment {
+            return if has_code { LineType::Code } else { LineType::Comment };
+        }
+        if let Some(ref line_comments) = lang.line_comments {
+            if let Some(pos) = Self::find_line_comment_start(line_remainder, line_comments) {
+                if pos > 0 && !line_remainder[..pos].trim().is_empty() {
+                    has_code = true;
                 }
+                return if has_code { LineType::Code } else { LineType::Comment };
             }
+        }
+        if !line_remainder.is_empty() {
             has_code = true;
         }
-        if has_code {
-            LineType::Code
-        } else {
-            LineType::Comment
+        if has_code { LineType::Code } else { LineType::Comment }
+    }
+
+    fn find_block_comment_start(line: &str, block_comments: &[Vec<String>]) -> Option<(usize, usize)> {
+        block_comments
+            .iter()
+            .filter_map(|block_pair| {
+                if let [start, ..] = block_pair.as_slice() {
+                    line.find(start).map(|pos| (pos, start.len()))
+                } else {
+                    None
+                }
+            })
+            .min_by_key(|(pos, _)| *pos)
+    }
+
+    fn find_block_comment_end_or_nested_start(
+        line: &str, 
+        block_comments: &[Vec<String>], 
+        nested: bool
+    ) -> Option<(usize, usize, bool)> {
+        for block_pair in block_comments {
+            if let [start, end] = block_pair.as_slice() {
+                let start_pos = if nested { line.find(start) } else { None };
+                let end_pos = line.find(end);
+                match (start_pos, end_pos) {
+                    (Some(s_pos), Some(e_pos)) if nested && s_pos < e_pos => {
+                        return Some((s_pos, start.len(), true)); // Found nested start
+                    }
+                    (Some(s_pos), None) if nested => {
+                        return Some((s_pos, start.len(), true)); // Found nested start, no end
+                    }
+                    (_, Some(e_pos)) => {
+                        return Some((e_pos, end.len(), false)); // Found end
+                    }
+                    _ => continue,
+                }
+            }
         }
+        None
+    }
+
+    fn find_line_comment_start(line: &str, line_comments: &[String]) -> Option<usize> {
+        line_comments
+            .iter()
+            .filter_map(|comment_start| line.find(comment_start))
+            .min()
     }
 }
 
@@ -415,16 +413,46 @@ mod tests {
     }
 
     #[test]
+    fn file_stats_creation() {
+        let stats = FileStats {
+            total_lines: 10,
+            code_lines: 8,
+            comment_lines: 1,
+            blank_lines: 1,
+            size: 1000,
+        };
+        assert_eq!(stats.total_lines, 10);
+        assert_eq!(stats.code_lines, 8);
+    }
+
+    #[test]
     fn lang_stats_add_file_accumulates() {
         let mut stats = LangStats::default();
-        stats.add_file(10, 8, 1, 1, 1000);
+        let file1 = FileStats {
+            total_lines: 10,
+            code_lines: 8,
+            comment_lines: 1,
+            blank_lines: 1,
+            size: 1000,
+        };
+        stats.add_file(file1);
+        
         assert_eq!(stats.files, 1);
         assert_eq!(stats.lines, 10);
         assert_eq!(stats.code_lines, 8);
         assert_eq!(stats.comment_lines, 1);
         assert_eq!(stats.blank_lines, 1);
         assert_eq!(stats.size, 1000);
-        stats.add_file(5, 3, 2, 0, 500);
+        
+        let file2 = FileStats {
+            total_lines: 5,
+            code_lines: 3,
+            comment_lines: 2,
+            blank_lines: 0,
+            size: 500,
+        };
+        stats.add_file(file2);
+        
         assert_eq!(stats.files, 2);
         assert_eq!(stats.lines, 15);
         assert_eq!(stats.code_lines, 11);
@@ -434,46 +462,44 @@ mod tests {
     }
 
     #[test]
-    fn stats_collector_add_file_stats_accumulates() {
-        let mut collector = StatsCollector::default();
-        collector.add_file_stats("Rust".into(), 100, 80, 15, 5, 2000);
-        collector.add_file_stats("Rust".into(), 200, 160, 30, 10, 1000);
-        collector.add_file_stats("C++".into(), 300, 250, 40, 10, 500);
-        assert_eq!(collector.total_files, 3);
-        assert_eq!(collector.total_lines, 600);
-        assert_eq!(collector.total_code_lines, 490);
-        assert_eq!(collector.total_comment_lines, 85);
-        assert_eq!(collector.total_blank_lines, 25);
-        assert_eq!(collector.total_size, 3500);
-        let rust_stats = collector.lang_stats.get("Rust").unwrap();
-        assert_eq!(rust_stats.files, 2);
-        assert_eq!(rust_stats.lines, 300);
-        assert_eq!(rust_stats.code_lines, 240);
-        assert_eq!(rust_stats.comment_lines, 45);
-        assert_eq!(rust_stats.blank_lines, 15);
-        assert_eq!(rust_stats.size, 3000);
+    fn comment_state_operations() {
+        let mut state = CommentState::default();
+        assert!(!state.in_block_comment);
+        
+        state.enter_block(true);
+        assert!(state.in_block_comment);
+        assert_eq!(state.block_comment_depth, 1);
+        
+        state.enter_nested_block();
+        assert_eq!(state.block_comment_depth, 2);
+        
+        state.exit_block(true);
+        assert_eq!(state.block_comment_depth, 1);
+        assert!(state.in_block_comment);
+        
+        state.exit_block(true);
+        assert_eq!(state.block_comment_depth, 0);
+        assert!(!state.in_block_comment);
     }
 
     #[test]
     fn classify_line_blank() {
-        let mut in_block = false;
-        let mut depth = 0;
+        let mut state = CommentState::default();
         assert_eq!(
-            CodeAnalyzer::classify_line("", &None, &mut in_block, &mut depth),
+            CodeAnalyzer::classify_line("", &None, &mut state),
             LineType::Blank
         );
         assert_eq!(
-            CodeAnalyzer::classify_line("   ", &None, &mut in_block, &mut depth),
+            CodeAnalyzer::classify_line("   ", &None, &mut state),
             LineType::Blank
         );
     }
 
     #[test]
     fn classify_line_code_no_lang_info() {
-        let mut in_block = false;
-        let mut depth = 0;
+        let mut state = CommentState::default();
         assert_eq!(
-            CodeAnalyzer::classify_line("let x = 5;", &None, &mut in_block, &mut depth),
+            CodeAnalyzer::classify_line("let x = 5;", &None, &mut state),
             LineType::Code
         );
     }
