@@ -117,7 +117,7 @@ impl<'a> CodeAnalyzer<'a> {
                 let stats = Arc::clone(&stats);
                 Box::new(move |entry_result| {
                     if let Ok(entry) = entry_result {
-                        if entry.file_type().map_or(false, |ft| ft.is_file()) {
+                        if entry.file_type().is_some_and(|ft| ft.is_file()) {
                             if let Err(e) = Self::process_file_concurrent(entry.path(), &stats) {
                                 if verbose {
                                     eprintln!(
