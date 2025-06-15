@@ -29,6 +29,12 @@
         "block_comments": [["/*", "*/"]]
     },
     {
+        "name": "Apex",
+        "file_patterns": ["*.apex", "*.cls", "*.trigger"],
+        "line_comments": ["//"],
+        "block_comments": [["/*", "*/"]]
+    },
+    {
         "name": "APL",
         "file_patterns": ["*.apl", "*.dyalog"],
         "line_comments": ["⍝"]
@@ -239,6 +245,12 @@
         "block_comments": [["/*", "*/"]]
     },
     {
+        "name": "Delphi/Object Pascal",
+        "file_patterns": ["*.dpr", "*.dpk"],
+        "line_comments": ["//"],
+        "block_comments": [["(*", "*)"], ["{", "}"]]
+    },    
+    {
         "name": "Dockerfile",
         "file_patterns": ["*.dockerfile", "Dockerfile"],
         "line_comments": ["#"]
@@ -380,6 +392,13 @@
         "block_comments": [["/*", "*/"]]
     },
     {
+        "name": "Idris",
+        "file_patterns": ["*.idr", "*.lidr"],
+        "line_comments": ["--"],
+        "block_comments": [["{-", "-}"]],
+        "nested_blocks": true
+    },
+    {
         "name": "Inform 7",
         "file_patterns": ["*.ni", "*.i7x"],
         "block_comments": [["[", "]"]]
@@ -448,6 +467,12 @@
         "block_comments": [["/*", "*/"]]
     },
     {
+        "name": "Lean",
+        "file_patterns": ["*.lean"],
+        "line_comments": ["--"],
+        "block_comments": [["/-", "-/"]]
+    },    
+    {
         "name": "Less",
         "file_patterns": ["*.less"],
         "line_comments": ["//"],
@@ -464,6 +489,11 @@
         "file_patterns": ["*.liquid"],
         "block_comments": [["{% comment %}", "{% endcomment %}"]]
     },
+    {
+        "name": "LiveScript",
+        "file_patterns": ["*.ls"],
+        "line_comments": ["#"]
+    },    
     {
         "name": "Lua",
         "file_patterns": ["*.lua", "*.wlua", "*.luau", "*.rockspec", ".luacheckrc"],
@@ -523,6 +553,12 @@
         "file_patterns": ["build.ninja"],
         "line_comments": ["#"]
     },
+    {
+        "name": "Nix",
+        "file_patterns": ["*.nix"],
+        "line_comments": ["#"],
+        "block_comments": [["/*", "*/"]]
+    },    
     {
         "name": "NSIS",
         "file_patterns": ["*.nsi", "*.nsh"],
@@ -733,6 +769,12 @@
         "block_comments": [["{{*", "*}}"]]
     },
     {
+        "name": "Solidity",
+        "file_patterns": ["*.sol"],
+        "line_comments": ["//"],
+        "block_comments": [["/*", "*/"]]
+    },    
+    {
         "name": "SpiderBasic",
         "file_patterns": ["*.sb", "*.sbi", "*.sbf", "*.sbp"],
         "line_comments": [";"]
@@ -819,6 +861,12 @@
         "nested_blocks": true
     },
     {
+        "name": "V",
+        "file_patterns": ["*.v"],
+        "line_comments": ["//"],
+        "block_comments": [["/*", "*/"]]
+    },    
+    {
         "name": "Vala",
         "file_patterns": ["*.vala", "*.vapi"],
         "line_comments": ["//"],
@@ -827,7 +875,7 @@
     },
     {
         "name": "Verilog",
-        "file_patterns": ["*.v", "*.vh", "*.sv", "*.svh"],
+        "file_patterns": ["*.vh", "*.sv", "*.svh"],
         "line_comments": ["//"],
         "block_comments": [["/*", "*/"]],
         "nested_blocks": true
