@@ -26,29 +26,27 @@ fn get_languages() -> &'static Vec<Language> {
     })
 }
 
+/// Checks if a filename matches a given pattern.
+fn matches_pattern(filename: &str, pattern: &str) -> bool {
+    if let Some(suffix) = pattern.strip_prefix('*') {
+        filename.ends_with(suffix)
+    } else {
+        filename == pattern
+    }
+}
+
 /// Tries to detect a programming language given a filename.
 #[must_use]
 pub fn detect_language(filename: &str) -> Option<String> {
-    get_languages().iter().find_map(|language| {
-        language.file_patterns.iter().find_map(|pattern| {
-            pattern.strip_prefix('*').map_or_else(
-                || {
-                    if filename == pattern {
-                        Some(language.name.clone())
-                    } else {
-                        None
-                    }
-                },
-                |suffix| {
-                    if filename.ends_with(suffix) {
-                        Some(language.name.clone())
-                    } else {
-                        None
-                    }
-                },
-            )
+    get_languages()
+        .iter()
+        .find(|language| {
+            language
+                .file_patterns
+                .iter()
+                .any(|pattern| matches_pattern(filename, pattern))
         })
-    })
+        .map(|language| language.name.clone())
 }
 
 /// Returns the language information for a given language name.
@@ -66,7 +64,7 @@ mod tests {
 
     #[test]
     fn test_detect_language_known_extensions() {
-        let cases = vec![
+        let test_cases = [
             ("test.rs", Some("Rust")),
             ("main.py", Some("Python")),
             ("script.js", Some("JavaScript")),
@@ -78,78 +76,66 @@ mod tests {
             ("module.go", Some("Go")),
             ("unknownfile.xyz", None),
         ];
-        for (input, expected) in cases {
-            let detected = detect_language(input);
+        for (filename, expected) in test_cases {
+            let detected = detect_language(filename);
             assert_eq!(
                 detected.as_deref(),
                 expected,
-                "Expected {:?} for file {:?}, got {:?}",
-                expected,
-                input,
-                detected
+                "Expected {expected:?} for file {filename:?}, got {detected:?}"
             );
         }
     }
 
     #[test]
     fn test_detect_language_exact_match_special_filenames() {
-        let cases = vec![
+        let test_cases = [
             ("Makefile", Some("Makefile")),
             ("Dockerfile", Some("Dockerfile")),
             ("Rakefile", Some("Ruby")),
             ("build.gradle", Some("Gradle")),
             ("CMakeLists.txt", Some("CMake")),
         ];
-        for (input, expected) in cases {
-            let detected = detect_language(input);
+        for (filename, expected) in test_cases {
+            let detected = detect_language(filename);
             assert_eq!(
                 detected.as_deref(),
                 expected,
-                "Expected {:?} for special file {:?}, got {:?}",
-                expected,
-                input,
-                detected
+                "Expected {expected:?} for special file {filename:?}, got {detected:?}"
             );
         }
     }
 
     #[test]
     fn test_detect_language_case_sensitivity() {
-        let cases = vec![
+        let test_cases = [
             ("makefile", Some("Makefile")),
             ("MAKEFILE", None),
             ("Dockerfile", Some("Dockerfile")),
         ];
-        for (input, expected) in cases {
-            let detected = detect_language(input);
+        for (filename, expected) in test_cases {
+            let detected = detect_language(filename);
             assert_eq!(
                 detected.as_deref(),
                 expected,
-                "Expected {:?} for case test file {:?}, got {:?}",
-                expected,
-                input,
-                detected
+                "Expected {expected:?} for case test file {filename:?}, got {detected:?}"
             );
         }
     }
 
     #[test]
     fn test_detect_language_edge_cases() {
-        let cases = vec![
+        let test_cases = [
             ("", None),
             (".hidden", None),
             ("weird.file.name.rs", Some("Rust")),
             ("tricky.rs.txt", None),
         ];
-        for (input, expected) in cases {
-            let detected = detect_language(input);
+        for (filename, expected) in test_cases {
+            let detected = detect_language(filename);
             assert_eq!(
                 detected.as_deref(),
                 expected,
-                "Expected {:?} for edge case file {:?}, got {:?}",
-                expected,
-                input,
-                detected
+                "Expected {expected:?} for edge case file {filename:?}, got {detected:?}"
             );
         }
     }
@@ -176,15 +162,12 @@ mod tests {
 
     #[test]
     fn test_get_language_info() {
-        // Test with a known language
         let rust_info = get_language_info("Rust");
         assert!(rust_info.is_some());
         let rust = rust_info.unwrap();
         assert_eq!(rust.name, "Rust");
         assert!(rust.line_comments.is_some());
         assert!(rust.block_comments.is_some());
-
-        // Test with unknown language
         let unknown_info = get_language_info("UnknownLanguage");
         assert!(unknown_info.is_none());
     }
@@ -192,13 +175,9 @@ mod tests {
     #[test]
     fn test_language_comment_info() {
         let rust_info = get_language_info("Rust").unwrap();
-
-        // Check line comments
         if let Some(ref line_comments) = rust_info.line_comments {
             assert!(line_comments.contains(&"//".to_string()));
         }
-
-        // Check block comments
         if let Some(ref block_comments) = rust_info.block_comments {
             let found_block = block_comments
                 .iter()
