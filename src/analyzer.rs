@@ -24,12 +24,14 @@ pub struct LangStats {
 
 impl LangStats {
     fn add_file(&mut self, file_stats: FileStats) {
-        self.files += 1;
-        self.lines += file_stats.total_lines;
-        self.code_lines += file_stats.code_lines;
-        self.comment_lines += file_stats.comment_lines;
-        self.blank_lines += file_stats.blank_lines;
-        self.size += file_stats.size;
+        *self = Self {
+            files: self.files + 1,
+            lines: self.lines + file_stats.total_lines,
+            code_lines: self.code_lines + file_stats.code_lines,
+            comment_lines: self.comment_lines + file_stats.comment_lines,
+            blank_lines: self.blank_lines + file_stats.blank_lines,
+            size: self.size + file_stats.size,
+        };
     }
 }
 
@@ -138,8 +140,8 @@ impl<'a> CodeAnalyzer<'a> {
             .run(|| {
                 let stats = Arc::clone(&stats);
                 Box::new(move |entry_result| {
-                    match entry_result {
-                        Ok(entry) if entry.file_type().is_some_and(|ft| ft.is_file()) => {
+                    if let Ok(entry) = entry_result {
+                        if entry.file_type().is_some_and(|ft| ft.is_file()) {
                             if let Err(e) = Self::process_file_concurrent(entry.path(), &stats) {
                                 if verbose {
                                     eprintln!(
@@ -149,10 +151,10 @@ impl<'a> CodeAnalyzer<'a> {
                                 }
                             }
                         }
-                        Err(e) if verbose => {
+                    } else if verbose {
+                        if let Err(e) = entry_result {
                             eprintln!("Error walking directory: {e}");
                         }
-                        _ => {}
                     }
                     ignore::WalkState::Continue
                 })
@@ -257,10 +259,8 @@ impl<'a> CodeAnalyzer<'a> {
             .with_context(|| format!("Failed to open file {}", file_path.display()))?;
         let reader = BufReader::new(file);
         let lang_info = langs::get_language_info(language);
-        let mut total_lines = 0u64;
-        let mut code_lines = 0u64;
-        let mut comment_lines = 0u64;
-        let mut blank_lines = 0u64;
+        let (mut total_lines, mut code_lines, mut comment_lines, mut blank_lines) =
+            (0u64, 0u64, 0u64, 0u64);
         let mut comment_state = CommentState::default();
         for line in reader.lines() {
             let line =
@@ -313,11 +313,10 @@ impl<'a> CodeAnalyzer<'a> {
                 {
                     if found_nested_start {
                         comment_state.enter_nested_block();
-                        line_remainder = &line_remainder[pos + end_len..];
                     } else {
-                        line_remainder = &line_remainder[pos + end_len..];
                         comment_state.exit_block(nested);
                     }
+                    line_remainder = &line_remainder[pos + end_len..];
                 } else {
                     break;
                 }
@@ -359,11 +358,9 @@ impl<'a> CodeAnalyzer<'a> {
         block_comments
             .iter()
             .filter_map(|block_pair| {
-                if let [start, ..] = block_pair.as_slice() {
-                    line.find(start).map(|pos| (pos, start.len()))
-                } else {
-                    None
-                }
+                block_pair
+                    .first()
+                    .and_then(|start| line.find(start).map(|pos| (pos, start.len())))
             })
             .min_by_key(|(pos, _)| *pos)
     }
@@ -375,13 +372,13 @@ impl<'a> CodeAnalyzer<'a> {
     ) -> Option<(usize, usize, bool)> {
         for block_pair in block_comments {
             if let [start, end] = block_pair.as_slice() {
-                let start_pos = if nested { line.find(start) } else { None };
+                let start_pos = nested.then(|| line.find(start)).flatten();
                 let end_pos = line.find(end);
                 match (start_pos, end_pos) {
-                    (Some(s_pos), Some(e_pos)) if nested && s_pos < e_pos => {
+                    (Some(s_pos), Some(e_pos)) if s_pos < e_pos => {
                         return Some((s_pos, start.len(), true)); // Found nested start
                     }
-                    (Some(s_pos), None) if nested => {
+                    (Some(s_pos), None) => {
                         return Some((s_pos, start.len(), true)); // Found nested start, no end
                     }
                     (_, Some(e_pos)) => {
