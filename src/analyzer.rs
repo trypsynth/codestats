@@ -12,7 +12,7 @@ use std::{
 };
 
 /// Holds statistics about a programming language's usage throughout a project/folder.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct LangStats {
     pub files: u64,
     pub lines: u64,
@@ -23,26 +23,58 @@ pub struct LangStats {
 }
 
 impl LangStats {
+    /// Adds statistics from a single file to this language's totals
     fn add_file(&mut self, file_stats: FileStats) {
-        *self = Self {
-            files: self.files + 1,
-            lines: self.lines + file_stats.total_lines,
-            code_lines: self.code_lines + file_stats.code_lines,
-            comment_lines: self.comment_lines + file_stats.comment_lines,
-            blank_lines: self.blank_lines + file_stats.blank_lines,
-            size: self.size + file_stats.size,
-        };
+        self.files += 1;
+        self.lines += file_stats.total_lines;
+        self.code_lines += file_stats.code_lines;
+        self.comment_lines += file_stats.comment_lines;
+        self.blank_lines += file_stats.blank_lines;
+        self.size += file_stats.size;
+    }
+
+    /// Returns the percentage of code lines vs total lines
+    pub fn code_percentage(&self) -> f64 {
+        percentage(self.code_lines, self.lines)
+    }
+
+    /// Returns the percentage of comment lines vs total lines
+    pub fn comment_percentage(&self) -> f64 {
+        percentage(self.comment_lines, self.lines)
+    }
+
+    /// Returns the percentage of blank lines vs total lines
+    pub fn blank_percentage(&self) -> f64 {
+        percentage(self.blank_lines, self.lines)
     }
 }
 
 /// Statistics for a single file
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct FileStats {
     total_lines: u64,
     code_lines: u64,
     comment_lines: u64,
     blank_lines: u64,
     size: u64,
+}
+
+impl FileStats {
+    fn new(
+        total_lines: u64,
+        code_lines: u64,
+        comment_lines: u64,
+        blank_lines: u64,
+        size: u64,
+    ) -> Self {
+        Self {
+            total_lines,
+            code_lines,
+            comment_lines,
+            blank_lines,
+            size,
+        }
+    }
 }
 
 /// Thread-safe statistics collector
@@ -70,6 +102,28 @@ impl StatsCollector {
             .or_default()
             .add_file(file_stats);
     }
+
+    /// Returns languages sorted by line count (descending)
+    fn languages_by_lines(&self) -> Vec<(&String, &LangStats)> {
+        let mut stats_vec: Vec<_> = self.lang_stats.iter().collect();
+        stats_vec.sort_by_key(|(_, lang_stats)| Reverse(lang_stats.lines));
+        stats_vec
+    }
+
+    /// Returns overall code percentage
+    fn code_percentage(&self) -> f64 {
+        percentage(self.total_code_lines, self.total_lines)
+    }
+
+    /// Returns overall comment percentage
+    fn comment_percentage(&self) -> f64 {
+        percentage(self.total_comment_lines, self.total_lines)
+    }
+
+    /// Returns overall blank line percentage
+    fn blank_percentage(&self) -> f64 {
+        percentage(self.total_blank_lines, self.total_lines)
+    }
 }
 
 /// Represents different types of lines in source code
@@ -81,13 +135,17 @@ enum LineType {
 }
 
 /// State for tracking block comments during line analysis
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
 struct CommentState {
     in_block_comment: bool,
     block_comment_depth: usize,
 }
 
 impl CommentState {
+    fn new() -> Self {
+        Self::default()
+    }
+
     fn enter_block(&mut self, nested: bool) {
         self.in_block_comment = true;
         if nested {
@@ -103,11 +161,16 @@ impl CommentState {
             }
         } else {
             self.in_block_comment = false;
+            self.block_comment_depth = 0;
         }
     }
 
     fn enter_nested_block(&mut self) {
         self.block_comment_depth += 1;
+    }
+
+    fn is_in_comment(&self) -> bool {
+        self.in_block_comment
     }
 }
 
@@ -140,8 +203,8 @@ impl<'a> CodeAnalyzer<'a> {
             .run(|| {
                 let stats = Arc::clone(&stats);
                 Box::new(move |entry_result| {
-                    if let Ok(entry) = entry_result {
-                        if entry.file_type().is_some_and(|ft| ft.is_file()) {
+                    match entry_result {
+                        Ok(entry) if entry.file_type().map_or(false, |ft| ft.is_file()) => {
                             if let Err(e) = Self::process_file_concurrent(entry.path(), &stats) {
                                 if verbose {
                                     eprintln!(
@@ -151,10 +214,10 @@ impl<'a> CodeAnalyzer<'a> {
                                 }
                             }
                         }
-                    } else if verbose {
-                        if let Err(e) = entry_result {
+                        Err(e) if verbose => {
                             eprintln!("Error walking directory: {e}");
                         }
+                        _ => {}
                     }
                     ignore::WalkState::Continue
                 })
@@ -191,26 +254,20 @@ impl<'a> CodeAnalyzer<'a> {
             stats.total_blank_lines,
             pluralize(stats.total_blank_lines, "line", "lines")
         );
-        let (code_pct, comment_pct, blank_pct) = (
-            percentage(stats.total_code_lines, stats.total_lines),
-            percentage(stats.total_comment_lines, stats.total_lines),
-            percentage(stats.total_blank_lines, stats.total_lines),
-        );
         println!(
-            "Percentages: {code_pct:.1}% code, {comment_pct:.1}% comments, {blank_pct:.1}% blank lines"
+            "Percentages: {:.1}% code, {:.1}% comments, {:.1}% blank lines",
+            stats.code_percentage(),
+            stats.comment_percentage(),
+            stats.blank_percentage()
         );
     }
 
     fn print_language_breakdown(stats: &StatsCollector) {
-        let mut stats_vec: Vec<_> = stats.lang_stats.iter().collect();
-        stats_vec.sort_by_key(|(_, lang_stats)| Reverse(lang_stats.lines));
         println!("\nLanguage breakdown:");
-        for (lang, lang_stats) in stats_vec {
-            let (file_pct, line_pct, size_pct) = (
-                percentage(lang_stats.files, stats.total_files),
-                percentage(lang_stats.lines, stats.total_lines),
-                percentage(lang_stats.size, stats.total_size),
-            );
+        for (lang, lang_stats) in stats.languages_by_lines() {
+            let file_pct = percentage(lang_stats.files, stats.total_files);
+            let line_pct = percentage(lang_stats.lines, stats.total_lines);
+            let size_pct = percentage(lang_stats.size, stats.total_size);
             println!(
                 "{lang}: {} {} ({file_pct:.1}% of files), {} {} ({line_pct:.1}% of lines), {} ({size_pct:.1}% of size)",
                 lang_stats.files,
@@ -219,14 +276,14 @@ impl<'a> CodeAnalyzer<'a> {
                 pluralize(lang_stats.lines, "line", "lines"),
                 human_bytes(lang_stats.size as f64),
             );
-            let (code_pct, comment_pct, blank_pct) = (
-                percentage(lang_stats.code_lines, lang_stats.lines),
-                percentage(lang_stats.comment_lines, lang_stats.lines),
-                percentage(lang_stats.blank_lines, lang_stats.lines),
-            );
             println!(
-                "Code: {} lines ({code_pct:.1}%), Comments: {} lines ({comment_pct:.1}%), Blank: {} lines ({blank_pct:.1}%)",
-                lang_stats.code_lines, lang_stats.comment_lines, lang_stats.blank_lines,
+                "Code: {} lines ({:.1}%), Comments: {} lines ({:.1}%), Blank: {} lines ({:.1}%)",
+                lang_stats.code_lines,
+                lang_stats.code_percentage(),
+                lang_stats.comment_lines,
+                lang_stats.comment_percentage(),
+                lang_stats.blank_lines,
+                lang_stats.blank_percentage(),
             );
         }
     }
@@ -243,13 +300,13 @@ impl<'a> CodeAnalyzer<'a> {
             .len();
         let (total_lines, code_lines, comment_lines, blank_lines) =
             Self::analyze_file_lines(file_path, &language)?;
-        let file_stats = FileStats {
+        let file_stats = FileStats::new(
             total_lines,
             code_lines,
             comment_lines,
             blank_lines,
-            size: file_size,
-        };
+            file_size,
+        );
         stats.lock().unwrap().add_file_stats(language, file_stats);
         Ok(())
     }
@@ -259,20 +316,19 @@ impl<'a> CodeAnalyzer<'a> {
             .with_context(|| format!("Failed to open file {}", file_path.display()))?;
         let reader = BufReader::new(file);
         let lang_info = langs::get_language_info(language);
-        let (mut total_lines, mut code_lines, mut comment_lines, mut blank_lines) =
-            (0u64, 0u64, 0u64, 0u64);
-        let mut comment_state = CommentState::default();
-        for line in reader.lines() {
-            let line =
-                line.with_context(|| format!("Failed to read line from {}", file_path.display()))?;
-            total_lines += 1;
+        let mut line_counts = (0u64, 0u64, 0u64, 0u64); // total, code, comment, blank
+        let mut comment_state = CommentState::new();
+        for line_result in reader.lines() {
+            let line = line_result
+                .with_context(|| format!("Failed to read line from {}", file_path.display()))?;
+            line_counts.0 += 1; // total_lines
             match Self::classify_line(&line, &lang_info, &mut comment_state) {
-                LineType::Code => code_lines += 1,
-                LineType::Comment => comment_lines += 1,
-                LineType::Blank => blank_lines += 1,
+                LineType::Code => line_counts.1 += 1,
+                LineType::Comment => line_counts.2 += 1,
+                LineType::Blank => line_counts.3 += 1,
             }
         }
-        Ok((total_lines, code_lines, comment_lines, blank_lines))
+        Ok(line_counts)
     }
 
     fn classify_line(
@@ -292,7 +348,7 @@ impl<'a> CodeAnalyzer<'a> {
         if let Some(ref block_comments) = lang.block_comments {
             let nested = lang.nested_blocks.unwrap_or(false);
             while !line_remainder.is_empty() {
-                if !comment_state.in_block_comment {
+                if !comment_state.is_in_comment() {
                     if let Some((pos, start_len)) =
                         Self::find_block_comment_start(line_remainder, block_comments)
                     {
@@ -322,7 +378,7 @@ impl<'a> CodeAnalyzer<'a> {
                 }
             }
         }
-        if comment_state.in_block_comment {
+        if comment_state.is_in_comment() {
             return if has_code {
                 LineType::Code
             } else {
@@ -341,7 +397,7 @@ impl<'a> CodeAnalyzer<'a> {
                 };
             }
         }
-        if !line_remainder.is_empty() {
+        if !line_remainder.trim().is_empty() {
             has_code = true;
         }
         if has_code {
@@ -372,17 +428,17 @@ impl<'a> CodeAnalyzer<'a> {
     ) -> Option<(usize, usize, bool)> {
         for block_pair in block_comments {
             if let [start, end] = block_pair.as_slice() {
-                let start_pos = nested.then(|| line.find(start)).flatten();
+                let start_pos = if nested { line.find(start) } else { None };
                 let end_pos = line.find(end);
                 match (start_pos, end_pos) {
                     (Some(s_pos), Some(e_pos)) if s_pos < e_pos => {
-                        return Some((s_pos, start.len(), true)); // Found nested start
+                        return Some((s_pos, start.len(), true));
                     }
                     (Some(s_pos), None) => {
-                        return Some((s_pos, start.len(), true)); // Found nested start, no end
+                        return Some((s_pos, start.len(), true));
                     }
                     (_, Some(e_pos)) => {
-                        return Some((e_pos, end.len(), false)); // Found end
+                        return Some((e_pos, end.len(), false));
                     }
                     _ => continue,
                 }
@@ -399,10 +455,12 @@ impl<'a> CodeAnalyzer<'a> {
     }
 }
 
+/// Returns the singular or plural form based on count
 const fn pluralize<'a>(count: u64, singular: &'a str, plural: &'a str) -> &'a str {
     if count == 1 { singular } else { plural }
 }
 
+/// Calculates percentage with zero-division safety
 fn percentage(part: u64, total: u64) -> f64 {
     if total == 0 {
         0.0
@@ -416,48 +474,53 @@ mod tests {
     use super::*;
 
     #[test]
-    fn pluralize_singular_and_plural() {
-        assert_eq!(pluralize(1, "file", "files"), "file");
+    fn test_pluralize() {
         assert_eq!(pluralize(0, "file", "files"), "files");
+        assert_eq!(pluralize(1, "file", "files"), "file");
         assert_eq!(pluralize(2, "line", "lines"), "lines");
+        assert_eq!(pluralize(42, "item", "items"), "items");
     }
 
     #[test]
-    fn percentage_normal_cases() {
+    fn test_percentage() {
         assert_eq!(percentage(0, 100), 0.0);
         assert_eq!(percentage(1, 2), 50.0);
         assert_eq!(percentage(25, 100), 25.0);
         assert_eq!(percentage(3, 4), 75.0);
+        assert_eq!(percentage(100, 100), 100.0);
     }
 
     #[test]
-    fn percentage_zero_total() {
+    fn test_percentage_zero_total() {
         assert_eq!(percentage(10, 0), 0.0);
+        assert_eq!(percentage(0, 0), 0.0);
     }
 
     #[test]
-    fn file_stats_creation() {
-        let stats = FileStats {
-            total_lines: 10,
-            code_lines: 8,
-            comment_lines: 1,
-            blank_lines: 1,
-            size: 1000,
-        };
+    fn test_file_stats_creation() {
+        let stats = FileStats::new(10, 8, 1, 1, 1000);
         assert_eq!(stats.total_lines, 10);
         assert_eq!(stats.code_lines, 8);
+        assert_eq!(stats.comment_lines, 1);
+        assert_eq!(stats.blank_lines, 1);
+        assert_eq!(stats.size, 1000);
     }
 
     #[test]
-    fn lang_stats_add_file_accumulates() {
-        let mut stats = LangStats::default();
-        let file1 = FileStats {
-            total_lines: 10,
-            code_lines: 8,
-            comment_lines: 1,
-            blank_lines: 1,
-            size: 1000,
-        };
+    fn test_lang_stats_new() {
+        let stats = LangStats::new();
+        assert_eq!(stats.files, 0);
+        assert_eq!(stats.lines, 0);
+        assert_eq!(stats.code_lines, 0);
+        assert_eq!(stats.comment_lines, 0);
+        assert_eq!(stats.blank_lines, 0);
+        assert_eq!(stats.size, 0);
+    }
+
+    #[test]
+    fn test_lang_stats_add_file() {
+        let mut stats = LangStats::new();
+        let file1 = FileStats::new(10, 8, 1, 1, 1000);
         stats.add_file(file1);
         assert_eq!(stats.files, 1);
         assert_eq!(stats.lines, 10);
@@ -465,13 +528,7 @@ mod tests {
         assert_eq!(stats.comment_lines, 1);
         assert_eq!(stats.blank_lines, 1);
         assert_eq!(stats.size, 1000);
-        let file2 = FileStats {
-            total_lines: 5,
-            code_lines: 3,
-            comment_lines: 2,
-            blank_lines: 0,
-            size: 500,
-        };
+        let file2 = FileStats::new(5, 3, 2, 0, 500);
         stats.add_file(file2);
         assert_eq!(stats.files, 2);
         assert_eq!(stats.lines, 15);
@@ -482,25 +539,69 @@ mod tests {
     }
 
     #[test]
-    fn comment_state_operations() {
-        let mut state = CommentState::default();
-        assert!(!state.in_block_comment);
-        state.enter_block(true);
-        assert!(state.in_block_comment);
-        assert_eq!(state.block_comment_depth, 1);
-        state.enter_nested_block();
-        assert_eq!(state.block_comment_depth, 2);
-        state.exit_block(true);
-        assert_eq!(state.block_comment_depth, 1);
-        assert!(state.in_block_comment);
-        state.exit_block(true);
-        assert_eq!(state.block_comment_depth, 0);
-        assert!(!state.in_block_comment);
+    fn test_lang_stats_percentages() {
+        let mut stats = LangStats::new();
+        let file_stats = FileStats::new(100, 75, 15, 10, 5000);
+        stats.add_file(file_stats);
+        assert_eq!(stats.code_percentage(), 75.0);
+        assert_eq!(stats.comment_percentage(), 15.0);
+        assert_eq!(stats.blank_percentage(), 10.0);
     }
 
     #[test]
-    fn classify_line_blank() {
-        let mut state = CommentState::default();
+    fn test_lang_stats_percentages_zero_lines() {
+        let stats = LangStats::new();
+        assert_eq!(stats.code_percentage(), 0.0);
+        assert_eq!(stats.comment_percentage(), 0.0);
+        assert_eq!(stats.blank_percentage(), 0.0);
+    }
+
+    #[test]
+    fn test_comment_state_new() {
+        let state = CommentState::new();
+        assert!(!state.is_in_comment());
+        assert_eq!(state.block_comment_depth, 0);
+    }
+
+    #[test]
+    fn test_comment_state_non_nested() {
+        let mut state = CommentState::new();
+        state.enter_block(false);
+        assert!(state.is_in_comment());
+        assert_eq!(state.block_comment_depth, 0);
+        state.exit_block(false);
+        assert!(!state.is_in_comment());
+        assert_eq!(state.block_comment_depth, 0);
+    }
+
+    #[test]
+    fn test_comment_state_nested() {
+        let mut state = CommentState::new();
+        state.enter_block(true);
+        assert!(state.is_in_comment());
+        assert_eq!(state.block_comment_depth, 1);
+        state.enter_nested_block();
+        assert_eq!(state.block_comment_depth, 2);
+        assert!(state.is_in_comment());
+        state.exit_block(true);
+        assert_eq!(state.block_comment_depth, 1);
+        assert!(state.is_in_comment());
+        state.exit_block(true);
+        assert_eq!(state.block_comment_depth, 0);
+        assert!(!state.is_in_comment());
+    }
+
+    #[test]
+    fn test_comment_state_saturating_sub() {
+        let mut state = CommentState::new();
+        state.exit_block(true);
+        assert_eq!(state.block_comment_depth, 0);
+        assert!(!state.is_in_comment());
+    }
+
+    #[test]
+    fn test_classify_line_blank() {
+        let mut state = CommentState::new();
         assert_eq!(
             CodeAnalyzer::classify_line("", &None, &mut state),
             LineType::Blank
@@ -509,14 +610,131 @@ mod tests {
             CodeAnalyzer::classify_line("   ", &None, &mut state),
             LineType::Blank
         );
+        assert_eq!(
+            CodeAnalyzer::classify_line("\t\t", &None, &mut state),
+            LineType::Blank
+        );
+        assert_eq!(
+            CodeAnalyzer::classify_line(" \t \n ", &None, &mut state),
+            LineType::Blank
+        );
     }
 
     #[test]
-    fn classify_line_code_no_lang_info() {
-        let mut state = CommentState::default();
+    fn test_classify_line_no_language_info() {
+        let mut state = CommentState::new();
         assert_eq!(
             CodeAnalyzer::classify_line("let x = 5;", &None, &mut state),
             LineType::Code
         );
+        assert_eq!(
+            CodeAnalyzer::classify_line("function test() {", &None, &mut state),
+            LineType::Code
+        );
+    }
+
+    #[test]
+    fn test_stats_collector_accumulation() {
+        let mut collector = StatsCollector::default();
+        let file1 = FileStats::new(10, 8, 1, 1, 1000);
+        collector.add_file_stats("Rust".to_string(), file1);
+        assert_eq!(collector.total_files, 1);
+        assert_eq!(collector.total_lines, 10);
+        assert_eq!(collector.total_code_lines, 8);
+        assert_eq!(collector.lang_stats.len(), 1);
+        let file2 = FileStats::new(5, 3, 2, 0, 500);
+        collector.add_file_stats("Python".to_string(), file2);
+        assert_eq!(collector.total_files, 2);
+        assert_eq!(collector.total_lines, 15);
+        assert_eq!(collector.total_code_lines, 11);
+        assert_eq!(collector.lang_stats.len(), 2);
+    }
+
+    #[test]
+    fn test_stats_collector_percentages() {
+        let mut collector = StatsCollector::default();
+        let file_stats = FileStats::new(100, 70, 20, 10, 5000);
+        collector.add_file_stats("Test".to_string(), file_stats);
+        assert_eq!(collector.code_percentage(), 70.0);
+        assert_eq!(collector.comment_percentage(), 20.0);
+        assert_eq!(collector.blank_percentage(), 10.0);
+    }
+
+    #[test]
+    fn test_stats_collector_languages_by_lines() {
+        let mut collector = StatsCollector::default();
+        collector.add_file_stats("Rust".to_string(), FileStats::new(100, 80, 10, 10, 2000));
+        collector.add_file_stats("Python".to_string(), FileStats::new(50, 40, 5, 5, 1000));
+        collector.add_file_stats(
+            "JavaScript".to_string(),
+            FileStats::new(75, 60, 10, 5, 1500),
+        );
+        let sorted = collector.languages_by_lines();
+        assert_eq!(sorted.len(), 3);
+        assert_eq!(sorted[0].0, "Rust"); // 100 lines
+        assert_eq!(sorted[1].0, "JavaScript"); // 75 lines
+        assert_eq!(sorted[2].0, "Python"); // 50 lines
+    }
+
+    #[test]
+    fn test_find_block_comment_start() {
+        let block_comments = vec![vec!["/*".to_string(), "*/".to_string()]];
+        assert_eq!(
+            CodeAnalyzer::find_block_comment_start("/* comment */", &block_comments),
+            Some((0, 2))
+        );
+        assert_eq!(
+            CodeAnalyzer::find_block_comment_start("code /* comment", &block_comments),
+            Some((5, 2))
+        );
+        assert_eq!(
+            CodeAnalyzer::find_block_comment_start("no comment here", &block_comments),
+            None
+        );
+    }
+
+    #[test]
+    fn test_find_line_comment_start() {
+        let line_comments = vec!["//".to_string(), "#".to_string()];
+        assert_eq!(
+            CodeAnalyzer::find_line_comment_start("// comment", &line_comments),
+            Some(0)
+        );
+        assert_eq!(
+            CodeAnalyzer::find_line_comment_start("code // comment", &line_comments),
+            Some(5)
+        );
+        assert_eq!(
+            CodeAnalyzer::find_line_comment_start("# python comment", &line_comments),
+            Some(0)
+        );
+        assert_eq!(
+            CodeAnalyzer::find_line_comment_start("code # comment", &line_comments),
+            Some(5)
+        );
+        assert_eq!(
+            CodeAnalyzer::find_line_comment_start("no comment", &line_comments),
+            None
+        );
+    }
+
+    #[test]
+    fn test_multiple_file_types_integration() {
+        let mut collector = StatsCollector::default();
+        collector.add_file_stats("Rust".to_string(), FileStats::new(200, 150, 30, 20, 8000));
+        collector.add_file_stats("Python".to_string(), FileStats::new(100, 70, 20, 10, 3000));
+        collector.add_file_stats("Rust".to_string(), FileStats::new(50, 40, 5, 5, 2000));
+        assert_eq!(collector.total_files, 3);
+        assert_eq!(collector.total_lines, 350);
+        assert_eq!(collector.total_code_lines, 260);
+        assert_eq!(collector.total_size, 13000);
+        let rust_stats = collector.lang_stats.get("Rust").unwrap();
+        assert_eq!(rust_stats.files, 2);
+        assert_eq!(rust_stats.lines, 250);
+        assert_eq!(rust_stats.code_lines, 190);
+        let python_stats = collector.lang_stats.get("Python").unwrap();
+        assert_eq!(python_stats.files, 1);
+        assert_eq!(python_stats.lines, 100);
+        assert_eq!(python_stats.code_lines, 70);
     }
 }
