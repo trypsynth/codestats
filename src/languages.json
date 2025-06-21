@@ -1,944 +1,944 @@
 [
-    {
-        "name": "ABAP",
-        "file_patterns": ["*.abap"],
-        "line_comments": ["*"]
-    },
-    {
-        "name": "Ada",
-        "file_patterns": ["*.ada", "*.adb", "*.ads"],
-        "line_comments": ["--"]
-    },
-    {
-        "name": "Agda",
-        "file_patterns": ["*.agda", "*.lagda"],
-        "line_comments": ["--"],
-        "block_comments": [["{-", "-}"]],
-        "nested_blocks": true
-    },
-    {
-        "name": "Alloy",
-        "file_patterns": ["*.als"],
-        "line_comments": ["//", "--"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "AngelScript",
-        "file_patterns": ["*.as", "*.angelscript"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "Apex",
-        "file_patterns": ["*.apex", "*.cls", "*.trigger"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "APL",
-        "file_patterns": ["*.apl", "*.dyalog"],
-        "line_comments": ["⍝"]
-    },
-    {
-        "name": "AppleScript",
-        "file_patterns": ["*.scpt", "*.applescript"],
-        "line_comments": ["--", "#"]
-    },
-    {
-        "name": "Assembly",
-        "file_patterns": ["*.asm", "*.s", "*.nasm"],
-        "line_comments": [";", "#"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "AsciiDoc",
-        "file_patterns": ["*.adoc", "*.asciidoc", "*.asc"],
-        "line_comments": ["//"],
-        "block_comments": [["////", "////"]]
-    },
-    {
-        "name": "AutoHotkey",
-        "file_patterns": ["*.ahk", "*.ahkl", "*.ah2"],
-        "line_comments": [";"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "AutoIt",
-        "file_patterns": ["*.au3"],
-        "line_comments": [";"]
-    },
-    {
-        "name": "AWK",
-        "file_patterns": ["*.awk", "*.gawk", "*.nawk"],
-        "line_comments": ["#"]
-    },
-    {
-        "name": "Ballerina",
-        "file_patterns": ["*.bal"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "BCX/FreeBASIC",
-        "file_patterns": ["*.bas", "*.bi"],
-        "line_comments": ["'", "rem"],
-        "block_comments": [["$comment", "$comment"]]
-    },
-    {
-        "name": "Batch Script",
-        "file_patterns": ["*.bat", "*.cmd"],
-        "line_comments": ["rem", "::"]
-    },
-    {
-        "name": "Bazel",
-        "file_patterns": ["*.bzl", "*.star", "BUILD", "BUILD.bazel", "WORKSPACE", "MODULE.bazel"],
-        "line_comments": ["#"]
-    },
-    {
-        "name": "BGT",
-        "file_patterns": ["*.bgt"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "Bicep",
-        "file_patterns": ["*.bicep"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "BlitzBasic",
-        "file_patterns": ["*.bb", "*.decls", "*.bb2"],
-        "line_comments": [";"]
-    },
-    {
-        "name": "Boo",
-        "file_patterns": ["*.boo"],
-        "line_comments": ["#"]
-    },
-    {
-        "name": "Brainfuck",
-        "file_patterns": ["*.bf", "*.b"]
-    },
-    {
-        "name": "BrightScript",
-        "file_patterns": ["*.brs"],
-        "line_comments": ["'", "rem"]
-    },
-    {
-        "name": "Buck",
-        "file_patterns": ["BUCK"],
-        "line_comments": ["#"]
-    },
-    {
-        "name": "C",
-        "file_patterns": ["*.c", "*.h"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "C++",
-        "file_patterns": ["*.cpp", "*.hpp", "*.c++", "*.h++", "*.cc", "*.cxx", "*.hxx", "*.ino", "*.ipp", "*.pde", "*.cppm", "*.ixx", "*.c++m"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "C#",
-        "file_patterns": ["*.cs", "*.csx", "*.cake"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "Cabal",
-        "file_patterns": ["*.cabal", "cabal.project", "cabal.project.freeze"],
-        "line_comments": ["--"]
-    },
-    {
-        "name": "ChaiScript",
-        "file_patterns": ["*.chai"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "Chapel",
-        "file_patterns": ["*.chpl"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "Clojure",
-        "file_patterns": ["*.clj", "*.cljs", "*.cljc", "*.edn"],
-        "line_comments": [";"],
-        "block_comments": [["(comment", ")"]]
-    },
-    {
-        "name": "CMake",
-        "file_patterns": ["*.cmake", "*.cmake.in", "*.cmake.rule", "CMakeLists.txt"],
-        "line_comments": ["#"]
-    },
-    {
-        "name": "COBOL",
-        "file_patterns": ["*.cbl", "*.cob", "*.cpy"],
-        "line_comments": ["*>"]
-    },
-    {
-        "name": "CoffeeScript",
-        "file_patterns": ["*.coffee"],
-        "line_comments": ["#"],
-        "block_comments": [["###", "###"]]
-    },
-    {
-        "name": "ColdFusion",
-        "file_patterns": ["*.cfm", "*.cfc"],
-        "line_comments": ["//"],
-        "block_comments": [["<!---", "--->"], ["/*", "*/"]]
-    },
-    {
-        "name": "Common Lisp",
-        "file_patterns": ["*.lisp", "*.asd", "*.cl"],
-        "line_comments": [";"],
-        "block_comments": [["#|", "|#"]],
-        "nested_blocks": true
-    },
-    {
-        "name": "Crystal",
-        "file_patterns": ["*.cr"],
-        "line_comments": ["#"]
-    },
-    {
-        "name": "CSON",
-        "file_patterns": ["*.cson"],
-        "line_comments": ["#"],
-        "block_comments": [["###", "###"]]
-    },
-    {
-        "name": "CSS",
-        "file_patterns": ["*.css", "*.sass", "*.scss", "*.postcss", "*.styl"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "CSV",
-        "file_patterns": ["*.csv"]
-    },
-    {
-        "name": "CUDA",
-        "file_patterns": ["*.cu", "*.cuh", "*.ptx"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "Cython",
-        "file_patterns": ["*.pyx", "*.pxd", "*.pyi"],
-        "line_comments": ["#"]
-    },
-    {
-        "name": "D",
-        "file_patterns": ["*.d", "*.di"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"], ["/+", "+/"]],
-        "nested_blocks": true
-    },
-    {
-        "name": "Dart",
-        "file_patterns": ["*.dart"],
-        "line_comments": ["//", "///"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "Delphi/Object Pascal",
-        "file_patterns": ["*.dpr", "*.dpk"],
-        "line_comments": ["//"],
-        "block_comments": [["(*", "*)"], ["{", "}"]]
-    },    
-    {
-        "name": "Dockerfile",
-        "file_patterns": ["*.dockerfile", "Dockerfile"],
-        "line_comments": ["#"]
-    },
-    {
-        "name": "EBNF",
-        "file_patterns": ["*.ebnf"],
-        "line_comments": ["//"],
-        "block_comments": [["(*", "*)"]]
-    },
-    {
-        "name": "Eiffel",
-        "file_patterns": ["*.e"],
-        "line_comments": ["--"]
-    },
-    {
-        "name": "EJS",
-        "file_patterns": ["*.ejs"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"], ["<!--", "-->"]]
-    },
-    {
-        "name": "Elixir",
-        "file_patterns": ["*.ex", "*.exs"],
-        "line_comments": ["#"]
-    },
-    {
-        "name": "Elm",
-        "file_patterns": ["*.elm"],
-        "line_comments": ["--"],
-        "block_comments": [["{-", "-}"]],
-        "nested_blocks": true
-    },
-    {
-        "name": "Emacs Lisp",
-        "file_patterns": ["*.el"],
-        "line_comments": [";"]
-    },
-    {
-        "name": "EmberScript",
-        "file_patterns": ["*.em"],
-        "line_comments": ["#"],
-        "block_comments": [["###", "###"]]
-    },
-    {
-        "name": "Erlang",
-        "file_patterns": ["*.erl", "*.hrl", "rebar.config", "rebar.lock"],
-        "line_comments": ["%"]
-    },
-    {
-        "name": "F#",
-        "file_patterns": ["*.fs", "*.fsi", "*.fsx"],
-        "line_comments": ["//"],
-        "block_comments": [["(*", "*)"]],
-        "nested_blocks": true
-    },
-    {
-        "name": "Forth",
-        "file_patterns": ["*.4th", "*.fth", "*.frt"],
-        "line_comments": ["\\"]
-    },
-    {
-        "name": "Fortran",
-        "file_patterns": ["*.f", "*.for", "*.f77", "*.f90", "*.f95", "*.f03"],
-        "line_comments": ["!", "C", "c"]
-    },
-    {
-        "name": "GDScript",
-        "file_patterns": ["*.gd"],
-        "line_comments": ["#"]
-    },
-    {
-        "name": "GLSL",
-        "file_patterns": ["*.glsl", "*.vert", "*.frag", "*.geom", "*.tesc", "*.tese", "*.comp"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "Go",
-        "file_patterns": ["*.go", "*.tmpl", "*.gohtml", "*.gotmpl", "go.mod"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "GraphQL",
-        "file_patterns": ["*.graphql", "*.gql"],
-        "line_comments": ["#"]
-    },
-    {
-        "name": "Gradle",
-        "file_patterns": ["*.gradle", "gradle.properties"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "Groovy",
-        "file_patterns": ["*.groovy", "*.gvy", "*.gy", "*.gsh"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "Hack",
-        "file_patterns": ["*.hh", "*.hhi", "*.hack"],
-        "line_comments": ["//", "#"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "HAML",
-        "file_patterns": ["*.haml"],
-        "line_comments": ["-#"]
-    },
-    {
-        "name": "Handlebars",
-        "file_patterns": ["*.hbs", "*.handlebars"],
-        "block_comments": [["{{!--", "--}}"]]
-    },
-    {
-        "name": "Haskell",
-        "file_patterns": ["*.hs", "*.lhs", "*.hsc", "*.hs-boot", ".ghci"],
-        "line_comments": ["--"],
-        "block_comments": [["{-", "-}"]],
-        "nested_blocks": true
-    },
-    {
-        "name": "HLSL",
-        "file_patterns": ["*.hlsl", "*.fx", "*.fxh", "*.hlsli"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "HTML",
-        "file_patterns": ["*.html", "*.htm", "*.xht", "*.xhtml"],
-        "block_comments": [["<!--", "-->"]]
-    },
-    {
-        "name": "IDL",
-        "file_patterns": ["*.idl", "*.widl"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "Idris",
-        "file_patterns": ["*.idr", "*.lidr"],
-        "line_comments": ["--"],
-        "block_comments": [["{-", "-}"]],
-        "nested_blocks": true
-    },
-    {
-        "name": "Inform 7",
-        "file_patterns": ["*.ni", "*.i7x"],
-        "block_comments": [["[", "]"]]
-    },
-    {
-        "name": "INI",
-        "file_patterns": ["*.ini", "*.cfg", "*.prefs", "*.properties", ".editorconfig", ".gitconfig", "buildozer.spec"],
-        "line_comments": [";", "#"]
-    },
-    {
-        "name": "Inno Setup",
-        "file_patterns": ["*.iss", "*.ish"],
-        "line_comments": [";", "//"],
-        "block_comments": [["{", "}"], ["(*", "*)"]]
-    },
-    {
-        "name": "J",
-        "file_patterns": ["*.ijs"],
-        "line_comments": ["NB."]
-    },
-    {
-        "name": "Java",
-        "file_patterns": ["*.java", "*.jav"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "Java Server Pages",
-        "file_patterns": ["*.jsp"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"], ["<!--", "-->"]]
-    },
-    {
-        "name": "JavaScript",
-        "file_patterns": ["*.js", "*.cjs", "*.jsx", "*.jscad", "*.jsfl", "*.mjs", "*.njs", "*.sjs", "*.ssjs", "*.xsjs", "*.xsjslib", "*.es", "*.es6", "*.jake", ".babelrc", ".eslintrc", ".prettierrc"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "JAWS Script",
-        "file_patterns": ["*.jss", "*.jsh"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "Jinja2",
-        "file_patterns": ["*.j2", "*.jinja", "*.jinja2"],
-        "line_comments": ["{#"],
-        "block_comments": [["{#", "#}"]]
-    },
-    {
-        "name": "JSON",
-        "file_patterns": ["*.json", "*.geojson", "*.jsonc", "*.ndjson", "*.jsonl"]
-    },
-    {
-        "name": "Julia",
-        "file_patterns": ["*.jl"],
-        "line_comments": ["#"],
-        "block_comments": [["#=", "=#"]],
-        "nested_blocks": true
-    },
-    {
-        "name": "Kotlin",
-        "file_patterns": ["*.kt", "*.kts", "*.ktm"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "Lean",
-        "file_patterns": ["*.lean"],
-        "line_comments": ["--"],
-        "block_comments": [["/-", "-/"]]
-    },    
-    {
-        "name": "Less",
-        "file_patterns": ["*.less"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "LilyPond",
-        "file_patterns": ["*.ly", "*.ily"],
-        "line_comments": ["%"],
-        "block_comments": [["%{", "%}"]]
-    },
-    {
-        "name": "Liquid Templates",
-        "file_patterns": ["*.liquid"],
-        "block_comments": [["{% comment %}", "{% endcomment %}"]]
-    },
-    {
-        "name": "LiveScript",
-        "file_patterns": ["*.ls"],
-        "line_comments": ["#"]
-    },    
-    {
-        "name": "Lua",
-        "file_patterns": ["*.lua", "*.wlua", "*.luau", "*.rockspec", ".luacheckrc"],
-        "line_comments": ["--"],
-        "block_comments": [["--[[", "--]]"]]
-    },
-    {
-        "name": "Makefile",
-        "file_patterns": ["*.mak", "*.make", "*.mk", "*.mkfile", "BSDmakefile", "GNUmakefile", "Kbuild", "Makefile", "Makefile.am", "Makefile.boot", "Makefile.frag", "Makefile.in", "Makefile.inc", "Makefile.wat", "makefile", "makefile.sco", "mkfile"],
-        "line_comments": ["#"]
-    },
-    {
-        "name": "Markdown",
-        "file_patterns": ["*.md", "*.markdown", "*.mdx", "*.mdown", "*.mdwn", "*.mkd", "*.mkdn", "*.mkdown", "*.ronn", "*.workbook"],
-        "block_comments": [["<!--", "-->"]]
-    },
-    {
-        "name": "Maven",
-        "file_patterns": ["pom.xml"],
-        "block_comments": [["<!--", "-->"]]
-    },
-    {
-        "name": "MessagePack",
-        "file_patterns": ["*.msgpack"]
-    },
-    {
-        "name": "Meson",
-        "file_patterns": ["meson.build"],
-        "line_comments": ["#"]
-    },
-    {
-        "name": "Modula-2/3",
-        "file_patterns": ["*.m3", "*.mi"],
-        "block_comments": [["(*", "*)"]],
-        "nested_blocks": true
-    },
-    {
-        "name": "Moo",
-        "file_patterns": ["*.moo"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "Mustache",
-        "file_patterns": ["*.mustache"],
-        "block_comments": [["{{!", "}}"]]
-    },
-    {
-        "name": "Nim",
-        "file_patterns": ["*.nim"],
-        "line_comments": ["#"],
-        "block_comments": [["#[", "]#"]],
-        "nested_blocks": true
-    },
-    {
-        "name": "Ninja",
-        "file_patterns": ["build.ninja"],
-        "line_comments": ["#"]
-    },
-    {
-        "name": "Nix",
-        "file_patterns": ["*.nix"],
-        "line_comments": ["#"],
-        "block_comments": [["/*", "*/"]]
-    },    
-    {
-        "name": "NSIS",
-        "file_patterns": ["*.nsi", "*.nsh"],
-        "line_comments": [";", "#"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "Nunjucks Templates",
-        "file_patterns": ["*.njk"],
-        "block_comments": [["{#", "#}"]]
-    },
-    {
-        "name": "NVGT",
-        "file_patterns": ["*.nvgt", ".nvgtrc"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "Objective-C",
-        "file_patterns": ["*.m"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "Objective-C++",
-        "file_patterns": ["*.mm"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "Objective-J",
-        "file_patterns": ["*.j", "*.sj"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "OCaml",
-        "file_patterns": ["*.ml", "*.mli", "*.cmx", "*.cmxa", "*.mll", "*.mly"],
-        "block_comments": [["(*", "*)"]],
-        "nested_blocks": true
-    },
-    {
-        "name": "OpenSCAD",
-        "file_patterns": ["*.scad"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "Oz",
-        "file_patterns": ["*.oz"],
-        "line_comments": ["%"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "Pascal",
-        "file_patterns": ["*.pas", "*.pp", "*.p", "*.inc"],
-        "line_comments": ["//"],
-        "block_comments": [["(*", "*)"], ["{", "}"]],
-        "nested_blocks": true
-    },
-    {
-        "name": "PHP",
-        "file_patterns": ["*.php", "*.php3", "*.php4", "*.php5", "*.phps", "*.phpt", "*.phtml"],
-        "line_comments": ["//", "#"],
-        "block_comments": [["/*", "*/"], ["<!--", "-->"]]
-    },
-    {
-        "name": "Perl",
-        "file_patterns": ["*.pl", "*.al", "*.perl", "*.plx", "*.pm", "rexfile", "ack", "cpanfile", "cpanfile.snapshot"],
-        "line_comments": ["#"],
-        "block_comments": [["=pod", "=cut"]]
-    },
-    {
-        "name": "PogoScript",
-        "file_patterns": ["*.pogo"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "Pony",
-        "file_patterns": ["*.pony"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "PowerShell",
-        "file_patterns": ["*.ps1", "*.psd1", "*.psm1", "*.ps1xml"],
-        "line_comments": ["#"],
-        "block_comments": [["<#", "#>"]]
-    },
-    {
-        "name": "Protocol Buffers",
-        "file_patterns": ["*.proto"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "Pug",
-        "file_patterns": ["*.pug", "*.jade"],
-        "line_comments": ["//", "//-"]
-    },
-    {
-        "name": "PureBasic",
-        "file_patterns": ["*.pb", "*.pbi", "*.pbf", "*.pbp"],
-        "line_comments": [";"]
-    },
-    {
-        "name": "Python",
-        "file_patterns": ["*.py", "*.pyw", "*.py2", "*.py3", "*.pip", "*.pyz", "*.pyzw", ".gclient", "SConscript", "SConstruct", "Snakefile", "requirements.txt", "Pipfile", ".pythonrc", "py.typed"],
-        "line_comments": ["#"],
-        "block_comments": [["\"\"\"", "\"\"\""], ["'''", "'''"]]
-    },
-    {
-        "name": "Q#",
-        "file_patterns": ["*.qs"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "QML",
-        "file_patterns": ["*.qml"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "R",
-        "file_patterns": ["*.r", "*.rmd", ".Rprofile"],
-        "line_comments": ["#"]
-    },
-    {
-        "name": "Racket",
-        "file_patterns": ["*.rkt", "*.rktd", "*.rktl", "*.rktm"],
-        "line_comments": [";"],
-        "block_comments": [["#|", "|#"]],
-        "nested_blocks": true
-    },
-    {
-        "name": "Raku",
-        "file_patterns": ["*.raku", "*.rakumod", "*.rakutest", "*.pm6", "*.pl6", "*.p6"],
-        "line_comments": ["#"],
-        "block_comments": [["#`(", ")"], ["=begin", "=end"]]
-    },
-    {
-        "name": "reStructuredText",
-        "file_patterns": ["*.rst"],
-        "line_comments": [".."]
-    },
-    {
-        "name": "Robot Framework",
-        "file_patterns": ["*.robot"],
-        "line_comments": ["#"]
-    },
-    {
-        "name": "Ruby",
-        "file_patterns": ["*.rb", "*.builder", "*.eye", "*.gemspec", "*.god", "*.jbuilder", "*.mspec", "*.pluginspec", "*.podspec", "*.rabl", "*.rake", "*.rbuild", "*.rbw", "*.rbx", "*.ruby", "*.thor", "*.watchr", ".irbrc", ".pryrc", "Appraisals", "Berksfile", "Brewfile", "Buildfile", "Capfile", "Dangerfile", "Deliverfile", "Fastfile", "Gemfile", "Guardfile", "Jarfile", "Mavenfile", "Podfile", "Puppetfile", "Rakefile", "Snapfile", "Thorfile"],
-        "line_comments": ["#"],
-        "block_comments": [["=begin", "=end"]]
-    },
-    {
-        "name": "Rust",
-        "file_patterns": ["*.rs", "*.rs.in", "*.rslib", "*.rlib"],
-        "line_comments": ["//", "///", "//!"],
-        "block_comments": [["/*", "*/"], ["/**", "*/"], ["/*!", "*/"]],
-        "nested_blocks": true
-    },
-    {
-        "name": "SageMath",
-        "file_patterns": ["*.sage", "*.sagews"],
-        "line_comments": ["#"],
-        "block_comments": [["\"\"\"", "\"\"\""], ["'''", "'''"]]
-    },
-    {
-        "name": "Scala",
-        "file_patterns": ["*.scala", "*.sc", "build.sbt"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "Scheme",
-        "file_patterns": ["*.scm", "*.ss"],
-        "line_comments": [";"],
-        "block_comments": [["#|", "|#"]],
-        "nested_blocks": true
-    },
-    {
-        "name": "Sed",
-        "file_patterns": ["*.sed"],
-        "line_comments": ["#"]
-    },
-    {
-        "name": "Shell Script",
-        "file_patterns": ["*.sh", "*.bash", "*.ksh", "*.tmux", "*.zsh", "*.fish", "*.csh", "*.tcsh", ".bash_logout", ".bash_profile", ".bashrc", ".login", ".profile", ".zlogin", ".zlogout", ".zprofile", ".zshenv", ".zshrc", ".bash_aliases"],
-        "line_comments": ["#"]
-    },
-    {
-        "name": "Slim",
-        "file_patterns": ["*.slim"],
-        "line_comments": ["/", "//"]
-    },
-    {
-        "name": "Smalltalk",
-        "file_patterns": ["*.st"],
-        "block_comments": [["\"", "\""]]
-    },
-    {
-        "name": "Smarty",
-        "file_patterns": ["*.tpl"],
-        "block_comments": [["{{*", "*}}"]]
-    },
-    {
-        "name": "Solidity",
-        "file_patterns": ["*.sol"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },    
-    {
-        "name": "SpiderBasic",
-        "file_patterns": ["*.sb", "*.sbi", "*.sbf", "*.sbp"],
-        "line_comments": [";"]
-    },
-    {
-        "name": "SQL",
-        "file_patterns": ["*.sql"],
-        "line_comments": ["--"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "Squirrel",
-        "file_patterns": ["*.nut"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "Stan",
-        "file_patterns": ["*.stan"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },
-    {
-        "name": "Svelte",
-        "file_patterns": ["*.svelte"],
-        "line_comments": ["//"],
-        "block_comments": [["<!--", "-->"], ["/*", "*/"]]
-    },
-    {
-        "name": "Swift",
-        "file_patterns": ["*.swift", "*.swiftpm"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]],
-        "nested_blocks": true
-    },
-    {
-        "name": "Tcl",
-        "file_patterns": ["*.tcl", "*.tk"],
-        "line_comments": ["#"]
-    },
-    {
-        "name": "Terraform",
-        "file_patterns": ["*.tf", "*.hcl", "terraform.tfvars"],
-        "line_comments": ["#", "//"],
-        "block_comments": [["/*", "*/"]],
-        "nested_blocks": true
-    },
-    {
-        "name": "TeX/LaTeX",
-        "file_patterns": ["*.tex", "*.sty", ".latexmkrc"],
-        "line_comments": ["%"]
-    },
-    {
-        "name": "Textile",
-        "file_patterns": ["*.textile"]
-    },
-    {
-        "name": "TOML",
-        "file_patterns": ["*.toml"],
-        "line_comments": ["#"]
-    },
-    {
-        "name": "txt2tags",
-        "file_patterns": ["*.t2t"],
-        "line_comments": ["%"]
-    },
-    {
-        "name": "Twig",
-        "file_patterns": ["*.twig"],
-        "block_comments": [["{#", "#}"]]
-    },
-    {
-        "name": "TypeScript",
-        "file_patterns": ["*.ts", "*.tsx", "*.cts", "*.mts"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]],
-        "nested_blocks": true
-    },
-    {
-        "name": "UnrealScript",
-        "file_patterns": ["*.uc"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]],
-        "nested_blocks": true
-    },
-    {
-        "name": "V",
-        "file_patterns": ["*.v"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]]
-    },    
-    {
-        "name": "Vala",
-        "file_patterns": ["*.vala", "*.vapi"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]],
-        "nested_blocks": true
-    },
-    {
-        "name": "Verilog",
-        "file_patterns": ["*.vh", "*.sv", "*.svh"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]],
-        "nested_blocks": true
-    },
-    {
-        "name": "VHDL",
-        "file_patterns": ["*.vhd", "*.vhdl"],
-        "line_comments": ["--"]
-    },
-    {
-        "name": "Vim script",
-        "file_patterns": ["*.vim"],
-        "line_comments": ["\""]
-    },
-    {
-        "name": "Visual Basic/Visual Basic .NET",
-        "file_patterns": ["*.vb", "*.cls", "*.frm", "*.frx", "*.vba", "*.vbhtml", "*.vbs"],
-        "line_comments": ["'"]
-    },
-    {
-        "name": "Vue",
-        "file_patterns": ["*.vue"],
-        "line_comments": ["//"],
-        "block_comments": [["<!--", "-->"], ["/*", "*/"]],
-        "nested_blocks": true
-    },
-    {
-        "name": "WebAssembly",
-        "file_patterns": ["*.wat", "*.wasm"],
-        "line_comments": [";;"],
-        "block_comments": [["(;", ";)"]],
-        "nested_blocks": true
-    },
-    {
-        "name": "Windows Resource File",
-        "file_patterns": ["*.rc"],
-        "line_comments": ["//"],
-        "block_comments": [["/*", "*/"]],
-        "nested_blocks": true
-    },
-    {
-        "name": "Windows Registry Entry",
-        "file_patterns": ["*.reg"],
-        "line_comments": [";", "#"]
-    },
-    {
-        "name": "WiX",
-        "file_patterns": ["*.wxs"],
-        "block_comments": [["<!--", "-->"]]
-    },
-    {
-        "name": "XML",
-        "file_patterns": ["*.xml"],
-        "block_comments": [["<!--", "-->"]]
-    },
-    {
-        "name": "YAML",
-        "file_patterns": ["*.yaml", "*.yml", "*.yaml.tmpl", "*.yaml-tmpl", ".yamllint"],
-        "line_comments": ["#"]
-    },
-    {
-        "name": "Zig",
-        "file_patterns": ["*.zig"],
-        "line_comments": ["//", "///", "//!"]
-    }
+	{
+		"name": "ABAP",
+		"file_patterns": ["*.abap"],
+		"line_comments": ["*"]
+	},
+	{
+		"name": "Ada",
+		"file_patterns": ["*.ada", "*.adb", "*.ads"],
+		"line_comments": ["--"]
+	},
+	{
+		"name": "Agda",
+		"file_patterns": ["*.agda", "*.lagda"],
+		"line_comments": ["--"],
+		"block_comments": [["{-", "-}"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "Alloy",
+		"file_patterns": ["*.als"],
+		"line_comments": ["//", "--"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "AngelScript",
+		"file_patterns": ["*.as", "*.angelscript"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Apex",
+		"file_patterns": ["*.apex", "*.cls", "*.trigger"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "APL",
+		"file_patterns": ["*.apl", "*.dyalog"],
+		"line_comments": ["⍝"]
+	},
+	{
+		"name": "AppleScript",
+		"file_patterns": ["*.scpt", "*.applescript"],
+		"line_comments": ["--", "#"]
+	},
+	{
+		"name": "Assembly",
+		"file_patterns": ["*.asm", "*.s", "*.nasm"],
+		"line_comments": [";", "#"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "AsciiDoc",
+		"file_patterns": ["*.adoc", "*.asciidoc", "*.asc"],
+		"line_comments": ["//"],
+		"block_comments": [["////", "////"]]
+	},
+	{
+		"name": "AutoHotkey",
+		"file_patterns": ["*.ahk", "*.ahkl", "*.ah2"],
+		"line_comments": [";"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "AutoIt",
+		"file_patterns": ["*.au3"],
+		"line_comments": [";"]
+	},
+	{
+		"name": "AWK",
+		"file_patterns": ["*.awk", "*.gawk", "*.nawk"],
+		"line_comments": ["#"]
+	},
+	{
+		"name": "Ballerina",
+		"file_patterns": ["*.bal"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "BCX/FreeBASIC",
+		"file_patterns": ["*.bas", "*.bi"],
+		"line_comments": ["'", "rem"],
+		"block_comments": [["$comment", "$comment"]]
+	},
+	{
+		"name": "Batch Script",
+		"file_patterns": ["*.bat", "*.cmd"],
+		"line_comments": ["rem", "::"]
+	},
+	{
+		"name": "Bazel",
+		"file_patterns": ["*.bzl", "*.star", "BUILD", "BUILD.bazel", "WORKSPACE", "MODULE.bazel"],
+		"line_comments": ["#"]
+	},
+	{
+		"name": "BGT",
+		"file_patterns": ["*.bgt"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Bicep",
+		"file_patterns": ["*.bicep"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "BlitzBasic",
+		"file_patterns": ["*.bb", "*.decls", "*.bb2"],
+		"line_comments": [";"]
+	},
+	{
+		"name": "Boo",
+		"file_patterns": ["*.boo"],
+		"line_comments": ["#"]
+	},
+	{
+		"name": "Brainfuck",
+		"file_patterns": ["*.bf", "*.b"]
+	},
+	{
+		"name": "BrightScript",
+		"file_patterns": ["*.brs"],
+		"line_comments": ["'", "rem"]
+	},
+	{
+		"name": "Buck",
+		"file_patterns": ["BUCK"],
+		"line_comments": ["#"]
+	},
+	{
+		"name": "C",
+		"file_patterns": ["*.c", "*.h"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "C++",
+		"file_patterns": ["*.cpp", "*.hpp", "*.c++", "*.h++", "*.cc", "*.cxx", "*.hxx", "*.ino", "*.ipp", "*.pde", "*.cppm", "*.ixx", "*.c++m"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "C#",
+		"file_patterns": ["*.cs", "*.csx", "*.cake"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Cabal",
+		"file_patterns": ["*.cabal", "cabal.project", "cabal.project.freeze"],
+		"line_comments": ["--"]
+	},
+	{
+		"name": "ChaiScript",
+		"file_patterns": ["*.chai"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Chapel",
+		"file_patterns": ["*.chpl"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Clojure",
+		"file_patterns": ["*.clj", "*.cljs", "*.cljc", "*.edn"],
+		"line_comments": [";"],
+		"block_comments": [["(comment", ")"]]
+	},
+	{
+		"name": "CMake",
+		"file_patterns": ["*.cmake", "*.cmake.in", "*.cmake.rule", "CMakeLists.txt"],
+		"line_comments": ["#"]
+	},
+	{
+		"name": "COBOL",
+		"file_patterns": ["*.cbl", "*.cob", "*.cpy"],
+		"line_comments": ["*>"]
+	},
+	{
+		"name": "CoffeeScript",
+		"file_patterns": ["*.coffee"],
+		"line_comments": ["#"],
+		"block_comments": [["###", "###"]]
+	},
+	{
+		"name": "ColdFusion",
+		"file_patterns": ["*.cfm", "*.cfc"],
+		"line_comments": ["//"],
+		"block_comments": [["<!---", "--->"], ["/*", "*/"]]
+	},
+	{
+		"name": "Common Lisp",
+		"file_patterns": ["*.lisp", "*.asd", "*.cl"],
+		"line_comments": [";"],
+		"block_comments": [["#|", "|#"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "Crystal",
+		"file_patterns": ["*.cr"],
+		"line_comments": ["#"]
+	},
+	{
+		"name": "CSON",
+		"file_patterns": ["*.cson"],
+		"line_comments": ["#"],
+		"block_comments": [["###", "###"]]
+	},
+	{
+		"name": "CSS",
+		"file_patterns": ["*.css", "*.sass", "*.scss", "*.postcss", "*.styl"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "CSV",
+		"file_patterns": ["*.csv"]
+	},
+	{
+		"name": "CUDA",
+		"file_patterns": ["*.cu", "*.cuh", "*.ptx"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Cython",
+		"file_patterns": ["*.pyx", "*.pxd", "*.pyi"],
+		"line_comments": ["#"]
+	},
+	{
+		"name": "D",
+		"file_patterns": ["*.d", "*.di"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"], ["/+", "+/"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "Dart",
+		"file_patterns": ["*.dart"],
+		"line_comments": ["//", "///"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Delphi/Object Pascal",
+		"file_patterns": ["*.dpr", "*.dpk"],
+		"line_comments": ["//"],
+		"block_comments": [["(*", "*)"], ["{", "}"]]
+	},	
+	{
+		"name": "Dockerfile",
+		"file_patterns": ["*.dockerfile", "Dockerfile"],
+		"line_comments": ["#"]
+	},
+	{
+		"name": "EBNF",
+		"file_patterns": ["*.ebnf"],
+		"line_comments": ["//"],
+		"block_comments": [["(*", "*)"]]
+	},
+	{
+		"name": "Eiffel",
+		"file_patterns": ["*.e"],
+		"line_comments": ["--"]
+	},
+	{
+		"name": "EJS",
+		"file_patterns": ["*.ejs"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"], ["<!--", "-->"]]
+	},
+	{
+		"name": "Elixir",
+		"file_patterns": ["*.ex", "*.exs"],
+		"line_comments": ["#"]
+	},
+	{
+		"name": "Elm",
+		"file_patterns": ["*.elm"],
+		"line_comments": ["--"],
+		"block_comments": [["{-", "-}"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "Emacs Lisp",
+		"file_patterns": ["*.el"],
+		"line_comments": [";"]
+	},
+	{
+		"name": "EmberScript",
+		"file_patterns": ["*.em"],
+		"line_comments": ["#"],
+		"block_comments": [["###", "###"]]
+	},
+	{
+		"name": "Erlang",
+		"file_patterns": ["*.erl", "*.hrl", "rebar.config", "rebar.lock"],
+		"line_comments": ["%"]
+	},
+	{
+		"name": "F#",
+		"file_patterns": ["*.fs", "*.fsi", "*.fsx"],
+		"line_comments": ["//"],
+		"block_comments": [["(*", "*)"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "Forth",
+		"file_patterns": ["*.4th", "*.fth", "*.frt"],
+		"line_comments": ["\\"]
+	},
+	{
+		"name": "Fortran",
+		"file_patterns": ["*.f", "*.for", "*.f77", "*.f90", "*.f95", "*.f03"],
+		"line_comments": ["!", "C", "c"]
+	},
+	{
+		"name": "GDScript",
+		"file_patterns": ["*.gd"],
+		"line_comments": ["#"]
+	},
+	{
+		"name": "GLSL",
+		"file_patterns": ["*.glsl", "*.vert", "*.frag", "*.geom", "*.tesc", "*.tese", "*.comp"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Go",
+		"file_patterns": ["*.go", "*.tmpl", "*.gohtml", "*.gotmpl", "go.mod"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "GraphQL",
+		"file_patterns": ["*.graphql", "*.gql"],
+		"line_comments": ["#"]
+	},
+	{
+		"name": "Gradle",
+		"file_patterns": ["*.gradle", "gradle.properties"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Groovy",
+		"file_patterns": ["*.groovy", "*.gvy", "*.gy", "*.gsh"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Hack",
+		"file_patterns": ["*.hh", "*.hhi", "*.hack"],
+		"line_comments": ["//", "#"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "HAML",
+		"file_patterns": ["*.haml"],
+		"line_comments": ["-#"]
+	},
+	{
+		"name": "Handlebars",
+		"file_patterns": ["*.hbs", "*.handlebars"],
+		"block_comments": [["{{!--", "--}}"]]
+	},
+	{
+		"name": "Haskell",
+		"file_patterns": ["*.hs", "*.lhs", "*.hsc", "*.hs-boot", ".ghci"],
+		"line_comments": ["--"],
+		"block_comments": [["{-", "-}"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "HLSL",
+		"file_patterns": ["*.hlsl", "*.fx", "*.fxh", "*.hlsli"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "HTML",
+		"file_patterns": ["*.html", "*.htm", "*.xht", "*.xhtml"],
+		"block_comments": [["<!--", "-->"]]
+	},
+	{
+		"name": "IDL",
+		"file_patterns": ["*.idl", "*.widl"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Idris",
+		"file_patterns": ["*.idr", "*.lidr"],
+		"line_comments": ["--"],
+		"block_comments": [["{-", "-}"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "Inform 7",
+		"file_patterns": ["*.ni", "*.i7x"],
+		"block_comments": [["[", "]"]]
+	},
+	{
+		"name": "INI",
+		"file_patterns": ["*.ini", "*.cfg", "*.prefs", "*.properties", ".editorconfig", ".gitconfig", "buildozer.spec"],
+		"line_comments": [";", "#"]
+	},
+	{
+		"name": "Inno Setup",
+		"file_patterns": ["*.iss", "*.ish"],
+		"line_comments": [";", "//"],
+		"block_comments": [["{", "}"], ["(*", "*)"]]
+	},
+	{
+		"name": "J",
+		"file_patterns": ["*.ijs"],
+		"line_comments": ["NB."]
+	},
+	{
+		"name": "Java",
+		"file_patterns": ["*.java", "*.jav"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Java Server Pages",
+		"file_patterns": ["*.jsp"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"], ["<!--", "-->"]]
+	},
+	{
+		"name": "JavaScript",
+		"file_patterns": ["*.js", "*.cjs", "*.jsx", "*.jscad", "*.jsfl", "*.mjs", "*.njs", "*.sjs", "*.ssjs", "*.xsjs", "*.xsjslib", "*.es", "*.es6", "*.jake", ".babelrc", ".eslintrc", ".prettierrc"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "JAWS Script",
+		"file_patterns": ["*.jss", "*.jsh"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Jinja2",
+		"file_patterns": ["*.j2", "*.jinja", "*.jinja2"],
+		"line_comments": ["{#"],
+		"block_comments": [["{#", "#}"]]
+	},
+	{
+		"name": "JSON",
+		"file_patterns": ["*.json", "*.geojson", "*.jsonc", "*.ndjson", "*.jsonl"]
+	},
+	{
+		"name": "Julia",
+		"file_patterns": ["*.jl"],
+		"line_comments": ["#"],
+		"block_comments": [["#=", "=#"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "Kotlin",
+		"file_patterns": ["*.kt", "*.kts", "*.ktm"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Lean",
+		"file_patterns": ["*.lean"],
+		"line_comments": ["--"],
+		"block_comments": [["/-", "-/"]]
+	},	
+	{
+		"name": "Less",
+		"file_patterns": ["*.less"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "LilyPond",
+		"file_patterns": ["*.ly", "*.ily"],
+		"line_comments": ["%"],
+		"block_comments": [["%{", "%}"]]
+	},
+	{
+		"name": "Liquid Templates",
+		"file_patterns": ["*.liquid"],
+		"block_comments": [["{% comment %}", "{% endcomment %}"]]
+	},
+	{
+		"name": "LiveScript",
+		"file_patterns": ["*.ls"],
+		"line_comments": ["#"]
+	},	
+	{
+		"name": "Lua",
+		"file_patterns": ["*.lua", "*.wlua", "*.luau", "*.rockspec", ".luacheckrc"],
+		"line_comments": ["--"],
+		"block_comments": [["--[[", "--]]"]]
+	},
+	{
+		"name": "Makefile",
+		"file_patterns": ["*.mak", "*.make", "*.mk", "*.mkfile", "BSDmakefile", "GNUmakefile", "Kbuild", "Makefile", "Makefile.am", "Makefile.boot", "Makefile.frag", "Makefile.in", "Makefile.inc", "Makefile.wat", "makefile", "makefile.sco", "mkfile"],
+		"line_comments": ["#"]
+	},
+	{
+		"name": "Markdown",
+		"file_patterns": ["*.md", "*.markdown", "*.mdx", "*.mdown", "*.mdwn", "*.mkd", "*.mkdn", "*.mkdown", "*.ronn", "*.workbook"],
+		"block_comments": [["<!--", "-->"]]
+	},
+	{
+		"name": "Maven",
+		"file_patterns": ["pom.xml"],
+		"block_comments": [["<!--", "-->"]]
+	},
+	{
+		"name": "MessagePack",
+		"file_patterns": ["*.msgpack"]
+	},
+	{
+		"name": "Meson",
+		"file_patterns": ["meson.build"],
+		"line_comments": ["#"]
+	},
+	{
+		"name": "Modula-2/3",
+		"file_patterns": ["*.m3", "*.mi"],
+		"block_comments": [["(*", "*)"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "Moo",
+		"file_patterns": ["*.moo"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Mustache",
+		"file_patterns": ["*.mustache"],
+		"block_comments": [["{{!", "}}"]]
+	},
+	{
+		"name": "Nim",
+		"file_patterns": ["*.nim"],
+		"line_comments": ["#"],
+		"block_comments": [["#[", "]#"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "Ninja",
+		"file_patterns": ["build.ninja"],
+		"line_comments": ["#"]
+	},
+	{
+		"name": "Nix",
+		"file_patterns": ["*.nix"],
+		"line_comments": ["#"],
+		"block_comments": [["/*", "*/"]]
+	},	
+	{
+		"name": "NSIS",
+		"file_patterns": ["*.nsi", "*.nsh"],
+		"line_comments": [";", "#"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Nunjucks Templates",
+		"file_patterns": ["*.njk"],
+		"block_comments": [["{#", "#}"]]
+	},
+	{
+		"name": "NVGT",
+		"file_patterns": ["*.nvgt", ".nvgtrc"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Objective-C",
+		"file_patterns": ["*.m"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Objective-C++",
+		"file_patterns": ["*.mm"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Objective-J",
+		"file_patterns": ["*.j", "*.sj"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "OCaml",
+		"file_patterns": ["*.ml", "*.mli", "*.cmx", "*.cmxa", "*.mll", "*.mly"],
+		"block_comments": [["(*", "*)"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "OpenSCAD",
+		"file_patterns": ["*.scad"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Oz",
+		"file_patterns": ["*.oz"],
+		"line_comments": ["%"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Pascal",
+		"file_patterns": ["*.pas", "*.pp", "*.p", "*.inc"],
+		"line_comments": ["//"],
+		"block_comments": [["(*", "*)"], ["{", "}"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "PHP",
+		"file_patterns": ["*.php", "*.php3", "*.php4", "*.php5", "*.phps", "*.phpt", "*.phtml"],
+		"line_comments": ["//", "#"],
+		"block_comments": [["/*", "*/"], ["<!--", "-->"]]
+	},
+	{
+		"name": "Perl",
+		"file_patterns": ["*.pl", "*.al", "*.perl", "*.plx", "*.pm", "rexfile", "ack", "cpanfile", "cpanfile.snapshot"],
+		"line_comments": ["#"],
+		"block_comments": [["=pod", "=cut"]]
+	},
+	{
+		"name": "PogoScript",
+		"file_patterns": ["*.pogo"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Pony",
+		"file_patterns": ["*.pony"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "PowerShell",
+		"file_patterns": ["*.ps1", "*.psd1", "*.psm1", "*.ps1xml"],
+		"line_comments": ["#"],
+		"block_comments": [["<#", "#>"]]
+	},
+	{
+		"name": "Protocol Buffers",
+		"file_patterns": ["*.proto"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Pug",
+		"file_patterns": ["*.pug", "*.jade"],
+		"line_comments": ["//", "//-"]
+	},
+	{
+		"name": "PureBasic",
+		"file_patterns": ["*.pb", "*.pbi", "*.pbf", "*.pbp"],
+		"line_comments": [";"]
+	},
+	{
+		"name": "Python",
+		"file_patterns": ["*.py", "*.pyw", "*.py2", "*.py3", "*.pip", "*.pyz", "*.pyzw", ".gclient", "SConscript", "SConstruct", "Snakefile", "requirements.txt", "Pipfile", ".pythonrc", "py.typed"],
+		"line_comments": ["#"],
+		"block_comments": [["\"\"\"", "\"\"\""], ["'''", "'''"]]
+	},
+	{
+		"name": "Q#",
+		"file_patterns": ["*.qs"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "QML",
+		"file_patterns": ["*.qml"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "R",
+		"file_patterns": ["*.r", "*.rmd", ".Rprofile"],
+		"line_comments": ["#"]
+	},
+	{
+		"name": "Racket",
+		"file_patterns": ["*.rkt", "*.rktd", "*.rktl", "*.rktm"],
+		"line_comments": [";"],
+		"block_comments": [["#|", "|#"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "Raku",
+		"file_patterns": ["*.raku", "*.rakumod", "*.rakutest", "*.pm6", "*.pl6", "*.p6"],
+		"line_comments": ["#"],
+		"block_comments": [["#`(", ")"], ["=begin", "=end"]]
+	},
+	{
+		"name": "reStructuredText",
+		"file_patterns": ["*.rst"],
+		"line_comments": [".."]
+	},
+	{
+		"name": "Robot Framework",
+		"file_patterns": ["*.robot"],
+		"line_comments": ["#"]
+	},
+	{
+		"name": "Ruby",
+		"file_patterns": ["*.rb", "*.builder", "*.eye", "*.gemspec", "*.god", "*.jbuilder", "*.mspec", "*.pluginspec", "*.podspec", "*.rabl", "*.rake", "*.rbuild", "*.rbw", "*.rbx", "*.ruby", "*.thor", "*.watchr", ".irbrc", ".pryrc", "Appraisals", "Berksfile", "Brewfile", "Buildfile", "Capfile", "Dangerfile", "Deliverfile", "Fastfile", "Gemfile", "Guardfile", "Jarfile", "Mavenfile", "Podfile", "Puppetfile", "Rakefile", "Snapfile", "Thorfile"],
+		"line_comments": ["#"],
+		"block_comments": [["=begin", "=end"]]
+	},
+	{
+		"name": "Rust",
+		"file_patterns": ["*.rs", "*.rs.in", "*.rslib", "*.rlib"],
+		"line_comments": ["//", "///", "//!"],
+		"block_comments": [["/*", "*/"], ["/**", "*/"], ["/*!", "*/"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "SageMath",
+		"file_patterns": ["*.sage", "*.sagews"],
+		"line_comments": ["#"],
+		"block_comments": [["\"\"\"", "\"\"\""], ["'''", "'''"]]
+	},
+	{
+		"name": "Scala",
+		"file_patterns": ["*.scala", "*.sc", "build.sbt"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Scheme",
+		"file_patterns": ["*.scm", "*.ss"],
+		"line_comments": [";"],
+		"block_comments": [["#|", "|#"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "Sed",
+		"file_patterns": ["*.sed"],
+		"line_comments": ["#"]
+	},
+	{
+		"name": "Shell Script",
+		"file_patterns": ["*.sh", "*.bash", "*.ksh", "*.tmux", "*.zsh", "*.fish", "*.csh", "*.tcsh", ".bash_logout", ".bash_profile", ".bashrc", ".login", ".profile", ".zlogin", ".zlogout", ".zprofile", ".zshenv", ".zshrc", ".bash_aliases"],
+		"line_comments": ["#"]
+	},
+	{
+		"name": "Slim",
+		"file_patterns": ["*.slim"],
+		"line_comments": ["/", "//"]
+	},
+	{
+		"name": "Smalltalk",
+		"file_patterns": ["*.st"],
+		"block_comments": [["\"", "\""]]
+	},
+	{
+		"name": "Smarty",
+		"file_patterns": ["*.tpl"],
+		"block_comments": [["{{*", "*}}"]]
+	},
+	{
+		"name": "Solidity",
+		"file_patterns": ["*.sol"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},	
+	{
+		"name": "SpiderBasic",
+		"file_patterns": ["*.sb", "*.sbi", "*.sbf", "*.sbp"],
+		"line_comments": [";"]
+	},
+	{
+		"name": "SQL",
+		"file_patterns": ["*.sql"],
+		"line_comments": ["--"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Squirrel",
+		"file_patterns": ["*.nut"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Stan",
+		"file_patterns": ["*.stan"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Svelte",
+		"file_patterns": ["*.svelte"],
+		"line_comments": ["//"],
+		"block_comments": [["<!--", "-->"], ["/*", "*/"]]
+	},
+	{
+		"name": "Swift",
+		"file_patterns": ["*.swift", "*.swiftpm"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "Tcl",
+		"file_patterns": ["*.tcl", "*.tk"],
+		"line_comments": ["#"]
+	},
+	{
+		"name": "Terraform",
+		"file_patterns": ["*.tf", "*.hcl", "terraform.tfvars"],
+		"line_comments": ["#", "//"],
+		"block_comments": [["/*", "*/"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "TeX/LaTeX",
+		"file_patterns": ["*.tex", "*.sty", ".latexmkrc"],
+		"line_comments": ["%"]
+	},
+	{
+		"name": "Textile",
+		"file_patterns": ["*.textile"]
+	},
+	{
+		"name": "TOML",
+		"file_patterns": ["*.toml"],
+		"line_comments": ["#"]
+	},
+	{
+		"name": "txt2tags",
+		"file_patterns": ["*.t2t"],
+		"line_comments": ["%"]
+	},
+	{
+		"name": "Twig",
+		"file_patterns": ["*.twig"],
+		"block_comments": [["{#", "#}"]]
+	},
+	{
+		"name": "TypeScript",
+		"file_patterns": ["*.ts", "*.tsx", "*.cts", "*.mts"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "UnrealScript",
+		"file_patterns": ["*.uc"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "V",
+		"file_patterns": ["*.v"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},	
+	{
+		"name": "Vala",
+		"file_patterns": ["*.vala", "*.vapi"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "Verilog",
+		"file_patterns": ["*.vh", "*.sv", "*.svh"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "VHDL",
+		"file_patterns": ["*.vhd", "*.vhdl"],
+		"line_comments": ["--"]
+	},
+	{
+		"name": "Vim script",
+		"file_patterns": ["*.vim"],
+		"line_comments": ["\""]
+	},
+	{
+		"name": "Visual Basic/Visual Basic .NET",
+		"file_patterns": ["*.vb", "*.cls", "*.frm", "*.frx", "*.vba", "*.vbhtml", "*.vbs"],
+		"line_comments": ["'"]
+	},
+	{
+		"name": "Vue",
+		"file_patterns": ["*.vue"],
+		"line_comments": ["//"],
+		"block_comments": [["<!--", "-->"], ["/*", "*/"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "WebAssembly",
+		"file_patterns": ["*.wat", "*.wasm"],
+		"line_comments": [";;"],
+		"block_comments": [["(;", ";)"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "Windows Resource File",
+		"file_patterns": ["*.rc"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "Windows Registry Entry",
+		"file_patterns": ["*.reg"],
+		"line_comments": [";", "#"]
+	},
+	{
+		"name": "WiX",
+		"file_patterns": ["*.wxs"],
+		"block_comments": [["<!--", "-->"]]
+	},
+	{
+		"name": "XML",
+		"file_patterns": ["*.xml"],
+		"block_comments": [["<!--", "-->"]]
+	},
+	{
+		"name": "YAML",
+		"file_patterns": ["*.yaml", "*.yml", "*.yaml.tmpl", "*.yaml-tmpl", ".yamllint"],
+		"line_comments": ["#"]
+	},
+	{
+		"name": "Zig",
+		"file_patterns": ["*.zig"],
+		"line_comments": ["//", "///", "//!"]
+	}
 ]
