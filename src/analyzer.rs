@@ -186,7 +186,7 @@ impl<'a> CodeAnalyzer<'a> {
 				let stats = Arc::clone(&stats);
 				Box::new(move |entry_result| {
 					match entry_result {
-						Ok(entry) if entry.file_type().map_or(false, |ft| ft.is_file()) => {
+						Ok(entry) if entry.file_type().is_some_and(|ft| ft.is_file()) => {
 							if let Err(e) = Self::process_file_concurrent(entry.path(), &stats) {
 								if verbose {
 									eprintln!("Error processing file {}: {e}", entry.path().display());
@@ -441,7 +441,7 @@ mod tests {
 
 	#[test]
 	fn test_lang_stats_new() {
-		let stats = LangStats::new();
+		let stats = LangStats::default();
 		assert_eq!(stats.files, 0);
 		assert_eq!(stats.lines, 0);
 		assert_eq!(stats.code_lines, 0);
@@ -452,7 +452,7 @@ mod tests {
 
 	#[test]
 	fn test_lang_stats_add_file() {
-		let mut stats = LangStats::new();
+		let mut stats = LangStats::default();
 		let file1 = FileStats::new(10, 8, 1, 1, 1000);
 		stats.add_file(file1);
 		assert_eq!(stats.files, 1);
@@ -473,7 +473,7 @@ mod tests {
 
 	#[test]
 	fn test_lang_stats_percentages() {
-		let mut stats = LangStats::new();
+		let mut stats = LangStats::default();
 		let file_stats = FileStats::new(100, 75, 15, 10, 5000);
 		stats.add_file(file_stats);
 		assert_eq!(stats.code_percentage(), 75.0);
@@ -483,7 +483,7 @@ mod tests {
 
 	#[test]
 	fn test_lang_stats_percentages_zero_lines() {
-		let stats = LangStats::new();
+		let stats = LangStats::default();
 		assert_eq!(stats.code_percentage(), 0.0);
 		assert_eq!(stats.comment_percentage(), 0.0);
 		assert_eq!(stats.blank_percentage(), 0.0);
