@@ -61,13 +61,7 @@ struct FileStats {
 
 impl FileStats {
 	fn new(total_lines: u64, code_lines: u64, comment_lines: u64, blank_lines: u64, size: u64) -> Self {
-		Self {
-			total_lines,
-			code_lines,
-			comment_lines,
-			blank_lines,
-			size,
-		}
+		Self { total_lines, code_lines, comment_lines, blank_lines, size }
 	}
 }
 
@@ -173,10 +167,7 @@ pub struct CodeAnalyzer<'a> {
 
 impl<'a> CodeAnalyzer<'a> {
 	pub fn new(args: &'a Cli) -> Self {
-		Self {
-			args,
-			stats: Arc::new(Mutex::new(StatsCollector::default())),
-		}
+		Self { args, stats: Arc::new(Mutex::new(StatsCollector::default())) }
 	}
 
 	pub fn analyze(&mut self) -> Result<()> {
@@ -243,7 +234,7 @@ impl<'a> CodeAnalyzer<'a> {
 			pluralize(stats.total_blank_lines, "line", "lines")
 		);
 		println!(
-			"Percentages: {:.1}% code, {:.1}% comments, {:.1}% blank lines",
+			"Percentages: {:.1}% code, {:.1}% comments, {:.1}% blanks",
 			stats.code_percentage(),
 			stats.comment_percentage(),
 			stats.blank_percentage()
@@ -277,10 +268,7 @@ impl<'a> CodeAnalyzer<'a> {
 	}
 
 	fn process_file_concurrent(file_path: &Path, stats: &Arc<Mutex<StatsCollector>>) -> Result<()> {
-		let filename = file_path
-			.file_name()
-			.and_then(|name| name.to_str())
-			.context("Invalid UTF-8 in file name")?;
+		let filename = file_path.file_name().and_then(|name| name.to_str()).context("Invalid UTF-8 in file name")?;
 		let language = langs::detect_language(filename)
 			.with_context(|| format!("Unknown language for {}", file_path.display()))?;
 		let file_size = fs::metadata(file_path)
@@ -368,9 +356,7 @@ impl<'a> CodeAnalyzer<'a> {
 		block_comments
 			.iter()
 			.filter_map(|block_pair| {
-				block_pair
-					.first()
-					.and_then(|start| line.find(start).map(|pos| (pos, start.len())))
+				block_pair.first().and_then(|start| line.find(start).map(|pos| (pos, start.len())))
 			})
 			.min_by_key(|(pos, _)| *pos)
 	}
@@ -402,10 +388,7 @@ impl<'a> CodeAnalyzer<'a> {
 	}
 
 	fn find_line_comment_start(line: &str, line_comments: &[String]) -> Option<usize> {
-		line_comments
-			.iter()
-			.filter_map(|comment_start| line.find(comment_start))
-			.min()
+		line_comments.iter().filter_map(|comment_start| line.find(comment_start)).min()
 	}
 }
 

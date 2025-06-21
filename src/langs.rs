@@ -38,12 +38,7 @@ fn matches_pattern(filename: &str, pattern: &str) -> bool {
 pub fn detect_language(filename: &str) -> Option<String> {
 	get_languages()
 		.iter()
-		.find(|language| {
-			language
-				.file_patterns
-				.iter()
-				.any(|pattern| matches_pattern(filename, pattern))
-		})
+		.find(|language| language.file_patterns.iter().any(|pattern| matches_pattern(filename, pattern)))
 		.map(|language| language.name.clone())
 }
 
@@ -98,11 +93,7 @@ mod tests {
 
 	#[test]
 	fn test_detect_language_case_sensitivity() {
-		let test_cases = [
-			("makefile", Some("Makefile")),
-			("MAKEFILE", None),
-			("Dockerfile", Some("Dockerfile")),
-		];
+		let test_cases = [("makefile", Some("Makefile")), ("MAKEFILE", None), ("Dockerfile", Some("Dockerfile"))];
 		for (filename, expected) in test_cases {
 			let detected = detect_language(filename);
 			assert_eq!(
@@ -115,12 +106,7 @@ mod tests {
 
 	#[test]
 	fn test_detect_language_edge_cases() {
-		let test_cases = [
-			("", None),
-			(".hidden", None),
-			("weird.file.name.rs", Some("Rust")),
-			("tricky.rs.txt", None),
-		];
+		let test_cases = [("", None), (".hidden", None), ("weird.file.name.rs", Some("Rust")), ("tricky.rs.txt", None)];
 		for (filename, expected) in test_cases {
 			let detected = detect_language(filename);
 			assert_eq!(
@@ -160,9 +146,8 @@ mod tests {
 			assert!(line_comments.contains(&"//".to_string()));
 		}
 		if let Some(ref block_comments) = rust_info.block_comments {
-			let found_block = block_comments
-				.iter()
-				.any(|block| block.len() >= 2 && block[0] == "/*" && block[1] == "*/");
+			let found_block =
+				block_comments.iter().any(|block| block.len() >= 2 && block[0] == "/*" && block[1] == "*/");
 			assert!(found_block, "Expected to find /* */ block comments for Rust");
 		}
 	}
