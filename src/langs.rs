@@ -26,11 +26,7 @@ fn get_languages() -> &'static Vec<Language> {
 
 /// Checks if a filename matches a given pattern.
 fn matches_pattern(filename: &str, pattern: &str) -> bool {
-	if let Some(suffix) = pattern.strip_prefix('*') {
-		filename.ends_with(suffix)
-	} else {
-		filename == pattern
-	}
+	if let Some(suffix) = pattern.strip_prefix('*') { filename.ends_with(suffix) } else { filename == pattern }
 }
 
 /// Tries to detect a programming language given a filename.
