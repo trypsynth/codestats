@@ -160,13 +160,13 @@ impl CommentState {
 }
 
 /// The heart of codestats, this structure performs all the analysis of a codebase/folder and prints statistics about it.
-pub struct CodeAnalyzer<'a> {
-	args: &'a Cli,
+pub struct CodeAnalyzer {
+	args: Cli,
 	stats: Arc<Mutex<StatsCollector>>,
 }
 
-impl<'a> CodeAnalyzer<'a> {
-	pub fn new(args: &'a Cli) -> Self {
+impl CodeAnalyzer {
+	pub fn new(args: Cli) -> Self {
 		Self { args, stats: Arc::new(Mutex::new(StatsCollector::default())) }
 	}
 

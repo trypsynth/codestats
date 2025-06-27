@@ -8,7 +8,7 @@ use anyhow::{Result, ensure};
 pub(crate) fn main() -> Result<()> {
 	let args = cli::parse_cli();
 	ensure!(args.path.exists(), "Path `{}` not found", args.path.display());
-	let mut analyzer = CodeAnalyzer::new(&args);
+	let mut analyzer = CodeAnalyzer::new(args);
 	analyzer.analyze()?;
 	analyzer.print_stats();
 	Ok(())
