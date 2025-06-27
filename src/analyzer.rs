@@ -98,7 +98,7 @@ impl CodeAnalyzer {
 	}
 
 	fn print_language_breakdown(stats: &StatsCollector) {
-		println!("\nLanguage breakdown:");
+		println!("Language breakdown:");
 		for (lang, lang_stats) in stats.languages_by_lines() {
 			let file_pct = utils::percentage(lang_stats.files, stats.total_files);
 			let line_pct = utils::percentage(lang_stats.lines, stats.total_lines);
@@ -112,7 +112,7 @@ impl CodeAnalyzer {
 				human_bytes(lang_stats.size as f64),
 			);
 			println!(
-				"Code: {} lines ({:.1}%), Comments: {} lines ({:.1}%), Blank: {} lines ({:.1}%)",
+				"\tCode: {} lines ({:.1}%), Comments: {} lines ({:.1}%), Blank: {} lines ({:.1}%)",
 				lang_stats.code_lines,
 				lang_stats.code_percentage(),
 				lang_stats.comment_lines,
