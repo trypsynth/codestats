@@ -59,7 +59,6 @@ pub fn classify_line(line: &str, lang_info: &Option<langs::Language>, comment_st
 	};
 	let mut line_remainder = trimmed;
 	let mut has_code = false;
-
 	if let Some(ref block_comments) = lang.block_comments {
 		let nested = lang.nested_blocks.unwrap_or(false);
 		while !line_remainder.is_empty() {
@@ -87,11 +86,9 @@ pub fn classify_line(line: &str, lang_info: &Option<langs::Language>, comment_st
 			}
 		}
 	}
-
 	if comment_state.is_in_comment() {
 		return if has_code { LineType::Code } else { LineType::Comment };
 	}
-
 	if let Some(ref line_comments) = lang.line_comments {
 		if let Some(pos) = find_line_comment_start(line_remainder, line_comments) {
 			if pos > 0 && !line_remainder[..pos].trim().is_empty() {
@@ -100,11 +97,9 @@ pub fn classify_line(line: &str, lang_info: &Option<langs::Language>, comment_st
 			return if has_code { LineType::Code } else { LineType::Comment };
 		}
 	}
-
 	if !line_remainder.trim().is_empty() {
 		has_code = true;
 	}
-
 	if has_code { LineType::Code } else { LineType::Comment }
 }
 
