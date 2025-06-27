@@ -29,6 +29,11 @@
 		"block_comments": [["/*", "*/"]]
 	},
 	{
+		"name": "Apache Config",
+		"file_patterns": [".htaccess", "*.conf", "httpd.conf", "apache2.conf"],
+		"line_comments": ["#"]
+	},
+	{
 		"name": "Apex",
 		"file_patterns": ["*.apex", "*.cls", "*.trigger"],
 		"line_comments": ["//"],
@@ -152,6 +157,12 @@
 		"name": "Cabal",
 		"file_patterns": ["*.cabal", "cabal.project", "cabal.project.freeze"],
 		"line_comments": ["--"]
+	},
+	{
+		"name": "Carbon",
+		"file_patterns": ["*.carbon"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
 	},
 	{
 		"name": "ChaiScript",
@@ -323,6 +334,11 @@
 		"line_comments": ["#"]
 	},
 	{
+		"name": "Gleam",
+		"file_patterns": ["*.gleam"],
+		"line_comments": ["//"]
+	},
+	{
 		"name": "GLSL",
 		"file_patterns": ["*.glsl", "*.vert", "*.frag", "*.geom", "*.tesc", "*.tese", "*.comp"],
 		"line_comments": ["//"],
@@ -461,6 +477,10 @@
 		"nested_blocks": true
 	},
 	{
+		"name": "Jupyter Notebook",
+		"file_patterns": ["*.ipynb"]
+	},
+	{
 		"name": "Kotlin",
 		"file_patterns": ["*.kt", "*.kts", "*.ktm"],
 		"line_comments": ["//"],
@@ -525,10 +545,22 @@
 		"line_comments": ["#"]
 	},
 	{
+		"name": "Metal Shading Language",
+		"file_patterns": ["*.metal"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
 		"name": "Modula-2/3",
 		"file_patterns": ["*.m3", "*.mi"],
 		"block_comments": [["(*", "*)"]],
 		"nested_blocks": true
+	},
+	{
+		"name": "Mojo",
+		"file_patterns": ["*.mojo", "*.🔥"],
+		"line_comments": ["#"],
+		"block_comments": [["\"\"\"", "\"\"\""], ["'''", "'''"]]
 	},
 	{
 		"name": "Moo",
@@ -540,6 +572,11 @@
 		"name": "Mustache",
 		"file_patterns": ["*.mustache"],
 		"block_comments": [["{{!", "}}"]]
+	},
+	{
+		"name": "Nginx Config",
+		"file_patterns": ["nginx.conf", "*.nginx"],
+		"line_comments": ["#"]
 	},
 	{
 		"name": "Nim",
@@ -709,6 +746,11 @@
 	{
 		"name": "Robot Framework",
 		"file_patterns": ["*.robot"],
+		"line_comments": ["#"]
+	},
+	{
+		"name": "Roc",
+		"file_patterns": ["*.roc"],
 		"line_comments": ["#"]
 	},
 	{
