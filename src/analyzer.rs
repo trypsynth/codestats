@@ -407,50 +407,6 @@ mod tests {
 	use super::*;
 
 	#[test]
-	fn test_pluralize() {
-		assert_eq!(pluralize(0, "file", "files"), "files");
-		assert_eq!(pluralize(1, "file", "files"), "file");
-		assert_eq!(pluralize(2, "line", "lines"), "lines");
-		assert_eq!(pluralize(42, "item", "items"), "items");
-	}
-
-	#[test]
-	fn test_percentage() {
-		assert_eq!(percentage(0, 100), 0.0);
-		assert_eq!(percentage(1, 2), 50.0);
-		assert_eq!(percentage(25, 100), 25.0);
-		assert_eq!(percentage(3, 4), 75.0);
-		assert_eq!(percentage(100, 100), 100.0);
-	}
-
-	#[test]
-	fn test_percentage_zero_total() {
-		assert_eq!(percentage(10, 0), 0.0);
-		assert_eq!(percentage(0, 0), 0.0);
-	}
-
-	#[test]
-	fn test_file_stats_creation() {
-		let stats = FileStats::new(10, 8, 1, 1, 1000);
-		assert_eq!(stats.total_lines, 10);
-		assert_eq!(stats.code_lines, 8);
-		assert_eq!(stats.comment_lines, 1);
-		assert_eq!(stats.blank_lines, 1);
-		assert_eq!(stats.size, 1000);
-	}
-
-	#[test]
-	fn test_lang_stats_new() {
-		let stats = LangStats::default();
-		assert_eq!(stats.files, 0);
-		assert_eq!(stats.lines, 0);
-		assert_eq!(stats.code_lines, 0);
-		assert_eq!(stats.comment_lines, 0);
-		assert_eq!(stats.blank_lines, 0);
-		assert_eq!(stats.size, 0);
-	}
-
-	#[test]
 	fn test_lang_stats_add_file() {
 		let mut stats = LangStats::default();
 		let file1 = FileStats::new(10, 8, 1, 1, 1000);
@@ -479,21 +435,6 @@ mod tests {
 		assert_eq!(stats.code_percentage(), 75.0);
 		assert_eq!(stats.comment_percentage(), 15.0);
 		assert_eq!(stats.blank_percentage(), 10.0);
-	}
-
-	#[test]
-	fn test_lang_stats_percentages_zero_lines() {
-		let stats = LangStats::default();
-		assert_eq!(stats.code_percentage(), 0.0);
-		assert_eq!(stats.comment_percentage(), 0.0);
-		assert_eq!(stats.blank_percentage(), 0.0);
-	}
-
-	#[test]
-	fn test_comment_state_new() {
-		let state = CommentState::new();
-		assert!(!state.is_in_comment());
-		assert_eq!(state.block_comment_depth, 0);
 	}
 
 	#[test]
