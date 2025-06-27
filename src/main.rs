@@ -1,6 +1,10 @@
-pub(crate) mod analyzer;
-pub(crate) mod cli;
-pub(crate) mod langs;
+pub mod analyzer;
+pub mod cli;
+pub mod comments;
+pub mod langs;
+pub mod stats;
+pub mod utils;
+
 use crate::analyzer::CodeAnalyzer;
 use anyhow::{Result, ensure};
 
