@@ -527,7 +527,7 @@
 	},
 	{
 		"name": "Markdown",
-		"file_patterns": ["*.md", "*.markdown", "*.mdx", "*.mdown", "*.mdwn", "*.mkd", "*.mkdn", "*.mkdown", "*.ronn", "*.workbook"],
+		"file_patterns": ["*.md", "*.markdown", "*.mdx", "*.mdown", "*.mdwn", "*.mkd", "*.mkdn", "*.mkdown", "*.ronn"],
 		"block_comments": [["<!--", "-->"]]
 	},
 	{
