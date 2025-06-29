@@ -319,6 +319,13 @@
 		"nested_blocks": true
 	},
 	{
+		"name": "Fennel",
+		"file_patterns": ["*.fnl"],
+		"line_comments": [";"],
+		"block_comments": [["#|", "|#"]],
+		"nested_blocks": true
+	},
+	{
 		"name": "Forth",
 		"file_patterns": ["*.4th", "*.fth", "*.frt"],
 		"line_comments": ["\\"]
@@ -516,7 +523,13 @@
 	},	
 	{
 		"name": "Lua",
-		"file_patterns": ["*.lua", "*.wlua", "*.luau", "*.rockspec", ".luacheckrc"],
+		"file_patterns": ["*.lua", "*.wlua", "*.rockspec", ".luacheckrc"],
+		"line_comments": ["--"],
+		"block_comments": [["--[[", "--]]"]]
+	},
+	{
+		"name": "Luau",
+		"file_patterns": ["*.luau"],
 		"line_comments": ["--"],
 		"block_comments": [["--[[", "--]]"]]
 	},
@@ -558,7 +571,7 @@
 	},
 	{
 		"name": "Mojo",
-		"file_patterns": ["*.mojo", "*.🔥"],
+		"file_patterns": ["*.mojo"],
 		"line_comments": ["#"],
 		"block_comments": [["\"\"\"", "\"\"\""], ["'''", "'''"]]
 	},
@@ -567,6 +580,12 @@
 		"file_patterns": ["*.moo"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "MoonScript",
+		"file_patterns": ["*.moon"],
+		"line_comments": ["--"],
+		"block_comments": [["--[[", "--]]"]]
 	},
 	{
 		"name": "Mustache",
@@ -858,6 +877,12 @@
 		"line_comments": ["#"]
 	},
 	{
+		"name": "Teal",
+		"file_patterns": ["*.tl"],
+		"line_comments": ["--"],
+		"block_comments": [["--[[", "--]]"]]
+	},
+	{
 		"name": "Terraform",
 		"file_patterns": ["*.tf", "*.hcl", "terraform.tfvars"],
 		"line_comments": ["#", "//"],
@@ -967,6 +992,12 @@
 		"name": "WiX",
 		"file_patterns": ["*.wxs"],
 		"block_comments": [["<!--", "-->"]]
+	},
+	{
+		"name": "Wren",
+		"file_patterns": ["*.wren"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
 	},
 	{
 		"name": "XML",
