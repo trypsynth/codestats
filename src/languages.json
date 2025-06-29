@@ -5,6 +5,17 @@
 		"line_comments": ["*"]
 	},
 	{
+		"name": "ABNF",
+		"file_patterns": ["*.abnf"],
+		"line_comments": [";"]
+	},
+	{
+		"name": "ActionScript",
+		"file_patterns": ["*.actionscript"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
 		"name": "Ada",
 		"file_patterns": ["*.ada", "*.adb", "*.ads"],
 		"line_comments": ["--"]
@@ -15,6 +26,10 @@
 		"line_comments": ["--"],
 		"block_comments": [["{-", "-}"]],
 		"nested_blocks": true
+	},
+	{
+		"name": "Alex",
+		"file_patterns": ["*.x"]
 	},
 	{
 		"name": "Alloy",
@@ -41,7 +56,7 @@
 	},
 	{
 		"name": "APL",
-		"file_patterns": ["*.apl", "*.dyalog"],
+		"file_patterns": ["*.apl", "*.aplf", "*.apls"],
 		"line_comments": ["⍝"]
 	},
 	{
@@ -50,16 +65,27 @@
 		"line_comments": ["--", "#"]
 	},
 	{
-		"name": "Assembly",
-		"file_patterns": ["*.asm", "*.s", "*.nasm"],
-		"line_comments": [";", "#"],
-		"block_comments": [["/*", "*/"]]
+		"name": "Arturo",
+		"file_patterns": ["*.art"],
+		"line_comments": [";"]
 	},
 	{
 		"name": "AsciiDoc",
 		"file_patterns": ["*.adoc", "*.asciidoc", "*.asc"],
 		"line_comments": ["//"],
 		"block_comments": [["////", "////"]]
+	},
+	{
+		"name": "ASN.1",
+		"file_patterns": ["*.asn1"],
+		"line_comments": ["--"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Assembly",
+		"file_patterns": ["*.asm", "*.s", "*.nasm"],
+		"line_comments": [";", "#"],
+		"block_comments": [["/*", "*/"]]
 	},
 	{
 		"name": "AutoHotkey",
