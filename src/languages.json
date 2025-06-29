@@ -890,6 +890,12 @@
 		"line_comments": ["/", "//"]
 	},
 	{
+		"name": "Slint",
+		"file_patterns": ["*.slint"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
 		"name": "Smalltalk",
 		"file_patterns": ["*.st"],
 		"block_comments": [["\"", "\""]]
@@ -942,6 +948,13 @@
 		"nested_blocks": true
 	},
 	{
+		"name": "Swig",
+		"file_patterns": ["*.swg", "*.i"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]],
+		"nested_blocks": true
+	},
+	{
 		"name": "Tcl",
 		"file_patterns": ["*.tcl", "*.tk"],
 		"line_comments": ["#"]
@@ -951,6 +964,11 @@
 		"file_patterns": ["*.tl"],
 		"line_comments": ["--"],
 		"block_comments": [["--[[", "--]]"]]
+	},
+	{
+		"name": "Tera",
+		"file_patterns": ["*.tera"],
+		"block_comments": [["<!--", "-->"], ["{#", "#}"]]
 	},
 	{
 		"name": "Terraform",
@@ -967,6 +985,12 @@
 	{
 		"name": "Textile",
 		"file_patterns": ["*.textile"]
+	},
+	{
+		"name": "Thrift",
+		"file_patterns": ["*.thrift"],
+		"line_comments": ["#", "//"],
+		"block_comments": [["/*", "*/"]]
 	},
 	{
 		"name": "TOML",
@@ -1080,8 +1104,20 @@
 		"line_comments": ["#"]
 	},
 	{
+		"name": "ZenCode",
+		"file_patterns": ["*.zs"],
+		"line_comments": ["//", "#"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
 		"name": "Zig",
 		"file_patterns": ["*.zig"],
 		"line_comments": ["//", "///", "//!"]
+	},
+	{
+		"name": "ZoKrates",
+		"file_patterns": ["*.zok"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
 	}
 ]
