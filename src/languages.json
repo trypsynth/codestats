@@ -82,10 +82,32 @@
 		"block_comments": [["/*", "*/"]]
 	},
 	{
+		"name": "ASP",
+		"file_patterns": ["*.asp", "*.asa"],
+		"line_comments": ["'", "rem"]
+	},
+	{
+		"name": "ASP.NET",
+		"file_patterns": ["*.asax", "*.ascx", "*.asmx", "*.aspx", "*.master", "*.sitemap", "*.webinfo"],
+		"block_comments": [["<!--", "-->"], ["<%--", "-->"]]
+	},
+	{
 		"name": "Assembly",
 		"file_patterns": ["*.asm", "*.s", "*.nasm"],
-		"line_comments": [";", "#"],
+		"line_comments": [";", "#", "//"],
 		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Astro",
+		"file_patterns": ["*.astro"],
+		"line_comments": ["//"],
+		"multi_line_comments": [["/*", "*/"], ["<!--", "-->"]]
+	},
+	{
+		"name": "Ats",
+		"file_patterns": ["*.dats", "*.hats", "*.sats", "*.atxt"],
+		"line_comments": ["//"],
+		"block_comments": [["(*", "*)"], ["/*", "*/"]]
 	},
 	{
 		"name": "AutoHotkey",
@@ -96,7 +118,13 @@
 	{
 		"name": "AutoIt",
 		"file_patterns": ["*.au3"],
-		"line_comments": [";"]
+		"line_comments": [";"],
+		"block_comments": [["#comments-start", "#comments-end"], ["#cs", "#ce"]]
+	},
+	{
+		"name": "Automake",
+		"file_patterns": ["*.am"],
+		"line_comments": ["#"]
 	},
 	{
 		"name": "AWK",
@@ -106,8 +134,7 @@
 	{
 		"name": "Ballerina",
 		"file_patterns": ["*.bal"],
-		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"line_comments": ["//", "#"]
 	},
 	{
 		"name": "BCX/FreeBASIC",
@@ -561,7 +588,7 @@
 	},
 	{
 		"name": "Makefile",
-		"file_patterns": ["*.mak", "*.make", "*.mk", "*.mkfile", "BSDmakefile", "GNUmakefile", "Kbuild", "Makefile", "Makefile.am", "Makefile.boot", "Makefile.frag", "Makefile.in", "Makefile.inc", "Makefile.wat", "makefile", "makefile.sco", "mkfile"],
+		"file_patterns": ["*.mak", "*.make", "*.mk", "*.mkfile", "BSDmakefile", "GNUmakefile", "Kbuild", "Makefile", "Makefile.boot", "Makefile.frag", "Makefile.in", "Makefile.inc", "Makefile.wat", "makefile", "makefile.sco", "mkfile"],
 		"line_comments": ["#"]
 	},
 	{
