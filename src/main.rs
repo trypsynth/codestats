@@ -15,7 +15,7 @@ use anyhow::{Result, ensure};
 pub(crate) fn main() -> Result<()> {
 	let cli = cli::parse_cli();
 	match cli.command {
-		Commands::Languages => {
+		Commands::Langs => {
 			langs::print_supported_languages();
 			Ok(())
 		}

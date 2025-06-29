@@ -37,7 +37,7 @@ pub enum Commands {
 		symlinks: bool,
 	},
 	/// List all supported programming languages
-	Languages,
+	Langs,
 }
 
 /// Wrapper function to avoid needing to use `clap::Parser` in `main.rs`.
