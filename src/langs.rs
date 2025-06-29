@@ -1,3 +1,4 @@
+use crate::utils::pluralize;
 use serde::{Deserialize, Serialize};
 use std::sync::OnceLock;
 
@@ -37,6 +38,12 @@ pub fn get_language_info(language_name: &str) -> Option<Language> {
 
 /// Prints all supported language names to stdout
 pub fn print_supported_languages() {
+	let langs = get_languages();
+	println!(
+		"Total number of supported programming {}: {}",
+		pluralize(langs.len().try_into().unwrap(), "language", "languages"),
+		langs.len()
+	);
 	for lang in get_languages() {
 		println!("{}", lang.name);
 	}
