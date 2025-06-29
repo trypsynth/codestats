@@ -294,7 +294,7 @@
 	},
 	{
 		"name": "CSS",
-		"file_patterns": ["*.css", "*.sass", "*.scss", "*.postcss", "*.styl"],
+		"file_patterns": ["*.css", "*.sass", "*.scss", "*.postcss"],
 		"block_comments": [["/*", "*/"]]
 	},
 	{
@@ -917,6 +917,12 @@
 		"line_comments": [";"]
 	},
 	{
+		"name": "SQF",
+		"file_patterns": ["*.sqf"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
 		"name": "SQL",
 		"file_patterns": ["*.sql"],
 		"line_comments": ["--"],
@@ -931,14 +937,30 @@
 	{
 		"name": "Stan",
 		"file_patterns": ["*.stan"],
+		"line_comments": ["//", "#"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Stata",
+		"file_patterns": ["*.do"],
+		"line_comments": ["//", "*"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Stylus",
+		"file_patterns": ["*.styl"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
 	},
 	{
 		"name": "Svelte",
 		"file_patterns": ["*.svelte"],
-		"line_comments": ["//"],
-		"block_comments": [["<!--", "-->"], ["/*", "*/"]]
+		"block_comments": [["<!--", "-->"]]
+	},
+	{
+		"name": "SVG",
+		"file_patterns": ["*.svg"],
+		"block_comments": [["<!--", "-->"]]
 	},
 	{
 		"name": "Swift",
