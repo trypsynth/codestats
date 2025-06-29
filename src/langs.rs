@@ -34,3 +34,10 @@ pub fn detect_language(filename: &str) -> Option<String> {
 pub fn get_language_info(language_name: &str) -> Option<Language> {
 	get_languages().iter().find(|lang| lang.name == language_name).cloned()
 }
+
+/// Prints all supported language names to stdout
+pub fn print_supported_languages() {
+	for lang in get_languages() {
+		println!("{}", lang.name);
+	}
+}

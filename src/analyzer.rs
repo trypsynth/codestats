@@ -1,5 +1,4 @@
 use crate::{
-	cli::Cli,
 	comments::{self, CommentState, LineType},
 	langs,
 	stats::{FileStats, StatsCollector},
@@ -11,18 +10,26 @@ use ignore::WalkBuilder;
 use std::{
 	fs::{self, File},
 	io::{BufRead, BufReader},
-	path::Path,
+	path::{Path, PathBuf},
 	sync::{Arc, Mutex},
 };
 
+pub struct AnalyzerArgs {
+	pub path: PathBuf,
+	pub verbose: bool,
+	pub gitignore: bool,
+	pub hidden: bool,
+	pub symlinks: bool,
+}
+
 /// The heart of codestats, this structure performs all the analysis of a codebase/folder and prints statistics about it.
 pub struct CodeAnalyzer {
-	args: Cli,
+	args: AnalyzerArgs,
 	stats: Arc<Mutex<StatsCollector>>,
 }
 
 impl CodeAnalyzer {
-	pub fn new(args: Cli) -> Self {
+	pub fn new(args: AnalyzerArgs) -> Self {
 		Self { args, stats: Arc::new(Mutex::new(StatsCollector::default())) }
 	}
 
