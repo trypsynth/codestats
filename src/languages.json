@@ -149,8 +149,13 @@
 	},
 	{
 		"name": "Bazel",
-		"file_patterns": ["*.bzl", "*.star", "BUILD", "BUILD.bazel", "WORKSPACE", "MODULE.bazel"],
+		"file_patterns": ["*.bzl", "*.bazel", "*.bzlmod", "build", "build.bazel", "workspace", "module"],
 		"line_comments": ["#"]
+	},
+	{
+		"name": "Bean",
+		"file_patterns": ["*.bean", "*.beancount"],
+		"line_comments": [";"]
 	},
 	{
 		"name": "BGT",
@@ -160,7 +165,7 @@
 	},
 	{
 		"name": "Bicep",
-		"file_patterns": ["*.bicep"],
+		"file_patterns": ["*.bicep", "*.bicepparam"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
 	},
@@ -172,6 +177,11 @@
 	{
 		"name": "Boo",
 		"file_patterns": ["*.boo"],
+		"line_comments": ["#"]
+	},
+	{
+		"name": "BQN",
+		"file_patterns": ["*.bqn"],
 		"line_comments": ["#"]
 	},
 	{
@@ -190,7 +200,7 @@
 	},
 	{
 		"name": "C",
-		"file_patterns": ["*.c", "*.h"],
+		"file_patterns": ["*.c", "*.h", "*.ec", "*.pgc"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
 	},
@@ -209,7 +219,14 @@
 	{
 		"name": "Cabal",
 		"file_patterns": ["*.cabal", "cabal.project", "cabal.project.freeze"],
-		"line_comments": ["--"]
+		"line_comments": ["--"],
+		"block_comments": [["{-", "-}"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "Cairo",
+		"file_patterns": ["*.Cairo"],
+		"line_comments": ["//"]
 	},
 	{
 		"name": "Carbon",
