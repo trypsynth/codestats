@@ -235,14 +235,39 @@
 		"block_comments": [["/*", "*/"]]
 	},
 	{
-		"name": "ChaiScript",
-		"file_patterns": ["*.chai"],
+		"name": "Cangjie",
+		"file_patterns": ["*.cj"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "Cassius",
+		"file_patterns": ["*.cassius"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Ceylon",
+		"file_patterns": ["*.ceylon"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
 	},
 	{
 		"name": "Chapel",
 		"file_patterns": ["*.chpl"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "ChaiScript",
+		"file_patterns": ["*.chai"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Circom",
+		"file_patterns": ["*.circom"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
 	},
@@ -254,13 +279,13 @@
 	},
 	{
 		"name": "CMake",
-		"file_patterns": ["*.cmake", "*.cmake.in", "*.cmake.rule", "CMakeLists.txt"],
+		"file_patterns": ["*.cmake", "*.cmake.in", "*.cmake.rule", "cmakelists.txt"],
 		"line_comments": ["#"]
 	},
 	{
 		"name": "COBOL",
-		"file_patterns": ["*.cbl", "*.cob", "*.cpy"],
-		"line_comments": ["*>"]
+		"file_patterns": ["*.cob", "*.cbl", "*.ccp", "*.cobol", "*.cpy"],
+		"line_comments": ["*"]
 	},
 	{
 		"name": "CoffeeScript",
