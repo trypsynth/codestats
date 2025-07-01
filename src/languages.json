@@ -206,7 +206,7 @@
 	},
 	{
 		"name": "C++",
-		"file_patterns": ["*.cpp", "*.hpp", "*.c++", "*.h++", "*.cc", "*.cxx", "*.hxx", "*.ino", "*.ipp", "*.pde", "*.cppm", "*.ixx", "*.c++m"],
+		"file_patterns": ["*.cpp", "*.hpp", "*.c++", "*.h++", "*.cc", "*.cxx", "*.hxx", "*.ino", "*.ipp", "*.pde", "*.cppm", "*.ixx", "*.c++m", "*.pcc", "*.tpp"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
 	},
@@ -288,10 +288,21 @@
 		"line_comments": ["*"]
 	},
 	{
+		"name": "CodeQL",
+		"file_patterns": ["*.ql", "*.qll"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
 		"name": "CoffeeScript",
-		"file_patterns": ["*.coffee"],
+		"file_patterns": ["*.coffee", "*.cjsx"],
 		"line_comments": ["#"],
 		"block_comments": [["###", "###"]]
+	},
+	{
+		"name": "Cogent",
+		"file_patterns": ["*.cogent"],
+		"line_comments": ["--"]
 	},
 	{
 		"name": "ColdFusion",
@@ -320,6 +331,7 @@
 	{
 		"name": "CSS",
 		"file_patterns": ["*.css", "*.sass", "*.scss", "*.postcss"],
+		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
 	},
 	{
@@ -333,8 +345,13 @@
 		"block_comments": [["/*", "*/"]]
 	},
 	{
+		"name": "CUE",
+		"file_patterns": ["*.cue"],
+		"line_comments": ["//"]
+	},
+	{
 		"name": "Cython",
-		"file_patterns": ["*.pyx", "*.pxd", "*.pyi"],
+		"file_patterns": ["*.pyx", "*.pxd", "*.pyi", "*.pxi"],
 		"line_comments": ["#"]
 	},
 	{
@@ -342,6 +359,19 @@
 		"file_patterns": ["*.d", "*.di"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"], ["/+", "+/"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "D2",
+		"file_patterns": ["*.d2"],
+		"line_comments": ["#"],
+		"block_comments": [["\"\"\"", "\"\"\""]]
+	},
+	{
+		"name": "DAML",
+		"file_patterns": ["*.daml"],
+		"line_comments": ["--"],
+		"multi_line_comments": [["{-", "-}"]],
 		"nested_blocks": true
 	},
 	{
