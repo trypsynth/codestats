@@ -381,6 +381,19 @@
 		"block_comments": [["/*", "*/"]]
 	},
 	{
+		"name": "Device Tree",
+		"file_patterns": ["*.dts", "*.dtsi"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Dhall",
+		"file_patterns": ["*.dhall"],
+		"line_comments": ["--"],
+		"block_comments": [["{-", "-}"]],
+		"nested_blocks": true
+	},
+	{
 		"name": "Delphi/Object Pascal",
 		"file_patterns": ["*.dpr", "*.dpk"],
 		"line_comments": ["//"],
@@ -388,14 +401,41 @@
 	},	
 	{
 		"name": "Dockerfile",
-		"file_patterns": ["*.dockerfile", "Dockerfile"],
+		"file_patterns": ["*.dockerfile", "*.dockerignore", "Dockerfile"],
 		"line_comments": ["#"]
+	},
+	{
+		"name": "DotNet Resource",
+		"file_patterns": ["*.resx"],
+		"block_comments": [["<!--", "-->"]]
+	},
+	{
+		"name": "Dream Maker",
+		"file_patterns": ["*.dm", "*.dme"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "Dust.js",
+		"file_patterns": ["*.dust"],
+		"block_comments": [["{!", "!}"]]
 	},
 	{
 		"name": "EBNF",
 		"file_patterns": ["*.ebnf"],
 		"line_comments": ["//"],
 		"block_comments": [["(*", "*)"]]
+	},
+	{
+		"name": "Ebuild",
+		"file_patterns": ["*.ebuild", "*.eclass"],
+		"line_comments": ["#"]
+	},
+	{
+		"name": "EdgeQL",
+		"file_patterns": ["*.edgeql"],
+		"line_comments": ["#"]
 	},
 	{
 		"name": "Eiffel",
