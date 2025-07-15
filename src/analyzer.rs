@@ -1,17 +1,19 @@
-use crate::{
-	comments::{self, CommentState, LineType},
-	langs,
-	stats::{FileStats, StatsCollector},
-	utils,
-};
-use anyhow::{Context, Result};
-use human_bytes::human_bytes;
-use ignore::WalkBuilder;
 use std::{
 	fs::{self, File},
 	io::{BufRead, BufReader},
 	path::{Path, PathBuf},
 	sync::{Arc, Mutex},
+};
+
+use anyhow::{Context, Result};
+use human_bytes::human_bytes;
+use ignore::WalkBuilder;
+
+use crate::{
+	comments::{self, CommentState, LineType},
+	langs,
+	stats::{FileStats, StatsCollector},
+	utils,
 };
 
 pub struct AnalyzerArgs {

@@ -5,11 +5,12 @@ pub(crate) mod langs;
 pub(crate) mod stats;
 pub(crate) mod utils;
 
+use anyhow::{Result, ensure};
+
 use crate::{
 	analyzer::{AnalyzerArgs, CodeAnalyzer},
 	cli::Commands,
 };
-use anyhow::{Result, ensure};
 
 /// Codestats entrypoint.
 pub(crate) fn main() -> Result<()> {

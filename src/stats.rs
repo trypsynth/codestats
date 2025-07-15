@@ -1,5 +1,6 @@
-use crate::utils;
 use std::{cmp::Reverse, collections::HashMap};
+
+use crate::utils;
 
 /// Holds statistics about a programming language's usage throughout a project/folder.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]

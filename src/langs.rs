@@ -1,6 +1,8 @@
-use crate::utils::pluralize;
-use serde::{Deserialize, Serialize};
 use std::sync::OnceLock;
+
+use serde::{Deserialize, Serialize};
+
+use crate::utils::pluralize;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Language {
