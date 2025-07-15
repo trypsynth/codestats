@@ -1142,7 +1142,8 @@
 		"name": "V",
 		"file_patterns": ["*.v"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
+		"nested_blocks": true
 	},	
 	{
 		"name": "Vala",
