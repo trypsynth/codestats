@@ -765,7 +765,7 @@
 	{
 		"name": "Nim",
 		"file_patterns": ["*.nim"],
-		"line_comments": ["#"],
+		"line_comments": ["#", "##"],
 		"block_comments": [["#[", "]#"]],
 		"nested_blocks": true
 	},

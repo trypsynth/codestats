@@ -41,7 +41,7 @@ pub fn print_supported_languages() {
 	let langs = get_languages();
 	println!(
 		"Total number of supported programming {}: {}",
-		pluralize(langs.len().try_into().unwrap(), "language", "languages"),
+		pluralize(langs.len() as u64, "language", "languages"),
 		langs.len()
 	);
 	for lang in get_languages() {

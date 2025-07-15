@@ -147,7 +147,7 @@ impl CodeAnalyzer {
 		let file = File::open(file_path).with_context(|| format!("Failed to open file {}", file_path.display()))?;
 		let reader = BufReader::new(file);
 		let lang_info = langs::get_language_info(language);
-		let mut line_counts = (0u64, 0u64, 0u64, 0u64); // total, code, comment, blank
+		let mut line_counts = (0, 0, 0, 0); // total, code, comment, blank
 		let mut comment_state = CommentState::new();
 		for line_result in reader.lines() {
 			let line = line_result.with_context(|| format!("Failed to read line from {}", file_path.display()))?;

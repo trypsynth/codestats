@@ -1,4 +1,4 @@
-use clap::{ArgAction, Parser, Subcommand};
+use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
 /// A tool for analyzing code statistics across different programming languages
@@ -22,11 +22,11 @@ pub enum Commands {
 		/// Enable verbose output
 		#[arg(short, long)]
 		verbose: bool,
-		/// Respect .gitignore/.ignore files
-		#[arg(long, default_value_t = true, action = ArgAction::Set)]
-		gitignore: bool,
-		/// Ignore hidden files
-		#[arg(long, default_value_t = true, action = ArgAction::Set)]
+		/// Do not respect .gitignore files
+		#[arg(long)]
+		no_gitignore: bool,
+		/// Search hidden files and directories
+		#[arg(long)]
 		hidden: bool,
 		/// Follow symlinks
 		///

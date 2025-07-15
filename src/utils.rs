@@ -1,4 +1,4 @@
-pub(crate) const fn pluralize<'a>(count: u64, singular: &'a str, plural: &'a str) -> &'a str {
+pub(crate) fn pluralize<'a>(count: u64, singular: &'a str, plural: &'a str) -> &'a str {
 	if count == 1 { singular } else { plural }
 }
 
