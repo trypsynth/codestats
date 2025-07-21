@@ -224,7 +224,6 @@
 		"nested_blocks": true
 	},
 	{
-	{
 		"name": "Cabal",
 		"file_patterns": ["*.cabal", "cabal.project", "cabal.project.freeze"],
 		"line_comments": ["--"],
