@@ -217,6 +217,14 @@
 		"block_comments": [["/*", "*/"]]
 	},
 	{
+		"name": "C3",
+		"file_patterns": ["*.c3"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"], ["<*", "*>"]],
+		"nested_blocks": true
+	},
+	{
+	{
 		"name": "Cabal",
 		"file_patterns": ["*.cabal", "cabal.project", "cabal.project.freeze"],
 		"line_comments": ["--"],
