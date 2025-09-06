@@ -101,7 +101,7 @@
 		"name": "Astro",
 		"file_patterns": ["*.astro"],
 		"line_comments": ["//"],
-		"multi_line_comments": [["/*", "*/"], ["<!--", "-->"]]
+		"block_comments": [["/*", "*/"], ["<!--", "-->"]]
 	},
 	{
 		"name": "Ats",
@@ -156,6 +156,12 @@
 		"name": "Bean",
 		"file_patterns": ["*.bean", "*.beancount"],
 		"line_comments": [";"]
+	},
+	{
+		"name": "Beef",
+		"file_patterns": ["*.beef"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
 	},
 	{
 		"name": "BGT",
@@ -378,7 +384,7 @@
 		"name": "DAML",
 		"file_patterns": ["*.daml"],
 		"line_comments": ["--"],
-		"multi_line_comments": [["{-", "-}"]],
+		"block_comments": [["{-", "-}"]],
 		"nested_blocks": true
 	},
 	{
@@ -627,6 +633,12 @@
 		"block_comments": [["/*", "*/"], ["<!--", "-->"]]
 	},
 	{
+		"name": "Jai",
+		"file_patterns": ["*.jai"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
 		"name": "JavaScript",
 		"file_patterns": ["*.js", "*.cjs", "*.jsx", "*.jscad", "*.jsfl", "*.mjs", "*.njs", "*.sjs", "*.ssjs", "*.xsjs", "*.xsjslib", "*.es", "*.es6", "*.jake", ".babelrc", ".eslintrc", ".prettierrc"],
 		"line_comments": ["//"],
@@ -805,6 +817,12 @@
 		"block_comments": [["/*", "*/"]]
 	},
 	{
+		"name": "Odin",
+		"file_patterns": ["*.odin"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
 		"name": "Objective-C",
 		"file_patterns": ["*.m"],
 		"line_comments": ["//"],
@@ -880,6 +898,12 @@
 	{
 		"name": "Protocol Buffers",
 		"file_patterns": ["*.proto"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Prisma",
+		"file_patterns": ["*.prisma"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
 	},
@@ -1105,6 +1129,12 @@
 		"name": "TeX/LaTeX",
 		"file_patterns": ["*.tex", "*.sty", ".latexmkrc"],
 		"line_comments": ["%"]
+	},
+	{
+		"name": "Templ",
+		"file_patterns": ["*.templ"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
 	},
 	{
 		"name": "Textile",

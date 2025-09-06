@@ -24,6 +24,32 @@ pub struct AnalyzerArgs {
 	pub symlinks: bool,
 }
 
+impl AnalyzerArgs {
+	pub fn new(path: PathBuf) -> Self {
+		Self { path, verbose: false, gitignore: true, hidden: false, symlinks: false }
+	}
+
+	pub fn verbose(mut self, verbose: bool) -> Self {
+		self.verbose = verbose;
+		self
+	}
+
+	pub fn gitignore(mut self, gitignore: bool) -> Self {
+		self.gitignore = gitignore;
+		self
+	}
+
+	pub fn hidden(mut self, hidden: bool) -> Self {
+		self.hidden = hidden;
+		self
+	}
+
+	pub fn symlinks(mut self, symlinks: bool) -> Self {
+		self.symlinks = symlinks;
+		self
+	}
+}
+
 /// The heart of codestats, this structure performs all the analysis of a codebase/folder and prints statistics about it.
 pub struct CodeAnalyzer {
 	args: AnalyzerArgs,
@@ -134,8 +160,9 @@ impl CodeAnalyzer {
 
 	fn process_file_concurrent(file_path: &Path, stats: &Arc<Mutex<StatsCollector>>) -> Result<()> {
 		let filename = file_path.file_name().and_then(|name| name.to_str()).context("Invalid UTF-8 in file name")?;
-		let language = langs::detect_language(filename)
-			.with_context(|| format!("Unknown language for {}", file_path.display()))?;
+		let Some(language) = langs::detect_language(filename) else {
+			return Ok(()); // Skip files with unknown languages silently
+		};
 		let file_size = fs::metadata(file_path)
 			.with_context(|| format!("Failed to retrieve metadata for {}", file_path.display()))?
 			.len();

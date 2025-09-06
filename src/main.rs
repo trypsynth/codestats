@@ -1,20 +1,20 @@
-pub(crate) mod analyzer;
-pub(crate) mod cli;
-pub(crate) mod comments;
-pub(crate) mod langs;
-pub(crate) mod stats;
-pub(crate) mod utils;
+mod analyzer;
+mod cli;
+mod comments;
+mod langs;
+mod stats;
+mod utils;
 
 use anyhow::{Result, ensure};
+use clap::Parser;
 
 use crate::{
 	analyzer::{AnalyzerArgs, CodeAnalyzer},
-	cli::Commands,
+	cli::{Cli, Commands},
 };
 
-/// Codestats entrypoint.
-pub(crate) fn main() -> Result<()> {
-	let cli = cli::parse_cli();
+fn main() -> Result<()> {
+	let cli = Cli::parse();
 	match cli.command {
 		Commands::Langs => {
 			langs::print_supported_languages();
@@ -22,7 +22,8 @@ pub(crate) fn main() -> Result<()> {
 		}
 		Commands::Analyze { path, verbose, no_gitignore, hidden, symlinks } => {
 			ensure!(path.exists(), "Path `{}` not found", path.display());
-			let analyzer_args = AnalyzerArgs { path, verbose, gitignore: !no_gitignore, hidden, symlinks };
+			let analyzer_args =
+				AnalyzerArgs::new(path).verbose(verbose).gitignore(!no_gitignore).hidden(hidden).symlinks(symlinks);
 			let mut analyzer = CodeAnalyzer::new(analyzer_args);
 			analyzer.analyze()?;
 			analyzer.print_stats();

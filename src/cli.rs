@@ -40,9 +40,3 @@ pub enum Commands {
 	/// List all supported programming languages
 	Langs,
 }
-
-/// Wrapper function to avoid needing to use `clap::Parser` in `main.rs`.
-#[must_use]
-pub(crate) fn parse_cli() -> Cli {
-	Cli::parse()
-}
