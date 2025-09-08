@@ -17,7 +17,7 @@ fn main() -> Result<()> {
 	let cli = Cli::parse();
 	match cli.command {
 		Commands::Langs => {
-			langs::print_supported_languages();
+			langs::print_all();
 			Ok(())
 		}
 		Commands::Analyze { path, verbose, no_gitignore, hidden, symlinks } => {

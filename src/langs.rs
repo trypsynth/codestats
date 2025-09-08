@@ -23,13 +23,17 @@ pub fn get_language_info(language_name: &str) -> Option<&'static Language> {
 }
 
 /// Prints all supported language names to stdout
-pub fn print_supported_languages() {
+pub fn print_all() {
 	println!(
 		"Total number of supported programming {}: {}",
 		pluralize(LANGUAGES.len() as u64, "language", "languages"),
 		LANGUAGES.len()
 	);
-	for lang in LANGUAGES {
-		println!("{}", lang.name);
+	for (i, lang) in LANGUAGES.iter().enumerate() {
+		if i == LANGUAGES.len() - 1 {
+			println!("{}.", lang.name);
+		} else {
+			println!("{},", lang.name);
+		}
 	}
 }
