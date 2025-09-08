@@ -49,7 +49,7 @@ impl CommentState {
 }
 
 /// Classifies a line of code based on language comment syntax.
-pub fn classify_line(line: &str, lang_info: &Option<langs::Language>, comment_state: &mut CommentState) -> LineType {
+pub fn classify_line(line: &str, lang_info: &Option<&langs::Language>, comment_state: &mut CommentState) -> LineType {
 	let trimmed = line.trim();
 	if trimmed.is_empty() {
 		return LineType::Blank;
@@ -59,11 +59,11 @@ pub fn classify_line(line: &str, lang_info: &Option<langs::Language>, comment_st
 	};
 	let mut line_remainder = trimmed;
 	let mut has_code = false;
-	if let Some(ref block_comments) = lang.block_comments {
-		let nested = lang.nested_blocks.unwrap_or(false);
+	if !lang.block_comments.is_empty() {
+		let nested = lang.nested_blocks;
 		while !line_remainder.is_empty() {
 			if !comment_state.is_in_comment() {
-				if let Some((pos, start_len)) = find_block_comment_start(line_remainder, block_comments) {
+				if let Some((pos, start_len)) = find_block_comment_start(line_remainder, lang.block_comments) {
 					if pos > 0 && !line_remainder[..pos].trim().is_empty() {
 						has_code = true;
 					}
@@ -73,7 +73,7 @@ pub fn classify_line(line: &str, lang_info: &Option<langs::Language>, comment_st
 					break;
 				}
 			} else if let Some((pos, len, found_nested_start)) =
-				find_block_comment_end_or_nested_start(line_remainder, block_comments, nested)
+				find_block_comment_end_or_nested_start(line_remainder, lang.block_comments, nested)
 			{
 				if found_nested_start {
 					comment_state.enter_nested_block();
@@ -89,8 +89,8 @@ pub fn classify_line(line: &str, lang_info: &Option<langs::Language>, comment_st
 	if comment_state.is_in_comment() {
 		return if has_code { LineType::Code } else { LineType::Comment };
 	}
-	if let Some(ref line_comments) = lang.line_comments {
-		if let Some(pos) = find_line_comment_start(line_remainder, line_comments) {
+	if !lang.line_comments.is_empty() {
+		if let Some(pos) = find_line_comment_start(line_remainder, lang.line_comments) {
 			if pos > 0 && !line_remainder[..pos].trim().is_empty() {
 				has_code = true;
 			}
@@ -104,35 +104,33 @@ pub fn classify_line(line: &str, lang_info: &Option<langs::Language>, comment_st
 }
 
 /// Finds the earliest block comment start marker in the line.
-pub fn find_block_comment_start(line: &str, block_comments: &[Vec<String>]) -> Option<(usize, usize)> {
+pub fn find_block_comment_start(line: &str, block_comments: &[(&str, &str)]) -> Option<(usize, usize)> {
 	block_comments
 		.iter()
-		.filter_map(|block| block.first().and_then(|start| line.find(start).map(|pos| (pos, start.len()))))
+		.filter_map(|(start, _)| line.find(start).map(|pos| (pos, start.len())))
 		.min_by_key(|(pos, _)| *pos)
 }
 
 /// Finds the earliest end of block comment or nested start.
 pub fn find_block_comment_end_or_nested_start(
 	line: &str,
-	block_comments: &[Vec<String>],
+	block_comments: &[(&str, &str)],
 	nested: bool,
 ) -> Option<(usize, usize, bool)> {
-	for block in block_comments {
-		if let [start, end] = block.as_slice() {
-			let start_pos = if nested { line.find(start) } else { None };
-			let end_pos = line.find(end);
-			match (start_pos, end_pos) {
-				(Some(s), Some(e)) if s < e => return Some((s, start.len(), true)),
-				(Some(s), None) => return Some((s, start.len(), true)),
-				(_, Some(e)) => return Some((e, end.len(), false)),
-				_ => continue,
-			}
+	for (start, end) in block_comments {
+		let start_pos = if nested { line.find(start) } else { None };
+		let end_pos = line.find(end);
+		match (start_pos, end_pos) {
+			(Some(s), Some(e)) if s < e => return Some((s, start.len(), true)),
+			(Some(s), None) => return Some((s, start.len(), true)),
+			(_, Some(e)) => return Some((e, end.len(), false)),
+			_ => continue,
 		}
 	}
 	None
 }
 
 /// Finds the position of the earliest line comment start marker.
-pub fn find_line_comment_start(line: &str, line_comments: &[String]) -> Option<usize> {
+pub fn find_line_comment_start(line: &str, line_comments: &[&str]) -> Option<usize> {
 	line_comments.iter().filter_map(|c| line.find(c)).min()
 }

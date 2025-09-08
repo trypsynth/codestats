@@ -166,9 +166,9 @@ impl CodeAnalyzer {
 		let file_size = fs::metadata(file_path)
 			.with_context(|| format!("Failed to retrieve metadata for {}", file_path.display()))?
 			.len();
-		let (total_lines, code_lines, comment_lines, blank_lines) = Self::analyze_file_lines(file_path, &language)?;
+		let (total_lines, code_lines, comment_lines, blank_lines) = Self::analyze_file_lines(file_path, language)?;
 		let file_stats = FileStats::new(total_lines, code_lines, comment_lines, blank_lines, file_size);
-		stats.lock().unwrap().add_file_stats(language, file_stats);
+		stats.lock().unwrap().add_file_stats(language.to_string(), file_stats);
 		Ok(())
 	}
 
