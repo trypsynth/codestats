@@ -102,7 +102,7 @@ impl CodeAnalyzer {
 			println!("No recognized programming languages found.");
 			return;
 		}
-		Self::print_language_breakdown(&stats);
+		Self::print_language_breakdown(&stats, self.args.verbose);
 	}
 
 	fn print_summary(&self, stats: &StatsCollector) {
@@ -132,7 +132,7 @@ impl CodeAnalyzer {
 		);
 	}
 
-	fn print_language_breakdown(stats: &StatsCollector) {
+	fn print_language_breakdown(stats: &StatsCollector, verbose: bool) {
 		println!("Language breakdown:");
 		for (lang, lang_stats) in stats.languages_by_lines() {
 			let file_pct = utils::percentage(lang_stats.files, stats.total_files);
@@ -155,6 +155,20 @@ impl CodeAnalyzer {
 				lang_stats.blank_lines,
 				lang_stats.blank_percentage(),
 			);
+			if verbose {
+				println!("\tFile breakdown:");
+				let mut files = lang_stats.file_list.clone();
+				files.sort_by(|a, b| b.total_lines.cmp(&a.total_lines));
+				for file_stat in &files {
+					let file_pct = utils::percentage(file_stat.total_lines, stats.total_lines);
+					println!(
+						"\t\t{}: {} lines ({:.1}% of total).",
+						file_stat.path,
+						file_stat.total_lines,
+						file_pct
+					);
+				}
+			}
 		}
 	}
 
@@ -167,7 +181,8 @@ impl CodeAnalyzer {
 			.with_context(|| format!("Failed to retrieve metadata for {}", file_path.display()))?
 			.len();
 		let (total_lines, code_lines, comment_lines, blank_lines) = Self::analyze_file_lines(file_path, language)?;
-		let file_stats = FileStats::new(total_lines, code_lines, comment_lines, blank_lines, file_size);
+		let file_path_str = file_path.display().to_string();
+		let file_stats = FileStats::new(file_path_str, total_lines, code_lines, comment_lines, blank_lines, file_size);
 		stats.lock().unwrap().add_file_stats(language.to_string(), file_stats);
 		Ok(())
 	}

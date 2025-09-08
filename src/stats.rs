@@ -11,6 +11,7 @@ pub struct LangStats {
 	pub(crate) comment_lines: u64,
 	pub(crate) blank_lines: u64,
 	pub(crate) size: u64,
+	pub(crate) file_list: Vec<FileStats>,
 }
 
 impl LangStats {
@@ -21,6 +22,7 @@ impl LangStats {
 		self.comment_lines += file_stats.comment_lines;
 		self.blank_lines += file_stats.blank_lines;
 		self.size += file_stats.size;
+		self.file_list.push(file_stats);
 	}
 
 	pub(crate) fn code_percentage(&self) -> f64 {
@@ -37,8 +39,9 @@ impl LangStats {
 }
 
 /// Statistics for a single file
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FileStats {
+	pub(crate) path: String,
 	pub(crate) total_lines: u64,
 	pub(crate) code_lines: u64,
 	pub(crate) comment_lines: u64,
@@ -47,8 +50,8 @@ pub struct FileStats {
 }
 
 impl FileStats {
-	pub(crate) fn new(total_lines: u64, code_lines: u64, comment_lines: u64, blank_lines: u64, size: u64) -> Self {
-		Self { total_lines, code_lines, comment_lines, blank_lines, size }
+	pub(crate) fn new(path: String, total_lines: u64, code_lines: u64, comment_lines: u64, blank_lines: u64, size: u64) -> Self {
+		Self { path, total_lines, code_lines, comment_lines, blank_lines, size }
 	}
 }
 
