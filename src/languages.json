@@ -1,5 +1,12 @@
 [
 	{
+		"name": "8th",
+		"file_patterns": ["*.8th"],
+		"line_comments": ["\\\\ ", "-- "],
+		"block_comments": [["(*", "*)"]],
+		"nested_blocks": true
+	},
+	{
 		"name": "ABAP",
 		"file_patterns": ["*.abap"],
 		"line_comments": ["*"]
@@ -451,10 +458,16 @@
 		"line_comments": ["#"]
 	},
 	{
+		"name": "EDN",
+		"file_patterns": ["*.edn"],
+		"line_comments": [";"]
+	},
+	{
 		"name": "Eiffel",
 		"file_patterns": ["*.e"],
 		"line_comments": ["--"]
 	},
+		
 	{
 		"name": "EJS",
 		"file_patterns": ["*.ejs"],
@@ -474,6 +487,16 @@
 		"nested_blocks": true
 	},
 	{
+		"name": "Elvish",
+		"file_patterns": ["*.elv"],
+		"line_comments": ["#"]
+	},
+	{
+		"name": "Emacs Dev Env",
+		"file_patterns": ["*.ede"],
+		"line_comments": [";"]
+	},
+	{
 		"name": "Emacs Lisp",
 		"file_patterns": ["*.el"],
 		"line_comments": [";"]
@@ -485,16 +508,35 @@
 		"block_comments": [["###", "###"]]
 	},
 	{
+		"name": "Emojicode",
+		"file_patterns": ["*.emojic", "*.🍇"],
+		"line_comments": ["💭"],
+		"block_comments": [["💭🔜", "🔚💭"], ["📗", "📗"], ["📘", "📘"]]
+	},
+	{
 		"name": "Erlang",
-		"file_patterns": ["*.erl", "*.hrl", "rebar.config", "rebar.lock"],
+		"file_patterns": ["*.erl", "*.hrl"],
 		"line_comments": ["%"]
 	},
 	{
 		"name": "F#",
-		"file_patterns": ["*.fs", "*.fsi", "*.fsx"],
+		"file_patterns": ["*.fs", "*.fsi", "*.fsx", "*.fsscript"],
 		"line_comments": ["//"],
 		"block_comments": [["(*", "*)"]],
 		"nested_blocks": true
+	},
+	{
+		"name": "F*",
+		"file_patterns": ["*.fst", "*.fsti"],
+		"line_comments": ["//"],
+		"multi_line_comments": [["(*", "*)"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "Factor",
+		"file_patterns": ["*.factor"],
+		"line_comments": ["!", "#!"],
+		"block_comments": [["/*", "*/"]]
 	},
 	{
 		"name": "Fennel",
@@ -504,14 +546,41 @@
 		"nested_blocks": true
 	},
 	{
+		"name": "Fish",
+		"file_patterns": ["*.fish"],
+		"line_comments": ["#"]
+	},
+	{
+		"name": "FlatBuffers Schema",
+		"file_patterns": ["*.fbs"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
 		"name": "Forth",
-		"file_patterns": ["*.4th", "*.fth", "*.frt"],
-		"line_comments": ["\\"]
+		"file_patterns": ["*.4th", "*.forth", "*.fr", "*.fth", "*.frt", "*.f83", "*.fb", "*.fpm", "*.e4", "*.rx", "*.ft"],
+		"line_comments": ["\\\\"],
+		"block_comments": [["( ", ")"]]
 	},
 	{
 		"name": "Fortran",
 		"file_patterns": ["*.f", "*.for", "*.f77", "*.f90", "*.f95", "*.f03"],
 		"line_comments": ["!", "C", "c"]
+	},
+	{
+		"name": "FreeMarker",
+		"file_patterns": ["*.ftl", "*.ftlh", "*.ftlx"],
+		"block_comments": [["<#--", "-->"]]
+	},
+	{
+		"name": "Futhark",
+		"file_patterns": ["*.fut"],
+		"line_comments": ["--"]
+	},
+	{
+		"name": "GDB Script",
+		"file_patterns": ["*.gdb"],
+		"line_comments": ["#"]
 	},
 	{
 		"name": "GDScript",
@@ -1007,7 +1076,7 @@
 	},
 	{
 		"name": "Shell Script",
-		"file_patterns": ["*.sh", "*.bash", "*.ksh", "*.tmux", "*.zsh", "*.fish", "*.csh", "*.tcsh", ".bash_logout", ".bash_profile", ".bashrc", ".login", ".profile", ".zlogin", ".zlogout", ".zprofile", ".zshenv", ".zshrc", ".bash_aliases"],
+		"file_patterns": ["*.sh", "*.bash", "*.ksh", "*.tmux", "*.zsh", "*.csh", "*.tcsh", ".bash_logout", ".bash_profile", ".bashrc", ".login", ".profile", ".zlogin", ".zlogout", ".zprofile", ".zshenv", ".zshrc", ".bash_aliases"],
 		"line_comments": ["#"]
 	},
 	{
