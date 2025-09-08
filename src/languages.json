@@ -144,10 +144,9 @@
 		"line_comments": ["//", "#"]
 	},
 	{
-		"name": "BCX/FreeBASIC",
-		"file_patterns": ["*.bas", "*.bi"],
-		"line_comments": ["'", "rem"],
-		"block_comments": [["$comment", "$comment"]]
+		"name": "Bash",
+		"file_patterns": ["*.bash", ".bash_logout", ".bash_profile", ".bashrc", ".bash_aliases"],
+		"line_comments": ["#"]
 	},
 	{
 		"name": "Batch Script",
@@ -158,6 +157,12 @@
 		"name": "Bazel",
 		"file_patterns": ["*.bzl", "*.bazel", "*.bzlmod", "build", "build.bazel", "workspace", "module"],
 		"line_comments": ["#"]
+	},
+	{
+		"name": "BCX/FreeBASIC",
+		"file_patterns": ["*.bas", "*.bi"],
+		"line_comments": ["'", "rem"],
+		"block_comments": [["$comment", "$comment"]]
 	},
 	{
 		"name": "Bean",
@@ -372,6 +377,11 @@
 	{
 		"name": "Cython",
 		"file_patterns": ["*.pyx", "*.pxd", "*.pyi", "*.pxi"],
+		"line_comments": ["#"]
+	},
+	{
+		"name": "C Shell",
+		"file_patterns": ["*.csh"],
 		"line_comments": ["#"]
 	},
 	{
@@ -741,6 +751,11 @@
 		"file_patterns": ["*.ipynb"]
 	},
 	{
+		"name": "Korn Shell",
+		"file_patterns": ["*.ksh"],
+		"line_comments": ["#"]
+	},
+	{
 		"name": "Kotlin",
 		"file_patterns": ["*.kt", "*.kts", "*.ktm"],
 		"line_comments": ["//"],
@@ -878,6 +893,11 @@
 		"name": "Nunjucks Templates",
 		"file_patterns": ["*.njk"],
 		"block_comments": [["{#", "#}"]]
+	},
+	{
+		"name": "Nushell",
+		"file_patterns": ["*.nu"],
+		"line_comments": ["#"]
 	},
 	{
 		"name": "NVGT",
@@ -1076,7 +1096,7 @@
 	},
 	{
 		"name": "Shell Script",
-		"file_patterns": ["*.sh", "*.bash", "*.ksh", "*.tmux", "*.csh", "*.tcsh", ".bash_logout", ".bash_profile", ".bashrc", ".login", ".profile", ".bash_aliases"],
+		"file_patterns": ["*.sh", ".login", ".profile"],
 		"line_comments": ["#"]
 	},
 	{
@@ -1216,6 +1236,11 @@
 		"block_comments": [["/*", "*/"]]
 	},
 	{
+		"name": "Tmux",
+		"file_patterns": ["*.tmux"],
+		"line_comments": ["#"]
+	},
+	{
 		"name": "TOML",
 		"file_patterns": ["*.toml"],
 		"line_comments": ["#"]
@@ -1236,6 +1261,11 @@
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
 		"nested_blocks": true
+	},
+	{
+		"name": "TC Shell",
+		"file_patterns": ["*.tcsh"],
+		"line_comments": ["#"]
 	},
 	{
 		"name": "UnrealScript",
