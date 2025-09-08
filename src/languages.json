@@ -1076,7 +1076,7 @@
 	},
 	{
 		"name": "Shell Script",
-		"file_patterns": ["*.sh", "*.bash", "*.ksh", "*.tmux", "*.zsh", "*.csh", "*.tcsh", ".bash_logout", ".bash_profile", ".bashrc", ".login", ".profile", ".zlogin", ".zlogout", ".zprofile", ".zshenv", ".zshrc", ".bash_aliases"],
+		"file_patterns": ["*.sh", "*.bash", "*.ksh", "*.tmux", "*.csh", "*.tcsh", ".bash_logout", ".bash_profile", ".bashrc", ".login", ".profile", ".bash_aliases"],
 		"line_comments": ["#"]
 	},
 	{
@@ -1343,5 +1343,10 @@
 		"file_patterns": ["*.zok"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "ZSH",
+		"file_patterns": ["*.zsh", ".zlogin", ".zlogout", ".zprofile", ".zshenv", ".zshrc"],
+		"line_comments": ["#"]
 	}
 ]
