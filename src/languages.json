@@ -100,7 +100,7 @@
 	},
 	{
 		"name": "Assembly",
-		"file_patterns": ["*.asm", "*.s", "*.nasm"],
+		"file_patterns": ["*.asm", "*.s"],
 		"line_comments": [";", "#", "//"],
 		"block_comments": [["/*", "*/"]]
 	},
@@ -336,6 +336,12 @@
 		"block_comments": [["<!---", "--->"], ["/*", "*/"]]
 	},
 	{
+		"name": "Coq",
+		"file_patterns": ["*.coq"],
+		"block_comments": [["(*", "*)"]],
+		"nested_blocks": true
+	},
+	{
 		"name": "Common Lisp",
 		"file_patterns": ["*.lisp", "*.asd", "*.cl"],
 		"line_comments": [";"],
@@ -539,7 +545,7 @@
 		"name": "F*",
 		"file_patterns": ["*.fst", "*.fsti"],
 		"line_comments": ["//"],
-		"multi_line_comments": [["(*", "*)"]],
+		"block_comments": [["(*", "*)"]],
 		"nested_blocks": true
 	},
 	{
@@ -788,6 +794,11 @@
 		"name": "LiveScript",
 		"file_patterns": ["*.ls"],
 		"line_comments": ["#"]
+	},
+	{
+		"name": "LLVM IR",
+		"file_patterns": ["*.ll", "*.bc"],
+		"line_comments": [";"]
 	},	
 	{
 		"name": "Lua",
@@ -859,6 +870,12 @@
 		"name": "Mustache",
 		"file_patterns": ["*.mustache"],
 		"block_comments": [["{{!", "}}"]]
+	},
+	{
+		"name": "NASM",
+		"file_patterns": ["*.nasm"],
+		"line_comments": [";", "#"],
+		"block_comments": [["/*", "*/"]]
 	},
 	{
 		"name": "Nginx Config",
@@ -1041,6 +1058,12 @@
 		"file_patterns": ["*.raku", "*.rakumod", "*.rakutest", "*.pm6", "*.pl6", "*.p6"],
 		"line_comments": ["#"],
 		"block_comments": [["#`(", ")"], ["=begin", "=end"]]
+	},
+	{
+		"name": "ReScript",
+		"file_patterns": ["*.res", "*.resi"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
 	},
 	{
 		"name": "reStructuredText",
@@ -1273,6 +1296,11 @@
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
 		"nested_blocks": true
+	},
+	{
+		"name": "Uxntal",
+		"file_patterns": ["*.tal"],
+		"line_comments": ["(", ")"]
 	},
 	{
 		"name": "V",
