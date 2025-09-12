@@ -655,9 +655,14 @@
 		"block_comments": [["/*", "*/"]]
 	},
 	{
-		"name": "HAML",
+		"name": "Haml",
 		"file_patterns": ["*.haml"],
 		"line_comments": ["-#"]
+	},
+	{
+		"name": "Hamlet",
+		"file_patterns": ["*.hamlet"],
+		"block_comments": [["<!--", "-->"]]
 	},
 	{
 		"name": "Handlebars",
@@ -672,8 +677,32 @@
 		"nested_blocks": true
 	},
 	{
+		"name": "Haxe",
+		"file_patterns": ["*.hx"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "HCL",
+		"file_patterns": ["*.tf", "*.hcl", "*.tfvars"],
+		"line_comments": ["#", "//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Headache",
+		"file_patterns": ["*.ha"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
 		"name": "HLSL",
 		"file_patterns": ["*.hlsl", "*.fx", "*.fxh", "*.hlsli"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "HolyC",
+		"file_patterns": ["*.hc", "*.zc"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
 	},
@@ -681,6 +710,11 @@
 		"name": "HTML",
 		"file_patterns": ["*.html", "*.htm", "*.xht", "*.xhtml"],
 		"block_comments": [["<!--", "-->"]]
+	},
+	{
+		"name": "Hy",
+		"file_patterns": ["*.hy"],
+		"line_comments": [";"]
 	},
 	{
 		"name": "IDL",
@@ -702,7 +736,7 @@
 	},
 	{
 		"name": "INI",
-		"file_patterns": ["*.ini", "*.cfg", "*.prefs", "*.properties", ".editorconfig", ".gitconfig", "buildozer.spec"],
+		"file_patterns": ["*.ini", "*.cfg", "*.prefs", ".editorconfig", ".gitconfig", "buildozer.spec"],
 		"line_comments": [";", "#"]
 	},
 	{
@@ -717,6 +751,18 @@
 		"line_comments": ["NB."]
 	},
 	{
+		"name": "Jai",
+		"file_patterns": ["*.jai"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "Janet",
+		"file_patterns": ["*.janet"],
+		"line_comments": ["#"]
+	},
+	{
 		"name": "Java",
 		"file_patterns": ["*.java", "*.jav"],
 		"line_comments": ["//"],
@@ -727,12 +773,6 @@
 		"file_patterns": ["*.jsp"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"], ["<!--", "-->"]]
-	},
-	{
-		"name": "Jai",
-		"file_patterns": ["*.jai"],
-		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
 	},
 	{
 		"name": "JavaScript",
@@ -751,6 +791,16 @@
 		"file_patterns": ["*.j2", "*.jinja", "*.jinja2"],
 		"line_comments": ["{#"],
 		"block_comments": [["{#", "#}"]]
+	},
+	{
+		"name": "jq",
+		"file_patterns": ["*.jq"],
+		"line_comments": ["#"]
+	},
+	{
+		"name": "JSLT",
+		"file_patterns": ["*.jslt"],
+		"line_comments": ["//"]
 	},
 	{
 		"name": "JSON",
@@ -1240,13 +1290,6 @@
 		"name": "Tera",
 		"file_patterns": ["*.tera"],
 		"block_comments": [["<!--", "-->"], ["{#", "#}"]]
-	},
-	{
-		"name": "Terraform",
-		"file_patterns": ["*.tf", "*.hcl", "terraform.tfvars"],
-		"line_comments": ["#", "//"],
-		"block_comments": [["/*", "*/"]],
-		"nested_blocks": true
 	},
 	{
 		"name": "TeX/LaTeX",
