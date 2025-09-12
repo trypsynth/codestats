@@ -6,6 +6,7 @@ pub enum LineType {
 	Code,
 	Comment,
 	Blank,
+	Shebang,
 }
 
 /// Tracks block comment state for a language, including nesting.
@@ -49,10 +50,22 @@ impl CommentState {
 }
 
 /// Classifies a line of code based on language comment syntax.
-pub fn classify_line(line: &str, lang_info: &Option<&langs::Language>, comment_state: &mut CommentState) -> LineType {
+pub fn classify_line(
+	line: &str,
+	lang_info: &Option<&langs::Language>,
+	comment_state: &mut CommentState,
+	is_first_line: bool,
+) -> LineType {
 	let trimmed = line.trim();
 	if trimmed.is_empty() {
 		return LineType::Blank;
+	}
+	if is_first_line && trimmed.starts_with("#!") {
+		if let Some(lang) = lang_info {
+			if !lang.shebangs.is_empty() && lang.shebangs.iter().any(|shebang| trimmed.starts_with(shebang)) {
+				return LineType::Shebang;
+			}
+		}
 	}
 	let Some(lang) = lang_info else {
 		return LineType::Code;

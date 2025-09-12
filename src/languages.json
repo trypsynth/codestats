@@ -136,7 +136,8 @@
 	{
 		"name": "AWK",
 		"file_patterns": ["*.awk", "*.gawk", "*.nawk"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
+		"shebangs": ["#!/bin/awk -f"]
 	},
 	{
 		"name": "Ballerina",
@@ -145,8 +146,9 @@
 	},
 	{
 		"name": "Bash",
-		"file_patterns": ["*.bash", ".bash_logout", ".bash_profile", ".bashrc", ".bash_aliases"],
-		"line_comments": ["#"]
+		"file_patterns": ["*.bash", "*.sh", ".login", ".profile", ".bash_logout", ".bash_profile", ".bashrc", ".bash_aliases"],
+		"line_comments": ["#"],
+		"shebangs": ["#!/bin/bash", "#!/usr/bin/env bash", "#!/bin/sh", "#!/usr/bin/env sh"]
 	},
 	{
 		"name": "Batch Script",
@@ -225,7 +227,8 @@
 	{
 		"name": "C Shell",
 		"file_patterns": ["*.csh"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
+		"shebangs": ["#!/bin/csh"]
 	},
 	{
 		"name": "C#",
@@ -356,7 +359,8 @@
 	{
 		"name": "Crystal",
 		"file_patterns": ["*.cr"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
+		"shebangs": ["#!/usr/bin/crystal"]
 	},
 	{
 		"name": "CSON",
@@ -564,7 +568,8 @@
 	{
 		"name": "Fish",
 		"file_patterns": ["*.fish"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
+		"shebangs": ["#!/bin/fish"]
 	},
 	{
 		"name": "FlatBuffers Schema",
@@ -778,7 +783,8 @@
 		"name": "JavaScript",
 		"file_patterns": ["*.js", "*.cjs", "*.jsx", "*.jscad", "*.jsfl", "*.mjs", "*.njs", "*.sjs", "*.ssjs", "*.xsjs", "*.xsjslib", "*.es", "*.es6", "*.jake", ".babelrc", ".eslintrc", ".prettierrc"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
+		"shebangs": ["#!/usr/bin/node", "#!/usr/bin/env node"]
 	},
 	{
 		"name": "JAWS Script",
@@ -832,7 +838,8 @@
 	{
 		"name": "Just",
 		"file_patterns": ["*.jjust", "justfile"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
+		"shebangs": ["#!/usr/bin/env just --justfile"]
 	},
 	{
 		"name": "K",
@@ -847,7 +854,8 @@
 	{
 		"name": "Korn Shell",
 		"file_patterns": ["*.ksh"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
+		"shebangs": ["#!/bin/ksh"]
 	},
 	{
 		"name": "Kotlin",
@@ -903,7 +911,8 @@
 		"name": "Lua",
 		"file_patterns": ["*.lua", "*.wlua", "*.rockspec", ".luacheckrc"],
 		"line_comments": ["--"],
-		"block_comments": [["--[[", "--]]"]]
+		"block_comments": [["--[[", "--]]"]],
+		"shebangs": ["#!/usr/bin/lua", "#!/usr/bin/env lua"]
 	},
 	{
 		"name": "Luau",
@@ -1074,13 +1083,15 @@
 		"name": "Perl",
 		"file_patterns": ["*.pl", "*.al", "*.perl", "*.plx", "*.pm", "rexfile", "ack", "cpanfile", "cpanfile.snapshot"],
 		"line_comments": ["#"],
-		"block_comments": [["=pod", "=cut"]]
+		"block_comments": [["=pod", "=cut"]],
+		"shebangs": ["#!/usr/bin/perl", "#!/usr/bin/env perl"]
 	},
 	{
 		"name": "PHP",
 		"file_patterns": ["*.php", "*.php3", "*.php4", "*.php5", "*.phps", "*.phpt", "*.phtml"],
 		"line_comments": ["//", "#"],
-		"block_comments": [["/*", "*/"], ["<!--", "-->"]]
+		"block_comments": [["/*", "*/"], ["<!--", "-->"]],
+		"shebangs": ["#!/usr/bin/php", "#!/usr/bin/env php"]
 	},
 	{
 		"name": "PogoScript",
@@ -1126,7 +1137,8 @@
 		"name": "Python",
 		"file_patterns": ["*.py", "*.pyw", "*.py2", "*.py3", "*.pip", "*.pyz", "*.pyzw", ".gclient", "SConscript", "SConstruct", "Snakefile", "requirements.txt", "Pipfile", ".pythonrc", "py.typed"],
 		"line_comments": ["#"],
-		"block_comments": [["\"\"\"", "\"\"\""], ["'''", "'''"]]
+		"block_comments": [["\"\"\"", "\"\"\""], ["'''", "'''"]],
+		"shebangs": ["#!/usr/bin/python", "#!/usr/bin/env python", "#!/usr/bin/python3", "#!/usr/bin/env python3"]
 	},
 	{
 		"name": "Q#",
@@ -1156,7 +1168,8 @@
 		"name": "Raku",
 		"file_patterns": ["*.raku", "*.rakumod", "*.rakutest", "*.pm6", "*.pl6", "*.p6"],
 		"line_comments": ["#"],
-		"block_comments": [["#`(", ")"], ["=begin", "=end"]]
+		"block_comments": [["#`(", ")"], ["=begin", "=end"]],
+		"shebangs": ["#!/usr/bin/raku", "#!/usr/bin/perl6"]
 	},
 	{
 		"name": "ReScript",
@@ -1183,7 +1196,8 @@
 		"name": "Ruby",
 		"file_patterns": ["*.rb", "*.builder", "*.eye", "*.gemspec", "*.god", "*.jbuilder", "*.mspec", "*.pluginspec", "*.podspec", "*.rabl", "*.rake", "*.rbuild", "*.rbw", "*.rbx", "*.ruby", "*.thor", "*.watchr", ".irbrc", ".pryrc", "Appraisals", "Berksfile", "Brewfile", "Buildfile", "Capfile", "Dangerfile", "Deliverfile", "Fastfile", "Gemfile", "Guardfile", "Jarfile", "Mavenfile", "Podfile", "Puppetfile", "Rakefile", "Snapfile", "Thorfile"],
 		"line_comments": ["#"],
-		"block_comments": [["=begin", "=end"]]
+		"block_comments": [["=begin", "=end"]],
+		"shebangs": ["#!/usr/bin/ruby", "#!/usr/bin/env ruby"]
 	},
 	{
 		"name": "Rust",
@@ -1214,11 +1228,6 @@
 	{
 		"name": "Sed",
 		"file_patterns": ["*.sed"],
-		"line_comments": ["#"]
-	},
-	{
-		"name": "Shell Script",
-		"file_patterns": ["*.sh", ".login", ".profile"],
 		"line_comments": ["#"]
 	},
 	{
@@ -1497,6 +1506,7 @@
 	{
 		"name": "ZSH",
 		"file_patterns": ["*.zsh", ".zlogin", ".zlogout", ".zprofile", ".zshenv", ".zshrc"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
+		"shebangs": ["#!/bin/zsh"]
 	}
 ]

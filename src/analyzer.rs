@@ -78,7 +78,7 @@ impl CodeAnalyzer {
 				Box::new(move |entry_result| {
 					match entry_result {
 						Ok(entry) if entry.file_type().is_some_and(|ft| ft.is_file()) => {
-							if let Err(e) = Self::process_file_concurrent(entry.path(), &stats) {
+							if let Err(e) = Self::process_file(entry.path(), &stats) {
 								if verbose {
 									eprintln!("Error processing file {}: {e}", entry.path().display());
 								}
@@ -107,7 +107,7 @@ impl CodeAnalyzer {
 
 	fn print_summary(&self, stats: &StatsCollector) {
 		println!(
-			"Codestats for {}: {} {}, {} total {}, {} total size",
+			"Codestats for {}: {} {}, {} total {}, {} total size.",
 			self.args.path.display(),
 			stats.total_files,
 			utils::pluralize(stats.total_files, "file", "files"),
@@ -115,21 +115,50 @@ impl CodeAnalyzer {
 			utils::pluralize(stats.total_lines, "line", "lines"),
 			human_bytes(stats.total_size as f64)
 		);
-		println!(
-			"Line breakdown: {} code {}, {} comment {}, {} blank {}",
-			stats.total_code_lines,
-			utils::pluralize(stats.total_code_lines, "line", "lines"),
-			stats.total_comment_lines,
-			utils::pluralize(stats.total_comment_lines, "line", "lines"),
-			stats.total_blank_lines,
-			utils::pluralize(stats.total_blank_lines, "line", "lines")
-		);
-		println!(
-			"Percentages: {:.1}% code, {:.1}% comments, {:.1}% blanks",
-			stats.code_percentage(),
-			stats.comment_percentage(),
-			stats.blank_percentage()
-		);
+		let mut line_breakdown_parts = Vec::new();
+		if stats.total_code_lines > 0 {
+			line_breakdown_parts.push(format!(
+				"{} code {}",
+				stats.total_code_lines,
+				utils::pluralize(stats.total_code_lines, "line", "lines")
+			));
+		}
+		if stats.total_comment_lines > 0 {
+			line_breakdown_parts.push(format!(
+				"{} comment {}",
+				stats.total_comment_lines,
+				utils::pluralize(stats.total_comment_lines, "line", "lines")
+			));
+		}
+		if stats.total_blank_lines > 0 {
+			line_breakdown_parts.push(format!(
+				"{} blank {}",
+				stats.total_blank_lines,
+				utils::pluralize(stats.total_blank_lines, "line", "lines")
+			));
+		}
+		if stats.total_shebang_lines > 0 {
+			line_breakdown_parts.push(format!(
+				"{} shebang {}",
+				stats.total_shebang_lines,
+				utils::pluralize(stats.total_shebang_lines, "line", "lines")
+			));
+		}
+		println!("Line breakdown: {}", line_breakdown_parts.join(", "));
+		let mut percentage_parts = Vec::new();
+		if stats.total_code_lines > 0 {
+			percentage_parts.push(format!("{:.1}% code", stats.code_percentage()));
+		}
+		if stats.total_comment_lines > 0 {
+			percentage_parts.push(format!("{:.1}% comments", stats.comment_percentage()));
+		}
+		if stats.total_blank_lines > 0 {
+			percentage_parts.push(format!("{:.1}% blanks", stats.blank_percentage()));
+		}
+		if stats.total_shebang_lines > 0 {
+			percentage_parts.push(format!("{:.1}% shebangs", stats.shebang_percentage()));
+		}
+		println!("Percentages: {}", percentage_parts.join(", "));
 	}
 
 	fn print_language_breakdown(stats: &StatsCollector, verbose: bool) {
@@ -138,68 +167,84 @@ impl CodeAnalyzer {
 			let file_pct = utils::percentage(lang_stats.files, stats.total_files);
 			let line_pct = utils::percentage(lang_stats.lines, stats.total_lines);
 			let size_pct = utils::percentage(lang_stats.size, stats.total_size);
+			println!("{lang}:");
 			println!(
-				"{lang}: {} {} ({file_pct:.1}% of files), {} {} ({line_pct:.1}% of lines), {} ({size_pct:.1}% of size)",
+				"\tFiles: {} {} ({file_pct:.1}% of total).",
 				lang_stats.files,
-				utils::pluralize(lang_stats.files, "file", "files"),
-				lang_stats.lines,
-				utils::pluralize(lang_stats.lines, "line", "lines"),
-				human_bytes(lang_stats.size as f64),
+				utils::pluralize(lang_stats.files, "file", "files")
 			);
 			println!(
-				"\tCode: {} lines ({:.1}%), Comments: {} lines ({:.1}%), Blank: {} lines ({:.1}%)",
-				lang_stats.code_lines,
-				lang_stats.code_percentage(),
-				lang_stats.comment_lines,
-				lang_stats.comment_percentage(),
-				lang_stats.blank_lines,
-				lang_stats.blank_percentage(),
+				"\tLines: {} {} ({line_pct:.1}% of total).",
+				lang_stats.lines,
+				utils::pluralize(lang_stats.lines, "line", "lines")
 			);
+			println!("\tSize: {} ({size_pct:.1}% of total).", human_bytes(lang_stats.size as f64));
+			println!("\tLine breakdown:");
+			if lang_stats.code_lines > 0 {
+				println!("\t\tCode: {} lines ({:.1}%).", lang_stats.code_lines, lang_stats.code_percentage());
+			}
+			if lang_stats.comment_lines > 0 {
+				println!("\t\tComments: {} lines ({:.1}%).", lang_stats.comment_lines, lang_stats.comment_percentage());
+			}
+			if lang_stats.blank_lines > 0 {
+				println!("\t\tBlanks: {} lines ({:.1}%).", lang_stats.blank_lines, lang_stats.blank_percentage());
+			}
+			if lang_stats.shebang_lines > 0 {
+				println!("\t\tShebangs: {} lines ({:.1}%).", lang_stats.shebang_lines, lang_stats.shebang_percentage());
+			}
 			if verbose {
 				println!("\tFile breakdown:");
 				let mut files = lang_stats.file_list.clone();
 				files.sort_by(|a, b| b.total_lines.cmp(&a.total_lines));
 				for file_stat in &files {
 					let file_pct = utils::percentage(file_stat.total_lines, stats.total_lines);
-					println!(
-						"\t\t{}: {} lines ({:.1}% of total).",
-						file_stat.path,
-						file_stat.total_lines,
-						file_pct
-					);
+					println!("\t\t{}: {} lines ({:.1}% of total).", file_stat.path, file_stat.total_lines, file_pct);
 				}
 			}
 		}
 	}
 
-	fn process_file_concurrent(file_path: &Path, stats: &Arc<Mutex<StatsCollector>>) -> Result<()> {
+	fn process_file(file_path: &Path, stats: &Arc<Mutex<StatsCollector>>) -> Result<()> {
 		let filename = file_path.file_name().and_then(|name| name.to_str()).context("Invalid UTF-8 in file name")?;
 		let Some(language) = langs::detect_language(filename) else {
-			return Ok(()); // Skip files with unknown languages silently
+			return Ok(());
 		};
 		let file_size = fs::metadata(file_path)
 			.with_context(|| format!("Failed to retrieve metadata for {}", file_path.display()))?
 			.len();
-		let (total_lines, code_lines, comment_lines, blank_lines) = Self::analyze_file_lines(file_path, language)?;
+		let (total_lines, code_lines, comment_lines, blank_lines, shebang_lines) =
+			Self::analyze_file_lines(file_path, language)?;
 		let file_path_str = file_path.display().to_string();
-		let file_stats = FileStats::new(file_path_str, total_lines, code_lines, comment_lines, blank_lines, file_size);
+		let file_stats = FileStats::new(
+			file_path_str,
+			total_lines,
+			code_lines,
+			comment_lines,
+			blank_lines,
+			shebang_lines,
+			file_size,
+		);
 		stats.lock().unwrap().add_file_stats(language.to_string(), file_stats);
 		Ok(())
 	}
 
-	fn analyze_file_lines(file_path: &Path, language: &str) -> Result<(u64, u64, u64, u64)> {
+	fn analyze_file_lines(file_path: &Path, language: &str) -> Result<(u64, u64, u64, u64, u64)> {
 		let file = File::open(file_path).with_context(|| format!("Failed to open file {}", file_path.display()))?;
 		let reader = BufReader::new(file);
 		let lang_info = langs::get_language_info(language);
-		let mut line_counts = (0, 0, 0, 0); // total, code, comment, blank
+		let mut line_counts = (0, 0, 0, 0, 0); // total, code, comment, blank, shebang
 		let mut comment_state = CommentState::new();
+		let mut line_number = 0;
 		for line_result in reader.lines() {
 			let line = line_result.with_context(|| format!("Failed to read line from {}", file_path.display()))?;
 			line_counts.0 += 1; // total_lines
-			match comments::classify_line(&line, &lang_info, &mut comment_state) {
+			line_number += 1;
+			let line_type = comments::classify_line(&line, &lang_info, &mut comment_state, line_number == 1);
+			match line_type {
 				LineType::Code => line_counts.1 += 1,
 				LineType::Comment => line_counts.2 += 1,
 				LineType::Blank => line_counts.3 += 1,
+				LineType::Shebang => line_counts.4 += 1,
 			}
 		}
 		Ok(line_counts)

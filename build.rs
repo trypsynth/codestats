@@ -1,4 +1,11 @@
-use std::{collections::{HashMap, HashSet}, env, error::Error, fs, path::Path, result};
+use std::{
+	collections::{HashMap, HashSet},
+	env,
+	error::Error,
+	fs,
+	path::Path,
+	result,
+};
 
 use serde::{Deserialize, Serialize};
 use tera::{Context, Tera, Value, to_value};
@@ -14,6 +21,8 @@ struct Language {
 	block_comments: Option<Vec<Vec<String>>>,
 	#[serde(default)]
 	nested_blocks: Option<bool>,
+	#[serde(default)]
+	shebangs: Option<Vec<String>>,
 }
 
 fn get_language_schema() -> Vec<(&'static str, &'static str)> {
@@ -23,6 +32,7 @@ fn get_language_schema() -> Vec<(&'static str, &'static str)> {
 		("line_comments", "&'static [&'static str]"),
 		("block_comments", "&'static [(&'static str, &'static str)]"),
 		("nested_blocks", "bool"),
+		("shebangs", "&'static [&'static str]"),
 	]
 }
 
@@ -44,6 +54,7 @@ fn main() -> Result<()> {
 			line_comments: Some(lang.line_comments.unwrap_or_default()),
 			block_comments: Some(lang.block_comments.unwrap_or_default()),
 			nested_blocks: Some(lang.nested_blocks.unwrap_or(false)),
+			shebangs: Some(lang.shebangs.unwrap_or_default()),
 		})
 		.collect();
 	let mut pattern_mappings = HashMap::new();
@@ -159,7 +170,10 @@ fn validate_languages(languages: &[Language]) -> Result<()> {
 	for (_i, lang) in languages.iter().enumerate() {
 		if let Some(prev) = prev_name {
 			if lang.name.to_lowercase() < prev.to_lowercase() {
-				errors.push(format!("Language '{}' is not in alphabetical order (should come before '{}')", lang.name, prev));
+				errors.push(format!(
+					"Language '{}' is not in alphabetical order (should come before '{}')",
+					lang.name, prev
+				));
 			}
 		}
 		prev_name = Some(&lang.name);
@@ -180,41 +194,69 @@ fn validate_languages(languages: &[Language]) -> Result<()> {
 		}
 		for (pattern_idx, pattern) in lang.file_patterns.iter().enumerate() {
 			if pattern.is_empty() {
-				errors.push(format!("{} ('{}'), pattern {}: File pattern cannot be empty", position, lang.name, pattern_idx + 1));
+				errors.push(format!(
+					"{} ('{}'), pattern {}: File pattern cannot be empty",
+					position,
+					lang.name,
+					pattern_idx + 1
+				));
 			}
 			if pattern.trim() != pattern {
-				errors.push(format!("{} ('{}'), pattern {}: File pattern '{}' has leading/trailing whitespace", position, lang.name, pattern_idx + 1, pattern));
+				errors.push(format!(
+					"{} ('{}'), pattern {}: File pattern '{}' has leading/trailing whitespace",
+					position,
+					lang.name,
+					pattern_idx + 1,
+					pattern
+				));
 			}
 		}
 		if let Some(ref line_comments) = lang.line_comments {
 			for (comment_idx, comment) in line_comments.iter().enumerate() {
 				if comment.is_empty() {
-					errors.push(format!("{} ('{}'), line comment {}: Line comment cannot be empty", position, lang.name, comment_idx + 1));
+					errors.push(format!(
+						"{} ('{}'), line comment {}: Line comment cannot be empty",
+						position,
+						lang.name,
+						comment_idx + 1
+					));
 				}
 			}
 		}
 		if let Some(ref block_comments) = lang.block_comments {
 			for (comment_idx, comment_pair) in block_comments.iter().enumerate() {
 				if comment_pair.len() != 2 {
-					errors.push(format!("{} ('{}'), block comment {}: Block comment must have exactly 2 elements (start, end)", position, lang.name, comment_idx + 1));
+					errors.push(format!(
+						"{} ('{}'), block comment {}: Block comment must have exactly 2 elements (start, end)",
+						position,
+						lang.name,
+						comment_idx + 1
+					));
 				} else {
 					let (start, end) = (&comment_pair[0], &comment_pair[1]);
 					if start.is_empty() {
-						errors.push(format!("{} ('{}'), block comment {}: Block comment start cannot be empty", position, lang.name, comment_idx + 1));
+						errors.push(format!(
+							"{} ('{}'), block comment {}: Block comment start cannot be empty",
+							position,
+							lang.name,
+							comment_idx + 1
+						));
 					}
 					if end.is_empty() {
-						errors.push(format!("{} ('{}'), block comment {}: Block comment end cannot be empty", position, lang.name, comment_idx + 1));
+						errors.push(format!(
+							"{} ('{}'), block comment {}: Block comment end cannot be empty",
+							position,
+							lang.name,
+							comment_idx + 1
+						));
 					}
 				}
 			}
 		}
 	}
 	if !errors.is_empty() {
-		let error_message = format!(
-			"Language validation failed with {} error(s):\n{}",
-			errors.len(),
-			errors.join("\n")
-		);
+		let error_message =
+			format!("Language validation failed with {} error(s):\n{}", errors.len(), errors.join("\n"));
 		return Err(error_message.into());
 	}
 	Ok(())

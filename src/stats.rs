@@ -10,6 +10,7 @@ pub struct LangStats {
 	pub(crate) code_lines: u64,
 	pub(crate) comment_lines: u64,
 	pub(crate) blank_lines: u64,
+	pub(crate) shebang_lines: u64,
 	pub(crate) size: u64,
 	pub(crate) file_list: Vec<FileStats>,
 }
@@ -21,6 +22,7 @@ impl LangStats {
 		self.code_lines += file_stats.code_lines;
 		self.comment_lines += file_stats.comment_lines;
 		self.blank_lines += file_stats.blank_lines;
+		self.shebang_lines += file_stats.shebang_lines;
 		self.size += file_stats.size;
 		self.file_list.push(file_stats);
 	}
@@ -36,6 +38,10 @@ impl LangStats {
 	pub(crate) fn blank_percentage(&self) -> f64 {
 		utils::percentage(self.blank_lines, self.lines)
 	}
+
+	pub(crate) fn shebang_percentage(&self) -> f64 {
+		utils::percentage(self.shebang_lines, self.lines)
+	}
 }
 
 /// Statistics for a single file
@@ -46,12 +52,21 @@ pub struct FileStats {
 	pub(crate) code_lines: u64,
 	pub(crate) comment_lines: u64,
 	pub(crate) blank_lines: u64,
+	pub(crate) shebang_lines: u64,
 	pub(crate) size: u64,
 }
 
 impl FileStats {
-	pub(crate) fn new(path: String, total_lines: u64, code_lines: u64, comment_lines: u64, blank_lines: u64, size: u64) -> Self {
-		Self { path, total_lines, code_lines, comment_lines, blank_lines, size }
+	pub(crate) fn new(
+		path: String,
+		total_lines: u64,
+		code_lines: u64,
+		comment_lines: u64,
+		blank_lines: u64,
+		shebang_lines: u64,
+		size: u64,
+	) -> Self {
+		Self { path, total_lines, code_lines, comment_lines, blank_lines, shebang_lines, size }
 	}
 }
 
@@ -63,6 +78,7 @@ pub struct StatsCollector {
 	pub(crate) total_code_lines: u64,
 	pub(crate) total_comment_lines: u64,
 	pub(crate) total_blank_lines: u64,
+	pub(crate) total_shebang_lines: u64,
 	pub(crate) total_size: u64,
 	pub(crate) lang_stats: HashMap<String, LangStats>,
 }
@@ -74,6 +90,7 @@ impl StatsCollector {
 		self.total_code_lines += file_stats.code_lines;
 		self.total_comment_lines += file_stats.comment_lines;
 		self.total_blank_lines += file_stats.blank_lines;
+		self.total_shebang_lines += file_stats.shebang_lines;
 		self.total_size += file_stats.size;
 		self.lang_stats.entry(language).or_default().add_file(file_stats);
 	}
@@ -95,5 +112,9 @@ impl StatsCollector {
 
 	pub(crate) fn blank_percentage(&self) -> f64 {
 		utils::percentage(self.total_blank_lines, self.total_lines)
+	}
+
+	pub(crate) fn shebang_percentage(&self) -> f64 {
+		utils::percentage(self.total_shebang_lines, self.total_lines)
 	}
 }
