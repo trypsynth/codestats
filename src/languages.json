@@ -606,17 +606,23 @@
 	{
 		"name": "Gleam",
 		"file_patterns": ["*.gleam"],
-		"line_comments": ["//"]
+		"line_comments": ["//", "///", "////"]
 	},
 	{
 		"name": "GLSL",
-		"file_patterns": ["*.glsl", "*.vert", "*.frag", "*.geom", "*.tesc", "*.tese", "*.comp"],
+		"file_patterns": ["*.glsl", "*.vert", "*.frag", "*.geom", "*.tesc", "*.tese", "*.comp", "*.rcall", "*.rmiss", "*.rchit"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "GML",
+		"file_patterns": ["*.gml"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
 	},
 	{
 		"name": "Go",
-		"file_patterns": ["*.go", "*.tmpl", "*.gohtml", "*.gotmpl", "go.mod"],
+		"file_patterns": ["*.go", "*.tmpl", "*.gohtml", "*.gotmpl"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
 	},
@@ -633,9 +639,14 @@
 	},
 	{
 		"name": "Groovy",
-		"file_patterns": ["*.groovy", "*.gvy", "*.gy", "*.gsh"],
+		"file_patterns": ["*.groovy", "*.grt", "*.gtpl", "*.gvy", "*.gy", "*.gsh"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Gwion",
+		"file_patterns": ["*.gw"],
+		"line_comments": ["#!"]
 	},
 	{
 		"name": "Hack",
