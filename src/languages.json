@@ -807,6 +807,12 @@
 		"file_patterns": ["*.json", "*.geojson", "*.jsonc", "*.ndjson", "*.jsonl"]
 	},
 	{
+		"name": "Jsonet",
+		"file_patterns": ["*.jsonet", "*.libsonnet"],
+		"line_comments": ["//", "#"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
 		"name": "Julia",
 		"file_patterns": ["*.jl"],
 		"line_comments": ["#"],
@@ -814,8 +820,29 @@
 		"nested_blocks": true
 	},
 	{
+		"name": "Julius",
+		"file_patterns": ["*.julius"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
 		"name": "Jupyter Notebook",
 		"file_patterns": ["*.ipynb"]
+	},
+	{
+		"name": "Just",
+		"file_patterns": ["*.jjust", "justfile"],
+		"line_comments": ["#"]
+	},
+	{
+		"name": "K",
+		"file_patterns": ["*.k"],
+		"line_comments": ["/"]
+	},
+	{
+		"name": "Kakoune script",
+		"file_patterns": ["*.kak"],
+		"line_comments": ["#"]
 	},
 	{
 		"name": "Korn Shell",
@@ -826,7 +853,18 @@
 		"name": "Kotlin",
 		"file_patterns": ["*.kt", "*.kts", "*.ktm"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "KV Language",
+		"file_patterns": ["*.kv"],
+		"line_comments": ["# "]
+	},
+	{
+		"name": "LALRPOP",
+		"file_patterns": ["*.lalrpop"],
+		"line_comments": ["//"]
 	},
 	{
 		"name": "Lean",
