@@ -1,14 +1,18 @@
-use std::{collections::HashMap, env, error::Error, fs, path::Path, result};
+use std::{collections::{HashMap, HashSet}, env, error::Error, fs, path::Path, result};
 
 use serde::{Deserialize, Serialize};
 use tera::{Context, Tera, Value, to_value};
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(deny_unknown_fields)]
 struct Language {
 	name: String,
 	file_patterns: Vec<String>,
+	#[serde(default)]
 	line_comments: Option<Vec<String>>,
+	#[serde(default)]
 	block_comments: Option<Vec<Vec<String>>>,
+	#[serde(default)]
 	nested_blocks: Option<bool>,
 }
 
@@ -31,6 +35,7 @@ fn main() -> Result<()> {
 	let json_path = Path::new(&manifest_dir).join("src/languages.json");
 	let json_content = fs::read_to_string(&json_path)?;
 	let languages: Vec<Language> = serde_json::from_str(&json_content)?;
+	validate_languages(&languages)?;
 	let processed_languages: Vec<Language> = languages
 		.into_iter()
 		.map(|lang| Language {
@@ -145,4 +150,72 @@ fn escape_rust_string(s: &str) -> String {
 			c => c.to_string(),
 		})
 		.collect()
+}
+
+fn validate_languages(languages: &[Language]) -> Result<()> {
+	let mut errors = Vec::new();
+	let mut seen_names = HashSet::new();
+	let mut prev_name: Option<&str> = None;
+	for (_i, lang) in languages.iter().enumerate() {
+		if let Some(prev) = prev_name {
+			if lang.name.to_lowercase() < prev.to_lowercase() {
+				errors.push(format!("Language '{}' is not in alphabetical order (should come before '{}')", lang.name, prev));
+			}
+		}
+		prev_name = Some(&lang.name);
+	}
+	for (index, lang) in languages.iter().enumerate() {
+		let position = format!("Language at position {}", index + 1);
+		if lang.name.is_empty() {
+			errors.push(format!("{}: 'name' field cannot be empty", position));
+		}
+		if lang.file_patterns.is_empty() {
+			errors.push(format!("{} ('{}'): 'file_patterns' field cannot be empty", position, lang.name));
+		}
+		if !seen_names.insert(&lang.name) {
+			errors.push(format!("{}: Duplicate language name '{}'", position, lang.name));
+		}
+		if lang.name.trim() != lang.name {
+			errors.push(format!("{} ('{}'): Language name has leading/trailing whitespace", position, lang.name));
+		}
+		for (pattern_idx, pattern) in lang.file_patterns.iter().enumerate() {
+			if pattern.is_empty() {
+				errors.push(format!("{} ('{}'), pattern {}: File pattern cannot be empty", position, lang.name, pattern_idx + 1));
+			}
+			if pattern.trim() != pattern {
+				errors.push(format!("{} ('{}'), pattern {}: File pattern '{}' has leading/trailing whitespace", position, lang.name, pattern_idx + 1, pattern));
+			}
+		}
+		if let Some(ref line_comments) = lang.line_comments {
+			for (comment_idx, comment) in line_comments.iter().enumerate() {
+				if comment.is_empty() {
+					errors.push(format!("{} ('{}'), line comment {}: Line comment cannot be empty", position, lang.name, comment_idx + 1));
+				}
+			}
+		}
+		if let Some(ref block_comments) = lang.block_comments {
+			for (comment_idx, comment_pair) in block_comments.iter().enumerate() {
+				if comment_pair.len() != 2 {
+					errors.push(format!("{} ('{}'), block comment {}: Block comment must have exactly 2 elements (start, end)", position, lang.name, comment_idx + 1));
+				} else {
+					let (start, end) = (&comment_pair[0], &comment_pair[1]);
+					if start.is_empty() {
+						errors.push(format!("{} ('{}'), block comment {}: Block comment start cannot be empty", position, lang.name, comment_idx + 1));
+					}
+					if end.is_empty() {
+						errors.push(format!("{} ('{}'), block comment {}: Block comment end cannot be empty", position, lang.name, comment_idx + 1));
+					}
+				}
+			}
+		}
+	}
+	if !errors.is_empty() {
+		let error_message = format!(
+			"Language validation failed with {} error(s):\n{}",
+			errors.len(),
+			errors.join("\n")
+		);
+		return Err(error_message.into());
+	}
+	Ok(())
 }

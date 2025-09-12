@@ -223,14 +223,19 @@
 		"block_comments": [["/*", "*/"]]
 	},
 	{
-		"name": "C++",
-		"file_patterns": ["*.cpp", "*.hpp", "*.c++", "*.h++", "*.cc", "*.cxx", "*.hxx", "*.ino", "*.ipp", "*.pde", "*.cppm", "*.ixx", "*.c++m", "*.pcc", "*.tpp"],
-		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"name": "C Shell",
+		"file_patterns": ["*.csh"],
+		"line_comments": ["#"]
 	},
 	{
 		"name": "C#",
 		"file_patterns": ["*.cs", "*.csx", "*.cake"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "C++",
+		"file_patterns": ["*.cpp", "*.hpp", "*.c++", "*.h++", "*.cc", "*.cxx", "*.hxx", "*.ino", "*.ipp", "*.pde", "*.cppm", "*.ixx", "*.c++m", "*.pcc", "*.tpp"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
 	},
@@ -254,17 +259,17 @@
 		"line_comments": ["//"]
 	},
 	{
-		"name": "Carbon",
-		"file_patterns": ["*.carbon"],
-		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
-	},
-	{
 		"name": "Cangjie",
 		"file_patterns": ["*.cj"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
 		"nested_blocks": true
+	},
+	{
+		"name": "Carbon",
+		"file_patterns": ["*.carbon"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
 	},
 	{
 		"name": "Cassius",
@@ -279,14 +284,14 @@
 		"block_comments": [["/*", "*/"]]
 	},
 	{
-		"name": "Chapel",
-		"file_patterns": ["*.chpl"],
+		"name": "ChaiScript",
+		"file_patterns": ["*.chai"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
 	},
 	{
-		"name": "ChaiScript",
-		"file_patterns": ["*.chai"],
+		"name": "Chapel",
+		"file_patterns": ["*.chpl"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
 	},
@@ -336,16 +341,16 @@
 		"block_comments": [["<!---", "--->"], ["/*", "*/"]]
 	},
 	{
-		"name": "Coq",
-		"file_patterns": ["*.coq"],
-		"block_comments": [["(*", "*)"]],
-		"nested_blocks": true
-	},
-	{
 		"name": "Common Lisp",
 		"file_patterns": ["*.lisp", "*.asd", "*.cl"],
 		"line_comments": [";"],
 		"block_comments": [["#|", "|#"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "Coq",
+		"file_patterns": ["*.coq"],
+		"block_comments": [["(*", "*)"]],
 		"nested_blocks": true
 	},
 	{
@@ -386,11 +391,6 @@
 		"line_comments": ["#"]
 	},
 	{
-		"name": "C Shell",
-		"file_patterns": ["*.csh"],
-		"line_comments": ["#"]
-	},
-	{
 		"name": "D",
 		"file_patterns": ["*.d", "*.di"],
 		"line_comments": ["//"],
@@ -417,6 +417,12 @@
 		"block_comments": [["/*", "*/"]]
 	},
 	{
+		"name": "Delphi/Object Pascal",
+		"file_patterns": ["*.dpr", "*.dpk"],
+		"line_comments": ["//"],
+		"block_comments": [["(*", "*)"], ["{", "}"]]
+	},	
+	{
 		"name": "Device Tree",
 		"file_patterns": ["*.dts", "*.dtsi"],
 		"line_comments": ["//"],
@@ -429,12 +435,6 @@
 		"block_comments": [["{-", "-}"]],
 		"nested_blocks": true
 	},
-	{
-		"name": "Delphi/Object Pascal",
-		"file_patterns": ["*.dpr", "*.dpk"],
-		"line_comments": ["//"],
-		"block_comments": [["(*", "*)"], ["{", "}"]]
-	},	
 	{
 		"name": "Dockerfile",
 		"file_patterns": ["*.dockerfile", "*.dockerignore", "Dockerfile"],
@@ -627,15 +627,15 @@
 		"block_comments": [["/*", "*/"]]
 	},
 	{
-		"name": "GraphQL",
-		"file_patterns": ["*.graphql", "*.gql"],
-		"line_comments": ["#"]
-	},
-	{
 		"name": "Gradle",
 		"file_patterns": ["*.gradle", "gradle.properties"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "GraphQL",
+		"file_patterns": ["*.graphql", "*.gql"],
+		"line_comments": ["#"]
 	},
 	{
 		"name": "Groovy",
@@ -889,13 +889,13 @@
 		"block_comments": [["<!--", "-->"]]
 	},
 	{
-		"name": "MessagePack",
-		"file_patterns": ["*.msgpack"]
-	},
-	{
 		"name": "Meson",
 		"file_patterns": ["meson.build"],
 		"line_comments": ["#"]
+	},
+	{
+		"name": "MessagePack",
+		"file_patterns": ["*.msgpack"]
 	},
 	{
 		"name": "Metal Shading Language",
@@ -984,12 +984,6 @@
 		"block_comments": [["/*", "*/"]]
 	},
 	{
-		"name": "Odin",
-		"file_patterns": ["*.odin"],
-		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
-	},
-	{
 		"name": "Objective-C",
 		"file_patterns": ["*.m"],
 		"line_comments": ["//"],
@@ -1014,6 +1008,12 @@
 		"nested_blocks": true
 	},
 	{
+		"name": "Odin",
+		"file_patterns": ["*.odin"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
 		"name": "OpenSCAD",
 		"file_patterns": ["*.scad"],
 		"line_comments": ["//"],
@@ -1033,16 +1033,16 @@
 		"nested_blocks": true
 	},
 	{
-		"name": "PHP",
-		"file_patterns": ["*.php", "*.php3", "*.php4", "*.php5", "*.phps", "*.phpt", "*.phtml"],
-		"line_comments": ["//", "#"],
-		"block_comments": [["/*", "*/"], ["<!--", "-->"]]
-	},
-	{
 		"name": "Perl",
 		"file_patterns": ["*.pl", "*.al", "*.perl", "*.plx", "*.pm", "rexfile", "ack", "cpanfile", "cpanfile.snapshot"],
 		"line_comments": ["#"],
 		"block_comments": [["=pod", "=cut"]]
+	},
+	{
+		"name": "PHP",
+		"file_patterns": ["*.php", "*.php3", "*.php4", "*.php5", "*.phps", "*.phpt", "*.phtml"],
+		"line_comments": ["//", "#"],
+		"block_comments": [["/*", "*/"], ["<!--", "-->"]]
 	},
 	{
 		"name": "PogoScript",
@@ -1063,14 +1063,14 @@
 		"block_comments": [["<#", "#>"]]
 	},
 	{
-		"name": "Protocol Buffers",
-		"file_patterns": ["*.proto"],
+		"name": "Prisma",
+		"file_patterns": ["*.prisma"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
 	},
 	{
-		"name": "Prisma",
-		"file_patterns": ["*.prisma"],
+		"name": "Protocol Buffers",
+		"file_patterns": ["*.proto"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
 	},
@@ -1276,6 +1276,11 @@
 		"nested_blocks": true
 	},
 	{
+		"name": "TC Shell",
+		"file_patterns": ["*.tcsh"],
+		"line_comments": ["#"]
+	},
+	{
 		"name": "Tcl",
 		"file_patterns": ["*.tcl", "*.tk"],
 		"line_comments": ["#"]
@@ -1287,6 +1292,12 @@
 		"block_comments": [["--[[", "--]]"]]
 	},
 	{
+		"name": "Templ",
+		"file_patterns": ["*.templ"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
 		"name": "Tera",
 		"file_patterns": ["*.tera"],
 		"block_comments": [["<!--", "-->"], ["{#", "#}"]]
@@ -1295,12 +1306,6 @@
 		"name": "TeX/LaTeX",
 		"file_patterns": ["*.tex", "*.sty", ".latexmkrc"],
 		"line_comments": ["%"]
-	},
-	{
-		"name": "Templ",
-		"file_patterns": ["*.templ"],
-		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
 	},
 	{
 		"name": "Textile",
@@ -1323,14 +1328,14 @@
 		"line_comments": ["#"]
 	},
 	{
-		"name": "txt2tags",
-		"file_patterns": ["*.t2t"],
-		"line_comments": ["%"]
-	},
-	{
 		"name": "Twig",
 		"file_patterns": ["*.twig"],
 		"block_comments": [["{#", "#}"]]
+	},
+	{
+		"name": "txt2tags",
+		"file_patterns": ["*.t2t"],
+		"line_comments": ["%"]
 	},
 	{
 		"name": "TypeScript",
@@ -1338,11 +1343,6 @@
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
 		"nested_blocks": true
-	},
-	{
-		"name": "TC Shell",
-		"file_patterns": ["*.tcsh"],
-		"line_comments": ["#"]
 	},
 	{
 		"name": "UnrealScript",
@@ -1407,16 +1407,16 @@
 		"nested_blocks": true
 	},
 	{
+		"name": "Windows Registry Entry",
+		"file_patterns": ["*.reg"],
+		"line_comments": [";", "#"]
+	},
+	{
 		"name": "Windows Resource File",
 		"file_patterns": ["*.rc"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
 		"nested_blocks": true
-	},
-	{
-		"name": "Windows Registry Entry",
-		"file_patterns": ["*.reg"],
-		"line_comments": [";", "#"]
 	},
 	{
 		"name": "WiX",
