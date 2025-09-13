@@ -75,7 +75,7 @@ pub fn classify_line(
 		let nested = lang.nested_blocks;
 		while !line_remainder.is_empty() {
 			if !comment_state.is_in_comment() {
-				if let Some((pos, start_len)) = find_block_comment_start(line_remainder, &lang.block_comments) {
+				if let Some((pos, start_len)) = find_block_comment_start(line_remainder, lang.block_comments) {
 					if pos > 0 && !line_remainder[..pos].trim().is_empty() {
 						has_code = true;
 					}
@@ -85,7 +85,7 @@ pub fn classify_line(
 					break;
 				}
 			} else if let Some((pos, len, found_nested_start)) =
-				find_block_comment_end_or_nested_start(line_remainder, &lang.block_comments, nested)
+				find_block_comment_end_or_nested_start(line_remainder, lang.block_comments, nested)
 			{
 				if found_nested_start {
 					comment_state.enter_nested_block();
@@ -102,7 +102,7 @@ pub fn classify_line(
 		return if has_code { LineType::Code } else { LineType::Comment };
 	}
 	if !lang.line_comments.is_empty() {
-		if let Some(pos) = find_line_comment_start(line_remainder, &lang.line_comments) {
+		if let Some(pos) = find_line_comment_start(line_remainder, lang.line_comments) {
 			if pos > 0 && !line_remainder[..pos].trim().is_empty() {
 				has_code = true;
 			}

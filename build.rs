@@ -1,3 +1,5 @@
+#![warn(clippy::all, clippy::pedantic, clippy::nursery)]
+
 use std::{
 	collections::{HashMap, HashSet},
 	env,
@@ -146,7 +148,7 @@ fn field_render_filter(value: &Value, args: &HashMap<String, Value>) -> tera::Re
 			}
 		}
 		"bool" => Ok(value.clone()),
-		_ => Err(format!("Unknown field type: {}", field_type).into()),
+		_ => Err(format!("Unknown field type: {field_type}").into()),
 	}
 }
 
@@ -167,7 +169,7 @@ fn validate_languages(languages: &[Language]) -> Result<()> {
 	let mut errors = Vec::new();
 	let mut seen_names = HashSet::new();
 	let mut prev_name: Option<&str> = None;
-	for (_i, lang) in languages.iter().enumerate() {
+	for lang in languages {
 		if let Some(prev) = prev_name {
 			if lang.name.to_lowercase() < prev.to_lowercase() {
 				errors.push(format!(
@@ -181,7 +183,7 @@ fn validate_languages(languages: &[Language]) -> Result<()> {
 	for (index, lang) in languages.iter().enumerate() {
 		let position = format!("Language at position {}", index + 1);
 		if lang.name.is_empty() {
-			errors.push(format!("{}: 'name' field cannot be empty", position));
+			errors.push(format!("{position}: 'name' field cannot be empty"));
 		}
 		if lang.file_patterns.is_empty() {
 			errors.push(format!("{} ('{}'): 'file_patterns' field cannot be empty", position, lang.name));
@@ -225,32 +227,32 @@ fn validate_languages(languages: &[Language]) -> Result<()> {
 		}
 		if let Some(ref block_comments) = lang.block_comments {
 			for (comment_idx, comment_pair) in block_comments.iter().enumerate() {
-				if comment_pair.len() != 2 {
-					errors.push(format!(
-						"{} ('{}'), block comment {}: Block comment must have exactly 2 elements (start, end)",
-						position,
-						lang.name,
-						comment_idx + 1
-					));
-				} else {
-					let (start, end) = (&comment_pair[0], &comment_pair[1]);
-					if start.is_empty() {
-						errors.push(format!(
-							"{} ('{}'), block comment {}: Block comment start cannot be empty",
-							position,
-							lang.name,
-							comment_idx + 1
-						));
-					}
-					if end.is_empty() {
-						errors.push(format!(
-							"{} ('{}'), block comment {}: Block comment end cannot be empty",
-							position,
-							lang.name,
-							comment_idx + 1
-						));
-					}
-				}
+				if comment_pair.len() == 2 {
+    					let (start, end) = (&comment_pair[0], &comment_pair[1]);
+    					if start.is_empty() {
+    						errors.push(format!(
+    							"{} ('{}'), block comment {}: Block comment start cannot be empty",
+    							position,
+    							lang.name,
+    							comment_idx + 1
+    						));
+    					}
+    					if end.is_empty() {
+    						errors.push(format!(
+    							"{} ('{}'), block comment {}: Block comment end cannot be empty",
+    							position,
+    							lang.name,
+    							comment_idx + 1
+    						));
+    					}
+    				} else {
+    					errors.push(format!(
+    						"{} ('{}'), block comment {}: Block comment must have exactly 2 elements (start, end)",
+    						position,
+    						lang.name,
+    						comment_idx + 1
+    					));
+    				}
 			}
 		}
 	}

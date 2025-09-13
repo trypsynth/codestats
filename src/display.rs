@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{cmp::Reverse, path::Path};
 
 use human_bytes::human_bytes;
 
@@ -84,7 +84,7 @@ impl ResultFormatter {
 	fn print_file_breakdown(lang_stats: &LanguageStats, overall_results: &AnalysisResults) {
 		println!("\tFile breakdown:");
 		let mut files: Vec<_> = lang_stats.files_list().iter().collect();
-		files.sort_by(|a, b| b.total_lines().cmp(&a.total_lines()));
+		files.sort_by_key(|b| Reverse(b.total_lines()));
 		for file_stat in files {
 			let file_pct = utils::percentage(file_stat.total_lines(), overall_results.total_lines());
 			println!("\t\t{}: {} lines ({:.1}% of total).", file_stat.path(), file_stat.total_lines(), file_pct);
