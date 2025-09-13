@@ -1,3 +1,5 @@
+#![warn(clippy::all, clippy::pedantic, clippy::nursery)]
+
 pub mod analysis;
 pub mod cli;
 pub mod display;

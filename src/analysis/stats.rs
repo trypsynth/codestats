@@ -15,7 +15,8 @@ pub struct FileStats {
 }
 
 impl FileStats {
-	pub fn new(
+	#[must_use]
+	pub const fn new(
 		path: String,
 		total_lines: u64,
 		code_lines: u64,
@@ -27,31 +28,38 @@ impl FileStats {
 		Self { path, total_lines, code_lines, comment_lines, blank_lines, shebang_lines, size }
 	}
 
+	#[must_use]
 	pub fn path(&self) -> &str {
 		&self.path
 	}
 
-	pub fn total_lines(&self) -> u64 {
+	#[must_use]
+	pub const fn total_lines(&self) -> u64 {
 		self.total_lines
 	}
 
-	pub fn code_lines(&self) -> u64 {
+	#[must_use]
+	pub const fn code_lines(&self) -> u64 {
 		self.code_lines
 	}
 
-	pub fn comment_lines(&self) -> u64 {
+	#[must_use]
+	pub const fn comment_lines(&self) -> u64 {
 		self.comment_lines
 	}
 
-	pub fn blank_lines(&self) -> u64 {
+	#[must_use]
+	pub const fn blank_lines(&self) -> u64 {
 		self.blank_lines
 	}
 
-	pub fn shebang_lines(&self) -> u64 {
+	#[must_use]
+	pub const fn shebang_lines(&self) -> u64 {
 		self.shebang_lines
 	}
 
-	pub fn size(&self) -> u64 {
+	#[must_use]
+	pub const fn size(&self) -> u64 {
 		self.size
 	}
 }
@@ -81,50 +89,62 @@ impl LanguageStats {
 		self.file_list.push(file_stats);
 	}
 
-	pub fn files(&self) -> u64 {
+	#[must_use]
+	pub const fn files(&self) -> u64 {
 		self.files
 	}
 
-	pub fn lines(&self) -> u64 {
+	#[must_use]
+	pub const fn lines(&self) -> u64 {
 		self.lines
 	}
 
-	pub fn code_lines(&self) -> u64 {
+	#[must_use]
+	pub const fn code_lines(&self) -> u64 {
 		self.code_lines
 	}
 
-	pub fn comment_lines(&self) -> u64 {
+	#[must_use]
+	pub const fn comment_lines(&self) -> u64 {
 		self.comment_lines
 	}
 
-	pub fn blank_lines(&self) -> u64 {
+	#[must_use]
+	pub const fn blank_lines(&self) -> u64 {
 		self.blank_lines
 	}
 
-	pub fn shebang_lines(&self) -> u64 {
+	#[must_use]
+	pub const fn shebang_lines(&self) -> u64 {
 		self.shebang_lines
 	}
 
-	pub fn size(&self) -> u64 {
+	#[must_use]
+	pub const fn size(&self) -> u64 {
 		self.size
 	}
 
+	#[must_use]
 	pub fn files_list(&self) -> &[FileStats] {
 		&self.file_list
 	}
 
+	#[must_use]
 	pub fn code_percentage(&self) -> f64 {
 		utils::percentage(self.code_lines, self.lines)
 	}
 
+	#[must_use]
 	pub fn comment_percentage(&self) -> f64 {
 		utils::percentage(self.comment_lines, self.lines)
 	}
 
+	#[must_use]
 	pub fn blank_percentage(&self) -> f64 {
 		utils::percentage(self.blank_lines, self.lines)
 	}
 
+	#[must_use]
 	pub fn shebang_percentage(&self) -> f64 {
 		utils::percentage(self.shebang_lines, self.lines)
 	}
@@ -155,56 +175,69 @@ impl AnalysisResults {
 		self.language_stats.entry(language).or_default().add_file(file_stats);
 	}
 
-	pub fn total_files(&self) -> u64 {
+	#[must_use]
+	pub const fn total_files(&self) -> u64 {
 		self.total_files
 	}
 
-	pub fn total_lines(&self) -> u64 {
+	#[must_use]
+	pub const fn total_lines(&self) -> u64 {
 		self.total_lines
 	}
 
-	pub fn total_code_lines(&self) -> u64 {
+	#[must_use]
+	pub const fn total_code_lines(&self) -> u64 {
 		self.total_code_lines
 	}
 
-	pub fn total_comment_lines(&self) -> u64 {
+	#[must_use]
+	pub const fn total_comment_lines(&self) -> u64 {
 		self.total_comment_lines
 	}
 
-	pub fn total_blank_lines(&self) -> u64 {
+	#[must_use]
+	pub const fn total_blank_lines(&self) -> u64 {
 		self.total_blank_lines
 	}
 
-	pub fn total_shebang_lines(&self) -> u64 {
+	#[must_use]
+	pub const fn total_shebang_lines(&self) -> u64 {
 		self.total_shebang_lines
 	}
 
-	pub fn total_size(&self) -> u64 {
+	#[must_use]
+	pub const fn total_size(&self) -> u64 {
 		self.total_size
 	}
 
-	pub fn language_stats(&self) -> &HashMap<String, LanguageStats> {
+	#[must_use]
+	pub const fn language_stats(&self) -> &HashMap<String, LanguageStats> {
 		&self.language_stats
 	}
 
+	#[must_use]
 	pub fn languages_by_lines(&self) -> Vec<(&String, &LanguageStats)> {
 		let mut stats_vec: Vec<_> = self.language_stats.iter().collect();
 		stats_vec.sort_by_key(|(_, lang_stats)| std::cmp::Reverse(lang_stats.lines));
 		stats_vec
 	}
 
+	#[must_use]
 	pub fn code_percentage(&self) -> f64 {
 		utils::percentage(self.total_code_lines, self.total_lines)
 	}
 
+	#[must_use]
 	pub fn comment_percentage(&self) -> f64 {
 		utils::percentage(self.total_comment_lines, self.total_lines)
 	}
 
+	#[must_use]
 	pub fn blank_percentage(&self) -> f64 {
 		utils::percentage(self.total_blank_lines, self.total_lines)
 	}
 
+	#[must_use]
 	pub fn shebang_percentage(&self) -> f64 {
 		utils::percentage(self.total_shebang_lines, self.total_lines)
 	}

@@ -228,31 +228,31 @@ fn validate_languages(languages: &[Language]) -> Result<()> {
 		if let Some(ref block_comments) = lang.block_comments {
 			for (comment_idx, comment_pair) in block_comments.iter().enumerate() {
 				if comment_pair.len() == 2 {
-    					let (start, end) = (&comment_pair[0], &comment_pair[1]);
-    					if start.is_empty() {
-    						errors.push(format!(
-    							"{} ('{}'), block comment {}: Block comment start cannot be empty",
-    							position,
-    							lang.name,
-    							comment_idx + 1
-    						));
-    					}
-    					if end.is_empty() {
-    						errors.push(format!(
-    							"{} ('{}'), block comment {}: Block comment end cannot be empty",
-    							position,
-    							lang.name,
-    							comment_idx + 1
-    						));
-    					}
-    				} else {
-    					errors.push(format!(
-    						"{} ('{}'), block comment {}: Block comment must have exactly 2 elements (start, end)",
-    						position,
-    						lang.name,
-    						comment_idx + 1
-    					));
-    				}
+					let (start, end) = (&comment_pair[0], &comment_pair[1]);
+					if start.is_empty() {
+						errors.push(format!(
+							"{} ('{}'), block comment {}: Block comment start cannot be empty",
+							position,
+							lang.name,
+							comment_idx + 1
+						));
+					}
+					if end.is_empty() {
+						errors.push(format!(
+							"{} ('{}'), block comment {}: Block comment end cannot be empty",
+							position,
+							lang.name,
+							comment_idx + 1
+						));
+					}
+				} else {
+					errors.push(format!(
+						"{} ('{}'), block comment {}: Block comment must have exactly 2 elements (start, end)",
+						position,
+						lang.name,
+						comment_idx + 1
+					));
+				}
 			}
 		}
 	}

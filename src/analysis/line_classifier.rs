@@ -17,18 +17,19 @@ pub struct CommentState {
 }
 
 impl CommentState {
+	#[must_use]
 	pub fn new() -> Self {
 		Self::default()
 	}
 
-	pub fn enter_block(&mut self, nested: bool) {
+	pub const fn enter_block(&mut self, nested: bool) {
 		self.in_block_comment = true;
 		if nested {
 			self.block_comment_depth = 1;
 		}
 	}
 
-	pub fn exit_block(&mut self, nested: bool) {
+	pub const fn exit_block(&mut self, nested: bool) {
 		if nested {
 			self.block_comment_depth = self.block_comment_depth.saturating_sub(1);
 			if self.block_comment_depth == 0 {
@@ -40,11 +41,12 @@ impl CommentState {
 		}
 	}
 
-	pub fn enter_nested_block(&mut self) {
+	pub const fn enter_nested_block(&mut self) {
 		self.block_comment_depth += 1;
 	}
 
-	pub fn is_in_comment(&self) -> bool {
+	#[must_use]
+	pub const fn is_in_comment(&self) -> bool {
 		self.in_block_comment
 	}
 }

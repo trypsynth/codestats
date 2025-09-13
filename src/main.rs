@@ -1,3 +1,5 @@
+#![warn(clippy::all, clippy::pedantic, clippy::nursery)]
+
 use anyhow::{Result, ensure};
 use clap::Parser;
 use codestats::{

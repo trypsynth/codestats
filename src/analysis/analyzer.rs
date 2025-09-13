@@ -34,31 +34,37 @@ impl AnalysisOptions {
 		}
 	}
 
-	pub fn verbose(mut self, verbose: bool) -> Self {
+	#[must_use]
+	pub const fn verbose(mut self, verbose: bool) -> Self {
 		self.verbose = verbose;
 		self
 	}
 
-	pub fn respect_gitignore(mut self, respect: bool) -> Self {
+	#[must_use]
+	pub const fn respect_gitignore(mut self, respect: bool) -> Self {
 		self.respect_gitignore = respect;
 		self
 	}
 
-	pub fn include_hidden(mut self, include: bool) -> Self {
+	#[must_use]
+	pub const fn include_hidden(mut self, include: bool) -> Self {
 		self.include_hidden = include;
 		self
 	}
 
-	pub fn follow_symlinks(mut self, follow: bool) -> Self {
+	#[must_use]
+	pub const fn follow_symlinks(mut self, follow: bool) -> Self {
 		self.follow_symlinks = follow;
 		self
 	}
 
+	#[must_use]
 	pub fn path(&self) -> &Path {
 		&self.path
 	}
 
-	pub fn is_verbose(&self) -> bool {
+	#[must_use]
+	pub const fn is_verbose(&self) -> bool {
 		self.verbose
 	}
 }
@@ -68,7 +74,8 @@ pub struct CodeAnalyzer {
 }
 
 impl CodeAnalyzer {
-	pub fn new(options: AnalysisOptions) -> Self {
+	#[must_use]
+	pub const fn new(options: AnalysisOptions) -> Self {
 		Self { options }
 	}
 
