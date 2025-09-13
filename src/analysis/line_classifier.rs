@@ -138,7 +138,7 @@ fn find_block_comment_end_or_nested_start(
 			(Some(s), Some(e)) if s < e => return Some((s, start.len(), true)),
 			(Some(s), None) => return Some((s, start.len(), true)),
 			(_, Some(e)) => return Some((e, end.len(), false)),
-			_ => continue,
+			_ => {},
 		}
 	}
 	None

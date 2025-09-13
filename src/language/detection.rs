@@ -3,7 +3,7 @@ use crate::utils::pluralize;
 include!(concat!(env!("OUT_DIR"), "/languages.rs"));
 
 fn matches_pattern(filename: &str, pattern: &str) -> bool {
-	if let Some(suffix) = pattern.strip_prefix('*') { filename.ends_with(suffix) } else { filename == pattern }
+	pattern.strip_prefix('*').map_or_else(|| filename == pattern, |suffix| filename.ends_with(suffix))
 }
 
 /// Detect the programming language of a file based on its filename
