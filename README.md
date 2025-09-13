@@ -1,54 +1,53 @@
 # Codestats
 This is a CLI tool written in Rust to provide detailed analysis about a folder containing source code, with features such as rspecting gitignores, following symlinks, ignoring hidden files, etc.
 
-## Usage:
-CLI tool to provide a per-language breakdown of a folder of sourcecode, optionally respecting things like gitignores, hidden files, and symlinks.
+## Installation
+### With cargo
+```
+cargo install codestats
+```
 
-Usage: codestats <COMMAND>
+### From source
+```
+git clone https://github.com/trypsynth/codestats
+cd codestats
+cargo install --path .
+```
+
+## Usage:
+Usage: `codestats <command>`
 
 Commands:
-  analyze  Analyze a directory or file for code statistics
-  langs    List all supported programming languages
-  help     Print this message or the help of the given subcommand(s)
+* analyze: Analyze a directory or file for code statistics.
+* langs: List all supported programming languages.
+* help: Print program or command help.
 
 Options:
-  -h, --help     Print help
-  -V, --version  Print version
+* -h, --help: Print help
+* -V, --version: Print version
 
 ### Analyze
 Analyze a directory or file for code statistics
 
-Usage: codestats analyze [OPTIONS] <PATH>
+Usage: `codestats analyze [OPTIONS] <PATH>`
 
 Arguments:
-  <PATH>
-    The path to analyze
-    This can be either a directory (which will be recursively analyzed) or a single file. If a directory is provided, all supported source files within it will be analyzed.
+* `<PATH>`: The path to analyze. This can be either a directory (which will be recursively analyzed) or a single file. If a directory is provided, all supported source files within it will be analyzed.
 
 Options:
-  -v, --verbose
-    Enable verbose output
-
-  --no-gitignore
-    Do not respect .gitignore files
-
-  --hidden
-    Search hidden files and directories
-
-  -s, --symlinks
-    Follow symlinks
-    When enabled, symbolic links will be followed and their targets will be included in the analysis. Use with caution as this can lead to infinite loops with circular symlinks.
-
-  -h, --help
-    Print help (see a summary with '-h')
+* -v, --verbose Enable verbose output.
+* --no-gitignore Do not respect .gitignore/.ignore and similar files.
+* --hidden Search hidden files and directories.
+* -s, --symlinks Follow symlinks. When enabled, symbolic links will be followed and their targets will be included in the analysis. Use with caution as this can lead to infinite loops with circular symlinks.
+* -h, --help Print help
 
 ### Langs
 List all supported programming languages
 
-Usage: codestats langs
+Usage: `codestats langs`
 
 Options:
-  -h, --help  Print help
+* -h, --help  Print help
 
 ## Sample output
 This is the result of running codestats on itself.
