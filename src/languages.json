@@ -345,7 +345,7 @@
 	},
 	{
 		"name": "Common Lisp",
-		"file_patterns": ["*.lisp", "*.asd", "*.cl"],
+		"file_patterns": ["*.lisp", "*.lsp", "*.asd", "*.cl"],
 		"line_comments": [";"],
 		"block_comments": [["#|", "|#"]],
 		"nested_blocks": true
@@ -875,8 +875,13 @@
 		"line_comments": ["//"]
 	},
 	{
+		"name": "LD Script",
+		"file_patterns": ["*.ld", "*.lds"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
 		"name": "Lean",
-		"file_patterns": ["*.lean"],
+		"file_patterns": ["*.lean", "*.hlean"],
 		"line_comments": ["--"],
 		"block_comments": [["/-", "-/"]]
 	},	
@@ -887,26 +892,52 @@
 		"block_comments": [["/*", "*/"]]
 	},
 	{
+		"name": "Lex",
+		"file_patterns": ["*.l", "*.lex"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
 		"name": "LilyPond",
 		"file_patterns": ["*.ly", "*.ily"],
 		"line_comments": ["%"],
 		"block_comments": [["%{", "%}"]]
 	},
 	{
+		"name": "Lingua Franca",
+		"file_patterns": ["*.lf"],
+		"line_comments": ["//", "#"],
+		"block_comments": [["/*", "*/"]],
+		"nested_blocks": true
+	},
+	{
 		"name": "Liquid Templates",
 		"file_patterns": ["*.liquid"],
-		"block_comments": [["{% comment %}", "{% endcomment %}"]]
+		"block_comments": [["<!--", "-->"], ["{% comment %}", "{% endcomment %}"]]
 	},
 	{
 		"name": "LiveScript",
 		"file_patterns": ["*.ls"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
+		"block_comments": [["/*", "*/"]]
 	},
 	{
 		"name": "LLVM IR",
 		"file_patterns": ["*.ll", "*.bc"],
 		"line_comments": [";"]
 	},	
+	{
+		"name": "Logtalk",
+		"file_patterns": ["*.lgt", "*.logtalk"],
+		"line_comments": ["%"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Lolcode",
+		"file_patterns": ["*.lol"],
+		"line_comments": ["BTW"],
+		"block_comments": [["OBTW", "TLDR"]]
+	},
 	{
 		"name": "Lua",
 		"file_patterns": ["*.lua", "*.wlua", "*.rockspec", ".luacheckrc"],
