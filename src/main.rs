@@ -1,32 +1,28 @@
-mod analyzer;
-mod cli;
-mod comments;
-mod langs;
-mod stats;
-mod utils;
-
 use anyhow::{Result, ensure};
 use clap::Parser;
-
-use crate::{
-	analyzer::{AnalyzerArgs, CodeAnalyzer},
+use codestats::{
+	AnalysisOptions, CodeAnalyzer, ResultFormatter,
 	cli::{Cli, Commands},
+	language,
 };
 
 fn main() -> Result<()> {
 	let cli = Cli::parse();
 	match cli.command {
 		Commands::Langs => {
-			langs::print_all();
+			language::print_all_languages();
 			Ok(())
 		}
 		Commands::Analyze { path, verbose, no_gitignore, hidden, symlinks } => {
 			ensure!(path.exists(), "Path `{}` not found", path.display());
-			let analyzer_args =
-				AnalyzerArgs::new(path).verbose(verbose).gitignore(!no_gitignore).hidden(hidden).symlinks(symlinks);
-			let mut analyzer = CodeAnalyzer::new(analyzer_args);
-			analyzer.analyze()?;
-			analyzer.print_stats();
+			let options = AnalysisOptions::new(path.clone())
+				.verbose(verbose)
+				.respect_gitignore(!no_gitignore)
+				.include_hidden(hidden)
+				.follow_symlinks(symlinks);
+			let analyzer = CodeAnalyzer::new(options);
+			let results = analyzer.analyze()?;
+			ResultFormatter::print_summary(&results, &path, verbose);
 			Ok(())
 		}
 	}

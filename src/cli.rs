@@ -15,7 +15,6 @@ pub enum Commands {
 	/// Analyze a directory or file for code statistics
 	Analyze {
 		/// The path to analyze
-		///
 		/// This can be either a directory (which will be recursively analyzed)
 		/// or a single file. If a directory is provided, all supported source
 		/// files within it will be analyzed.
@@ -30,7 +29,6 @@ pub enum Commands {
 		#[arg(long)]
 		hidden: bool,
 		/// Follow symlinks
-		///
 		/// When enabled, symbolic links will be followed and their targets
 		/// will be included in the analysis. Use with caution as this can
 		/// lead to infinite loops with circular symlinks.

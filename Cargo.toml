@@ -2,8 +2,8 @@
 name = "codestats"
 version = "0.2.0"
 authors = ["Quin Gillespie <trypsynth@gmail.com>"]
-description = "CLI tool to provide a per-language breakdown of a folder of sourcecode, optionally respecting things like gitignores, hidden files, and symlinks."
-keywords = ["code", "analysis", "cli", "tool"]
+description = "A library and CLI tool for analyzing code statistics across different programming languages"
+keywords = ["code", "analysis", "cli", "tool", "library"]
 repository = "https://github.com/trypsynth/codestats"
 license = "Zlib"
 edition = "2024"

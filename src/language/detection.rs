@@ -6,6 +6,7 @@ fn matches_pattern(filename: &str, pattern: &str) -> bool {
 	if let Some(suffix) = pattern.strip_prefix('*') { filename.ends_with(suffix) } else { filename == pattern }
 }
 
+/// Detect the programming language of a file based on its filename
 #[must_use]
 pub fn detect_language(filename: &str) -> Option<&'static str> {
 	if let Some(lang) = PATTERN_MAP.get(filename) {
@@ -17,13 +18,14 @@ pub fn detect_language(filename: &str) -> Option<&'static str> {
 		.map(|language| language.name)
 }
 
+/// Get detailed language information by name
 #[must_use]
 pub fn get_language_info(language_name: &str) -> Option<&'static Language> {
 	LANGUAGE_MAP.get(language_name).copied()
 }
 
-/// Prints all supported language names to stdout
-pub fn print_all() {
+/// Print all supported programming languages to stdout
+pub fn print_all_languages() {
 	println!(
 		"Total number of supported programming {}: {}",
 		pluralize(LANGUAGES.len() as u64, "language", "languages"),
