@@ -751,6 +751,12 @@
 		"block_comments": [["{", "}"], ["(*", "*)"]]
 	},
 	{
+		"name": "Isabelle",
+		"file_patterns": ["*.thy"],
+		"line_comments": ["--"],
+		"block_comments": [["{*", "*}"], ["(*", "*)"], ["‹", "›"], ["\\\\<open>", "\\\\<close>"]]
+	},
+	{
 		"name": "J",
 		"file_patterns": ["*.ijs"],
 		"line_comments": ["NB."]
@@ -824,12 +830,6 @@
 		"line_comments": ["#"],
 		"block_comments": [["#=", "=#"]],
 		"nested_blocks": true
-	},
-	{
-		"name": "Julius",
-		"file_patterns": ["*.julius"],
-		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
 	},
 	{
 		"name": "Jupyter Notebook",
@@ -947,9 +947,21 @@
 	},
 	{
 		"name": "Luau",
-		"file_patterns": ["*.luau"],
+		"file_patterns": ["*.luau", "*.project.json", ".robloxrc"],
 		"line_comments": ["--"],
-		"block_comments": [["--[[", "--]]"]]
+		"block_comments": [["--[[", "--]]"]],
+		"shebangs": ["#!/usr/bin/env luau"]
+	},
+	{
+		"name": "M4",
+		"file_patterns": ["*.m4"],
+		"line_comments": ["#", "dnl"]
+	},
+	{
+		"name": "Madlang",
+		"file_patterns": ["*.mad"],
+		"line_comments": ["#"],
+		"block_comments": [["{#", "#}"]]
 	},
 	{
 		"name": "Makefile",
@@ -967,8 +979,19 @@
 		"block_comments": [["<!--", "-->"]]
 	},
 	{
+		"name": "max",
+		"file_patterns": ["*.maxpat"]
+	},
+	{
+		"name": "Menhir",
+		"file_patterns": ["*.mll", "*.mly", "*.vy"],
+		"line_comments": ["//"],
+		"block_comments": [["(*", "*)"], ["/*", "*/"]],
+		"nested_blocks": true
+	},
+	{
 		"name": "Meson",
-		"file_patterns": ["meson.build"],
+		"file_patterns": ["meson.build", "meson_options.txt"],
 		"line_comments": ["#"]
 	},
 	{
