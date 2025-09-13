@@ -4,13 +4,26 @@ version = "0.2.0"
 authors = ["Quin Gillespie <trypsynth@gmail.com>"]
 description = "A library and CLI tool for analyzing code statistics across different programming languages"
 keywords = ["code", "analysis", "cli", "tool", "library"]
+categories = ["command-line-utilities", "development-tools", "filesystem"]
 repository = "https://github.com/trypsynth/codestats"
+homepage = "https://github.com/trypsynth/codestats"
+documentation = "https://docs.rs/codestats"
+readme = "README.md"
 license = "Zlib"
 edition = "2024"
 rust-version = "1.85.1"
 
+[[bin]]
+name = "codestats"
+path = "src/main.rs"
+
+[lib]
+name = "codestats"
+path = "src/lib.rs"
+
 [dependencies]
 anyhow = "1.0.99"
+bitflags = "2.9"
 clap = { version = "4.5.47", features = ["derive"] }
 human_bytes = { version = "0.4.3", features = ["fast"] }
 ignore = "0.4.23"

@@ -11,6 +11,16 @@ use crate::{
 pub struct ResultFormatter;
 
 impl ResultFormatter {
+	/// Print a complete summary of analysis results
+	///
+	/// This method prints an overview followed by a language breakdown.
+	/// If no programming languages are found, it prints an appropriate message.
+	///
+	/// # Arguments
+	///
+	/// * `results` - The analysis results to display
+	/// * `path` - The path that was analyzed
+	/// * `verbose` - Whether to include verbose output (file-level details)
 	pub fn print_summary(results: &AnalysisResults, path: &Path, verbose: bool) {
 		Self::print_overview(results, path);
 		if results.language_stats().is_empty() {
@@ -20,6 +30,14 @@ impl ResultFormatter {
 		Self::print_language_breakdown(results, verbose);
 	}
 
+	/// Print a high-level overview of the analysis results
+	///
+	/// Displays total files, lines, size, and overall percentages.
+	///
+	/// # Arguments
+	///
+	/// * `results` - The analysis results to display
+	/// * `path` - The path that was analyzed
 	pub fn print_overview(results: &AnalysisResults, path: &Path) {
 		println!(
 			"Codestats for {}: {} {}, {} total {}, {} total size.",
@@ -28,7 +46,7 @@ impl ResultFormatter {
 			utils::pluralize(results.total_files(), "file", "files"),
 			results.total_lines(),
 			utils::pluralize(results.total_lines(), "line", "lines"),
-			human_bytes(results.total_size() as f64)
+			human_bytes(utils::size_to_f64(results.total_size()))
 		);
 		let line_breakdown_parts = Self::build_line_breakdown_parts(results);
 		if !line_breakdown_parts.is_empty() {
@@ -40,6 +58,15 @@ impl ResultFormatter {
 		}
 	}
 
+	/// Print a detailed breakdown by programming language
+	///
+	/// Shows statistics for each detected programming language,
+	/// optionally including file-level details if verbose is true.
+	///
+	/// # Arguments
+	///
+	/// * `results` - The analysis results to display
+	/// * `verbose` - Whether to include individual file statistics
 	pub fn print_language_breakdown(results: &AnalysisResults, verbose: bool) {
 		println!("Language breakdown:");
 		for (lang, lang_stats) in results.languages_by_lines() {
@@ -62,7 +89,7 @@ impl ResultFormatter {
 			lang_stats.lines(),
 			utils::pluralize(lang_stats.lines(), "line", "lines")
 		);
-		println!("\tSize: {} ({size_pct:.1}% of total).", human_bytes(lang_stats.size() as f64));
+		println!("\tSize: {} ({size_pct:.1}% of total).", human_bytes(utils::size_to_f64(lang_stats.size())));
 		println!("\tLine breakdown:");
 		if lang_stats.code_lines() > 0 {
 			println!("\t\tCode: {} lines ({:.1}%).", lang_stats.code_lines(), lang_stats.code_percentage());

@@ -3,9 +3,13 @@ use crate::language::Language;
 /// Represents different types of lines in source code.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LineType {
+	/// A line containing source code
 	Code,
+	/// A line containing only comments (single-line or block comments)
 	Comment,
+	/// A line containing only whitespace (or nothing at all)
 	Blank,
+	/// A line containing a shebang directive
 	Shebang,
 }
 
@@ -17,6 +21,7 @@ pub struct CommentState {
 }
 
 impl CommentState {
+	/// Create a new comment state tracker
 	#[must_use]
 	pub fn new() -> Self {
 		Self::default()
@@ -45,12 +50,29 @@ impl CommentState {
 		self.block_comment_depth += 1;
 	}
 
+	/// Check if currently inside a block comment
 	#[must_use]
 	pub const fn is_in_comment(&self) -> bool {
 		self.in_block_comment
 	}
 }
 
+/// Classify a line of source code into its appropriate type
+///
+/// This function analyzes a single line of code and determines whether it contains
+/// code, comments, is blank, or contains a shebang. It handles both single-line
+/// and multi-line block comments, including nested block comments for supported languages.
+///
+/// # Arguments
+///
+/// * `line` - The line of code to classify
+/// * `lang_info` - Language configuration containing comment patterns, or `None` for unknown languages
+/// * `comment_state` - Mutable state tracker for multi-line block comments
+/// * `is_first_line` - Whether this is the first line of the file (for shebang detection)
+///
+/// # Returns
+///
+/// Returns the [`LineType`] representing the primary content of the line.
 pub fn classify_line(
 	line: &str,
 	lang_info: Option<&Language>,

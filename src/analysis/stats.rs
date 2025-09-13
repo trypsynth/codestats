@@ -15,6 +15,17 @@ pub struct FileStats {
 }
 
 impl FileStats {
+	/// Create new file statistics
+	///
+	/// # Arguments
+	///
+	/// * `path` - The file path
+	/// * `total_lines` - Total number of lines in the file
+	/// * `code_lines` - Number of lines containing code
+	/// * `comment_lines` - Number of lines containing comments
+	/// * `blank_lines` - Number of blank lines
+	/// * `shebang_lines` - Number of shebang lines
+	/// * `size` - File size in bytes
 	#[must_use]
 	pub const fn new(
 		path: String,
@@ -28,36 +39,43 @@ impl FileStats {
 		Self { path, total_lines, code_lines, comment_lines, blank_lines, shebang_lines, size }
 	}
 
+	/// Get the file path
 	#[must_use]
 	pub fn path(&self) -> &str {
 		&self.path
 	}
 
+	/// Get the total number of lines in the file
 	#[must_use]
 	pub const fn total_lines(&self) -> u64 {
 		self.total_lines
 	}
 
+	/// Get the number of lines containing code
 	#[must_use]
 	pub const fn code_lines(&self) -> u64 {
 		self.code_lines
 	}
 
+	/// Get the number of lines containing comments
 	#[must_use]
 	pub const fn comment_lines(&self) -> u64 {
 		self.comment_lines
 	}
 
+	/// Get the number of blank lines
 	#[must_use]
 	pub const fn blank_lines(&self) -> u64 {
 		self.blank_lines
 	}
 
+	/// Get the number of shebang lines
 	#[must_use]
 	pub const fn shebang_lines(&self) -> u64 {
 		self.shebang_lines
 	}
 
+	/// Get the file size in bytes
 	#[must_use]
 	pub const fn size(&self) -> u64 {
 		self.size
@@ -89,61 +107,73 @@ impl LanguageStats {
 		self.file_list.push(file_stats);
 	}
 
+	/// Get the number of files of this language
 	#[must_use]
 	pub const fn files(&self) -> u64 {
 		self.files
 	}
 
+	/// Get the total number of lines across all files of this language
 	#[must_use]
 	pub const fn lines(&self) -> u64 {
 		self.lines
 	}
 
+	/// Get the number of code lines across all files of this language
 	#[must_use]
 	pub const fn code_lines(&self) -> u64 {
 		self.code_lines
 	}
 
+	/// Get the number of comment lines across all files of this language
 	#[must_use]
 	pub const fn comment_lines(&self) -> u64 {
 		self.comment_lines
 	}
 
+	/// Get the number of blank lines across all files of this language
 	#[must_use]
 	pub const fn blank_lines(&self) -> u64 {
 		self.blank_lines
 	}
 
+	/// Get the number of shebang lines across all files of this language
 	#[must_use]
 	pub const fn shebang_lines(&self) -> u64 {
 		self.shebang_lines
 	}
 
+	/// Get the total size in bytes across all files of this language
 	#[must_use]
 	pub const fn size(&self) -> u64 {
 		self.size
 	}
 
+	/// Get the list of individual file statistics for this language
 	#[must_use]
 	pub fn files_list(&self) -> &[FileStats] {
 		&self.file_list
 	}
 
+	/// Get the percentage of code lines relative to total lines for this language
 	#[must_use]
 	pub fn code_percentage(&self) -> f64 {
 		utils::percentage(self.code_lines, self.lines)
 	}
 
+	/// Get the percentage of comment lines relative to total lines for this language
 	#[must_use]
 	pub fn comment_percentage(&self) -> f64 {
 		utils::percentage(self.comment_lines, self.lines)
 	}
 
+	/// Get the percentage of blank lines relative to total lines for this language
 	#[must_use]
 	pub fn blank_percentage(&self) -> f64 {
 		utils::percentage(self.blank_lines, self.lines)
 	}
 
+	/// Get the percentage of shebang lines relative to total lines for this language
 	#[must_use]
 	pub fn shebang_percentage(&self) -> f64 {
 		utils::percentage(self.shebang_lines, self.lines)
@@ -175,46 +205,59 @@ impl AnalysisResults {
 		self.language_stats.entry(language).or_default().add_file(file_stats);
 	}
 
+	/// Get the total number of files analyzed
 	#[must_use]
 	pub const fn total_files(&self) -> u64 {
 		self.total_files
 	}
 
+	/// Get the total number of lines across all files
 	#[must_use]
 	pub const fn total_lines(&self) -> u64 {
 		self.total_lines
 	}
 
+	/// Get the total number of code lines across all files
 	#[must_use]
 	pub const fn total_code_lines(&self) -> u64 {
 		self.total_code_lines
 	}
 
+	/// Get the total number of comment lines across all files
 	#[must_use]
 	pub const fn total_comment_lines(&self) -> u64 {
 		self.total_comment_lines
 	}
 
+	/// Get the total number of blank lines across all files
 	#[must_use]
 	pub const fn total_blank_lines(&self) -> u64 {
 		self.total_blank_lines
 	}
 
+	/// Get the total number of shebang lines across all files
 	#[must_use]
 	pub const fn total_shebang_lines(&self) -> u64 {
 		self.total_shebang_lines
 	}
 
+	/// Get the total size in bytes across all files
 	#[must_use]
 	pub const fn total_size(&self) -> u64 {
 		self.total_size
 	}
 
+	/// Get a map of all language statistics
 	#[must_use]
 	pub const fn language_stats(&self) -> &HashMap<String, LanguageStats> {
 		&self.language_stats
 	}
 
+	/// Get languages sorted by total lines in descending order
+	///
+	/// Returns a vector of tuples containing (`language_name`, `language_stats`)
+	/// sorted by the number of lines in each language, with the language
+	/// with the most lines coming first.
 	#[must_use]
 	pub fn languages_by_lines(&self) -> Vec<(&String, &LanguageStats)> {
 		let mut stats_vec: Vec<_> = self.language_stats.iter().collect();
@@ -222,21 +265,25 @@ impl AnalysisResults {
 		stats_vec
 	}
 
+	/// Get the percentage of code lines relative to total lines
 	#[must_use]
 	pub fn code_percentage(&self) -> f64 {
 		utils::percentage(self.total_code_lines, self.total_lines)
 	}
 
+	/// Get the percentage of comment lines relative to total lines
 	#[must_use]
 	pub fn comment_percentage(&self) -> f64 {
 		utils::percentage(self.total_comment_lines, self.total_lines)
 	}
 
+	/// Get the percentage of blank lines relative to total lines
 	#[must_use]
 	pub fn blank_percentage(&self) -> f64 {
 		utils::percentage(self.total_blank_lines, self.total_lines)
 	}
 
+	/// Get the percentage of shebang lines relative to total lines
 	#[must_use]
 	pub fn shebang_percentage(&self) -> f64 {
 		utils::percentage(self.total_shebang_lines, self.total_lines)

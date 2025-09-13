@@ -6,6 +6,7 @@ use std::{
 };
 
 use anyhow::{Context, Result};
+use bitflags::bitflags;
 use ignore::WalkBuilder;
 
 use super::{
@@ -14,58 +15,111 @@ use super::{
 };
 use crate::language;
 
+bitflags! {
+	/// Configuration flags for analysis behavior
+	#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+	pub struct AnalysisFlags: u8 {
+		/// Enable verbose output
+		const VERBOSE = 1 << 0;
+		/// Respect .gitignore files (enabled by default)
+		const RESPECT_GITIGNORE = 1 << 1;
+		/// Include hidden files and directories
+		const INCLUDE_HIDDEN = 1 << 2;
+		/// Follow symbolic links
+		const FOLLOW_SYMLINKS = 1 << 3;
+	}
+}
+
+impl Default for AnalysisFlags {
+	fn default() -> Self {
+		Self::RESPECT_GITIGNORE
+	}
+}
+
+/// Configuration options for code analysis
 #[derive(Debug, Clone)]
 pub struct AnalysisOptions {
 	path: PathBuf,
-	verbose: bool,
-	respect_gitignore: bool,
-	include_hidden: bool,
-	follow_symlinks: bool,
+	flags: AnalysisFlags,
 }
 
 impl AnalysisOptions {
+	/// Create new analysis options with default flags
 	pub fn new(path: impl Into<PathBuf>) -> Self {
 		Self {
 			path: path.into(),
-			verbose: false,
-			respect_gitignore: true,
-			include_hidden: false,
-			follow_symlinks: false,
+			flags: AnalysisFlags::default(),
 		}
 	}
 
+	/// Create new analysis options with custom flags
+	pub fn with_flags(path: impl Into<PathBuf>, flags: AnalysisFlags) -> Self {
+		Self {
+			path: path.into(),
+			flags,
+		}
+	}
+
+	/// Enable or disable verbose output
 	#[must_use]
 	pub const fn verbose(mut self, verbose: bool) -> Self {
-		self.verbose = verbose;
+		if verbose {
+			self.flags = self.flags.union(AnalysisFlags::VERBOSE);
+		} else {
+			self.flags = self.flags.difference(AnalysisFlags::VERBOSE);
+		}
 		self
 	}
 
+	/// Enable or disable respecting .gitignore files
 	#[must_use]
 	pub const fn respect_gitignore(mut self, respect: bool) -> Self {
-		self.respect_gitignore = respect;
+		if respect {
+			self.flags = self.flags.union(AnalysisFlags::RESPECT_GITIGNORE);
+		} else {
+			self.flags = self.flags.difference(AnalysisFlags::RESPECT_GITIGNORE);
+		}
 		self
 	}
 
+	/// Enable or disable including hidden files
 	#[must_use]
 	pub const fn include_hidden(mut self, include: bool) -> Self {
-		self.include_hidden = include;
+		if include {
+			self.flags = self.flags.union(AnalysisFlags::INCLUDE_HIDDEN);
+		} else {
+			self.flags = self.flags.difference(AnalysisFlags::INCLUDE_HIDDEN);
+		}
 		self
 	}
 
+	/// Enable or disable following symbolic links
 	#[must_use]
 	pub const fn follow_symlinks(mut self, follow: bool) -> Self {
-		self.follow_symlinks = follow;
+		if follow {
+			self.flags = self.flags.union(AnalysisFlags::FOLLOW_SYMLINKS);
+		} else {
+			self.flags = self.flags.difference(AnalysisFlags::FOLLOW_SYMLINKS);
+		}
 		self
 	}
 
+	/// Get the path to analyze
 	#[must_use]
 	pub fn path(&self) -> &Path {
 		&self.path
 	}
 
+	/// Check if verbose output is enabled
 	#[must_use]
 	pub const fn is_verbose(&self) -> bool {
-		self.verbose
+		self.flags.contains(AnalysisFlags::VERBOSE)
+	}
+
+	/// Get the analysis flags
+	#[must_use]
+	pub const fn flags(&self) -> AnalysisFlags {
+		self.flags
 	}
 }
 
@@ -79,17 +133,31 @@ impl CodeAnalyzer {
 		Self { options }
 	}
 
+	/// Analyze the configured path for code statistics
+	///
+	/// # Errors
+	///
+	/// Returns an error if:
+	/// - The path cannot be accessed
+	/// - File I/O operations fail during analysis
+	/// - UTF-8 decoding fails for file contents
+	///
+	/// # Panics
+	///
+	/// May panic if the internal Arc or Mutex operations fail unexpectedly,
+	/// which should hopefully never happen.
 	pub fn analyze(&self) -> Result<AnalysisResults> {
-		if self.options.verbose {
+		let flags = self.options.flags();
+		if flags.contains(AnalysisFlags::VERBOSE) {
 			println!("Analyzing directory {}", self.options.path.display());
 		}
 		let results = Arc::new(Mutex::new(AnalysisResults::default()));
-		let verbose = self.options.verbose;
+		let verbose = flags.contains(AnalysisFlags::VERBOSE);
 		WalkBuilder::new(&self.options.path)
-			.follow_links(self.options.follow_symlinks)
-			.ignore(self.options.respect_gitignore)
-			.git_ignore(self.options.respect_gitignore)
-			.hidden(!self.options.include_hidden)
+			.follow_links(flags.contains(AnalysisFlags::FOLLOW_SYMLINKS))
+			.ignore(flags.contains(AnalysisFlags::RESPECT_GITIGNORE))
+			.git_ignore(flags.contains(AnalysisFlags::RESPECT_GITIGNORE))
+			.hidden(!flags.contains(AnalysisFlags::INCLUDE_HIDDEN))
 			.build_parallel()
 			.run(|| {
 				let results = Arc::clone(&results);
