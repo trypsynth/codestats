@@ -1005,16 +1005,42 @@
 		"block_comments": [["/*", "*/"]]
 	},
 	{
+		"name": "Mint",
+		"file_patterns": ["*.mint"]
+	},
+	{
+		"name": "Mlatu",
+		"file_patterns": ["*.mlt"],
+		"line_comments": ["//"]
+	},
+	{
+		"name": "Modelica",
+		"file_patterns": ["*.mo", "*.mos"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
 		"name": "Modula-2/3",
 		"file_patterns": ["*.m3", "*.mi"],
 		"block_comments": [["(*", "*)"]],
 		"nested_blocks": true
 	},
 	{
+		"name": "Module Definition",
+		"file_patterns": ["*.def"],
+		"line_comments": [";"]
+	},
+	{
 		"name": "Mojo",
-		"file_patterns": ["*.mojo"],
+		"file_patterns": ["*.mojo", "*.🔥"],
 		"line_comments": ["#"],
 		"block_comments": [["\"\"\"", "\"\"\""], ["'''", "'''"]]
+	},
+	{
+		"name": "Monkey C",
+		"file_patterns": ["*.mc"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
 	},
 	{
 		"name": "Moo",
@@ -1023,10 +1049,20 @@
 		"block_comments": [["/*", "*/"]]
 	},
 	{
+		"name": "MoonBit",
+		"file_patterns": ["*.mbt", "*.mbti"],
+		"line_comments": ["//"]
+	},
+	{
 		"name": "MoonScript",
 		"file_patterns": ["*.moon"],
 		"line_comments": ["--"],
 		"block_comments": [["--[[", "--]]"]]
+	},
+	{
+		"name": "MSBuild",
+		"file_patterns": ["*.csproj", "*.vbproj", "*.fsproj", "*.props", "*.targets"],
+		"block_comments": [["<!--", "-->"]]
 	},
 	{
 		"name": "Mustache",
@@ -1037,6 +1073,12 @@
 		"name": "NASM",
 		"file_patterns": ["*.nasm"],
 		"line_comments": [";", "#"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Nextflow",
+		"file_patterns": ["*.nextflow", "*.nf"],
+		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
 	},
 	{
@@ -1063,10 +1105,21 @@
 		"block_comments": [["/*", "*/"]]
 	},	
 	{
+		"name": "Not Quite Perl",
+		"file_patterns": ["*.nqp"],
+		"line_comments": ["#"],
+		"block_comments": [["=begin", "=end"]]
+	},
+	{
 		"name": "NSIS",
 		"file_patterns": ["*.nsi", "*.nsh"],
 		"line_comments": [";", "#"],
 		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "NuGet Config",
+		"file_patterns": ["nuget.config", "packages.config", "nugetdefaults.config"],
+		"block_comments": [["<!--", "-->"]]
 	},
 	{
 		"name": "Nunjucks Templates",
@@ -1111,6 +1164,22 @@
 	{
 		"name": "Odin",
 		"file_patterns": ["*.odin"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Open Policy Agent",
+		"file_patterns": ["*.rego"],
+		"line_comments": ["#"]
+	},
+	{
+		"name": "OpenCL",
+		"file_patterns": ["*.ocl"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "OpenQASM",
+		"file_patterns": ["*.qasm"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
 	},
