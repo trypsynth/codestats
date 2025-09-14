@@ -1190,10 +1190,25 @@
 		"block_comments": [["/*", "*/"]]
 	},
 	{
+		"name": "OpenType Feature File",
+		"file_patterns": ["*.fea"],
+		"line_comments": ["#"]
+	},
+	{
+		"name": "Org",
+		"file_patterns": ["*.org"],
+		"line_comments": ["#"]
+	},
+	{
 		"name": "Oz",
 		"file_patterns": ["*.oz"],
 		"line_comments": ["%"],
 		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Pan",
+		"file_patterns": ["*.pan"],
+		"line_comments": ["#"]
 	},
 	{
 		"name": "Pascal",
@@ -1210,11 +1225,22 @@
 		"shebangs": ["#!/usr/bin/perl", "#!/usr/bin/env perl"]
 	},
 	{
+		"name": "Pest",
+		"file_patterns": ["*.pest"],
+		"line_comments": ["//"]
+	},
+	{
 		"name": "PHP",
 		"file_patterns": ["*.php", "*.php3", "*.php4", "*.php5", "*.phps", "*.phpt", "*.phtml"],
 		"line_comments": ["//", "#"],
 		"block_comments": [["/*", "*/"], ["<!--", "-->"]],
 		"shebangs": ["#!/usr/bin/php", "#!/usr/bin/env php"]
+	},
+	{
+		"name": "PKGBUILD",
+		"file_patterns": ["PKGBUILD"],
+		"line_comments": ["#"],
+		"shebangs": ["#!/bin/bash", "#!/usr/bin/env bash", "#!/bin/sh", "#!/usr/bin/env sh"]
 	},
 	{
 		"name": "PogoScript",
