@@ -168,6 +168,7 @@ fn escape_rust_string(s: &str) -> String {
 fn validate_languages(languages: &[Language]) -> Result<()> {
 	let mut errors = Vec::new();
 	let mut seen_names = HashSet::new();
+	let mut seen_patterns: HashMap<String, Vec<String>> = HashMap::new();
 	let mut prev_name: Option<&str> = None;
 	for lang in languages {
 		if let Some(prev) = prev_name {
@@ -212,6 +213,7 @@ fn validate_languages(languages: &[Language]) -> Result<()> {
 					pattern
 				));
 			}
+			seen_patterns.entry(pattern.clone()).or_insert_with(Vec::new).push(lang.name.clone());
 		}
 		if let Some(ref line_comments) = lang.line_comments {
 			for (comment_idx, comment) in line_comments.iter().enumerate() {
@@ -254,6 +256,15 @@ fn validate_languages(languages: &[Language]) -> Result<()> {
 					));
 				}
 			}
+		}
+	}
+	for (pattern, language_names) in seen_patterns {
+		if language_names.len() > 1 {
+			errors.push(format!(
+				"Duplicate file pattern '{}' found in languages: {}",
+				pattern,
+				language_names.join(", ")
+			));
 		}
 	}
 	if !errors.is_empty() {

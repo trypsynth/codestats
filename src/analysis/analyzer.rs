@@ -46,18 +46,12 @@ pub struct AnalysisOptions {
 impl AnalysisOptions {
 	/// Create new analysis options with default flags
 	pub fn new(path: impl Into<PathBuf>) -> Self {
-		Self {
-			path: path.into(),
-			flags: AnalysisFlags::default(),
-		}
+		Self { path: path.into(), flags: AnalysisFlags::default() }
 	}
 
 	/// Create new analysis options with custom flags
 	pub fn with_flags(path: impl Into<PathBuf>, flags: AnalysisFlags) -> Self {
-		Self {
-			path: path.into(),
-			flags,
-		}
+		Self { path: path.into(), flags }
 	}
 
 	/// Enable or disable verbose output

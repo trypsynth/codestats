@@ -57,7 +57,7 @@
 	},
 	{
 		"name": "Apex",
-		"file_patterns": ["*.apex", "*.cls", "*.trigger"],
+		"file_patterns": ["*.apex", "*.apexcls", "*.trigger"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
 	},
@@ -255,6 +255,11 @@
 		"line_comments": ["--"],
 		"block_comments": [["{-", "-}"]],
 		"nested_blocks": true
+	},
+	{
+		"name": "Caddyfile",
+		"file_patterns": ["Caddyfile", "*.caddyfile"],
+		"line_comments": ["#"]
 	},
 	{
 		"name": "Cairo",
@@ -476,11 +481,6 @@
 		"name": "EdgeQL",
 		"file_patterns": ["*.edgeql"],
 		"line_comments": ["#"]
-	},
-	{
-		"name": "EDN",
-		"file_patterns": ["*.edn"],
-		"line_comments": [";"]
 	},
 	{
 		"name": "Eiffel",
@@ -847,6 +847,11 @@
 		"line_comments": ["/"]
 	},
 	{
+		"name": "Kaitai Struct",
+		"file_patterns": ["*.ksy"],
+		"line_comments": ["#"]
+	},
+	{
 		"name": "Kakoune script",
 		"file_patterns": ["*.kak"],
 		"line_comments": ["#"]
@@ -984,7 +989,7 @@
 	},
 	{
 		"name": "Menhir",
-		"file_patterns": ["*.mll", "*.mly", "*.vy"],
+		"file_patterns": ["*.menhir", "*.vy"],
 		"line_comments": ["//"],
 		"block_comments": [["(*", "*)"], ["/*", "*/"]],
 		"nested_blocks": true
@@ -1060,6 +1065,18 @@
 		"block_comments": [["--[[", "--]]"]]
 	},
 	{
+		"name": "Motoko",
+		"file_patterns": ["*.mot"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Move",
+		"file_patterns": ["*.move"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
 		"name": "MSBuild",
 		"file_patterns": ["*.csproj", "*.vbproj", "*.fsproj", "*.props", "*.targets"],
 		"block_comments": [["<!--", "-->"]]
@@ -1074,6 +1091,11 @@
 		"file_patterns": ["*.nasm"],
 		"line_comments": [";", "#"],
 		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Nearley",
+		"file_patterns": ["*.ne"],
+		"line_comments": ["#"]
 	},
 	{
 		"name": "Nextflow",
@@ -1237,6 +1259,12 @@
 		"shebangs": ["#!/usr/bin/php", "#!/usr/bin/env php"]
 	},
 	{
+		"name": "Pine Script",
+		"file_patterns": ["*.pine"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
 		"name": "PKGBUILD",
 		"file_patterns": ["PKGBUILD"],
 		"line_comments": ["#"],
@@ -1263,6 +1291,12 @@
 	{
 		"name": "Prisma",
 		"file_patterns": ["*.prisma"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Promela",
+		"file_patterns": ["*.pml"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
 	},
@@ -1601,6 +1635,18 @@
 		"line_comments": [";;"],
 		"block_comments": [["(;", ";)"]],
 		"nested_blocks": true
+	},
+	{
+		"name": "WebIDL",
+		"file_patterns": ["*.webidl"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "WGSL",
+		"file_patterns": ["*.wgsl"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
 	},
 	{
 		"name": "Windows Registry Entry",

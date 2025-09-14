@@ -39,6 +39,9 @@ pub mod language;
 
 mod utils;
 
-pub use analysis::{AnalysisFlags, AnalysisOptions, AnalysisResults, CodeAnalyzer, CommentState, FileStats, LanguageStats, LineType, classify_line};
+pub use analysis::{
+	AnalysisFlags, AnalysisOptions, AnalysisResults, CodeAnalyzer, CommentState, FileStats, LanguageStats, LineType,
+	classify_line,
+};
 pub use display::ResultFormatter;
 pub use language::{detect_language, get_language_info};
