@@ -13,7 +13,7 @@ use super::{
 	line_classifier::{self, CommentState, LineType},
 	stats::{AnalysisResults, FileStats},
 };
-use crate::language;
+use crate::langs;
 
 bitflags! {
 	/// Configuration flags for analysis behavior
@@ -177,7 +177,7 @@ impl CodeAnalyzer {
 
 	fn process_file(file_path: &Path, results: &Arc<Mutex<AnalysisResults>>) -> Result<()> {
 		let filename = file_path.file_name().and_then(|name| name.to_str()).context("Invalid UTF-8 in file name")?;
-		let Some(language) = language::detect_language(filename) else {
+		let Some(language) = langs::detect_language(filename) else {
 			return Ok(());
 		};
 		let file_size = fs::metadata(file_path)
@@ -202,7 +202,7 @@ impl CodeAnalyzer {
 	fn analyze_file_lines(file_path: &Path, language: &str) -> Result<(u64, u64, u64, u64, u64)> {
 		let file = File::open(file_path).with_context(|| format!("Failed to open file {}", file_path.display()))?;
 		let reader = BufReader::new(file);
-		let lang_info = language::get_language_info(language);
+		let lang_info = langs::get_language_info(language);
 		let mut line_counts = (0, 0, 0, 0, 0); // total, code, comment, blank, shebang
 		let mut comment_state = CommentState::new();
 		let mut line_number = 0;

@@ -1,2 +1,5 @@
-/target
+.claude/
+target/
+*.dll
+*.exe
 *.zip

@@ -3,19 +3,19 @@
 use anyhow::{Result, ensure};
 use clap::Parser;
 use codestats::{
-	AnalysisOptions, CodeAnalyzer, ResultFormatter,
+	AnalysisOptions, CodeAnalyzer,
 	cli::{Cli, Commands},
-	language,
+	get_formatter, langs,
 };
 
 fn main() -> Result<()> {
 	let cli = Cli::parse();
 	match cli.command {
 		Commands::Langs => {
-			language::print_all_languages();
+			langs::print_all_languages();
 			Ok(())
 		}
-		Commands::Analyze { path, verbose, no_gitignore, hidden, symlinks } => {
+		Commands::Analyze { path, verbose, no_gitignore, hidden, symlinks, output } => {
 			ensure!(path.exists(), "Path `{}` not found", path.display());
 			let options = AnalysisOptions::new(path.clone())
 				.verbose(verbose)
@@ -24,7 +24,9 @@ fn main() -> Result<()> {
 				.follow_symlinks(symlinks);
 			let analyzer = CodeAnalyzer::new(options);
 			let results = analyzer.analyze()?;
-			ResultFormatter::print_summary(&results, &path, verbose);
+			let formatter = get_formatter(output);
+			let output_text = formatter.format(&results, &path, verbose)?;
+			print!("{output_text}");
 			Ok(())
 		}
 	}

@@ -1,9 +1,11 @@
 use std::collections::HashMap;
 
+use serde::{Deserialize, Serialize};
+
 use crate::utils;
 
 /// Statistics for a single file
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct FileStats {
 	path: String,
 	total_lines: u64,
@@ -83,7 +85,7 @@ impl FileStats {
 }
 
 /// Holds statistics about a programming language's usage throughout a project.
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct LanguageStats {
 	files: u64,
 	lines: u64,
@@ -181,7 +183,7 @@ impl LanguageStats {
 }
 
 /// Results of a code analysis operation
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct AnalysisResults {
 	total_files: u64,
 	total_lines: u64,

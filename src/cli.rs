@@ -2,6 +2,8 @@ use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
 
+use crate::display::OutputFormat;
+
 /// A tool for analyzing code statistics across different programming languages
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -34,6 +36,9 @@ pub enum Commands {
 		/// lead to infinite loops with circular symlinks.
 		#[arg(short, long)]
 		symlinks: bool,
+		/// Output format
+		#[arg(short, long, default_value = "human")]
+		output: OutputFormat,
 	},
 	/// List all supported programming languages
 	Langs,

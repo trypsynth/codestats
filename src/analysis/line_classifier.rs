@@ -1,6 +1,6 @@
-use crate::language::Language;
+use crate::langs::Language;
 
-/// Represents different types of lines in source code.
+/// Represents different types of lines in a file.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LineType {
 	/// A line containing source code

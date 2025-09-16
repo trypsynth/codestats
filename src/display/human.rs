@@ -2,45 +2,32 @@ use std::{cmp::Reverse, path::Path};
 
 use human_bytes::human_bytes;
 
+use super::OutputFormatter;
 use crate::{
 	analysis::{AnalysisResults, LanguageStats},
 	utils,
 };
 
-/// Formats and displays analysis results
-pub struct ResultFormatter;
+/// Human-readable formatter
+pub struct HumanFormatter;
 
-impl ResultFormatter {
-	/// Print a complete summary of analysis results
-	///
-	/// This method prints an overview followed by a language breakdown.
-	/// If no programming languages are found, it prints an appropriate message.
-	///
-	/// # Arguments
-	///
-	/// * `results` - The analysis results to display
-	/// * `path` - The path that was analyzed
-	/// * `verbose` - Whether to include verbose output (file-level details)
-	pub fn print_summary(results: &AnalysisResults, path: &Path, verbose: bool) {
-		Self::print_overview(results, path);
+impl OutputFormatter for HumanFormatter {
+	fn format(&self, results: &AnalysisResults, path: &Path, verbose: bool) -> anyhow::Result<String> {
+		let mut output = String::new();
+		output.push_str(&Self::format_overview(results, path));
 		if results.language_stats().is_empty() {
-			println!("No recognized programming languages found.");
-			return;
+			output.push_str("No recognized programming languages found.\n");
+			return Ok(output);
 		}
-		Self::print_language_breakdown(results, verbose);
+		output.push_str(&Self::format_language_breakdown(results, verbose));
+		Ok(output)
 	}
+}
 
-	/// Print a high-level overview of the analysis results
-	///
-	/// Displays total files, lines, size, and overall percentages.
-	///
-	/// # Arguments
-	///
-	/// * `results` - The analysis results to display
-	/// * `path` - The path that was analyzed
-	pub fn print_overview(results: &AnalysisResults, path: &Path) {
-		println!(
-			"Codestats for {}: {} {}, {} total {}, {} total size.",
+impl HumanFormatter {
+	fn format_overview(results: &AnalysisResults, path: &Path) -> String {
+		let mut output = format!(
+			"Codestats for {}: {} {}, {} total {}, {} total size.\n",
 			path.display(),
 			results.total_files(),
 			utils::pluralize(results.total_files(), "file", "files"),
@@ -50,72 +37,99 @@ impl ResultFormatter {
 		);
 		let line_breakdown_parts = Self::build_line_breakdown_parts(results);
 		if !line_breakdown_parts.is_empty() {
-			println!("Line breakdown: {}", line_breakdown_parts.join(", "));
+			output.push_str(&format!("Line breakdown: {}\n", line_breakdown_parts.join(", ")));
 		}
 		let percentage_parts = Self::build_percentage_parts(results);
 		if !percentage_parts.is_empty() {
-			println!("Percentages: {}", percentage_parts.join(", "));
+			output.push_str(&format!("Percentages: {}\n", percentage_parts.join(", ")));
 		}
+		output
 	}
 
-	/// Print a detailed breakdown by programming language
-	///
-	/// Shows statistics for each detected programming language,
-	/// optionally including file-level details if verbose is true.
-	///
-	/// # Arguments
-	///
-	/// * `results` - The analysis results to display
-	/// * `verbose` - Whether to include individual file statistics
-	pub fn print_language_breakdown(results: &AnalysisResults, verbose: bool) {
-		println!("Language breakdown:");
+	fn format_language_breakdown(results: &AnalysisResults, verbose: bool) -> String {
+		let mut output = String::from("Language breakdown:\n");
 		for (lang, lang_stats) in results.languages_by_lines() {
-			Self::print_language_stats(lang, lang_stats, results, verbose);
+			output.push_str(&Self::format_language_stats(lang, lang_stats, results, verbose));
 		}
+		output
 	}
 
-	fn print_language_stats(lang: &str, lang_stats: &LanguageStats, overall_results: &AnalysisResults, verbose: bool) {
+	fn format_language_stats(
+		lang: &str,
+		lang_stats: &LanguageStats,
+		overall_results: &AnalysisResults,
+		verbose: bool,
+	) -> String {
+		let mut output = String::new();
 		let file_pct = utils::percentage(lang_stats.files(), overall_results.total_files());
 		let line_pct = utils::percentage(lang_stats.lines(), overall_results.total_lines());
 		let size_pct = utils::percentage(lang_stats.size(), overall_results.total_size());
-		println!("{lang}:");
-		println!(
-			"\tFiles: {} {} ({file_pct:.1}% of total).",
+		output.push_str(&format!("{lang}:\n"));
+		output.push_str(&format!(
+			"\tFiles: {} {} ({file_pct:.1}% of total).\n",
 			lang_stats.files(),
 			utils::pluralize(lang_stats.files(), "file", "files")
-		);
-		println!(
-			"\tLines: {} {} ({line_pct:.1}% of total).",
+		));
+		output.push_str(&format!(
+			"\tLines: {} {} ({line_pct:.1}% of total).\n",
 			lang_stats.lines(),
 			utils::pluralize(lang_stats.lines(), "line", "lines")
-		);
-		println!("\tSize: {} ({size_pct:.1}% of total).", human_bytes(utils::size_to_f64(lang_stats.size())));
-		println!("\tLine breakdown:");
+		));
+		output.push_str(&format!(
+			"\tSize: {} ({size_pct:.1}% of total).\n",
+			human_bytes(utils::size_to_f64(lang_stats.size()))
+		));
+		output.push_str("\tLine breakdown:\n");
 		if lang_stats.code_lines() > 0 {
-			println!("\t\tCode: {} lines ({:.1}%).", lang_stats.code_lines(), lang_stats.code_percentage());
+			output.push_str(&format!(
+				"\t\tCode: {} lines ({:.1}%).\n",
+				lang_stats.code_lines(),
+				lang_stats.code_percentage()
+			));
 		}
 		if lang_stats.comment_lines() > 0 {
-			println!("\t\tComments: {} lines ({:.1}%).", lang_stats.comment_lines(), lang_stats.comment_percentage());
+			output.push_str(&format!(
+				"\t\tComments: {} lines ({:.1}%).\n",
+				lang_stats.comment_lines(),
+				lang_stats.comment_percentage()
+			));
 		}
 		if lang_stats.blank_lines() > 0 {
-			println!("\t\tBlanks: {} lines ({:.1}%).", lang_stats.blank_lines(), lang_stats.blank_percentage());
+			output.push_str(&format!(
+				"\t\tBlanks: {} lines ({:.1}%).\n",
+				lang_stats.blank_lines(),
+				lang_stats.blank_percentage()
+			));
 		}
 		if lang_stats.shebang_lines() > 0 {
-			println!("\t\tShebangs: {} lines ({:.1}%).", lang_stats.shebang_lines(), lang_stats.shebang_percentage());
+			output.push_str(&format!(
+				"\t\tShebangs: {} lines ({:.1}%).\n",
+				lang_stats.shebang_lines(),
+				lang_stats.shebang_percentage()
+			));
 		}
 		if verbose {
-			Self::print_file_breakdown(lang_stats, overall_results);
+			output.push_str(&Self::format_file_breakdown(lang_stats, overall_results));
 		}
+		output
 	}
 
-	fn print_file_breakdown(lang_stats: &LanguageStats, overall_results: &AnalysisResults) {
-		println!("\tFile breakdown:");
+	fn format_file_breakdown(lang_stats: &LanguageStats, overall_results: &AnalysisResults) -> String {
+		let mut output = String::from("\tFile breakdown:\n");
 		let mut files: Vec<_> = lang_stats.files_list().iter().collect();
 		files.sort_by_key(|b| Reverse(b.total_lines()));
 		for file_stat in files {
 			let file_pct = utils::percentage(file_stat.total_lines(), overall_results.total_lines());
-			println!("\t\t{}: {} lines ({:.1}% of total).", file_stat.path(), file_stat.total_lines(), file_pct);
+			let file_size_human = human_bytes(utils::size_to_f64(file_stat.size()));
+			output.push_str(&format!(
+				"\t\t{}: {} lines, {} ({:.1}% of total lines).\n",
+				file_stat.path(),
+				file_stat.total_lines(),
+				file_size_human,
+				file_pct
+			));
 		}
+		output
 	}
 
 	fn build_line_breakdown_parts(results: &AnalysisResults) -> Vec<String> {
