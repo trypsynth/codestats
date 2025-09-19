@@ -404,7 +404,8 @@
 		"file_patterns": ["*.d", "*.di"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"], ["/+", "+/"]],
-		"nested_blocks": true
+		"nested_blocks": true,
+		"shebangs": ["#!"]
 	},
 	{
 		"name": "D2",
@@ -1269,6 +1270,12 @@
 		"file_patterns": ["PKGBUILD"],
 		"line_comments": ["#"],
 		"shebangs": ["#!/bin/bash", "#!/usr/bin/env bash", "#!/bin/sh", "#!/usr/bin/env sh"]
+	},
+	{
+		"name": "PlantUML",
+		"file_patterns": ["*.puml"],
+		"line_comments": ["'"],
+		"block_comments": [["/'", "'/"]]
 	},
 	{
 		"name": "PogoScript",
