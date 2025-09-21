@@ -238,7 +238,7 @@
 	},
 	{
 		"name": "C++",
-		"file_patterns": ["*.cpp", "*.hpp", "*.c++", "*.h++", "*.cc", "*.cxx", "*.hxx", "*.ino", "*.ipp", "*.pde", "*.cppm", "*.ixx", "*.c++m", "*.pcc", "*.tpp"],
+		"file_patterns": ["*.cpp", "*.hpp", "*.c++", "*.h++", "*.cc", "*.cxx", "*.hxx", "*.ino", "*.ipp", "*.cppm", "*.ixx", "*.c++m", "*.pcc", "*.tpp"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
 	},
@@ -610,6 +610,11 @@
 		"line_comments": ["#"]
 	},
 	{
+		"name": "Gettext",
+		"file_patterns": ["*.po", "*.pot"],
+		"line_comments": ["#"]
+	},
+	{
 		"name": "Gleam",
 		"file_patterns": ["*.gleam"],
 		"line_comments": ["//", "///", "////"]
@@ -879,6 +884,11 @@
 		"name": "LALRPOP",
 		"file_patterns": ["*.lalrpop"],
 		"line_comments": ["//"]
+	},
+	{
+		"name": "Lauterbach CMM",
+		"file_patterns": ["*.cmm"],
+		"line_comments": [";"]
 	},
 	{
 		"name": "LD Script",
@@ -1284,14 +1294,25 @@
 		"block_comments": [["/*", "*/"]]
 	},
 	{
+		"name": "Poke",
+		"file_patterns": ["*.pk"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
 		"name": "Pony",
 		"file_patterns": ["*.pony"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
 	},
 	{
+		"name": "PostCSS",
+		"file_patterns": ["*.pcss", "*.sss"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
 		"name": "PowerShell",
-		"file_patterns": ["*.ps1", "*.psd1", "*.psm1", "*.ps1xml"],
+		"file_patterns": ["*.ps1", "*.psm1", "*.psd1", "*.ps1xml", "*.cdxml", "*.pssc", "*.psc1"],
 		"line_comments": ["#"],
 		"block_comments": [["<#", "#>"]]
 	},
@@ -1299,6 +1320,18 @@
 		"name": "Prisma",
 		"file_patterns": ["*.prisma"],
 		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Processing",
+		"file_patterns": ["*.pde"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Prolog",
+		"file_patterns": ["*.pro"],
+		"line_comments": ["%"],
 		"block_comments": [["/*", "*/"]]
 	},
 	{
@@ -1324,6 +1357,19 @@
 		"line_comments": [";"]
 	},
 	{
+		"name": "PureScript",
+		"file_patterns": ["*.purs"],
+		"line_comments": ["--"],
+		"block_comments": [["{-", "-}"]],
+		"nested_blocks": true
+	},
+	{
+		"name": "Pyret",
+		"file_patterns": ["*.arr"],
+		"line_comments": ["#"],
+		"block_comments": [["#|", "|#"]]
+	},
+	{
 		"name": "Python",
 		"file_patterns": ["*.py", "*.pyw", "*.py2", "*.py3", "*.pip", "*.pyz", "*.pyzw", ".gclient", "SConscript", "SConstruct", "Snakefile", "requirements.txt", "Pipfile", ".pythonrc", "py.typed"],
 		"line_comments": ["#"],
@@ -1331,8 +1377,19 @@
 		"shebangs": ["#!/usr/bin/python", "#!/usr/bin/env python", "#!/usr/bin/python3", "#!/usr/bin/env python3"]
 	},
 	{
+		"name": "Q",
+		"file_patterns": ["*.q"],
+		"line_comments": ["/"]
+	},
+	{
 		"name": "Q#",
 		"file_patterns": ["*.qs"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "QCL",
+		"file_patterns": ["*.qcl"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
 	},
