@@ -2,10 +2,9 @@ use std::{cmp::Reverse, path::Path};
 
 use anyhow::Result;
 use csv::Writer;
-use human_bytes::human_bytes;
 
 use super::OutputFormatter;
-use crate::{analysis::AnalysisResults, utils};
+use crate::analysis::AnalysisResults;
 
 /// CSV formatter
 pub struct CsvFormatter;
@@ -43,12 +42,7 @@ impl OutputFormatter for CsvFormatter {
 				&format!("{:.2}", results.shebang_percentage()),
 				"",
 			])?;
-			wtr.write_record(&[
-				"Total Size",
-				&results.total_size().to_string(),
-				"100.00",
-				&human_bytes(utils::size_to_f64(results.total_size())),
-			])?;
+			wtr.write_record(&["Total Size", &results.total_size().to_string(), "100.00", results.total_size_human()])?;
 			let summary_data = wtr.into_inner()?;
 			output.push_str("Summary:\n");
 			output.push_str(&String::from_utf8(summary_data)?);
@@ -79,7 +73,7 @@ impl OutputFormatter for CsvFormatter {
 					&stats.blank_lines().to_string(),
 					&stats.shebang_lines().to_string(),
 					&stats.size().to_string(),
-					&human_bytes(utils::size_to_f64(stats.size())),
+					stats.size_human(),
 					&format!("{:.2}", stats.code_percentage()),
 					&format!("{:.2}", stats.comment_percentage()),
 					&format!("{:.2}", stats.blank_percentage()),
@@ -113,7 +107,7 @@ impl OutputFormatter for CsvFormatter {
 						&file_stat.blank_lines().to_string(),
 						&file_stat.shebang_lines().to_string(),
 						&file_stat.size().to_string(),
-						&human_bytes(utils::size_to_f64(file_stat.size())),
+						file_stat.size_human(),
 					])?;
 				}
 				let file_data = wtr.into_inner()?;
@@ -148,7 +142,7 @@ impl OutputFormatter for CsvFormatter {
 					&stats.blank_lines().to_string(),
 					&stats.shebang_lines().to_string(),
 					&stats.size().to_string(),
-					&human_bytes(utils::size_to_f64(stats.size())),
+					stats.size_human(),
 					&format!("{:.2}", stats.code_percentage()),
 					&format!("{:.2}", stats.comment_percentage()),
 					&format!("{:.2}", stats.blank_percentage()),

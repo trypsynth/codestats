@@ -22,10 +22,7 @@ impl OutputFormatter for JsonFormatter {
 			summary.insert("total_blank_lines".to_string(), Value::Number(results.total_blank_lines().into()));
 			summary.insert("total_shebang_lines".to_string(), Value::Number(results.total_shebang_lines().into()));
 			summary.insert("total_size".to_string(), Value::Number(results.total_size().into()));
-			summary.insert(
-				"total_size_human".to_string(),
-				Value::String(human_bytes::human_bytes(crate::utils::size_to_f64(results.total_size()))),
-			);
+			summary.insert("total_size_human".to_string(), Value::String(results.total_size_human().to_string()));
 			summary.insert(
 				"code_percentage".to_string(),
 				Value::Number(serde_json::Number::from_f64(results.code_percentage()).unwrap_or_else(|| 0.into())),
@@ -53,10 +50,7 @@ impl OutputFormatter for JsonFormatter {
 				lang_obj.insert("blank_lines".to_string(), Value::Number(lang_stats.blank_lines().into()));
 				lang_obj.insert("shebang_lines".to_string(), Value::Number(lang_stats.shebang_lines().into()));
 				lang_obj.insert("size".to_string(), Value::Number(lang_stats.size().into()));
-				lang_obj.insert(
-					"size_human".to_string(),
-					Value::String(human_bytes::human_bytes(crate::utils::size_to_f64(lang_stats.size()))),
-				);
+				lang_obj.insert("size_human".to_string(), Value::String(lang_stats.size_human().to_string()));
 				lang_obj.insert(
 					"code_percentage".to_string(),
 					Value::Number(
@@ -93,10 +87,7 @@ impl OutputFormatter for JsonFormatter {
 						file_obj.insert("blank_lines".to_string(), Value::Number(file.blank_lines().into()));
 						file_obj.insert("shebang_lines".to_string(), Value::Number(file.shebang_lines().into()));
 						file_obj.insert("size".to_string(), Value::Number(file.size().into()));
-						file_obj.insert(
-							"size_human".to_string(),
-							Value::String(human_bytes::human_bytes(crate::utils::size_to_f64(file.size()))),
-						);
+						file_obj.insert("size_human".to_string(), Value::String(file.size_human().to_string()));
 						Value::Object(file_obj)
 					})
 					.collect();

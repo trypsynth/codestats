@@ -20,3 +20,9 @@ pub fn percentage(part: u64, total: u64) -> f64 {
 pub const fn size_to_f64(size: u64) -> f64 {
 	size as f64
 }
+
+/// Convert size in bytes to human-readable format
+#[must_use]
+pub fn human_size(size: u64) -> String {
+	human_bytes::human_bytes(size_to_f64(size))
+}

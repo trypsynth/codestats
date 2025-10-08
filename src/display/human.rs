@@ -1,7 +1,5 @@
 use std::{cmp::Reverse, path::Path};
 
-use human_bytes::human_bytes;
-
 use super::OutputFormatter;
 use crate::{
 	analysis::{AnalysisResults, LanguageStats},
@@ -33,7 +31,7 @@ impl HumanFormatter {
 			utils::pluralize(results.total_files(), "file", "files"),
 			results.total_lines(),
 			utils::pluralize(results.total_lines(), "line", "lines"),
-			human_bytes(utils::size_to_f64(results.total_size()))
+			results.total_size_human()
 		);
 		let line_breakdown_parts = Self::build_line_breakdown_parts(results);
 		if !line_breakdown_parts.is_empty() {
@@ -75,10 +73,7 @@ impl HumanFormatter {
 			lang_stats.lines(),
 			utils::pluralize(lang_stats.lines(), "line", "lines")
 		));
-		output.push_str(&format!(
-			"\tSize: {} ({size_pct:.1}% of total).\n",
-			human_bytes(utils::size_to_f64(lang_stats.size()))
-		));
+		output.push_str(&format!("\tSize: {} ({size_pct:.1}% of total).\n", lang_stats.size_human()));
 		output.push_str("\tLine breakdown:\n");
 		if lang_stats.code_lines() > 0 {
 			output.push_str(&format!(
@@ -120,12 +115,11 @@ impl HumanFormatter {
 		files.sort_by_key(|b| Reverse(b.total_lines()));
 		for file_stat in files {
 			let file_pct = utils::percentage(file_stat.total_lines(), overall_results.total_lines());
-			let file_size_human = human_bytes(utils::size_to_f64(file_stat.size()));
 			output.push_str(&format!(
 				"\t\t{}: {} lines, {} ({:.1}% of total lines).\n",
 				file_stat.path(),
 				file_stat.total_lines(),
-				file_size_human,
+				file_stat.size_human(),
 				file_pct
 			));
 		}

@@ -14,6 +14,7 @@ pub struct FileStats {
 	blank_lines: u64,
 	shebang_lines: u64,
 	size: u64,
+	size_human: String,
 }
 
 impl FileStats {
@@ -29,7 +30,7 @@ impl FileStats {
 	/// * `shebang_lines` - Number of shebang lines
 	/// * `size` - File size in bytes
 	#[must_use]
-	pub const fn new(
+	pub fn new(
 		path: String,
 		total_lines: u64,
 		code_lines: u64,
@@ -38,7 +39,16 @@ impl FileStats {
 		shebang_lines: u64,
 		size: u64,
 	) -> Self {
-		Self { path, total_lines, code_lines, comment_lines, blank_lines, shebang_lines, size }
+		Self {
+			path,
+			total_lines,
+			code_lines,
+			comment_lines,
+			blank_lines,
+			shebang_lines,
+			size,
+			size_human: utils::human_size(size),
+		}
 	}
 
 	/// Get the file path
@@ -82,6 +92,12 @@ impl FileStats {
 	pub const fn size(&self) -> u64 {
 		self.size
 	}
+
+	/// Get the file size in human-readable format
+	#[must_use]
+	pub fn size_human(&self) -> &str {
+		&self.size_human
+	}
 }
 
 /// Holds statistics about a programming language's usage throughout a project.
@@ -94,6 +110,7 @@ pub struct LanguageStats {
 	blank_lines: u64,
 	shebang_lines: u64,
 	size: u64,
+	size_human: String,
 	file_list: Vec<FileStats>,
 }
 
@@ -106,6 +123,7 @@ impl LanguageStats {
 		self.blank_lines += file_stats.blank_lines;
 		self.shebang_lines += file_stats.shebang_lines;
 		self.size += file_stats.size;
+		self.size_human = utils::human_size(self.size);
 		self.file_list.push(file_stats);
 	}
 
@@ -151,6 +169,12 @@ impl LanguageStats {
 		self.size
 	}
 
+	/// Get the total size in human-readable format across all files of this language
+	#[must_use]
+	pub fn size_human(&self) -> &str {
+		&self.size_human
+	}
+
 	/// Get the list of individual file statistics for this language
 	#[must_use]
 	pub fn files_list(&self) -> &[FileStats] {
@@ -192,6 +216,7 @@ pub struct AnalysisResults {
 	total_blank_lines: u64,
 	total_shebang_lines: u64,
 	total_size: u64,
+	total_size_human: String,
 	language_stats: HashMap<String, LanguageStats>,
 }
 
@@ -204,6 +229,7 @@ impl AnalysisResults {
 		self.total_blank_lines += file_stats.blank_lines;
 		self.total_shebang_lines += file_stats.shebang_lines;
 		self.total_size += file_stats.size;
+		self.total_size_human = utils::human_size(self.total_size);
 		self.language_stats.entry(language).or_default().add_file(file_stats);
 	}
 
@@ -247,6 +273,12 @@ impl AnalysisResults {
 	#[must_use]
 	pub const fn total_size(&self) -> u64 {
 		self.total_size
+	}
+
+	/// Get the total size in human-readable format across all files
+	#[must_use]
+	pub fn total_size_human(&self) -> &str {
+		&self.total_size_human
 	}
 
 	/// Get a map of all language statistics

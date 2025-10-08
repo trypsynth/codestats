@@ -2,11 +2,14 @@ mod csv;
 mod human;
 mod json;
 
-use std::{fmt::{self, Display}, path::Path, str::FromStr};
+use std::{
+	fmt::{self, Display},
+	path::Path,
+	str::FromStr,
+};
 
 use anyhow::Result;
 use clap::ValueEnum;
-
 pub use csv::CsvFormatter;
 pub use human::HumanFormatter;
 pub use json::JsonFormatter;
