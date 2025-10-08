@@ -123,8 +123,11 @@ impl LanguageStats {
 		self.blank_lines += file_stats.blank_lines;
 		self.shebang_lines += file_stats.shebang_lines;
 		self.size += file_stats.size;
-		self.size_human = utils::human_size(self.size);
 		self.file_list.push(file_stats);
+	}
+
+	pub(crate) fn finalize(&mut self) {
+		self.size_human = utils::human_size(self.size);
 	}
 
 	/// Get the number of files of this language
@@ -229,8 +232,14 @@ impl AnalysisResults {
 		self.total_blank_lines += file_stats.blank_lines;
 		self.total_shebang_lines += file_stats.shebang_lines;
 		self.total_size += file_stats.size;
-		self.total_size_human = utils::human_size(self.total_size);
 		self.language_stats.entry(language).or_default().add_file(file_stats);
+	}
+
+	pub(crate) fn finalize(&mut self) {
+		self.total_size_human = utils::human_size(self.total_size);
+		for lang_stats in self.language_stats.values_mut() {
+			lang_stats.finalize();
+		}
 	}
 
 	/// Get the total number of files analyzed

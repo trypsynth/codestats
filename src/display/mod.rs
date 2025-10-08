@@ -5,7 +5,6 @@ mod json;
 use std::{
 	fmt::{self, Display},
 	path::Path,
-	str::FromStr,
 };
 
 use anyhow::Result;
@@ -22,19 +21,6 @@ pub enum OutputFormat {
 	Human,
 	Json,
 	Csv,
-}
-
-impl FromStr for OutputFormat {
-	type Err = String;
-
-	fn from_str(s: &str) -> Result<Self, Self::Err> {
-		match s.to_lowercase().as_str() {
-			"human" => Ok(Self::Human),
-			"json" => Ok(Self::Json),
-			"csv" => Ok(Self::Csv),
-			_ => Err(format!("Invalid output format: {s}. Valid formats are: human, json, csv")),
-		}
-	}
 }
 
 impl Display for OutputFormat {

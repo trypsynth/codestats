@@ -2,6 +2,7 @@ use crate::utils::pluralize;
 
 include!(concat!(env!("OUT_DIR"), "/languages.rs"));
 
+#[inline]
 fn matches_pattern(filename: &str, pattern: &str) -> bool {
 	pattern.strip_prefix('*').map_or_else(|| filename == pattern, |suffix| filename.ends_with(suffix))
 }
@@ -68,11 +69,9 @@ pub fn print_all_languages() {
 		pluralize(LANGUAGES.len() as u64, "language", "languages"),
 		LANGUAGES.len()
 	);
+	let last_idx = LANGUAGES.len().saturating_sub(1);
 	for (i, lang) in LANGUAGES.iter().enumerate() {
-		if i == LANGUAGES.len() - 1 {
-			println!("{}.", lang.name);
-		} else {
-			println!("{},", lang.name);
-		}
+		let suffix = if i == last_idx { "." } else { "," };
+		println!("{}{suffix}", lang.name);
 	}
 }

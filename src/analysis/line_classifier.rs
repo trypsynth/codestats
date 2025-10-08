@@ -73,6 +73,7 @@ impl CommentState {
 /// # Returns
 ///
 /// Returns the [`LineType`] representing the primary content of the line.
+#[inline]
 pub fn classify_line(
 	line: &str,
 	lang_info: Option<&Language>,

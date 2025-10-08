@@ -2,7 +2,7 @@ use std::{
 	fs::{self, File},
 	io::{BufRead, BufReader},
 	path::{Path, PathBuf},
-	sync::{Arc, Mutex},
+	sync::{Arc, Mutex, PoisonError},
 };
 
 use anyhow::{Context, Result};
@@ -172,7 +172,12 @@ impl CodeAnalyzer {
 					ignore::WalkState::Continue
 				})
 			});
-		Ok(Arc::try_unwrap(results).unwrap().into_inner().unwrap())
+		let mut results = Arc::try_unwrap(results)
+			.expect("Failed to unwrap Arc - multiple references remain")
+			.into_inner()
+			.unwrap_or_else(PoisonError::into_inner);
+		results.finalize();
+		Ok(results)
 	}
 
 	fn process_file(file_path: &Path, results: &Arc<Mutex<AnalysisResults>>) -> Result<()> {

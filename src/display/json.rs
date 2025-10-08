@@ -1,7 +1,7 @@
-use std::path::Path;
+use std::{collections::HashMap, path::Path};
 
 use anyhow::Result;
-use serde_json::{Map, Value};
+use serde_json::json;
 
 use super::OutputFormatter;
 use crate::analysis::AnalysisResults;
@@ -12,90 +12,58 @@ pub struct JsonFormatter;
 impl OutputFormatter for JsonFormatter {
 	fn format(&self, results: &AnalysisResults, path: &Path, verbose: bool) -> Result<String> {
 		if verbose {
-			let mut output = Map::new();
-			output.insert("analysis_path".to_string(), Value::String(path.display().to_string()));
-			let mut summary = Map::new();
-			summary.insert("total_files".to_string(), Value::Number(results.total_files().into()));
-			summary.insert("total_lines".to_string(), Value::Number(results.total_lines().into()));
-			summary.insert("total_code_lines".to_string(), Value::Number(results.total_code_lines().into()));
-			summary.insert("total_comment_lines".to_string(), Value::Number(results.total_comment_lines().into()));
-			summary.insert("total_blank_lines".to_string(), Value::Number(results.total_blank_lines().into()));
-			summary.insert("total_shebang_lines".to_string(), Value::Number(results.total_shebang_lines().into()));
-			summary.insert("total_size".to_string(), Value::Number(results.total_size().into()));
-			summary.insert("total_size_human".to_string(), Value::String(results.total_size_human().to_string()));
-			summary.insert(
-				"code_percentage".to_string(),
-				Value::Number(serde_json::Number::from_f64(results.code_percentage()).unwrap_or_else(|| 0.into())),
-			);
-			summary.insert(
-				"comment_percentage".to_string(),
-				Value::Number(serde_json::Number::from_f64(results.comment_percentage()).unwrap_or_else(|| 0.into())),
-			);
-			summary.insert(
-				"blank_percentage".to_string(),
-				Value::Number(serde_json::Number::from_f64(results.blank_percentage()).unwrap_or_else(|| 0.into())),
-			);
-			summary.insert(
-				"shebang_percentage".to_string(),
-				Value::Number(serde_json::Number::from_f64(results.shebang_percentage()).unwrap_or_else(|| 0.into())),
-			);
-			output.insert("summary".to_string(), Value::Object(summary));
-			let mut languages = Map::new();
-			for (lang_name, lang_stats) in results.languages_by_lines() {
-				let mut lang_obj = Map::new();
-				lang_obj.insert("files".to_string(), Value::Number(lang_stats.files().into()));
-				lang_obj.insert("lines".to_string(), Value::Number(lang_stats.lines().into()));
-				lang_obj.insert("code_lines".to_string(), Value::Number(lang_stats.code_lines().into()));
-				lang_obj.insert("comment_lines".to_string(), Value::Number(lang_stats.comment_lines().into()));
-				lang_obj.insert("blank_lines".to_string(), Value::Number(lang_stats.blank_lines().into()));
-				lang_obj.insert("shebang_lines".to_string(), Value::Number(lang_stats.shebang_lines().into()));
-				lang_obj.insert("size".to_string(), Value::Number(lang_stats.size().into()));
-				lang_obj.insert("size_human".to_string(), Value::String(lang_stats.size_human().to_string()));
-				lang_obj.insert(
-					"code_percentage".to_string(),
-					Value::Number(
-						serde_json::Number::from_f64(lang_stats.code_percentage()).unwrap_or_else(|| 0.into()),
-					),
-				);
-				lang_obj.insert(
-					"comment_percentage".to_string(),
-					Value::Number(
-						serde_json::Number::from_f64(lang_stats.comment_percentage()).unwrap_or_else(|| 0.into()),
-					),
-				);
-				lang_obj.insert(
-					"blank_percentage".to_string(),
-					Value::Number(
-						serde_json::Number::from_f64(lang_stats.blank_percentage()).unwrap_or_else(|| 0.into()),
-					),
-				);
-				lang_obj.insert(
-					"shebang_percentage".to_string(),
-					Value::Number(
-						serde_json::Number::from_f64(lang_stats.shebang_percentage()).unwrap_or_else(|| 0.into()),
-					),
-				);
-				let files: Vec<Value> = lang_stats
-					.files_list()
-					.iter()
-					.map(|file| {
-						let mut file_obj = Map::new();
-						file_obj.insert("path".to_string(), Value::String(file.path().to_string()));
-						file_obj.insert("total_lines".to_string(), Value::Number(file.total_lines().into()));
-						file_obj.insert("code_lines".to_string(), Value::Number(file.code_lines().into()));
-						file_obj.insert("comment_lines".to_string(), Value::Number(file.comment_lines().into()));
-						file_obj.insert("blank_lines".to_string(), Value::Number(file.blank_lines().into()));
-						file_obj.insert("shebang_lines".to_string(), Value::Number(file.shebang_lines().into()));
-						file_obj.insert("size".to_string(), Value::Number(file.size().into()));
-						file_obj.insert("size_human".to_string(), Value::String(file.size_human().to_string()));
-						Value::Object(file_obj)
-					})
-					.collect();
-				lang_obj.insert("files_detail".to_string(), Value::Array(files));
-				languages.insert(lang_name.clone(), Value::Object(lang_obj));
-			}
-			output.insert("languages".to_string(), Value::Object(languages));
-			Ok(serde_json::to_string_pretty(&Value::Object(output))?)
+			let languages: HashMap<_, _> = results
+				.languages_by_lines()
+				.iter()
+				.map(|(lang_name, lang_stats)| {
+					(
+						lang_name.as_str(),
+						json!({
+							"files": lang_stats.files(),
+							"lines": lang_stats.lines(),
+							"code_lines": lang_stats.code_lines(),
+							"comment_lines": lang_stats.comment_lines(),
+							"blank_lines": lang_stats.blank_lines(),
+							"shebang_lines": lang_stats.shebang_lines(),
+							"size": lang_stats.size(),
+							"size_human": lang_stats.size_human(),
+							"code_percentage": lang_stats.code_percentage(),
+							"comment_percentage": lang_stats.comment_percentage(),
+							"blank_percentage": lang_stats.blank_percentage(),
+							"shebang_percentage": lang_stats.shebang_percentage(),
+							"files_detail": lang_stats.files_list().iter().map(|file| json!({
+								"path": file.path(),
+								"total_lines": file.total_lines(),
+								"code_lines": file.code_lines(),
+								"comment_lines": file.comment_lines(),
+								"blank_lines": file.blank_lines(),
+								"shebang_lines": file.shebang_lines(),
+								"size": file.size(),
+								"size_human": file.size_human(),
+							})).collect::<Vec<_>>(),
+						}),
+					)
+				})
+				.collect();
+			let output = json!({
+				"analysis_path": path.display().to_string(),
+				"summary": {
+					"total_files": results.total_files(),
+					"total_lines": results.total_lines(),
+					"total_code_lines": results.total_code_lines(),
+					"total_comment_lines": results.total_comment_lines(),
+					"total_blank_lines": results.total_blank_lines(),
+					"total_shebang_lines": results.total_shebang_lines(),
+					"total_size": results.total_size(),
+					"total_size_human": results.total_size_human(),
+					"code_percentage": results.code_percentage(),
+					"comment_percentage": results.comment_percentage(),
+					"blank_percentage": results.blank_percentage(),
+					"shebang_percentage": results.shebang_percentage(),
+				},
+				"languages": languages,
+			});
+			Ok(serde_json::to_string_pretty(&output)?)
 		} else {
 			Ok(serde_json::to_string_pretty(results)?)
 		}
