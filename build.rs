@@ -165,6 +165,7 @@ fn escape_rust_string(s: &str) -> String {
 		.collect()
 }
 
+#[allow(clippy::too_many_lines)]
 fn validate_languages(languages: &[Language]) -> Result<()> {
 	let mut errors = Vec::new();
 	let mut seen_names = HashSet::new();

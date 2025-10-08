@@ -1,4 +1,4 @@
-use std::{cmp::Reverse, path::Path};
+use std::{cmp::Reverse, fmt::Write, path::Path};
 
 use super::OutputFormatter;
 use crate::{
@@ -35,11 +35,11 @@ impl HumanFormatter {
 		);
 		let line_breakdown_parts = Self::build_line_breakdown_parts(results);
 		if !line_breakdown_parts.is_empty() {
-			output.push_str(&format!("Line breakdown: {}\n", line_breakdown_parts.join(", ")));
+			writeln!(output, "Line breakdown: {}", line_breakdown_parts.join(", ")).ok();
 		}
 		let percentage_parts = Self::build_percentage_parts(results);
 		if !percentage_parts.is_empty() {
-			output.push_str(&format!("Percentages: {}\n", percentage_parts.join(", ")));
+			writeln!(output, "Percentages: {}", percentage_parts.join(", ")).ok();
 		}
 		output
 	}
@@ -62,46 +62,52 @@ impl HumanFormatter {
 		let file_pct = utils::percentage(lang_stats.files(), overall_results.total_files());
 		let line_pct = utils::percentage(lang_stats.lines(), overall_results.total_lines());
 		let size_pct = utils::percentage(lang_stats.size(), overall_results.total_size());
-		output.push_str(&format!("{lang}:\n"));
-		output.push_str(&format!(
-			"\tFiles: {} {} ({file_pct:.1}% of total).\n",
+		writeln!(output, "{lang}:").ok();
+		writeln!(
+			output,
+			"\tFiles: {} {} ({file_pct:.1}% of total).",
 			lang_stats.files(),
 			utils::pluralize(lang_stats.files(), "file", "files")
-		));
-		output.push_str(&format!(
-			"\tLines: {} {} ({line_pct:.1}% of total).\n",
+		).ok();
+		writeln!(
+			output,
+			"\tLines: {} {} ({line_pct:.1}% of total).",
 			lang_stats.lines(),
 			utils::pluralize(lang_stats.lines(), "line", "lines")
-		));
-		output.push_str(&format!("\tSize: {} ({size_pct:.1}% of total).\n", lang_stats.size_human()));
+		).ok();
+		writeln!(output, "\tSize: {} ({size_pct:.1}% of total).", lang_stats.size_human()).ok();
 		output.push_str("\tLine breakdown:\n");
 		if lang_stats.code_lines() > 0 {
-			output.push_str(&format!(
-				"\t\tCode: {} lines ({:.1}%).\n",
+			writeln!(
+				output,
+				"\t\tCode: {} lines ({:.1}%).",
 				lang_stats.code_lines(),
 				lang_stats.code_percentage()
-			));
+			).ok();
 		}
 		if lang_stats.comment_lines() > 0 {
-			output.push_str(&format!(
-				"\t\tComments: {} lines ({:.1}%).\n",
+			writeln!(
+				output,
+				"\t\tComments: {} lines ({:.1}%).",
 				lang_stats.comment_lines(),
 				lang_stats.comment_percentage()
-			));
+			).ok();
 		}
 		if lang_stats.blank_lines() > 0 {
-			output.push_str(&format!(
-				"\t\tBlanks: {} lines ({:.1}%).\n",
+			writeln!(
+				output,
+				"\t\tBlanks: {} lines ({:.1}%).",
 				lang_stats.blank_lines(),
 				lang_stats.blank_percentage()
-			));
+			).ok();
 		}
 		if lang_stats.shebang_lines() > 0 {
-			output.push_str(&format!(
-				"\t\tShebangs: {} lines ({:.1}%).\n",
+			writeln!(
+				output,
+				"\t\tShebangs: {} lines ({:.1}%).",
 				lang_stats.shebang_lines(),
 				lang_stats.shebang_percentage()
-			));
+			).ok();
 		}
 		if verbose {
 			output.push_str(&Self::format_file_breakdown(lang_stats, overall_results));
@@ -115,13 +121,14 @@ impl HumanFormatter {
 		files.sort_by_key(|b| Reverse(b.total_lines()));
 		for file_stat in files {
 			let file_pct = utils::percentage(file_stat.total_lines(), overall_results.total_lines());
-			output.push_str(&format!(
-				"\t\t{}: {} lines, {} ({:.1}% of total lines).\n",
+			writeln!(
+				output,
+				"\t\t{}: {} lines, {} ({:.1}% of total lines).",
 				file_stat.path(),
 				file_stat.total_lines(),
 				file_stat.size_human(),
 				file_pct
-			));
+			).ok();
 		}
 		output
 	}

@@ -1,4 +1,4 @@
-use std::{cmp::Reverse, path::Path};
+use std::{cmp::Reverse, fmt::Write, path::Path};
 
 use anyhow::Result;
 use csv::Writer;
@@ -10,6 +10,7 @@ use crate::analysis::AnalysisResults;
 pub struct CsvFormatter;
 
 impl OutputFormatter for CsvFormatter {
+	#[allow(clippy::too_many_lines)]
 	fn format(&self, results: &AnalysisResults, path: &Path, verbose: bool) -> Result<String> {
 		let mut output = String::new();
 		if verbose {
@@ -111,7 +112,7 @@ impl OutputFormatter for CsvFormatter {
 					])?;
 				}
 				let file_data = wtr.into_inner()?;
-				output.push_str(&format!("{lang_name} files:\n"));
+				writeln!(output, "{lang_name} files:")?;
 				output.push_str(&String::from_utf8(file_data)?);
 				output.push('\n');
 			}

@@ -50,6 +50,11 @@ impl Display for OutputFormat {
 /// Trait for formatting analysis results in a desired format.
 pub trait OutputFormatter {
 	/// Format and output the analysis results
+	///
+	/// # Errors
+	///
+	/// Returns an error if formatting fails, such as when CSV writing, JSON serialization,
+	/// or string conversion operations encounter issues.
 	fn format(&self, results: &AnalysisResults, path: &Path, verbose: bool) -> Result<String>;
 }
 
