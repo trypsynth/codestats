@@ -59,7 +59,7 @@ pub trait OutputFormatter {
 }
 
 /// Factory for creating output formatters
-#[must_use] 
+#[must_use]
 pub fn get_formatter(format: OutputFormat) -> Box<dyn OutputFormatter> {
 	match format {
 		OutputFormat::Human => Box::new(HumanFormatter),

@@ -25,14 +25,13 @@ pub enum Commands {
 		#[arg(short, long)]
 		verbose: bool,
 		/// Do not respect .gitignore files
-		#[arg(long)]
+		#[arg(short, long)]
 		no_gitignore: bool,
 		/// Search hidden files and directories
 		#[arg(long)]
 		hidden: bool,
-		/// Follow symlinks
-		/// When enabled, symbolic links will be followed and their targets
-		/// will be included in the analysis. Use with caution as this can
+		/// Follow symbolic links and include their targets
+		/// in the analysis. Use with caution as this can
 		/// lead to infinite loops with circular symlinks.
 		#[arg(short, long)]
 		symlinks: bool,

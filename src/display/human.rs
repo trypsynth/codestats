@@ -68,22 +68,20 @@ impl HumanFormatter {
 			"\tFiles: {} {} ({file_pct:.1}% of total).",
 			lang_stats.files(),
 			utils::pluralize(lang_stats.files(), "file", "files")
-		).ok();
+		)
+		.ok();
 		writeln!(
 			output,
 			"\tLines: {} {} ({line_pct:.1}% of total).",
 			lang_stats.lines(),
 			utils::pluralize(lang_stats.lines(), "line", "lines")
-		).ok();
+		)
+		.ok();
 		writeln!(output, "\tSize: {} ({size_pct:.1}% of total).", lang_stats.size_human()).ok();
 		output.push_str("\tLine breakdown:\n");
 		if lang_stats.code_lines() > 0 {
-			writeln!(
-				output,
-				"\t\tCode: {} lines ({:.1}%).",
-				lang_stats.code_lines(),
-				lang_stats.code_percentage()
-			).ok();
+			writeln!(output, "\t\tCode: {} lines ({:.1}%).", lang_stats.code_lines(), lang_stats.code_percentage())
+				.ok();
 		}
 		if lang_stats.comment_lines() > 0 {
 			writeln!(
@@ -91,15 +89,12 @@ impl HumanFormatter {
 				"\t\tComments: {} lines ({:.1}%).",
 				lang_stats.comment_lines(),
 				lang_stats.comment_percentage()
-			).ok();
+			)
+			.ok();
 		}
 		if lang_stats.blank_lines() > 0 {
-			writeln!(
-				output,
-				"\t\tBlanks: {} lines ({:.1}%).",
-				lang_stats.blank_lines(),
-				lang_stats.blank_percentage()
-			).ok();
+			writeln!(output, "\t\tBlanks: {} lines ({:.1}%).", lang_stats.blank_lines(), lang_stats.blank_percentage())
+				.ok();
 		}
 		if lang_stats.shebang_lines() > 0 {
 			writeln!(
@@ -107,7 +102,8 @@ impl HumanFormatter {
 				"\t\tShebangs: {} lines ({:.1}%).",
 				lang_stats.shebang_lines(),
 				lang_stats.shebang_percentage()
-			).ok();
+			)
+			.ok();
 		}
 		if verbose {
 			output.push_str(&Self::format_file_breakdown(lang_stats, overall_results));
@@ -128,7 +124,8 @@ impl HumanFormatter {
 				file_stat.total_lines(),
 				file_stat.size_human(),
 				file_pct
-			).ok();
+			)
+			.ok();
 		}
 		output
 	}
