@@ -42,7 +42,7 @@ type Result<T> = result::Result<T, Box<dyn Error>>;
 
 fn main() -> Result<()> {
 	println!("cargo:rerun-if-changed=src/languages.json");
-	println!("cargo:rerun-if-changed=templates/languages.rs");
+	println!("cargo:rerun-if-changed=src/langs/template.rs");
 	let manifest_dir = env::var("CARGO_MANIFEST_DIR")?;
 	let json_path = Path::new(&manifest_dir).join("src/languages.json");
 	let json_content = fs::read_to_string(&json_path)?;
@@ -66,14 +66,14 @@ fn main() -> Result<()> {
 		}
 	}
 	let pattern_mappings: Vec<(String, usize)> = pattern_mappings.into_iter().collect();
-	let mut tera = Tera::new("templates/**/*")?;
+	let mut tera = Tera::new("src/langs/**/*")?;
 	tera.register_filter("rust_string", rust_string_filter);
 	tera.register_filter("field_render", field_render_filter);
 	let mut context = Context::new();
 	context.insert("languages", &to_value(&processed_languages)?);
 	context.insert("pattern_mappings", &to_value(pattern_mappings)?);
 	context.insert("struct_fields", &to_value(get_language_schema())?);
-	let rendered = tera.render("languages.rs", &context)?;
+	let rendered = tera.render("template.rs", &context)?;
 	let out_dir = env::var("OUT_DIR")?;
 	let dest_path = Path::new(&out_dir).join("languages.rs");
 	fs::write(dest_path, rendered)?;
