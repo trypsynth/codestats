@@ -213,7 +213,7 @@ fn validate_languages(languages: &[Language]) -> Result<()> {
 					pattern
 				));
 			}
-			seen_patterns.entry(pattern.clone()).or_insert_with(Vec::new).push(lang.name.clone());
+			seen_patterns.entry(pattern.clone()).or_default().push(lang.name.clone());
 		}
 		if let Some(ref line_comments) = lang.line_comments {
 			for (comment_idx, comment) in line_comments.iter().enumerate() {
