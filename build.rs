@@ -41,10 +41,10 @@ fn get_language_schema() -> Vec<(&'static str, &'static str)> {
 type Result<T> = result::Result<T, Box<dyn Error>>;
 
 fn main() -> Result<()> {
-	println!("cargo:rerun-if-changed=src/languages.json");
+	println!("cargo:rerun-if-changed=languages.json");
 	println!("cargo:rerun-if-changed=src/langs/template.rs");
 	let manifest_dir = env::var("CARGO_MANIFEST_DIR")?;
-	let json_path = Path::new(&manifest_dir).join("src/languages.json");
+	let json_path = Path::new(&manifest_dir).join("languages.json");
 	let json_content = fs::read_to_string(&json_path)?;
 	let languages: Vec<Language> = serde_json::from_str(&json_content)?;
 	validate_languages(&languages)?;
