@@ -32,15 +32,8 @@ fn score_language(lang: &Language, content: &str) -> i32 {
 }
 
 fn disambiguate(candidates: Vec<&'static Language>, content: &str) -> Option<&'static str> {
-	let scores: Vec<_> = candidates
-		.iter()
-		.map(|lang| (*lang, score_language(lang, content)))
-		.collect();
-	scores
-		.iter()
-		.max_by_key(|(_, score)| score)
-		.filter(|(_, score)| *score > 0)
-		.map(|(lang, _)| lang.name)
+	let scores: Vec<_> = candidates.iter().map(|lang| (*lang, score_language(lang, content))).collect();
+	scores.iter().max_by_key(|(_, score)| score).filter(|(_, score)| *score > 0).map(|(lang, _)| lang.name)
 }
 
 #[must_use]
