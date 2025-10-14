@@ -7,38 +7,56 @@ fn matches_pattern(filename: &str, pattern: &str) -> bool {
 	pattern.strip_prefix('*').map_or_else(|| filename == pattern, |suffix| filename.ends_with(suffix))
 }
 
-/// Detect the programming language of a file based on its filename
-///
-/// This function uses a combination of exact filename matching and pattern matching
-/// to identify programming languages. It first checks for exact matches, then falls
-/// back to pattern matching against file extensions and other patterns.
-///
-/// # Arguments
-///
-/// * `filename` - The name of the file (with or without path)
-///
-/// # Returns
-///
-/// Returns `Some(language_name)` if a language is detected, `None` otherwise.
-///
-/// # Examples
-///
-/// ```
-/// use codestats::detect_language;
-///
-/// assert_eq!(detect_language("main.rs"), Some("Rust"));
-/// assert_eq!(detect_language("script.py"), Some("Python"));
-/// assert_eq!(detect_language("unknown.xyz"), None);
-/// ```
-#[must_use]
-pub fn detect_language(filename: &str) -> Option<&'static str> {
+fn get_candidates(filename: &str) -> Vec<&'static Language> {
 	if let Some(lang) = PATTERN_MAP.get(filename) {
-		return Some(lang.name);
+		return vec![lang];
 	}
 	LANGUAGES
 		.iter()
-		.find(|language| language.file_patterns.iter().any(|pattern| matches_pattern(filename, pattern)))
-		.map(|language| language.name)
+		.filter(|lang| lang.file_patterns.iter().any(|pattern| matches_pattern(filename, pattern)))
+		.collect()
+}
+
+fn score_language(lang: &Language, content: &str) -> i32 {
+	let mut score = 0;
+	for comment in lang.line_comments {
+		if content.contains(comment) {
+			score += 50;
+		}
+	}
+	for keyword in lang.keywords {
+		let count = content.matches(keyword).count();
+		score += count as i32 * 10;
+	}
+	score
+}
+
+fn disambiguate(candidates: Vec<&'static Language>, content: &str) -> Option<&'static str> {
+	let scores: Vec<_> = candidates
+		.iter()
+		.map(|lang| (*lang, score_language(lang, content)))
+		.collect();
+	scores
+		.iter()
+		.max_by_key(|(_, score)| score)
+		.filter(|(_, score)| *score > 0)
+		.map(|(lang, _)| lang.name)
+}
+
+#[must_use]
+pub fn detect_language(filename: &str, content: Option<&str>) -> Option<&'static str> {
+	let candidates = get_candidates(filename);
+	match candidates.len() {
+		0 => None,
+		1 => Some(candidates[0].name),
+		_ => {
+			if let Some(file_content) = content {
+				disambiguate(candidates.clone(), file_content).or_else(|| Some(candidates[0].name))
+			} else {
+				Some(candidates[0].name)
+			}
+		}
+	}
 }
 
 /// Get detailed language information by name

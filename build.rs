@@ -25,6 +25,8 @@ struct Language {
 	nested_blocks: Option<bool>,
 	#[serde(default)]
 	shebangs: Option<Vec<String>>,
+	#[serde(default)]
+	keywords: Option<Vec<String>>,
 }
 
 fn get_language_schema() -> Vec<(&'static str, &'static str)> {
@@ -35,6 +37,7 @@ fn get_language_schema() -> Vec<(&'static str, &'static str)> {
 		("block_comments", "&'static [(&'static str, &'static str)]"),
 		("nested_blocks", "bool"),
 		("shebangs", "&'static [&'static str]"),
+		("keywords", "&'static [&'static str]"),
 	]
 }
 
@@ -57,6 +60,7 @@ fn main() -> Result<()> {
 			block_comments: Some(lang.block_comments.unwrap_or_default()),
 			nested_blocks: Some(lang.nested_blocks.unwrap_or(false)),
 			shebangs: Some(lang.shebangs.unwrap_or_default()),
+			keywords: Some(lang.keywords.unwrap_or_default()),
 		})
 		.collect();
 	let mut pattern_mappings = HashMap::new();
@@ -261,11 +265,21 @@ fn validate_languages(languages: &[Language]) -> Result<()> {
 	}
 	for (pattern, language_names) in seen_patterns {
 		if language_names.len() > 1 {
-			errors.push(format!(
-				"Duplicate file pattern '{}' found in languages: {}",
-				pattern,
-				language_names.join(", ")
-			));
+			let all_have_keywords = language_names.iter().all(|name| {
+				languages
+					.iter()
+					.find(|l| l.name == *name)
+					.and_then(|l| l.keywords.as_ref())
+					.map(|k| !k.is_empty())
+					.unwrap_or(false)
+			});
+			if !all_have_keywords {
+				errors.push(format!(
+					"Duplicate pattern '{}' in [{}] - all must have 'keywords' for disambiguation",
+					pattern,
+					language_names.join(", ")
+				));
+			}
 		}
 	}
 	if !errors.is_empty() {

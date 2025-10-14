@@ -182,7 +182,8 @@ impl CodeAnalyzer {
 
 	fn process_file(file_path: &Path, results: &Arc<Mutex<AnalysisResults>>) -> Result<()> {
 		let filename = file_path.file_name().and_then(|name| name.to_str()).context("Invalid UTF-8 in file name")?;
-		let Some(language) = langs::detect_language(filename) else {
+		let preview = Self::read_file_preview(file_path, 50).ok();
+		let Some(language) = langs::detect_language(filename, preview.as_deref()) else {
 			return Ok(());
 		};
 		let file_size = fs::metadata(file_path)
@@ -202,6 +203,21 @@ impl CodeAnalyzer {
 		);
 		results.lock().unwrap().add_file_stats(language.to_string(), file_stats);
 		Ok(())
+	}
+
+	fn read_file_preview(file_path: &Path, max_lines: usize) -> Result<String> {
+		let file = File::open(file_path)?;
+		let reader = BufReader::new(file);
+		let mut content = String::new();
+		for (i, line_result) in reader.lines().enumerate() {
+			if i >= max_lines {
+				break;
+			}
+			let line = line_result?;
+			content.push_str(&line);
+			content.push('\n');
+		}
+		Ok(content)
 	}
 
 	fn analyze_file_lines(file_path: &Path, language: &str) -> Result<(u64, u64, u64, u64, u64)> {

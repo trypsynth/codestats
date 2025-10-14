@@ -990,6 +990,13 @@
 		"block_comments": [["<!--", "-->"]]
 	},
 	{
+		"name": "MATLAB",
+		"file_patterns": ["*.m"],
+		"line_comments": ["%"],
+		"block_comments": [["%{", "%}"]],
+		"keywords": ["function", "classdef", "end", "disp", "plot", "elseif"]
+	},
+	{
 		"name": "Maven",
 		"file_patterns": ["pom.xml"],
 		"block_comments": [["<!--", "-->"]]
@@ -1174,7 +1181,8 @@
 		"name": "Objective-C",
 		"file_patterns": ["*.m"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
+		"keywords": ["@interface", "@implementation", "@protocol", "@property", "@synthesize", "@end", "NSString", "#import"]
 	},
 	{
 		"name": "Objective-C++",
