@@ -117,6 +117,12 @@
 		"block_comments": [["(*", "*)"], ["/*", "*/"]]
 	},
 	{
+		"name": "Austral",
+		"file_patterns": ["*.aum", "*.aui"],
+		"line_comments": ["--"],
+		"block_comments": [["(*", "*)"]]
+	},
+	{
 		"name": "AutoHotkey",
 		"file_patterns": ["*.ahk", "*.ahkl", "*.ah2"],
 		"line_comments": [";"],
@@ -188,6 +194,13 @@
 		"file_patterns": ["*.bicep", "*.bicepparam"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Bison",
+		"file_patterns": ["*.y", "*.yy"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]],
+		"keywords": ["%token", "%type", "%start", "yyparse"]
 	},
 	{
 		"name": "BlitzBasic",
@@ -304,6 +317,12 @@
 		"block_comments": [["/*", "*/"]]
 	},
 	{
+		"name": "ChucK",
+		"file_patterns": ["*.ck"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
 		"name": "Circom",
 		"file_patterns": ["*.circom"],
 		"line_comments": ["//"],
@@ -324,6 +343,12 @@
 		"name": "COBOL",
 		"file_patterns": ["*.cob", "*.cbl", "*.ccp", "*.cobol", "*.cpy"],
 		"line_comments": ["*"]
+	},
+	{
+		"name": "Cobra",
+		"file_patterns": ["*.cobra"],
+		"line_comments": ["#"],
+		"block_comments": [["/#", "#/"]]
 	},
 	{
 		"name": "CodeQL",
@@ -414,6 +439,12 @@
 		"block_comments": [["\"\"\"", "\"\"\""]]
 	},
 	{
+		"name": "Dafny",
+		"file_patterns": ["*.dfy"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
 		"name": "DAML",
 		"file_patterns": ["*.daml"],
 		"line_comments": ["--"],
@@ -468,6 +499,12 @@
 		"block_comments": [["{!", "!}"]]
 	},
 	{
+		"name": "Dylan",
+		"file_patterns": ["*.dylan", "*.lid"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
 		"name": "EBNF",
 		"file_patterns": ["*.ebnf"],
 		"line_comments": ["//"],
@@ -484,9 +521,16 @@
 		"line_comments": ["#"]
 	},
 	{
+		"name": "Effekt",
+		"file_patterns": ["*.effekt"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
 		"name": "Eiffel",
 		"file_patterns": ["*.e"],
-		"line_comments": ["--"]
+		"line_comments": ["--"],
+		"keywords": ["class", "feature", "is", "do", "end", "require", "ensure", "invariant"]
 	},
 		
 	{
@@ -498,7 +542,8 @@
 	{
 		"name": "Elixir",
 		"file_patterns": ["*.ex", "*.exs"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
+		"keywords": ["defmodule", "def", "defp", "do", "end", "|>"]
 	},
 	{
 		"name": "Elm",
@@ -540,6 +585,13 @@
 		"line_comments": ["%"]
 	},
 	{
+		"name": "Euphoria",
+		"file_patterns": ["*.e", "*.ex", "*.exw", "*.ew", "*.eu"],
+		"line_comments": ["--"],
+		"block_comments": [["/*", "*/"]],
+		"keywords": ["procedure", "function", "end procedure", "end function", "with", "without"]
+	},
+	{
 		"name": "F#",
 		"file_patterns": ["*.fs", "*.fsi", "*.fsx", "*.fsscript"],
 		"line_comments": ["//"],
@@ -557,6 +609,24 @@
 		"name": "Factor",
 		"file_patterns": ["*.factor"],
 		"line_comments": ["!", "#!"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Fantom",
+		"file_patterns": ["*.fan"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Faust",
+		"file_patterns": ["*.dsp"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Felix",
+		"file_patterns": ["*.flx"],
+		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
 	},
 	{
@@ -638,10 +708,23 @@
 		"block_comments": [["/*", "*/"]]
 	},
 	{
+		"name": "Gosu",
+		"file_patterns": ["*.gs", "*.gsx"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
 		"name": "Gradle",
 		"file_patterns": ["*.gradle", "gradle.properties"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Grain",
+		"file_patterns": ["*.gr"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]],
+		"nested_blocks": true
 	},
 	{
 		"name": "GraphQL",
@@ -679,6 +762,13 @@
 		"name": "Handlebars",
 		"file_patterns": ["*.hbs", "*.handlebars"],
 		"block_comments": [["{{!--", "--}}"]]
+	},
+	{
+		"name": "Happy",
+		"file_patterns": ["*.y"],
+		"line_comments": ["--"],
+		"block_comments": [["{-", "-}"]],
+		"keywords": ["%name", "%tokentype", "%token", "%%"]
 	},
 	{
 		"name": "Haskell",
@@ -728,6 +818,11 @@
 		"line_comments": [";"]
 	},
 	{
+		"name": "Icon",
+		"file_patterns": ["*.icn"],
+		"line_comments": ["#"]
+	},
+	{
 		"name": "IDL",
 		"file_patterns": ["*.idl", "*.widl"],
 		"line_comments": ["//"],
@@ -755,6 +850,12 @@
 		"file_patterns": ["*.iss", "*.ish"],
 		"line_comments": [";", "//"],
 		"block_comments": [["{", "}"], ["(*", "*)"]]
+	},
+	{
+		"name": "Io",
+		"file_patterns": ["*.io"],
+		"line_comments": ["//", "#"],
+		"block_comments": [["/*", "*/"]]
 	},
 	{
 		"name": "Isabelle",
@@ -863,6 +964,12 @@
 		"line_comments": ["#"]
 	},
 	{
+		"name": "Koka",
+		"file_patterns": ["*.kk"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
 		"name": "Korn Shell",
 		"file_patterns": ["*.ksh"],
 		"line_comments": ["#"],
@@ -911,7 +1018,8 @@
 		"name": "Lex",
 		"file_patterns": ["*.l", "*.lex"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
+		"keywords": ["%%", "yy", "BEGIN", "ECHO"]
 	},
 	{
 		"name": "LilyPond",
@@ -1011,6 +1119,13 @@
 		"line_comments": ["//"],
 		"block_comments": [["(*", "*)"], ["/*", "*/"]],
 		"nested_blocks": true
+	},
+	{
+		"name": "Mercury",
+		"file_patterns": ["*.m"],
+		"line_comments": ["%"],
+		"block_comments": [["/*", "*/"]],
+		"keywords": [":- module", ":- pred", ":- func", ":- type", "io.write_string"]
 	},
 	{
 		"name": "Meson",
@@ -1116,6 +1231,13 @@
 		"line_comments": ["#"]
 	},
 	{
+		"name": "Nemerle",
+		"file_patterns": ["*.n"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]],
+		"nested_blocks": true
+	},
+	{
 		"name": "Nextflow",
 		"file_patterns": ["*.nextflow", "*.nf"],
 		"line_comments": ["//"],
@@ -1176,6 +1298,13 @@
 		"file_patterns": ["*.nvgt", ".nvgtrc"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Oberon",
+		"file_patterns": ["*.ob", "*.ob2", "*.obx", "*.oberon"],
+		"line_comments": [],
+		"block_comments": [["(*", "*)"]],
+		"nested_blocks": true
 	},
 	{
 		"name": "Objective-C",
@@ -1256,7 +1385,8 @@
 		"file_patterns": ["*.pas", "*.pp", "*.p", "*.inc"],
 		"line_comments": ["//"],
 		"block_comments": [["(*", "*)"], ["{", "}"]],
-		"nested_blocks": true
+		"nested_blocks": true,
+		"keywords": ["program", "begin", "end", "var", "procedure", "function", "uses"]
 	},
 	{
 		"name": "Perl",
@@ -1276,6 +1406,19 @@
 		"line_comments": ["//", "#"],
 		"block_comments": [["/*", "*/"], ["<!--", "-->"]],
 		"shebangs": ["#!/usr/bin/php", "#!/usr/bin/env php"]
+	},
+	{
+		"name": "PicoLisp",
+		"file_patterns": ["*.l"],
+		"line_comments": ["#"],
+		"keywords": ["de", "def", "dm", "class", "rel", "var"]
+	},
+	{
+		"name": "Pike",
+		"file_patterns": ["*.pike", "*.pmod"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]],
+		"nested_blocks": true
 	},
 	{
 		"name": "Pine Script",
@@ -1319,6 +1462,11 @@
 		"block_comments": [["/*", "*/"]]
 	},
 	{
+		"name": "PostScript",
+		"file_patterns": ["*.ps", "*.eps"],
+		"line_comments": ["%"]
+	},
+	{
 		"name": "PowerShell",
 		"file_patterns": ["*.ps1", "*.psm1", "*.psd1", "*.ps1xml", "*.cdxml", "*.pssc", "*.psc1"],
 		"line_comments": ["#"],
@@ -1358,6 +1506,13 @@
 		"name": "Pug",
 		"file_patterns": ["*.pug", "*.jade"],
 		"line_comments": ["//", "//-"]
+	},
+	{
+		"name": "Puppet",
+		"file_patterns": ["*.pp"],
+		"line_comments": ["#"],
+		"block_comments": [["/*", "*/"]],
+		"keywords": ["class", "define", "node", "package", "service", "file", "exec", "=>"]
 	},
 	{
 		"name": "PureBasic",
@@ -1410,7 +1565,8 @@
 	{
 		"name": "R",
 		"file_patterns": ["*.r", "*.rmd", ".Rprofile"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
+		"keywords": ["<-", "function", "library", "data.frame", "ggplot", "lm"]
 	},
 	{
 		"name": "Racket",
@@ -1427,6 +1583,18 @@
 		"shebangs": ["#!/usr/bin/raku", "#!/usr/bin/perl6"]
 	},
 	{
+		"name": "Rebol",
+		"file_patterns": ["*.r", "*.reb", "*.rebol"],
+		"line_comments": [";"],
+		"keywords": ["REBOL", "context", "object!", "func"]
+	},
+	{
+		"name": "Red",
+		"file_patterns": ["*.red", "*.reds"],
+		"line_comments": [";"],
+		"block_comments": [["comment {", "}"]]
+	},
+	{
 		"name": "ReScript",
 		"file_patterns": ["*.res", "*.resi"],
 		"line_comments": ["//"],
@@ -1436,6 +1604,18 @@
 		"name": "reStructuredText",
 		"file_patterns": ["*.rst"],
 		"line_comments": [".."]
+	},
+	{
+		"name": "REXX",
+		"file_patterns": ["*.rexx", "*.rex"],
+		"line_comments": [],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Ring",
+		"file_patterns": ["*.ring", "*.rh"],
+		"line_comments": ["#", "//"],
+		"block_comments": [["/*", "*/"]]
 	},
 	{
 		"name": "Robot Framework",
@@ -1471,7 +1651,8 @@
 		"name": "Scala",
 		"file_patterns": ["*.scala", "*.sc", "build.sbt"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
+		"keywords": ["object", "class", "trait", "def", "val", "var", "extends", "with"]
 	},
 	{
 		"name": "Scheme",
@@ -1484,6 +1665,12 @@
 		"name": "Sed",
 		"file_patterns": ["*.sed"],
 		"line_comments": ["#"]
+	},
+	{
+		"name": "Shen",
+		"file_patterns": ["*.shen"],
+		"line_comments": ["\\\\"],
+		"block_comments": [["\\\\*", "*\\\\"]]
 	},
 	{
 		"name": "Slim",
@@ -1505,6 +1692,11 @@
 		"name": "Smarty",
 		"file_patterns": ["*.tpl"],
 		"block_comments": [["{{*", "*}}"]]
+	},
+	{
+		"name": "SNOBOL",
+		"file_patterns": ["*.sno", "*.snob", "*.snobol"],
+		"line_comments": ["*"]
 	},
 	{
 		"name": "Solidity",
@@ -1542,6 +1734,13 @@
 		"block_comments": [["/*", "*/"]]
 	},
 	{
+		"name": "Standard ML",
+		"file_patterns": ["*.sml", "*.sig", "*.fun"],
+		"line_comments": [],
+		"block_comments": [["(*", "*)"]],
+		"nested_blocks": true
+	},
+	{
 		"name": "Stata",
 		"file_patterns": ["*.do"],
 		"line_comments": ["//", "*"],
@@ -1552,6 +1751,13 @@
 		"file_patterns": ["*.styl"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "SuperCollider",
+		"file_patterns": ["*.sc", "*.scd"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]],
+		"keywords": ["SinOsc", "SynthDef", "Server", "~", ".ar", ".kr"]
 	},
 	{
 		"name": "Svelte",
@@ -1620,6 +1826,12 @@
 		"block_comments": [["/*", "*/"]]
 	},
 	{
+		"name": "TLA+",
+		"file_patterns": ["*.tla"],
+		"line_comments": ["\\\\"],
+		"block_comments": [["(*", "*)"]]
+	},
+	{
 		"name": "Tmux",
 		"file_patterns": ["*.tmux"],
 		"line_comments": ["#"]
@@ -1647,6 +1859,19 @@
 		"nested_blocks": true
 	},
 	{
+		"name": "Umka",
+		"file_patterns": ["*.um"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
+	},
+	{
+		"name": "Unison",
+		"file_patterns": ["*.u", "*.uu"],
+		"line_comments": ["--"],
+		"block_comments": [["{-", "-}"]],
+		"nested_blocks": true
+	},
+	{
 		"name": "UnrealScript",
 		"file_patterns": ["*.uc"],
 		"line_comments": ["//"],
@@ -1671,6 +1896,12 @@
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
 		"nested_blocks": true
+	},
+	{
+		"name": "Vale",
+		"file_patterns": ["*.vale"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]]
 	},
 	{
 		"name": "Verilog",
@@ -1715,6 +1946,12 @@
 		"block_comments": [["/*", "*/"]]
 	},
 	{
+		"name": "Wenyan",
+		"file_patterns": ["*.wy"],
+		"line_comments": ["注曰"],
+		"block_comments": [["批曰", "也"]]
+	},
+	{
 		"name": "WGSL",
 		"file_patterns": ["*.wgsl"],
 		"line_comments": ["//"],
@@ -1747,6 +1984,13 @@
 		"name": "XML",
 		"file_patterns": ["*.xml"],
 		"block_comments": [["<!--", "-->"]]
+	},
+	{
+		"name": "Yacc",
+		"file_patterns": ["*.y", "*.yacc"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]],
+		"keywords": ["%token", "%type", "%start", "yyparse"]
 	},
 	{
 		"name": "YAML",
