@@ -270,8 +270,7 @@ fn validate_languages(languages: &[Language]) -> Result<()> {
 					.iter()
 					.find(|l| l.name == *name)
 					.and_then(|l| l.keywords.as_ref())
-					.map(|k| !k.is_empty())
-					.unwrap_or(false)
+					.is_some_and(|k| !k.is_empty())
 			});
 			if !all_have_keywords {
 				errors.push(format!(

@@ -26,12 +26,15 @@ fn score_language(lang: &Language, content: &str) -> i32 {
 	}
 	for keyword in lang.keywords {
 		let count = content.matches(keyword).count();
-		score += count as i32 * 10;
+		#[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
+		{
+			score += count as i32 * 10;
+		}
 	}
 	score
 }
 
-fn disambiguate(candidates: Vec<&'static Language>, content: &str) -> Option<&'static str> {
+fn disambiguate(candidates: &[&'static Language], content: &str) -> Option<&'static str> {
 	let scores: Vec<_> = candidates.iter().map(|lang| (*lang, score_language(lang, content))).collect();
 	scores.iter().max_by_key(|(_, score)| score).filter(|(_, score)| *score > 0).map(|(lang, _)| lang.name)
 }
@@ -42,13 +45,10 @@ pub fn detect_language(filename: &str, content: Option<&str>) -> Option<&'static
 	match candidates.len() {
 		0 => None,
 		1 => Some(candidates[0].name),
-		_ => {
-			if let Some(file_content) = content {
-				disambiguate(candidates.clone(), file_content).or_else(|| Some(candidates[0].name))
-			} else {
-				Some(candidates[0].name)
-			}
-		}
+		_ => content.map_or_else(
+			|| Some(candidates[0].name),
+			|file_content| disambiguate(&candidates, file_content).or_else(|| Some(candidates[0].name)),
+		),
 	}
 }
 

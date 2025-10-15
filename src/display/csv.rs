@@ -16,6 +16,7 @@ impl OutputFormatter for CsvFormatter {
 }
 
 impl CsvFormatter {
+	#[allow(clippy::too_many_lines)]
 	fn format_verbose(results: &AnalysisResults, path: &Path) -> Result<String> {
 		let mut output = String::new();
 		let mut wtr = Writer::from_writer(Vec::new());
