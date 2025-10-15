@@ -172,11 +172,10 @@ impl CodeAnalyzer {
 					ignore::WalkState::Continue
 				})
 			});
-		let mut results = Arc::try_unwrap(results)
-			.expect("Failed to unwrap Arc - multiple references remain")
+		let results = Arc::try_unwrap(results)
+			.map_err(|_| anyhow::anyhow!("Failed to unwrap Arc - parallel walker still holds references"))?
 			.into_inner()
 			.unwrap_or_else(PoisonError::into_inner);
-		results.finalize();
 		Ok(results)
 	}
 
@@ -201,7 +200,7 @@ impl CodeAnalyzer {
 			shebang_lines,
 			file_size,
 		);
-		results.lock().unwrap().add_file_stats(language.to_string(), file_stats);
+		results.lock().unwrap_or_else(PoisonError::into_inner).add_file_stats(language.to_string(), file_stats);
 		Ok(())
 	}
 

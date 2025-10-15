@@ -27,6 +27,7 @@ impl CommentState {
 		Self::default()
 	}
 
+	#[inline]
 	pub const fn enter_block(&mut self, nested: bool) {
 		self.in_block_comment = true;
 		if nested {
@@ -34,6 +35,7 @@ impl CommentState {
 		}
 	}
 
+	#[inline]
 	pub const fn exit_block(&mut self, nested: bool) {
 		if nested {
 			self.block_comment_depth = self.block_comment_depth.saturating_sub(1);
@@ -46,6 +48,7 @@ impl CommentState {
 		}
 	}
 
+	#[inline]
 	pub const fn enter_nested_block(&mut self) {
 		self.block_comment_depth += 1;
 	}
@@ -141,14 +144,23 @@ pub fn classify_line(
 }
 
 /// Finds the earliest block comment start marker in the line.
+#[inline]
 fn find_block_comment_start(line: &str, block_comments: &[(&str, &str)]) -> Option<(usize, usize)> {
-	block_comments
-		.iter()
-		.filter_map(|(start, _)| line.find(start).map(|pos| (pos, start.len())))
-		.min_by_key(|(pos, _)| *pos)
+	let mut min_pos = None;
+	for (start, _) in block_comments {
+		if let Some(pos) = line.find(start) {
+			match min_pos {
+				None => min_pos = Some((pos, start.len())),
+				Some((min, _)) if pos < min => min_pos = Some((pos, start.len())),
+				_ => {}
+			}
+		}
+	}
+	min_pos
 }
 
 /// Finds the earliest end of block comment or nested start.
+#[inline]
 fn find_block_comment_end_or_nested_start(
 	line: &str,
 	block_comments: &[(&str, &str)],
@@ -168,6 +180,17 @@ fn find_block_comment_end_or_nested_start(
 }
 
 /// Finds the position of the earliest line comment start marker.
+#[inline]
 fn find_line_comment_start(line: &str, line_comments: &[&str]) -> Option<usize> {
-	line_comments.iter().filter_map(|c| line.find(c)).min()
+	let mut min_pos = None;
+	for comment in line_comments {
+		if let Some(pos) = line.find(comment) {
+			match min_pos {
+				None => min_pos = Some(pos),
+				Some(min) if pos < min => min_pos = Some(pos),
+				_ => {}
+			}
+		}
+	}
+	min_pos
 }

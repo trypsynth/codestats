@@ -16,9 +16,15 @@ impl OutputFormatter for CsvFormatter {
 }
 
 impl CsvFormatter {
-	#[allow(clippy::too_many_lines)]
 	fn format_verbose(results: &AnalysisResults, path: &Path) -> Result<String> {
 		let mut output = String::new();
+		Self::write_summary_section(results, path, &mut output)?;
+		Self::write_language_section(results, &mut output)?;
+		Self::write_files_sections(results, &mut output)?;
+		Ok(output)
+	}
+
+	fn write_summary_section(results: &AnalysisResults, path: &Path, output: &mut String) -> Result<()> {
 		let mut wtr = Writer::from_writer(Vec::new());
 		wtr.write_record(["metric", "value", "percentage", "human_readable"])?;
 		wtr.write_record(["Analysis Path", &path.display().to_string(), "", ""])?;
@@ -53,6 +59,10 @@ impl CsvFormatter {
 		output.push_str("Summary:\n");
 		output.push_str(&String::from_utf8(summary_data)?);
 		output.push('\n');
+		Ok(())
+	}
+
+	fn write_language_section(results: &AnalysisResults, output: &mut String) -> Result<()> {
 		let mut wtr = Writer::from_writer(Vec::new());
 		wtr.write_record([
 			"language",
@@ -90,6 +100,10 @@ impl CsvFormatter {
 		output.push_str("Language breakdown:\n");
 		output.push_str(&String::from_utf8(lang_data)?);
 		output.push('\n');
+		Ok(())
+	}
+
+	fn write_files_sections(results: &AnalysisResults, output: &mut String) -> Result<()> {
 		for (lang_name, lang_stats) in results.languages_by_lines() {
 			let mut wtr = csv::Writer::from_writer(Vec::new());
 			wtr.write_record([
@@ -121,7 +135,7 @@ impl CsvFormatter {
 			output.push_str(&String::from_utf8(file_data)?);
 			output.push('\n');
 		}
-		Ok(output)
+		Ok(())
 	}
 
 	fn format_simple(results: &AnalysisResults) -> Result<String> {

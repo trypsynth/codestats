@@ -7,6 +7,7 @@ fn matches_pattern(filename: &str, pattern: &str) -> bool {
 	pattern.strip_prefix('*').map_or_else(|| filename == pattern, |suffix| filename.ends_with(suffix))
 }
 
+#[inline]
 fn get_candidates(filename: &str) -> Vec<&'static Language> {
 	if let Some(lang) = PATTERN_MAP.get(filename) {
 		return vec![lang];
@@ -17,23 +18,26 @@ fn get_candidates(filename: &str) -> Vec<&'static Language> {
 		.collect()
 }
 
+#[inline]
 fn score_language(lang: &Language, content: &str) -> i32 {
-	let mut score = 0;
+	let mut score: i32 = 0;
 	for comment in lang.line_comments {
 		if content.contains(comment) {
-			score += 50;
+			score = score.saturating_add(50);
 		}
 	}
 	for keyword in lang.keywords {
 		let count = content.matches(keyword).count();
+		let clamped_count = count.min(usize::try_from(i32::MAX / 10).unwrap_or(usize::MAX));
+		// We now know that this is safe because we've clamped the value.
 		#[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
-		{
-			score += count as i32 * 10;
-		}
+		let count_i32 = clamped_count as i32;
+		score = score.saturating_add(count_i32 * 10);
 	}
 	score
 }
 
+#[inline]
 fn disambiguate(candidates: &[&'static Language], content: &str) -> Option<&'static str> {
 	let scores: Vec<_> = candidates.iter().map(|lang| (*lang, score_language(lang, content))).collect();
 	scores.iter().max_by_key(|(_, score)| score).filter(|(_, score)| *score > 0).map(|(lang, _)| lang.name)

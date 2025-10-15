@@ -233,9 +233,6 @@ impl AnalysisResults {
 		self.total_shebang_lines += file_stats.shebang_lines;
 		self.total_size += file_stats.size;
 		self.language_stats.entry(language).or_default().add_file(file_stats);
-	}
-
-	pub(crate) fn finalize(&mut self) {
 		self.total_size_human = utils::human_size(self.total_size);
 		for lang_stats in self.language_stats.values_mut() {
 			lang_stats.finalize();

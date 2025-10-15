@@ -169,11 +169,20 @@ fn escape_rust_string(s: &str) -> String {
 		.collect()
 }
 
-#[allow(clippy::too_many_lines)]
 fn validate_languages(languages: &[Language]) -> Result<()> {
 	let mut errors = Vec::new();
-	let mut seen_names = HashSet::new();
-	let mut seen_patterns: HashMap<String, Vec<String>> = HashMap::new();
+	validate_alphabetical_order(languages, &mut errors);
+	let seen_patterns = validate_language_fields(languages, &mut errors);
+	validate_pattern_disambiguation(languages, seen_patterns, &mut errors);
+	if !errors.is_empty() {
+		let error_message =
+			format!("Language validation failed with {} error(s):\n{}", errors.len(), errors.join("\n"));
+		return Err(error_message.into());
+	}
+	Ok(())
+}
+
+fn validate_alphabetical_order(languages: &[Language], errors: &mut Vec<String>) {
 	let mut prev_name: Option<&str> = None;
 	for lang in languages {
 		if let Some(prev) = prev_name {
@@ -186,83 +195,113 @@ fn validate_languages(languages: &[Language]) -> Result<()> {
 		}
 		prev_name = Some(&lang.name);
 	}
+}
+
+fn validate_language_fields(languages: &[Language], errors: &mut Vec<String>) -> HashMap<String, Vec<String>> {
+	let mut seen_names = HashSet::new();
+	let mut seen_patterns: HashMap<String, Vec<String>> = HashMap::new();
 	for (index, lang) in languages.iter().enumerate() {
 		let position = format!("Language at position {}", index + 1);
-		if lang.name.is_empty() {
-			errors.push(format!("{position}: 'name' field cannot be empty"));
+		validate_basic_fields(lang, &position, &mut seen_names, errors);
+		validate_file_patterns(lang, &position, &mut seen_patterns, errors);
+		validate_comment_fields(lang, &position, errors);
+	}
+	seen_patterns
+}
+
+fn validate_basic_fields(lang: &Language, position: &str, seen_names: &mut HashSet<String>, errors: &mut Vec<String>) {
+	if lang.name.is_empty() {
+		errors.push(format!("{position}: 'name' field cannot be empty"));
+	}
+	if lang.file_patterns.is_empty() {
+		errors.push(format!("{} ('{}'): 'file_patterns' field cannot be empty", position, lang.name));
+	}
+	if !seen_names.insert(lang.name.clone()) {
+		errors.push(format!("{}: Duplicate language name '{}'", position, lang.name));
+	}
+	if lang.name.trim() != lang.name {
+		errors.push(format!("{} ('{}'): Language name has leading/trailing whitespace", position, lang.name));
+	}
+}
+
+fn validate_file_patterns(
+	lang: &Language,
+	position: &str,
+	seen_patterns: &mut HashMap<String, Vec<String>>,
+	errors: &mut Vec<String>,
+) {
+	for (pattern_idx, pattern) in lang.file_patterns.iter().enumerate() {
+		if pattern.is_empty() {
+			errors.push(format!(
+				"{} ('{}'), pattern {}: File pattern cannot be empty",
+				position,
+				lang.name,
+				pattern_idx + 1
+			));
 		}
-		if lang.file_patterns.is_empty() {
-			errors.push(format!("{} ('{}'): 'file_patterns' field cannot be empty", position, lang.name));
+		if pattern.trim() != pattern {
+			errors.push(format!(
+				"{} ('{}'), pattern {}: File pattern '{}' has leading/trailing whitespace",
+				position,
+				lang.name,
+				pattern_idx + 1,
+				pattern
+			));
 		}
-		if !seen_names.insert(&lang.name) {
-			errors.push(format!("{}: Duplicate language name '{}'", position, lang.name));
-		}
-		if lang.name.trim() != lang.name {
-			errors.push(format!("{} ('{}'): Language name has leading/trailing whitespace", position, lang.name));
-		}
-		for (pattern_idx, pattern) in lang.file_patterns.iter().enumerate() {
-			if pattern.is_empty() {
+		seen_patterns.entry(pattern.clone()).or_default().push(lang.name.clone());
+	}
+}
+
+fn validate_comment_fields(lang: &Language, position: &str, errors: &mut Vec<String>) {
+	if let Some(ref line_comments) = lang.line_comments {
+		for (comment_idx, comment) in line_comments.iter().enumerate() {
+			if comment.is_empty() {
 				errors.push(format!(
-					"{} ('{}'), pattern {}: File pattern cannot be empty",
+					"{} ('{}'), line comment {}: Line comment cannot be empty",
 					position,
 					lang.name,
-					pattern_idx + 1
+					comment_idx + 1
 				));
-			}
-			if pattern.trim() != pattern {
-				errors.push(format!(
-					"{} ('{}'), pattern {}: File pattern '{}' has leading/trailing whitespace",
-					position,
-					lang.name,
-					pattern_idx + 1,
-					pattern
-				));
-			}
-			seen_patterns.entry(pattern.clone()).or_default().push(lang.name.clone());
-		}
-		if let Some(ref line_comments) = lang.line_comments {
-			for (comment_idx, comment) in line_comments.iter().enumerate() {
-				if comment.is_empty() {
-					errors.push(format!(
-						"{} ('{}'), line comment {}: Line comment cannot be empty",
-						position,
-						lang.name,
-						comment_idx + 1
-					));
-				}
-			}
-		}
-		if let Some(ref block_comments) = lang.block_comments {
-			for (comment_idx, comment_pair) in block_comments.iter().enumerate() {
-				if comment_pair.len() == 2 {
-					let (start, end) = (&comment_pair[0], &comment_pair[1]);
-					if start.is_empty() {
-						errors.push(format!(
-							"{} ('{}'), block comment {}: Block comment start cannot be empty",
-							position,
-							lang.name,
-							comment_idx + 1
-						));
-					}
-					if end.is_empty() {
-						errors.push(format!(
-							"{} ('{}'), block comment {}: Block comment end cannot be empty",
-							position,
-							lang.name,
-							comment_idx + 1
-						));
-					}
-				} else {
-					errors.push(format!(
-						"{} ('{}'), block comment {}: Block comment must have exactly 2 elements (start, end)",
-						position,
-						lang.name,
-						comment_idx + 1
-					));
-				}
 			}
 		}
 	}
+	if let Some(ref block_comments) = lang.block_comments {
+		for (comment_idx, comment_pair) in block_comments.iter().enumerate() {
+			if comment_pair.len() == 2 {
+				let (start, end) = (&comment_pair[0], &comment_pair[1]);
+				if start.is_empty() {
+					errors.push(format!(
+						"{} ('{}'), block comment {}: Block comment start cannot be empty",
+						position,
+						lang.name,
+						comment_idx + 1
+					));
+				}
+				if end.is_empty() {
+					errors.push(format!(
+						"{} ('{}'), block comment {}: Block comment end cannot be empty",
+						position,
+						lang.name,
+						comment_idx + 1
+					));
+				}
+			} else {
+				errors.push(format!(
+					"{} ('{}'), block comment {}: Block comment must have exactly 2 elements (start, end)",
+					position,
+					lang.name,
+					comment_idx + 1
+				));
+			}
+		}
+	}
+}
+
+fn validate_pattern_disambiguation(
+	languages: &[Language],
+	seen_patterns: HashMap<String, Vec<String>>,
+	errors: &mut Vec<String>,
+) {
 	for (pattern, language_names) in seen_patterns {
 		if language_names.len() > 1 {
 			let all_have_keywords = language_names.iter().all(|name| {
@@ -281,10 +320,4 @@ fn validate_languages(languages: &[Language]) -> Result<()> {
 			}
 		}
 	}
-	if !errors.is_empty() {
-		let error_message =
-			format!("Language validation failed with {} error(s):\n{}", errors.len(), errors.join("\n"));
-		return Err(error_message.into());
-	}
-	Ok(())
 }
