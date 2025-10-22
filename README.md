@@ -53,96 +53,41 @@ Options:
 This is the result of running codestats on itself.
 
 ```
-Codestats for codestats: 13 files, 2543 total lines, 62.8 KiB total size.
-Line breakdown: 2428 code lines, 28 comment lines, 87 blank lines
-Percentages: 95.5% code, 1.1% comments, 3.4% blanks
+Codestats for codestats: 19 files, 4030 total lines, 101 KiB total size.
+Line breakdown: 3674 code lines, 190 comment lines, 166 blank lines
+Percentages: 91.2% code, 4.7% comments, 4.1% blanks
 Language breakdown:
 JSON:
-	Files: 1 file (7.7% of total).
-	Lines: 1512 lines (59.5% of total).
-	Size: 32.8 KiB (52.3% of total).
+	Files: 1 file (5.3% of total).
+	Lines: 2023 lines (50.2% of total).
+	Size: 44.1 KiB (43.6% of total).
 	Line breakdown:
-		Code: 1511 lines (99.9%).
-		Blanks: 1 lines (0.1%).
+		Code: 2022 lines (100.0%).
+		Blanks: 1 lines (0.0%).
 Rust:
-	Files: 9 files (69.2% of total).
-	Lines: 935 lines (36.8% of total).
-	Size: 27.1 KiB (43.2% of total).
+	Files: 15 files (78.9% of total).
+	Lines: 1856 lines (46.1% of total).
+	Size: 52.9 KiB (52.4% of total).
 	Line breakdown:
-		Code: 839 lines (89.7%).
-		Comments: 28 lines (3.0%).
-		Blanks: 68 lines (7.3%).
+		Code: 1521 lines (82.0%).
+		Comments: 190 lines (10.2%).
+		Blanks: 145 lines (7.8%).
 Markdown:
-	Files: 1 file (7.7% of total).
-	Lines: 51 lines (2.0% of total).
-	Size: 1.5 KiB (2.4% of total).
+	Files: 1 file (5.3% of total).
+	Lines: 92 lines (2.3% of total).
+	Size: 2.5 KiB (2.5% of total).
 	Line breakdown:
-		Code: 36 lines (70.6%).
-		Blanks: 15 lines (29.4%).
+		Code: 77 lines (83.7%).
+		Blanks: 15 lines (16.3%).
 TOML:
-	Files: 2 files (15.4% of total).
-	Lines: 45 lines (1.8% of total).
-	Size: 1.3 KiB (2.0% of total).
+	Files: 2 files (10.5% of total).
+	Lines: 59 lines (1.5% of total).
+	Size: 1.5 KiB (1.5% of total).
 	Line breakdown:
-		Code: 42 lines (93.3%).
-		Blanks: 3 lines (6.7%).
-```
-
-And the same directory, but this time with verbose output.
-
-```
-Analyzing directory codestats
-Codestats for codestats: 13 files, 2543 total lines, 62.8 KiB total size.
-Line breakdown: 2428 code lines, 28 comment lines, 87 blank lines
-Percentages: 95.5% code, 1.1% comments, 3.4% blanks
-Language breakdown:
-JSON:
-	Files: 1 file (7.7% of total).
-	Lines: 1512 lines (59.5% of total).
-	Size: 32.8 KiB (52.3% of total).
-	Line breakdown:
-		Code: 1511 lines (99.9%).
-		Blanks: 1 lines (0.1%).
-	File breakdown:
-		codestats\src\languages.json: 1512 lines (59.5% of total).
-Rust:
-	Files: 9 files (69.2% of total).
-	Lines: 935 lines (36.8% of total).
-	Size: 27.1 KiB (43.2% of total).
-	Line breakdown:
-		Code: 839 lines (89.7%).
-		Comments: 28 lines (3.0%).
-		Blanks: 68 lines (7.3%).
-	File breakdown:
-		codestats\build.rs: 263 lines (10.3% of total).
-		codestats\src\analyzer.rs: 252 lines (9.9% of total).
-		codestats\src\comments.rs: 149 lines (5.9% of total).
-		codestats\src\stats.rs: 120 lines (4.7% of total).
-		codestats\src\cli.rs: 42 lines (1.7% of total).
-		codestats\src\langs.rs: 39 lines (1.5% of total).
-		codestats\src\main.rs: 33 lines (1.3% of total).
-		codestats\templates\languages.rs: 30 lines (1.2% of total).
-		codestats\src\utils.rs: 7 lines (0.3% of total).
-Markdown:
-	Files: 1 file (7.7% of total).
-	Lines: 51 lines (2.0% of total).
-	Size: 1.5 KiB (2.4% of total).
-	Line breakdown:
-		Code: 36 lines (70.6%).
-		Blanks: 15 lines (29.4%).
-	File breakdown:
-		codestats\README.md: 51 lines (2.0% of total).
-TOML:
-	Files: 2 files (15.4% of total).
-	Lines: 45 lines (1.8% of total).
-	Size: 1.3 KiB (2.0% of total).
-	Line breakdown:
-		Code: 42 lines (93.3%).
-		Blanks: 3 lines (6.7%).
-	File breakdown:
-		codestats\Cargo.toml: 32 lines (1.3% of total).
-		codestats\rustfmt.toml: 13 lines (0.5% of total).
+		Code: 54 lines (91.5%).
+		Blanks: 5 lines (8.5%).
 ```
 
 ## License
 Codestats is licensed under the [Zlib License](LICENSE).
+
