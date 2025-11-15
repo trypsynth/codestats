@@ -36,7 +36,7 @@ Arguments:
 
 Options:
 * -v, --verbose Enable verbose output.
-* --no-gitignore Do not respect .gitignore/.ignore and similar files.
+* -n, --no-gitignore Do not respect .gitignore/.ignore and similar files.
 * --hidden Search hidden files and directories.
 * -s, --symlinks Follow symlinks. When enabled, symbolic links will be followed and their targets will be included in the analysis. Use with caution as this can lead to infinite loops with circular symlinks.
 * -h, --help Print help
