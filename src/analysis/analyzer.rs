@@ -1,6 +1,6 @@
 use std::{
-	fs::{self, File},
-	io::{BufRead, BufReader},
+	fs::File,
+	io::{BufRead, BufReader, Seek},
 	path::{Path, PathBuf},
 	sync::{Arc, Mutex, PoisonError},
 };
@@ -172,24 +172,28 @@ impl CodeAnalyzer {
 					ignore::WalkState::Continue
 				})
 			});
-		let results = Arc::try_unwrap(results)
+		let mut results = Arc::try_unwrap(results)
 			.map_err(|_| anyhow::anyhow!("Failed to unwrap Arc - parallel walker still holds references"))?
 			.into_inner()
 			.unwrap_or_else(PoisonError::into_inner);
+		results.finalize();
 		Ok(results)
 	}
 
 	fn process_file(file_path: &Path, results: &Arc<Mutex<AnalysisResults>>) -> Result<()> {
 		let filename = file_path.file_name().and_then(|name| name.to_str()).context("Invalid UTF-8 in file name")?;
-		let preview = Self::read_file_preview(file_path, 50).ok();
-		let Some(language) = langs::detect_language(filename, preview.as_deref()) else {
+		let file = File::open(file_path).with_context(|| format!("Failed to open file {}", file_path.display()))?;
+		let file_size =
+			file.metadata().with_context(|| format!("Failed to retrieve metadata for {}", file_path.display()))?.len();
+		let mut reader = BufReader::new(file);
+		let preview = Self::read_file_preview(&mut reader, 50)
+			.with_context(|| format!("Failed to read preview from {}", file_path.display()))?;
+		reader.rewind().with_context(|| format!("Failed to rewind file {}", file_path.display()))?;
+		let Some(language) = langs::detect_language(filename, Some(preview.as_str())) else {
 			return Ok(());
 		};
-		let file_size = fs::metadata(file_path)
-			.with_context(|| format!("Failed to retrieve metadata for {}", file_path.display()))?
-			.len();
 		let (total_lines, code_lines, comment_lines, blank_lines, shebang_lines) =
-			Self::analyze_file_lines(file_path, language)?;
+			Self::analyze_file_lines(&mut reader, file_path, language)?;
 		let file_path_str = file_path.display().to_string();
 		let file_stats = FileStats::new(
 			file_path_str,
@@ -204,9 +208,7 @@ impl CodeAnalyzer {
 		Ok(())
 	}
 
-	fn read_file_preview(file_path: &Path, max_lines: usize) -> Result<String> {
-		let file = File::open(file_path)?;
-		let reader = BufReader::new(file);
+	fn read_file_preview(reader: &mut BufReader<File>, max_lines: usize) -> Result<String> {
 		let mut content = String::new();
 		for (i, line_result) in reader.lines().enumerate() {
 			if i >= max_lines {
@@ -219,9 +221,11 @@ impl CodeAnalyzer {
 		Ok(content)
 	}
 
-	fn analyze_file_lines(file_path: &Path, language: &str) -> Result<(u64, u64, u64, u64, u64)> {
-		let file = File::open(file_path).with_context(|| format!("Failed to open file {}", file_path.display()))?;
-		let reader = BufReader::new(file);
+	fn analyze_file_lines(
+		reader: &mut BufReader<File>,
+		file_path: &Path,
+		language: &str,
+	) -> Result<(u64, u64, u64, u64, u64)> {
 		let lang_info = langs::get_language_info(language);
 		let mut line_counts = (0, 0, 0, 0, 0); // total, code, comment, blank, shebang
 		let mut comment_state = CommentState::new();

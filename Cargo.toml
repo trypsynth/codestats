@@ -25,8 +25,6 @@ path = "src/lib.rs"
 anyhow = "1.0.100"
 bitflags = "2.10"
 clap = { version = "4.5.50", features = ["derive"] }
-csv = "1.4"
-human_bytes = { version = "0.4.3", features = ["fast"] }
 ignore = "0.4.24"
 phf = { version = "0.13", features = ["macros"] }
 serde = { version = "1.0.228", features = ["derive"] }
@@ -35,8 +33,6 @@ serde_json = "1.0.145"
 [build-dependencies]
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.145"
-phf_codegen = "0.13"
-tera = "1.20.0"
 
 [profile.release]
 strip = true

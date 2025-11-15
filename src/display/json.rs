@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::Path};
+use std::path::Path;
 
 use anyhow::Result;
 use serde_json::json;
@@ -12,37 +12,35 @@ pub struct JsonFormatter;
 impl OutputFormatter for JsonFormatter {
 	fn format(&self, results: &AnalysisResults, path: &Path, verbose: bool) -> Result<String> {
 		if verbose {
-			let languages: HashMap<_, _> = results
+			let languages: Vec<_> = results
 				.languages_by_lines()
-				.iter()
+				.into_iter()
 				.map(|(lang_name, lang_stats)| {
-					(
-						lang_name.as_str(),
-						json!({
-							"files": lang_stats.files(),
-							"lines": lang_stats.lines(),
-							"code_lines": lang_stats.code_lines(),
-							"comment_lines": lang_stats.comment_lines(),
-							"blank_lines": lang_stats.blank_lines(),
-							"shebang_lines": lang_stats.shebang_lines(),
-							"size": lang_stats.size(),
-							"size_human": lang_stats.size_human(),
-							"code_percentage": lang_stats.code_percentage(),
-							"comment_percentage": lang_stats.comment_percentage(),
-							"blank_percentage": lang_stats.blank_percentage(),
-							"shebang_percentage": lang_stats.shebang_percentage(),
-							"files_detail": lang_stats.files_list().iter().map(|file| json!({
-								"path": file.path(),
-								"total_lines": file.total_lines(),
-								"code_lines": file.code_lines(),
-								"comment_lines": file.comment_lines(),
-								"blank_lines": file.blank_lines(),
-								"shebang_lines": file.shebang_lines(),
-								"size": file.size(),
-								"size_human": file.size_human(),
-							})).collect::<Vec<_>>(),
-						}),
-					)
+					json!({
+						"name": lang_name,
+						"files": lang_stats.files(),
+						"lines": lang_stats.lines(),
+						"code_lines": lang_stats.code_lines(),
+						"comment_lines": lang_stats.comment_lines(),
+						"blank_lines": lang_stats.blank_lines(),
+						"shebang_lines": lang_stats.shebang_lines(),
+						"size": lang_stats.size(),
+						"size_human": lang_stats.size_human(),
+						"code_percentage": lang_stats.code_percentage(),
+						"comment_percentage": lang_stats.comment_percentage(),
+						"blank_percentage": lang_stats.blank_percentage(),
+						"shebang_percentage": lang_stats.shebang_percentage(),
+						"files_detail": lang_stats.files_list().iter().map(|file| json!({
+							"path": file.path(),
+							"total_lines": file.total_lines(),
+							"code_lines": file.code_lines(),
+							"comment_lines": file.comment_lines(),
+							"blank_lines": file.blank_lines(),
+							"shebang_lines": file.shebang_lines(),
+							"size": file.size(),
+							"size_human": file.size_human(),
+						})).collect::<Vec<_>>(),
+					})
 				})
 				.collect();
 			let output = json!({

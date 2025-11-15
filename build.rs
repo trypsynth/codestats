@@ -9,10 +9,9 @@ use std::{
 	result,
 };
 
-use serde::{Deserialize, Serialize};
-use tera::{Context, Tera, Value, to_value};
+use serde::Deserialize;
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Language {
 	name: String,
@@ -29,6 +28,36 @@ struct Language {
 	keywords: Option<Vec<String>>,
 }
 
+#[derive(Debug, Clone)]
+struct ProcessedLanguage {
+	name: String,
+	file_patterns: Vec<String>,
+	line_comments: Vec<String>,
+	block_comments: Vec<(String, String)>,
+	nested_blocks: bool,
+	shebangs: Vec<String>,
+	keywords: Vec<String>,
+}
+
+impl From<Language> for ProcessedLanguage {
+	fn from(lang: Language) -> Self {
+		Self {
+			name: lang.name,
+			file_patterns: lang.file_patterns,
+			line_comments: lang.line_comments.unwrap_or_default(),
+			block_comments: lang
+				.block_comments
+				.unwrap_or_default()
+				.into_iter()
+				.filter_map(|pair| if pair.len() == 2 { Some((pair[0].clone(), pair[1].clone())) } else { None })
+				.collect(),
+			nested_blocks: lang.nested_blocks.unwrap_or(false),
+			shebangs: lang.shebangs.unwrap_or_default(),
+			keywords: lang.keywords.unwrap_or_default(),
+		}
+	}
+}
+
 fn get_language_schema() -> Vec<(&'static str, &'static str)> {
 	vec![
 		("name", "&'static str"),
@@ -41,119 +70,94 @@ fn get_language_schema() -> Vec<(&'static str, &'static str)> {
 	]
 }
 
+fn build_pattern_mappings(languages: &[ProcessedLanguage]) -> Vec<(String, usize)> {
+	let mut pattern_mappings = HashMap::new();
+	for (lang_idx, lang) in languages.iter().enumerate() {
+		for pattern in &lang.file_patterns {
+			pattern_mappings.insert(pattern.clone(), lang_idx);
+		}
+	}
+	pattern_mappings.into_iter().collect()
+}
+
+fn render_languages(languages: &[ProcessedLanguage], pattern_mappings: &[(String, usize)]) -> String {
+	let mut output = String::new();
+	output.push_str("use phf::{Map, phf_map};\n\n");
+	output.push_str("#[derive(Debug, Clone, PartialEq, Eq)]\n");
+	output.push_str("pub struct Language {\n");
+	for (field, ty) in get_language_schema() {
+		output.push_str(&format!("\tpub {field}: {ty},\n"));
+	}
+	output.push_str("}\n\n");
+	output.push_str("pub static LANGUAGES: &[Language] = &[\n");
+	for lang in languages {
+		output.push_str("\tLanguage {\n");
+		output.push_str(&format!("\t\tname: {},\n", render_str(&lang.name)));
+		output.push_str(&format!("\t\tfile_patterns: {},\n", render_str_slice(&lang.file_patterns)));
+		output.push_str(&format!("\t\tline_comments: {},\n", render_str_slice(&lang.line_comments)));
+		output.push_str(&format!("\t\tblock_comments: {},\n", render_block_comments(&lang.block_comments)));
+		output.push_str(&format!("\t\tnested_blocks: {},\n", lang.nested_blocks));
+		output.push_str(&format!("\t\tshebangs: {},\n", render_str_slice(&lang.shebangs)));
+		output.push_str(&format!("\t\tkeywords: {},\n", render_str_slice(&lang.keywords)));
+		output.push_str("\t},\n");
+	}
+	output.push_str("];\n\n");
+	output.push_str("pub static LANGUAGE_MAP: Map<&'static str, &Language> = phf_map! {\n");
+	for (index, lang) in languages.iter().enumerate() {
+		output.push_str(&format!("\t{} => &LANGUAGES[{index}],\n", render_str(&lang.name)));
+	}
+	output.push_str("};\n\n");
+	output.push_str("pub static PATTERN_MAP: Map<&'static str, &Language> = phf_map! {\n");
+	for (pattern, index) in pattern_mappings {
+		output.push_str(&format!("\t{} => &LANGUAGES[{index}],\n", render_str(pattern)));
+	}
+	output.push_str("};\n");
+	output
+}
+
+fn render_str(value: &str) -> String {
+	format!("\"{}\"", escape_rust_string(value))
+}
+
+fn render_str_slice(values: &[String]) -> String {
+	if values.is_empty() {
+		"&[]".to_string()
+	} else {
+		let joined = values.iter().map(|value| render_str(value)).collect::<Vec<_>>().join(", ");
+		format!("&[{joined}]")
+	}
+}
+
+fn render_block_comments(values: &[(String, String)]) -> String {
+	if values.is_empty() {
+		"&[]".to_string()
+	} else {
+		let joined = values
+			.iter()
+			.map(|(start, end)| format!("({}, {})", render_str(start), render_str(end)))
+			.collect::<Vec<_>>()
+			.join(", ");
+		format!("&[{joined}]")
+	}
+}
+
 type Result<T> = result::Result<T, Box<dyn Error>>;
 
 fn main() -> Result<()> {
 	println!("cargo:rerun-if-changed=languages.json");
-	println!("cargo:rerun-if-changed=src/langs/template.rs");
 	let manifest_dir = env::var("CARGO_MANIFEST_DIR")?;
 	let json_path = Path::new(&manifest_dir).join("languages.json");
 	let json_content = fs::read_to_string(&json_path)?;
 	let languages: Vec<Language> = serde_json::from_str(&json_content)?;
 	validate_languages(&languages)?;
-	let processed_languages: Vec<Language> = languages
-		.into_iter()
-		.map(|lang| Language {
-			name: lang.name,
-			file_patterns: lang.file_patterns,
-			line_comments: Some(lang.line_comments.unwrap_or_default()),
-			block_comments: Some(lang.block_comments.unwrap_or_default()),
-			nested_blocks: Some(lang.nested_blocks.unwrap_or(false)),
-			shebangs: Some(lang.shebangs.unwrap_or_default()),
-			keywords: Some(lang.keywords.unwrap_or_default()),
-		})
-		.collect();
-	let mut pattern_mappings = HashMap::new();
-	for (lang_idx, lang) in processed_languages.iter().enumerate() {
-		for pattern in &lang.file_patterns {
-			pattern_mappings.insert(pattern.clone(), lang_idx);
-		}
-	}
-	let pattern_mappings: Vec<(String, usize)> = pattern_mappings.into_iter().collect();
-	let mut tera = Tera::new("src/langs/**/*")?;
-	tera.register_filter("rust_string", rust_string_filter);
-	tera.register_filter("field_render", field_render_filter);
-	let mut context = Context::new();
-	context.insert("languages", &to_value(&processed_languages)?);
-	context.insert("pattern_mappings", &to_value(pattern_mappings)?);
-	context.insert("struct_fields", &to_value(get_language_schema())?);
-	let rendered = tera.render("template.rs", &context)?;
+	let processed_languages: Vec<ProcessedLanguage> = languages.into_iter().map(ProcessedLanguage::from).collect();
+	let pattern_mappings = build_pattern_mappings(&processed_languages);
+	let rendered = render_languages(&processed_languages, &pattern_mappings);
 	let out_dir = env::var("OUT_DIR")?;
 	let dest_path = Path::new(&out_dir).join("languages.rs");
 	fs::write(dest_path, rendered)?;
-	println!("Generated language data for {} languages using Tera", processed_languages.len());
+	println!("Generated language data for {} languages", processed_languages.len());
 	Ok(())
-}
-
-fn rust_string_filter(value: &Value, _: &HashMap<String, Value>) -> tera::Result<Value> {
-	match value {
-		Value::String(s) => Ok(Value::String(format!("\"{}\"", escape_rust_string(s)))),
-		_ => Err("rust_string filter can only be used on strings".into()),
-	}
-}
-
-fn field_render_filter(value: &Value, args: &HashMap<String, Value>) -> tera::Result<Value> {
-	let field_type =
-		args.get("field_type").and_then(|v| v.as_str()).ok_or("field_render requires field_type argument")?;
-	match field_type {
-		"&'static str" => {
-			if let Value::String(s) = value {
-				Ok(Value::String(format!("\"{}\"", escape_rust_string(s))))
-			} else {
-				Err("Expected string for &'static str field".into())
-			}
-		}
-		"&'static [&'static str]" => {
-			if let Value::Array(arr) = value {
-				let rendered: result::Result<Vec<String>, tera::Error> = arr
-					.iter()
-					.map(|v| {
-						if let Value::String(s) = v {
-							Ok(format!("\"{}\"", escape_rust_string(s)))
-						} else {
-							Err("Expected string in array".into())
-						}
-					})
-					.collect();
-				match rendered {
-					Ok(strings) => Ok(Value::String(format!("&[{}]", strings.join(", ")))),
-					Err(e) => Err(e),
-				}
-			} else {
-				Err("Expected array for &'static [&'static str] field".into())
-			}
-		}
-		"&'static [(&'static str, &'static str)]" => {
-			if let Value::Array(arr) = value {
-				let rendered: result::Result<Vec<String>, tera::Error> = arr
-					.iter()
-					.map(|v| {
-						if let Value::Array(pair) = v {
-							if pair.len() == 2 {
-								if let (Value::String(a), Value::String(b)) = (&pair[0], &pair[1]) {
-									Ok(format!("(\"{}\", \"{}\")", escape_rust_string(a), escape_rust_string(b)))
-								} else {
-									Err("Expected string pair".into())
-								}
-							} else {
-								Err("Expected pair (2 elements) in array".into())
-							}
-						} else {
-							Err("Expected array pairs".into())
-						}
-					})
-					.collect();
-				match rendered {
-					Ok(strings) => Ok(Value::String(format!("&[{}]", strings.join(", ")))),
-					Err(e) => Err(e),
-				}
-			} else {
-				Err("Expected array for block comments field".into())
-			}
-		}
-		"bool" => Ok(value.clone()),
-		_ => Err(format!("Unknown field type: {field_type}").into()),
-	}
 }
 
 fn escape_rust_string(s: &str) -> String {
