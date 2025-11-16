@@ -69,271 +69,272 @@
 	{
 		"name": "AppleScript",
 		"file_patterns": ["*.scpt", "*.applescript"],
-		"line_comments": ["--", "#"]
+		"line_comments": ["--", "#"],
 	},
 	{
 		"name": "Arturo",
 		"file_patterns": ["*.art"],
-		"line_comments": [";"]
+		"line_comments": [";"],
 	},
 	{
 		"name": "AsciiDoc",
 		"file_patterns": ["*.adoc", "*.asciidoc", "*.asc"],
 		"line_comments": ["//"],
-		"block_comments": [["////", "////"]]
+		"block_comments": [["////", "////"]],
 	},
 	{
 		"name": "ASN.1",
 		"file_patterns": ["*.asn1"],
 		"line_comments": ["--"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "ASP",
 		"file_patterns": ["*.asp", "*.asa"],
-		"line_comments": ["'", "rem"]
+		"line_comments": ["'", "rem"],
 	},
 	{
 		"name": "ASP.NET",
 		"file_patterns": ["*.asax", "*.ascx", "*.asmx", "*.aspx", "*.master", "*.sitemap", "*.webinfo"],
-		"block_comments": [["<!--", "-->"], ["<%--", "-->"]]
+		"block_comments": [["<!--", "-->"], ["<%--", "-->"]],
 	},
 	{
 		"name": "Assembly",
 		"file_patterns": ["*.asm", "*.s"],
 		"line_comments": [";", "#", "//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Astro",
 		"file_patterns": ["*.astro"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"], ["<!--", "-->"]]
+		"block_comments": [["/*", "*/"], ["<!--", "-->"]],
 	},
 	{
 		"name": "Ats",
 		"file_patterns": ["*.dats", "*.hats", "*.sats", "*.atxt"],
 		"line_comments": ["//"],
-		"block_comments": [["(*", "*)"], ["/*", "*/"]]
+		"block_comments": [["(*", "*)"], ["/*", "*/"]],
 	},
 	{
 		"name": "Austral",
 		"file_patterns": ["*.aum", "*.aui"],
 		"line_comments": ["--"],
-		"block_comments": [["(*", "*)"]]
+		"block_comments": [["(*", "*)"]],
 	},
 	{
 		"name": "AutoHotkey",
 		"file_patterns": ["*.ahk", "*.ahkl", "*.ah2"],
 		"line_comments": [";"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "AutoIt",
 		"file_patterns": ["*.au3"],
 		"line_comments": [";"],
-		"block_comments": [["#comments-start", "#comments-end"], ["#cs", "#ce"]]
+		"block_comments": [["#comments-start", "#comments-end"], ["#cs", "#ce"]],
 	},
 	{
 		"name": "Automake",
 		"file_patterns": ["*.am"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "AWK",
 		"file_patterns": ["*.awk", "*.gawk", "*.nawk"],
 		"line_comments": ["#"],
-		"shebangs": ["#!/bin/awk -f"]
+		"shebangs": ["#!/bin/awk -f"],
 	},
 	{
 		"name": "Ballerina",
 		"file_patterns": ["*.bal"],
-		"line_comments": ["//", "#"]
+		"line_comments": ["//", "#"],
 	},
 	{
 		"name": "Bash",
 		"file_patterns": ["*.bash", "*.sh", ".login", ".profile", ".bash_logout", ".bash_profile", ".bashrc", ".bash_aliases"],
 		"line_comments": ["#"],
-		"shebangs": ["#!/bin/bash", "#!/usr/bin/env bash", "#!/bin/sh", "#!/usr/bin/env sh"]
+		"shebangs": ["#!/bin/bash", "#!/usr/bin/env bash", "#!/bin/sh", "#!/usr/bin/env sh"],
 	},
 	{
 		"name": "Batch Script",
 		"file_patterns": ["*.bat", "*.cmd"],
-		"line_comments": ["rem", "::"]
+		"line_comments": ["rem", "::"],
 	},
 	{
 		"name": "Bazel",
 		"file_patterns": ["*.bzl", "*.bazel", "*.bzlmod", "build", "build.bazel", "workspace", "module"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "BCX/FreeBASIC",
 		"file_patterns": ["*.bas", "*.bi"],
 		"line_comments": ["'", "rem"],
-		"block_comments": [["$comment", "$comment"]]
+		"block_comments": [["$comment", "$comment"]],
 	},
 	{
 		"name": "Bean",
 		"file_patterns": ["*.bean", "*.beancount"],
-		"line_comments": [";"]
+		"line_comments": [";"],
 	},
 	{
 		"name": "Beef",
 		"file_patterns": ["*.beef"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "BGT",
 		"file_patterns": ["*.bgt"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Bicep",
 		"file_patterns": ["*.bicep", "*.bicepparam"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Bison",
 		"file_patterns": ["*.y", "*.yy"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
-		"keywords": ["%token", "%type", "%start", "yyparse"]
+		"keywords": ["%token", "%type", "%start", "yyparse"],
 	},
 	{
 		"name": "BlitzBasic",
 		"file_patterns": ["*.bb", "*.decls", "*.bb2"],
-		"line_comments": [";"]
+		"line_comments": [";"],
 	},
 	{
 		"name": "Boo",
 		"file_patterns": ["*.boo"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "BQN",
 		"file_patterns": ["*.bqn"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "Brainfuck",
-		"file_patterns": ["*.bf", "*.b"]
+		"file_patterns": ["*.bf", "*.b"],
 	},
 	{
 		"name": "BrightScript",
 		"file_patterns": ["*.brs"],
-		"line_comments": ["'", "rem"]
+		"line_comments": ["'", "rem"],
 	},
 	{
 		"name": "Buck",
 		"file_patterns": ["BUCK"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "C",
 		"file_patterns": ["*.c", "*.h", "*.ec", "*.pgc"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "C Shell",
 		"file_patterns": ["*.csh"],
 		"line_comments": ["#"],
-		"shebangs": ["#!/bin/csh"]
+		"shebangs": ["#!/bin/csh"],
 	},
 	{
 		"name": "C#",
 		"file_patterns": ["*.cs", "*.csx", "*.cake"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "C++",
 		"file_patterns": ["*.cpp", "*.hpp", "*.c++", "*.h++", "*.cc", "*.cxx", "*.hxx", "*.ino", "*.ipp", "*.cppm", "*.ixx", "*.c++m", "*.pcc", "*.tpp"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "C3",
 		"file_patterns": ["*.c3"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"], ["<*", "*>"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Cabal",
 		"file_patterns": ["*.cabal", "cabal.project", "cabal.project.freeze"],
 		"line_comments": ["--"],
 		"block_comments": [["{-", "-}"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Caddyfile",
 		"file_patterns": ["Caddyfile", "*.caddyfile"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "Cairo",
 		"file_patterns": ["*.Cairo"],
-		"line_comments": ["//"]
+		"line_comments": ["//"],
 	},
 	{
 		"name": "Cangjie",
 		"file_patterns": ["*.cj"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Carbon",
 		"file_patterns": ["*.carbon"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Cassius",
 		"file_patterns": ["*.cassius"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Ceylon",
 		"file_patterns": ["*.ceylon"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "ChaiScript",
 		"file_patterns": ["*.chai"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Chapel",
 		"file_patterns": ["*.chpl"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "ChucK",
 		"file_patterns": ["*.ck"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Circom",
 		"file_patterns": ["*.circom"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Clojure",
 		"file_patterns": ["*.clj", "*.cljs", "*.cljc", "*.edn"],
 		"line_comments": [";"],
-		"block_comments": [["(comment", ")"]]
+		"block_comments": [["(comment", ")"]],
 	},
+	// Trailing commas end here.
 	{
 		"name": "CMake",
 		"file_patterns": ["*.cmake", "*.cmake.in", "*.cmake.rule", "cmakelists.txt"],
