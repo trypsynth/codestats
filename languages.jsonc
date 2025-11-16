@@ -1304,87 +1304,86 @@
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
 	},
-	// Trailing commas end here.
 	{
 		"name": "Oberon",
 		"file_patterns": ["*.ob", "*.ob2", "*.obx", "*.oberon"],
 		"line_comments": [],
 		"block_comments": [["(*", "*)"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Objective-C",
 		"file_patterns": ["*.m"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
-		"keywords": ["@interface", "@implementation", "@protocol", "@property", "@synthesize", "@end", "NSString", "#import"]
+		"keywords": ["@interface", "@implementation", "@protocol", "@property", "@synthesize", "@end", "NSString", "#import"],
 	},
 	{
 		"name": "Objective-C++",
 		"file_patterns": ["*.mm"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Objective-J",
 		"file_patterns": ["*.j", "*.sj"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "OCaml",
 		"file_patterns": ["*.ml", "*.mli", "*.cmx", "*.cmxa", "*.mll", "*.mly"],
 		"block_comments": [["(*", "*)"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Odin",
 		"file_patterns": ["*.odin"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Open Policy Agent",
 		"file_patterns": ["*.rego"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "OpenCL",
 		"file_patterns": ["*.ocl"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "OpenQASM",
 		"file_patterns": ["*.qasm"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "OpenSCAD",
 		"file_patterns": ["*.scad"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "OpenType Feature File",
 		"file_patterns": ["*.fea"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "Org",
 		"file_patterns": ["*.org"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "Oz",
 		"file_patterns": ["*.oz"],
 		"line_comments": ["%"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Pan",
 		"file_patterns": ["*.pan"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "Pascal",
@@ -1392,638 +1391,638 @@
 		"line_comments": ["//"],
 		"block_comments": [["(*", "*)"], ["{", "}"]],
 		"nested_blocks": true,
-		"keywords": ["program", "begin", "end", "var", "procedure", "function", "uses"]
+		"keywords": ["program", "begin", "end", "var", "procedure", "function", "uses"],
 	},
 	{
 		"name": "Perl",
 		"file_patterns": ["*.pl", "*.al", "*.perl", "*.plx", "*.pm", "rexfile", "ack", "cpanfile", "cpanfile.snapshot"],
 		"line_comments": ["#"],
 		"block_comments": [["=pod", "=cut"]],
-		"shebangs": ["#!/usr/bin/perl", "#!/usr/bin/env perl"]
+		"shebangs": ["#!/usr/bin/perl", "#!/usr/bin/env perl"],
 	},
 	{
 		"name": "Pest",
 		"file_patterns": ["*.pest"],
-		"line_comments": ["//"]
+		"line_comments": ["//"],
 	},
 	{
 		"name": "PHP",
 		"file_patterns": ["*.php", "*.php3", "*.php4", "*.php5", "*.phps", "*.phpt", "*.phtml"],
 		"line_comments": ["//", "#"],
 		"block_comments": [["/*", "*/"], ["<!--", "-->"]],
-		"shebangs": ["#!/usr/bin/php", "#!/usr/bin/env php"]
+		"shebangs": ["#!/usr/bin/php", "#!/usr/bin/env php"],
 	},
 	{
 		"name": "PicoLisp",
 		"file_patterns": ["*.l"],
 		"line_comments": ["#"],
-		"keywords": ["de", "def", "dm", "class", "rel", "var"]
+		"keywords": ["de", "def", "dm", "class", "rel", "var"],
 	},
 	{
 		"name": "Pike",
 		"file_patterns": ["*.pike", "*.pmod"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Pine Script",
 		"file_patterns": ["*.pine"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "PKGBUILD",
 		"file_patterns": ["PKGBUILD"],
 		"line_comments": ["#"],
-		"shebangs": ["#!/bin/bash", "#!/usr/bin/env bash", "#!/bin/sh", "#!/usr/bin/env sh"]
+		"shebangs": ["#!/bin/bash", "#!/usr/bin/env bash", "#!/bin/sh", "#!/usr/bin/env sh"],
 	},
 	{
 		"name": "PlantUML",
 		"file_patterns": ["*.puml"],
 		"line_comments": ["'"],
-		"block_comments": [["/'", "'/"]]
+		"block_comments": [["/'", "'/"]],
 	},
 	{
 		"name": "PogoScript",
 		"file_patterns": ["*.pogo"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Poke",
 		"file_patterns": ["*.pk"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Pony",
 		"file_patterns": ["*.pony"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "PostCSS",
 		"file_patterns": ["*.pcss", "*.sss"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "PostScript",
 		"file_patterns": ["*.ps", "*.eps"],
-		"line_comments": ["%"]
+		"line_comments": ["%"],
 	},
 	{
 		"name": "PowerShell",
 		"file_patterns": ["*.ps1", "*.psm1", "*.psd1", "*.ps1xml", "*.cdxml", "*.pssc", "*.psc1"],
 		"line_comments": ["#"],
-		"block_comments": [["<#", "#>"]]
+		"block_comments": [["<#", "#>"]],
 	},
 	{
 		"name": "Prisma",
 		"file_patterns": ["*.prisma"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Processing",
 		"file_patterns": ["*.pde"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Prolog",
 		"file_patterns": ["*.pro"],
 		"line_comments": ["%"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Promela",
 		"file_patterns": ["*.pml"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Protocol Buffers",
 		"file_patterns": ["*.proto"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Pug",
 		"file_patterns": ["*.pug", "*.jade"],
-		"line_comments": ["//", "//-"]
+		"line_comments": ["//", "//-"],
 	},
 	{
 		"name": "Puppet",
 		"file_patterns": ["*.pp"],
 		"line_comments": ["#"],
 		"block_comments": [["/*", "*/"]],
-		"keywords": ["class", "define", "node", "package", "service", "file", "exec", "=>"]
+		"keywords": ["class", "define", "node", "package", "service", "file", "exec", "=>"],
 	},
 	{
 		"name": "PureBasic",
 		"file_patterns": ["*.pb", "*.pbi", "*.pbf", "*.pbp"],
-		"line_comments": [";"]
+		"line_comments": [";"],
 	},
 	{
 		"name": "PureScript",
 		"file_patterns": ["*.purs"],
 		"line_comments": ["--"],
 		"block_comments": [["{-", "-}"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Pyret",
 		"file_patterns": ["*.arr"],
 		"line_comments": ["#"],
-		"block_comments": [["#|", "|#"]]
+		"block_comments": [["#|", "|#"]],
 	},
 	{
 		"name": "Python",
 		"file_patterns": ["*.py", "*.pyw", "*.py2", "*.py3", "*.pip", "*.pyz", "*.pyzw", ".gclient", "SConscript", "SConstruct", "Snakefile", "requirements.txt", "Pipfile", ".pythonrc", "py.typed"],
 		"line_comments": ["#"],
 		"block_comments": [["\"\"\"", "\"\"\""], ["'''", "'''"]],
-		"shebangs": ["#!/usr/bin/python", "#!/usr/bin/env python", "#!/usr/bin/python3", "#!/usr/bin/env python3"]
+		"shebangs": ["#!/usr/bin/python", "#!/usr/bin/env python", "#!/usr/bin/python3", "#!/usr/bin/env python3"],
 	},
 	{
 		"name": "Q",
 		"file_patterns": ["*.q"],
-		"line_comments": ["/"]
+		"line_comments": ["/"],
 	},
 	{
 		"name": "Q#",
 		"file_patterns": ["*.qs"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "QCL",
 		"file_patterns": ["*.qcl"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "QML",
 		"file_patterns": ["*.qml"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "R",
 		"file_patterns": ["*.r", "*.rmd", ".Rprofile"],
 		"line_comments": ["#"],
-		"keywords": ["<-", "function", "library", "data.frame", "ggplot", "lm"]
+		"keywords": ["<-", "function", "library", "data.frame", "ggplot", "lm"],
 	},
 	{
 		"name": "Racket",
 		"file_patterns": ["*.rkt", "*.rktd", "*.rktl", "*.rktm"],
 		"line_comments": [";"],
 		"block_comments": [["#|", "|#"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Raku",
 		"file_patterns": ["*.raku", "*.rakumod", "*.rakutest", "*.pm6", "*.pl6", "*.p6"],
 		"line_comments": ["#"],
 		"block_comments": [["#`(", ")"], ["=begin", "=end"]],
-		"shebangs": ["#!/usr/bin/raku", "#!/usr/bin/perl6"]
+		"shebangs": ["#!/usr/bin/raku", "#!/usr/bin/perl6"],
 	},
 	{
 		"name": "Rebol",
 		"file_patterns": ["*.r", "*.reb", "*.rebol"],
 		"line_comments": [";"],
-		"keywords": ["REBOL", "context", "object!", "func"]
+		"keywords": ["REBOL", "context", "object!", "func"],
 	},
 	{
 		"name": "Red",
 		"file_patterns": ["*.red", "*.reds"],
 		"line_comments": [";"],
-		"block_comments": [["comment {", "}"]]
+		"block_comments": [["comment {", "}"]],
 	},
 	{
 		"name": "ReScript",
 		"file_patterns": ["*.res", "*.resi"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "reStructuredText",
 		"file_patterns": ["*.rst"],
-		"line_comments": [".."]
+		"line_comments": [".."],
 	},
 	{
 		"name": "REXX",
 		"file_patterns": ["*.rexx", "*.rex"],
 		"line_comments": [],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Ring",
 		"file_patterns": ["*.ring", "*.rh"],
 		"line_comments": ["#", "//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Robot Framework",
 		"file_patterns": ["*.robot"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "Roc",
 		"file_patterns": ["*.roc"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "Ruby",
 		"file_patterns": ["*.rb", "*.builder", "*.eye", "*.gemspec", "*.god", "*.jbuilder", "*.mspec", "*.pluginspec", "*.podspec", "*.rabl", "*.rake", "*.rbuild", "*.rbw", "*.rbx", "*.ruby", "*.thor", "*.watchr", ".irbrc", ".pryrc", "Appraisals", "Berksfile", "Brewfile", "Buildfile", "Capfile", "Dangerfile", "Deliverfile", "Fastfile", "Gemfile", "Guardfile", "Jarfile", "Mavenfile", "Podfile", "Puppetfile", "Rakefile", "Snapfile", "Thorfile"],
 		"line_comments": ["#"],
 		"block_comments": [["=begin", "=end"]],
-		"shebangs": ["#!/usr/bin/ruby", "#!/usr/bin/env ruby"]
+		"shebangs": ["#!/usr/bin/ruby", "#!/usr/bin/env ruby"],
 	},
 	{
 		"name": "Rust",
 		"file_patterns": ["*.rs", "*.rs.in", "*.rslib", "*.rlib"],
 		"line_comments": ["//", "///", "//!"],
 		"block_comments": [["/*", "*/"], ["/**", "*/"], ["/*!", "*/"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "SageMath",
 		"file_patterns": ["*.sage", "*.sagews"],
 		"line_comments": ["#"],
-		"block_comments": [["\"\"\"", "\"\"\""], ["'''", "'''"]]
+		"block_comments": [["\"\"\"", "\"\"\""], ["'''", "'''"]],
 	},
 	{
 		"name": "Scala",
 		"file_patterns": ["*.scala", "*.sc", "build.sbt"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
-		"keywords": ["object", "class", "trait", "def", "val", "var", "extends", "with"]
+		"keywords": ["object", "class", "trait", "def", "val", "var", "extends", "with"],
 	},
 	{
 		"name": "Scheme",
 		"file_patterns": ["*.scm", "*.ss"],
 		"line_comments": [";"],
 		"block_comments": [["#|", "|#"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Sed",
 		"file_patterns": ["*.sed"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "Shen",
 		"file_patterns": ["*.shen"],
 		"line_comments": ["\\\\"],
-		"block_comments": [["\\\\*", "*\\\\"]]
+		"block_comments": [["\\\\*", "*\\\\"]],
 	},
 	{
 		"name": "Slim",
 		"file_patterns": ["*.slim"],
-		"line_comments": ["/", "//"]
+		"line_comments": ["/", "//"],
 	},
 	{
 		"name": "Slint",
 		"file_patterns": ["*.slint"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Smalltalk",
 		"file_patterns": ["*.st"],
-		"block_comments": [["\"", "\""]]
+		"block_comments": [["\"", "\""]],
 	},
 	{
 		"name": "Smarty",
 		"file_patterns": ["*.tpl"],
-		"block_comments": [["{{*", "*}}"]]
+		"block_comments": [["{{*", "*}}"]],
 	},
 	{
 		"name": "SNOBOL",
 		"file_patterns": ["*.sno", "*.snob", "*.snobol"],
-		"line_comments": ["*"]
+		"line_comments": ["*"],
 	},
 	{
 		"name": "Solidity",
 		"file_patterns": ["*.sol"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},	
 	{
 		"name": "SpiderBasic",
 		"file_patterns": ["*.sb", "*.sbi", "*.sbf", "*.sbp"],
-		"line_comments": [";"]
+		"line_comments": [";"],
 	},
 	{
 		"name": "SQF",
 		"file_patterns": ["*.sqf"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "SQL",
 		"file_patterns": ["*.sql"],
 		"line_comments": ["--"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Squirrel",
 		"file_patterns": ["*.nut"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Stan",
 		"file_patterns": ["*.stan"],
 		"line_comments": ["//", "#"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Standard ML",
 		"file_patterns": ["*.sml", "*.sig", "*.fun"],
 		"line_comments": [],
 		"block_comments": [["(*", "*)"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Stata",
 		"file_patterns": ["*.do"],
 		"line_comments": ["//", "*"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Stylus",
 		"file_patterns": ["*.styl"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "SuperCollider",
 		"file_patterns": ["*.sc", "*.scd"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
-		"keywords": ["SinOsc", "SynthDef", "Server", "~", ".ar", ".kr"]
+		"keywords": ["SinOsc", "SynthDef", "Server", "~", ".ar", ".kr"],
 	},
 	{
 		"name": "Svelte",
 		"file_patterns": ["*.svelte"],
-		"block_comments": [["<!--", "-->"]]
+		"block_comments": [["<!--", "-->"]],
 	},
 	{
 		"name": "SVG",
 		"file_patterns": ["*.svg"],
-		"block_comments": [["<!--", "-->"]]
+		"block_comments": [["<!--", "-->"]],
 	},
 	{
 		"name": "Swift",
 		"file_patterns": ["*.swift", "*.swiftpm"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Swig",
 		"file_patterns": ["*.swg", "*.i"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "TC Shell",
 		"file_patterns": ["*.tcsh"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "Tcl",
 		"file_patterns": ["*.tcl", "*.tk"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "Teal",
 		"file_patterns": ["*.tl"],
 		"line_comments": ["--"],
-		"block_comments": [["--[[", "--]]"]]
+		"block_comments": [["--[[", "--]]"]],
 	},
 	{
 		"name": "Templ",
 		"file_patterns": ["*.templ"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Tera",
 		"file_patterns": ["*.tera"],
-		"block_comments": [["<!--", "-->"], ["{#", "#}"]]
+		"block_comments": [["<!--", "-->"], ["{#", "#}"]],
 	},
 	{
 		"name": "TeX/LaTeX",
 		"file_patterns": ["*.tex", "*.sty", ".latexmkrc"],
-		"line_comments": ["%"]
+		"line_comments": ["%"],
 	},
 	{
 		"name": "Textile",
-		"file_patterns": ["*.textile"]
+		"file_patterns": ["*.textile"],
 	},
 	{
 		"name": "Thrift",
 		"file_patterns": ["*.thrift"],
 		"line_comments": ["#", "//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "TLA+",
 		"file_patterns": ["*.tla"],
 		"line_comments": ["\\\\"],
-		"block_comments": [["(*", "*)"]]
+		"block_comments": [["(*", "*)"]],
 	},
 	{
 		"name": "Tmux",
 		"file_patterns": ["*.tmux"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "TOML",
 		"file_patterns": ["*.toml"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "Twig",
 		"file_patterns": ["*.twig"],
-		"block_comments": [["{#", "#}"]]
+		"block_comments": [["{#", "#}"]],
 	},
 	{
 		"name": "txt2tags",
 		"file_patterns": ["*.t2t"],
-		"line_comments": ["%"]
+		"line_comments": ["%"],
 	},
 	{
 		"name": "TypeScript",
 		"file_patterns": ["*.ts", "*.tsx", "*.cts", "*.mts"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Umka",
 		"file_patterns": ["*.um"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Unison",
 		"file_patterns": ["*.u", "*.uu"],
 		"line_comments": ["--"],
 		"block_comments": [["{-", "-}"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "UnrealScript",
 		"file_patterns": ["*.uc"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Uxntal",
 		"file_patterns": ["*.tal"],
-		"line_comments": ["(", ")"]
+		"line_comments": ["(", ")"],
 	},
 	{
 		"name": "V",
 		"file_patterns": ["*.v"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},	
 	{
 		"name": "Vala",
 		"file_patterns": ["*.vala", "*.vapi"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Vale",
 		"file_patterns": ["*.vale"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Verilog",
 		"file_patterns": ["*.vh", "*.sv", "*.svh"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "VHDL",
 		"file_patterns": ["*.vhd", "*.vhdl"],
-		"line_comments": ["--"]
+		"line_comments": ["--"],
 	},
 	{
 		"name": "Vim script",
 		"file_patterns": ["*.vim"],
-		"line_comments": ["\""]
+		"line_comments": ["\""],
 	},
 	{
 		"name": "Visual Basic/Visual Basic .NET",
 		"file_patterns": ["*.vb", "*.cls", "*.frm", "*.frx", "*.vba", "*.vbhtml", "*.vbs"],
-		"line_comments": ["'"]
+		"line_comments": ["'"],
 	},
 	{
 		"name": "Vue",
 		"file_patterns": ["*.vue"],
 		"line_comments": ["//"],
 		"block_comments": [["<!--", "-->"], ["/*", "*/"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "WebAssembly",
 		"file_patterns": ["*.wat", "*.wasm"],
 		"line_comments": [";;"],
 		"block_comments": [["(;", ";)"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "WebIDL",
 		"file_patterns": ["*.webidl"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Wenyan",
 		"file_patterns": ["*.wy"],
 		"line_comments": ["注曰"],
-		"block_comments": [["批曰", "也"]]
+		"block_comments": [["批曰", "也"]],
 	},
 	{
 		"name": "WGSL",
 		"file_patterns": ["*.wgsl"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Windows Registry Entry",
 		"file_patterns": ["*.reg"],
-		"line_comments": [";", "#"]
+		"line_comments": [";", "#"],
 	},
 	{
 		"name": "Windows Resource File",
 		"file_patterns": ["*.rc"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "WiX",
 		"file_patterns": ["*.wxs"],
-		"block_comments": [["<!--", "-->"]]
+		"block_comments": [["<!--", "-->"]],
 	},
 	{
 		"name": "Wren",
 		"file_patterns": ["*.wren"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "XML",
 		"file_patterns": ["*.xml"],
-		"block_comments": [["<!--", "-->"]]
+		"block_comments": [["<!--", "-->"]],
 	},
 	{
 		"name": "Yacc",
 		"file_patterns": ["*.y", "*.yacc"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
-		"keywords": ["%token", "%type", "%start", "yyparse"]
+		"keywords": ["%token", "%type", "%start", "yyparse"],
 	},
 	{
 		"name": "YAML",
 		"file_patterns": ["*.yaml", "*.yml", "*.yaml.tmpl", "*.yaml-tmpl", ".yamllint"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "ZenCode",
 		"file_patterns": ["*.zs"],
 		"line_comments": ["//", "#"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Zig",
 		"file_patterns": ["*.zig"],
-		"line_comments": ["//", "///", "//!"]
+		"line_comments": ["//", "///", "//!"],
 	},
 	{
 		"name": "ZoKrates",
 		"file_patterns": ["*.zok"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "ZSH",
 		"file_patterns": ["*.zsh", ".zlogin", ".zlogout", ".zprofile", ".zshenv", ".zshrc"],
 		"line_comments": ["#"],
-		"shebangs": ["#!/bin/zsh"]
-	}
+		"shebangs": ["#!/bin/zsh"],
+	},
 ]
