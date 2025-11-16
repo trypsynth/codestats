@@ -24,7 +24,8 @@ fn main() -> Result<()> {
 				.verbose(verbose)
 				.respect_gitignore(!no_gitignore)
 				.include_hidden(hidden)
-				.follow_symlinks(symlinks);
+				.follow_symlinks(symlinks)
+				.include_file_details(verbose);
 			let analyzer = CodeAnalyzer::new(options);
 			let results = analyzer.analyze()?;
 			let formatter = get_formatter(output);

@@ -162,17 +162,22 @@ fn find_block_comment_end_or_nested_start(
 	block_comments: &[(&str, &str)],
 	nested: bool,
 ) -> Option<(usize, usize, bool)> {
+	let mut best: Option<(usize, usize, bool)> = None;
 	for (start, end) in block_comments {
-		let start_pos = if nested { line.find(start) } else { None };
-		let end_pos = line.find(end);
-		match (start_pos, end_pos) {
-			(Some(s), Some(e)) if s < e => return Some((s, start.len(), true)),
-			(Some(s), None) => return Some((s, start.len(), true)),
-			(_, Some(e)) => return Some((e, end.len(), false)),
-			_ => {}
+		if nested {
+			if let Some(pos) = line.find(start) {
+				if best.map_or(true, |(best_pos, _, is_nested)| pos < best_pos || (pos == best_pos && !is_nested)) {
+					best = Some((pos, start.len(), true));
+				}
+			}
+		}
+		if let Some(pos) = line.find(end) {
+			if best.map_or(true, |(best_pos, _, is_nested)| pos < best_pos || (pos == best_pos && is_nested)) {
+				best = Some((pos, end.len(), false));
+			}
 		}
 	}
-	None
+	best
 }
 
 /// Finds the position of the earliest line comment start marker.

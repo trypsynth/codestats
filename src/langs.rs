@@ -9,8 +9,8 @@ fn matches_pattern(filename: &str, pattern: &str) -> bool {
 
 #[inline]
 fn get_candidates(filename: &str) -> Vec<&'static Language> {
-	if let Some(lang) = PATTERN_MAP.get(filename) {
-		return vec![lang];
+	if let Some(literal_matches) = PATTERN_MAP.get(filename) {
+		return literal_matches.to_vec();
 	}
 	LANGUAGES
 		.iter()
@@ -24,18 +24,13 @@ fn score_language(lang: &Language, content: &str) -> i32 {
 	if lang.line_comments.is_empty() && lang.keywords.is_empty() {
 		return 0;
 	}
-	let sample_content = if content.len() > 10000 {
-		content.lines().take(200).collect::<Vec<_>>().join("\n")
-	} else {
-		content.to_string()
-	};
 	for comment in lang.line_comments {
-		if sample_content.contains(comment) {
+		if content.contains(comment) {
 			score = score.saturating_add(50);
 		}
 	}
 	for keyword in lang.keywords {
-		let count = sample_content.matches(keyword).count();
+		let count = content.matches(keyword).count();
 		let clamped_count = count.min(usize::try_from(i32::MAX / 10).unwrap_or(usize::MAX));
 		// We now know that this is safe because we've clamped the value.
 		#[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
@@ -46,50 +41,37 @@ fn score_language(lang: &Language, content: &str) -> i32 {
 }
 
 #[inline]
-fn disambiguate(candidates: &[&'static Language], content: &str) -> Option<&'static str> {
+fn disambiguate<'a>(candidates: &[&'a Language], content: &str) -> Option<&'a Language> {
 	candidates
 		.iter()
 		.map(|lang| (*lang, score_language(lang, content)))
 		.max_by_key(|(_, score)| *score)
 		.filter(|(_, score)| *score > 0)
-		.map(|(lang, _)| lang.name)
+		.map(|(lang, _)| lang)
+}
+
+#[must_use]
+pub fn detect_language_info(filename: &str, content: Option<&str>) -> Option<&'static Language> {
+	let candidates = get_candidates(filename);
+	match candidates.len() {
+		0 => None,
+		1 => Some(candidates[0]),
+		_ => content
+			.and_then(|file_content| disambiguate(&candidates, file_content))
+			.or_else(|| candidates.first().copied()),
+	}
 }
 
 #[must_use]
 pub fn detect_language(filename: &str, content: Option<&str>) -> Option<&'static str> {
-	let candidates = get_candidates(filename);
-	match candidates.len() {
-		0 => None,
-		1 => Some(candidates[0].name),
-		_ => content.map_or_else(
-			|| Some(candidates[0].name),
-			|file_content| disambiguate(&candidates, file_content).or_else(|| Some(candidates[0].name)),
-		),
-	}
+	detect_language_info(filename, content).map(|lang| lang.name)
 }
 
-/// Get detailed language information by name
-///
-/// Returns the complete language configuration including comment patterns,
-/// file patterns, and other metadata for the specified language.
-///
-/// # Arguments
-///
-/// * `language_name` - The name of the programming language
-///
-/// # Returns
-///
-/// Returns `Some(Language)` if the language is supported, `None` otherwise.
 #[must_use]
 pub fn get_language_info(language_name: &str) -> Option<&'static Language> {
 	LANGUAGE_MAP.get(language_name).copied()
 }
 
-/// Print all supported programming languages to stdout
-///
-/// Displays a complete list of all programming languages that can be detected
-/// and analyzed by the library. The output includes the total count and names
-/// of all supported languages.
 pub fn print_all_languages() {
 	let lang_count = u64::try_from(LANGUAGES.len()).unwrap_or(u64::MAX);
 	println!(

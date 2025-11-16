@@ -4,6 +4,61 @@ use serde::{Deserialize, Serialize};
 
 use crate::utils;
 
+/// Aggregated data about a single file, used for updating totals without always storing per-file detail.
+#[derive(Debug, Clone, Copy)]
+pub struct FileContribution {
+	total_lines: u64,
+	code_lines: u64,
+	comment_lines: u64,
+	blank_lines: u64,
+	shebang_lines: u64,
+	size: u64,
+}
+
+impl FileContribution {
+	#[must_use]
+	pub const fn new(
+		total_lines: u64,
+		code_lines: u64,
+		comment_lines: u64,
+		blank_lines: u64,
+		shebang_lines: u64,
+		size: u64,
+	) -> Self {
+		Self { total_lines, code_lines, comment_lines, blank_lines, shebang_lines, size }
+	}
+
+	#[must_use]
+	pub const fn total_lines(&self) -> u64 {
+		self.total_lines
+	}
+
+	#[must_use]
+	pub const fn code_lines(&self) -> u64 {
+		self.code_lines
+	}
+
+	#[must_use]
+	pub const fn comment_lines(&self) -> u64 {
+		self.comment_lines
+	}
+
+	#[must_use]
+	pub const fn blank_lines(&self) -> u64 {
+		self.blank_lines
+	}
+
+	#[must_use]
+	pub const fn shebang_lines(&self) -> u64 {
+		self.shebang_lines
+	}
+
+	#[must_use]
+	pub const fn size(&self) -> u64 {
+		self.size
+	}
+}
+
 /// Statistics for a single file
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct FileStats {
@@ -115,15 +170,17 @@ pub struct LanguageStats {
 }
 
 impl LanguageStats {
-	pub(crate) fn add_file(&mut self, file_stats: FileStats) {
+	pub(crate) fn add_file(&mut self, contribution: &FileContribution, file_stats: Option<FileStats>) {
 		self.files += 1;
-		self.lines += file_stats.total_lines;
-		self.code_lines += file_stats.code_lines;
-		self.comment_lines += file_stats.comment_lines;
-		self.blank_lines += file_stats.blank_lines;
-		self.shebang_lines += file_stats.shebang_lines;
-		self.size += file_stats.size;
-		self.file_list.push(file_stats);
+		self.lines += contribution.total_lines();
+		self.code_lines += contribution.code_lines();
+		self.comment_lines += contribution.comment_lines();
+		self.blank_lines += contribution.blank_lines();
+		self.shebang_lines += contribution.shebang_lines();
+		self.size += contribution.size();
+		if let Some(stats) = file_stats {
+			self.file_list.push(stats);
+		}
 	}
 
 	pub(crate) fn finalize(&mut self) {
@@ -224,15 +281,20 @@ pub struct AnalysisResults {
 }
 
 impl AnalysisResults {
-	pub(crate) fn add_file_stats(&mut self, language: String, file_stats: FileStats) {
+	pub(crate) fn add_file_stats(
+		&mut self,
+		language: &str,
+		contribution: FileContribution,
+		file_stats: Option<FileStats>,
+	) {
 		self.total_files += 1;
-		self.total_lines += file_stats.total_lines;
-		self.total_code_lines += file_stats.code_lines;
-		self.total_comment_lines += file_stats.comment_lines;
-		self.total_blank_lines += file_stats.blank_lines;
-		self.total_shebang_lines += file_stats.shebang_lines;
-		self.total_size += file_stats.size;
-		self.language_stats.entry(language).or_default().add_file(file_stats);
+		self.total_lines += contribution.total_lines();
+		self.total_code_lines += contribution.code_lines();
+		self.total_comment_lines += contribution.comment_lines();
+		self.total_blank_lines += contribution.blank_lines();
+		self.total_shebang_lines += contribution.shebang_lines();
+		self.total_size += contribution.size();
+		self.language_stats.entry(language.to_string()).or_default().add_file(&contribution, file_stats);
 	}
 
 	/// Get the total number of files analyzed

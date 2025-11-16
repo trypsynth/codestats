@@ -1,7 +1,7 @@
 #![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 
 use std::{
-	collections::{HashMap, HashSet},
+	collections::{BTreeMap, HashMap, HashSet},
 	env,
 	error::Error,
 	fmt::Write,
@@ -71,17 +71,24 @@ fn get_language_schema() -> Vec<(&'static str, &'static str)> {
 	]
 }
 
-fn build_pattern_mappings(languages: &[ProcessedLanguage]) -> Vec<(String, usize)> {
-	let mut pattern_mappings = HashMap::new();
+fn build_pattern_mappings(languages: &[ProcessedLanguage]) -> Vec<(String, Vec<usize>)> {
+	let mut literal_map: BTreeMap<String, Vec<usize>> = BTreeMap::new();
 	for (lang_idx, lang) in languages.iter().enumerate() {
+		let mut seen_patterns = HashSet::new();
 		for pattern in &lang.file_patterns {
-			pattern_mappings.insert(pattern.clone(), lang_idx);
+			if pattern.contains('*') {
+				continue;
+			}
+			if !seen_patterns.insert(pattern) {
+				continue;
+			}
+			literal_map.entry(pattern.clone()).or_default().push(lang_idx);
 		}
 	}
-	pattern_mappings.into_iter().collect()
+	literal_map.into_iter().collect()
 }
 
-fn render_languages(languages: &[ProcessedLanguage], pattern_mappings: &[(String, usize)]) -> String {
+fn render_languages(languages: &[ProcessedLanguage], pattern_mappings: &[(String, Vec<usize>)]) -> String {
 	let mut output = String::new();
 	output.push_str("use phf::{Map, phf_map};\n\n");
 	output.push_str("#[derive(Debug, Clone, PartialEq, Eq)]\n");
@@ -108,9 +115,10 @@ fn render_languages(languages: &[ProcessedLanguage], pattern_mappings: &[(String
 		let _ = writeln!(output, "\t{} => &LANGUAGES[{index}],", render_str(&lang.name));
 	}
 	output.push_str("};\n\n");
-	output.push_str("pub static PATTERN_MAP: Map<&'static str, &Language> = phf_map! {\n");
-	for (pattern, index) in pattern_mappings {
-		let _ = writeln!(output, "\t{} => &LANGUAGES[{index}],", render_str(pattern));
+	output.push_str("pub static PATTERN_MAP: Map<&'static str, &'static [&'static Language]> = phf_map! {\n");
+	for (pattern, indexes) in pattern_mappings {
+		let lang_refs = indexes.iter().map(|index| format!("&LANGUAGES[{index}]")).collect::<Vec<_>>().join(", ");
+		let _ = writeln!(output, "\t{} => &[{lang_refs}],", render_str(pattern));
 	}
 	output.push_str("};\n");
 	output
@@ -437,10 +445,7 @@ fn remove_trailing_commas(input: &str) -> String {
 			',' => {
 				let idx = output.len();
 				output.push(',');
-				pending_comma = Some(PendingComma {
-					idx,
-					whitespace: String::new(),
-				});
+				pending_comma = Some(PendingComma { idx, whitespace: String::new() });
 			}
 			_ => output.push(c),
 		}

@@ -12,4 +12,4 @@ pub use analysis::{
 	classify_line,
 };
 pub use display::{OutputFormat, OutputFormatter, get_formatter};
-pub use langs::{detect_language, get_language_info};
+pub use langs::{detect_language, detect_language_info, get_language_info};
