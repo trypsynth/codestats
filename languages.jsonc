@@ -683,247 +683,246 @@
 		"file_patterns": ["*.po", "*.pot"],
 		"line_comments": ["#"],
 	},
-	// Trailing commas end here.
 	{
 		"name": "Gleam",
 		"file_patterns": ["*.gleam"],
-		"line_comments": ["//", "///", "////"]
+		"line_comments": ["//", "///", "////"],
 	},
 	{
 		"name": "GLSL",
 		"file_patterns": ["*.glsl", "*.vert", "*.frag", "*.geom", "*.tesc", "*.tese", "*.comp", "*.rcall", "*.rmiss", "*.rchit"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "GML",
 		"file_patterns": ["*.gml"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Go",
 		"file_patterns": ["*.go", "*.tmpl", "*.gohtml", "*.gotmpl"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Gosu",
 		"file_patterns": ["*.gs", "*.gsx"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Gradle",
 		"file_patterns": ["*.gradle", "gradle.properties"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Grain",
 		"file_patterns": ["*.gr"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "GraphQL",
 		"file_patterns": ["*.graphql", "*.gql"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "Groovy",
 		"file_patterns": ["*.groovy", "*.grt", "*.gtpl", "*.gvy", "*.gy", "*.gsh"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Gwion",
 		"file_patterns": ["*.gw"],
-		"line_comments": ["#!"]
+		"line_comments": ["#!"],
 	},
 	{
 		"name": "Hack",
 		"file_patterns": ["*.hh", "*.hhi", "*.hack"],
 		"line_comments": ["//", "#"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Haml",
 		"file_patterns": ["*.haml"],
-		"line_comments": ["-#"]
+		"line_comments": ["-#"],
 	},
 	{
 		"name": "Hamlet",
 		"file_patterns": ["*.hamlet"],
-		"block_comments": [["<!--", "-->"]]
+		"block_comments": [["<!--", "-->"]],
 	},
 	{
 		"name": "Handlebars",
 		"file_patterns": ["*.hbs", "*.handlebars"],
-		"block_comments": [["{{!--", "--}}"]]
+		"block_comments": [["{{!--", "--}}"]],
 	},
 	{
 		"name": "Happy",
 		"file_patterns": ["*.y"],
 		"line_comments": ["--"],
 		"block_comments": [["{-", "-}"]],
-		"keywords": ["%name", "%tokentype", "%token", "%%"]
+		"keywords": ["%name", "%tokentype", "%token", "%%"],
 	},
 	{
 		"name": "Haskell",
 		"file_patterns": ["*.hs", "*.lhs", "*.hsc", "*.hs-boot", ".ghci"],
 		"line_comments": ["--"],
 		"block_comments": [["{-", "-}"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Haxe",
 		"file_patterns": ["*.hx"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "HCL",
 		"file_patterns": ["*.tf", "*.hcl", "*.tfvars"],
 		"line_comments": ["#", "//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Headache",
 		"file_patterns": ["*.ha"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "HLSL",
 		"file_patterns": ["*.hlsl", "*.fx", "*.fxh", "*.hlsli"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "HolyC",
 		"file_patterns": ["*.hc", "*.zc"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "HTML",
 		"file_patterns": ["*.html", "*.htm", "*.xht", "*.xhtml"],
-		"block_comments": [["<!--", "-->"]]
+		"block_comments": [["<!--", "-->"]],
 	},
 	{
 		"name": "Hy",
 		"file_patterns": ["*.hy"],
-		"line_comments": [";"]
+		"line_comments": [";"],
 	},
 	{
 		"name": "Icon",
 		"file_patterns": ["*.icn"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "IDL",
 		"file_patterns": ["*.idl", "*.widl"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Idris",
 		"file_patterns": ["*.idr", "*.lidr"],
 		"line_comments": ["--"],
 		"block_comments": [["{-", "-}"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Inform 7",
 		"file_patterns": ["*.ni", "*.i7x"],
-		"block_comments": [["[", "]"]]
+		"block_comments": [["[", "]"]],
 	},
 	{
 		"name": "INI",
 		"file_patterns": ["*.ini", "*.cfg", "*.prefs", ".editorconfig", ".gitconfig", "buildozer.spec"],
-		"line_comments": [";", "#"]
+		"line_comments": [";", "#"],
 	},
 	{
 		"name": "Inno Setup",
 		"file_patterns": ["*.iss", "*.ish"],
 		"line_comments": [";", "//"],
-		"block_comments": [["{", "}"], ["(*", "*)"]]
+		"block_comments": [["{", "}"], ["(*", "*)"]],
 	},
 	{
 		"name": "Io",
 		"file_patterns": ["*.io"],
 		"line_comments": ["//", "#"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Isabelle",
 		"file_patterns": ["*.thy"],
 		"line_comments": ["--"],
-		"block_comments": [["{*", "*}"], ["(*", "*)"], ["‹", "›"], ["\\\\<open>", "\\\\<close>"]]
+		"block_comments": [["{*", "*}"], ["(*", "*)"], ["‹", "›"], ["\\\\<open>", "\\\\<close>"]],
 	},
 	{
 		"name": "J",
 		"file_patterns": ["*.ijs"],
-		"line_comments": ["NB."]
+		"line_comments": ["NB."],
 	},
 	{
 		"name": "Jai",
 		"file_patterns": ["*.jai"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Janet",
 		"file_patterns": ["*.janet"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "Java",
 		"file_patterns": ["*.java", "*.jav"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Java Server Pages",
 		"file_patterns": ["*.jsp"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"], ["<!--", "-->"]]
+		"block_comments": [["/*", "*/"], ["<!--", "-->"]],
 	},
 	{
 		"name": "JavaScript",
 		"file_patterns": ["*.js", "*.cjs", "*.jsx", "*.jscad", "*.jsfl", "*.mjs", "*.njs", "*.sjs", "*.ssjs", "*.xsjs", "*.xsjslib", "*.es", "*.es6", "*.jake", ".babelrc", ".eslintrc", ".prettierrc"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
-		"shebangs": ["#!/usr/bin/node", "#!/usr/bin/env node"]
+		"shebangs": ["#!/usr/bin/node", "#!/usr/bin/env node"],
 	},
 	{
 		"name": "JAWS Script",
 		"file_patterns": ["*.jss", "*.jsh"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Jinja2",
 		"file_patterns": ["*.j2", "*.jinja", "*.jinja2"],
 		"line_comments": ["{#"],
-		"block_comments": [["{#", "#}"]]
+		"block_comments": [["{#", "#}"]],
 	},
 	{
 		"name": "jq",
 		"file_patterns": ["*.jq"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "JSLT",
 		"file_patterns": ["*.jslt"],
-		"line_comments": ["//"]
+		"line_comments": ["//"],
 	},
 	{
 		"name": "JSON",
-		"file_patterns": ["*.json", "*.geojson", "*.ndjson", "*.jsonl"]
+		"file_patterns": ["*.json", "*.geojson", "*.ndjson", "*.jsonl"],
 	},
 	{
 		"name": "JSONC",
@@ -935,376 +934,377 @@
 		"name": "Jsonet",
 		"file_patterns": ["*.jsonet", "*.libsonnet"],
 		"line_comments": ["//", "#"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Julia",
 		"file_patterns": ["*.jl"],
 		"line_comments": ["#"],
 		"block_comments": [["#=", "=#"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Jupyter Notebook",
-		"file_patterns": ["*.ipynb"]
+		"file_patterns": ["*.ipynb"],
 	},
 	{
 		"name": "Just",
 		"file_patterns": ["*.jjust", "justfile"],
 		"line_comments": ["#"],
-		"shebangs": ["#!/usr/bin/env just --justfile"]
+		"shebangs": ["#!/usr/bin/env just --justfile"],
 	},
 	{
 		"name": "K",
 		"file_patterns": ["*.k"],
-		"line_comments": ["/"]
+		"line_comments": ["/"],
 	},
 	{
 		"name": "Kaitai Struct",
 		"file_patterns": ["*.ksy"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "Kakoune script",
 		"file_patterns": ["*.kak"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "Koka",
 		"file_patterns": ["*.kk"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Korn Shell",
 		"file_patterns": ["*.ksh"],
 		"line_comments": ["#"],
-		"shebangs": ["#!/bin/ksh"]
+		"shebangs": ["#!/bin/ksh"],
 	},
 	{
 		"name": "Kotlin",
 		"file_patterns": ["*.kt", "*.kts", "*.ktm"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "KV Language",
 		"file_patterns": ["*.kv"],
-		"line_comments": ["# "]
+		"line_comments": ["# "],
 	},
 	{
 		"name": "LALRPOP",
 		"file_patterns": ["*.lalrpop"],
-		"line_comments": ["//"]
+		"line_comments": ["//"],
 	},
 	{
 		"name": "Lauterbach CMM",
 		"file_patterns": ["*.cmm"],
-		"line_comments": [";"]
+		"line_comments": [";"],
 	},
 	{
 		"name": "LD Script",
 		"file_patterns": ["*.ld", "*.lds"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Lean",
 		"file_patterns": ["*.lean", "*.hlean"],
 		"line_comments": ["--"],
-		"block_comments": [["/-", "-/"]]
+		"block_comments": [["/-", "-/"]],
 	},	
 	{
 		"name": "Less",
 		"file_patterns": ["*.less"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Lex",
 		"file_patterns": ["*.l", "*.lex"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
-		"keywords": ["%%", "yy", "BEGIN", "ECHO"]
+		"keywords": ["%%", "yy", "BEGIN", "ECHO"],
 	},
 	{
 		"name": "LilyPond",
 		"file_patterns": ["*.ly", "*.ily"],
 		"line_comments": ["%"],
-		"block_comments": [["%{", "%}"]]
+		"block_comments": [["%{", "%}"]],
 	},
 	{
 		"name": "Lingua Franca",
 		"file_patterns": ["*.lf"],
 		"line_comments": ["//", "#"],
 		"block_comments": [["/*", "*/"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Liquid Templates",
 		"file_patterns": ["*.liquid"],
-		"block_comments": [["<!--", "-->"], ["{% comment %}", "{% endcomment %}"]]
+		"block_comments": [["<!--", "-->"], ["{% comment %}", "{% endcomment %}"]],
 	},
 	{
 		"name": "LiveScript",
 		"file_patterns": ["*.ls"],
 		"line_comments": ["#"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "LLVM IR",
 		"file_patterns": ["*.ll", "*.bc"],
-		"line_comments": [";"]
+		"line_comments": [";"],
 	},	
 	{
 		"name": "Logtalk",
 		"file_patterns": ["*.lgt", "*.logtalk"],
 		"line_comments": ["%"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Lolcode",
 		"file_patterns": ["*.lol"],
 		"line_comments": ["BTW"],
-		"block_comments": [["OBTW", "TLDR"]]
+		"block_comments": [["OBTW", "TLDR"]],
 	},
 	{
 		"name": "Lua",
 		"file_patterns": ["*.lua", "*.wlua", "*.rockspec", ".luacheckrc"],
 		"line_comments": ["--"],
 		"block_comments": [["--[[", "--]]"]],
-		"shebangs": ["#!/usr/bin/lua", "#!/usr/bin/env lua"]
+		"shebangs": ["#!/usr/bin/lua", "#!/usr/bin/env lua"],
 	},
 	{
 		"name": "Luau",
 		"file_patterns": ["*.luau", "*.project.json", ".robloxrc"],
 		"line_comments": ["--"],
 		"block_comments": [["--[[", "--]]"]],
-		"shebangs": ["#!/usr/bin/env luau"]
+		"shebangs": ["#!/usr/bin/env luau"],
 	},
 	{
 		"name": "M4",
 		"file_patterns": ["*.m4"],
-		"line_comments": ["#", "dnl"]
+		"line_comments": ["#", "dnl"],
 	},
 	{
 		"name": "Madlang",
 		"file_patterns": ["*.mad"],
 		"line_comments": ["#"],
-		"block_comments": [["{#", "#}"]]
+		"block_comments": [["{#", "#}"]],
 	},
 	{
 		"name": "Makefile",
 		"file_patterns": ["*.mak", "*.make", "*.mk", "*.mkfile", "BSDmakefile", "GNUmakefile", "Kbuild", "Makefile", "Makefile.boot", "Makefile.frag", "Makefile.in", "Makefile.inc", "Makefile.wat", "makefile", "makefile.sco", "mkfile"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "Markdown",
 		"file_patterns": ["*.md", "*.markdown", "*.mdx", "*.mdown", "*.mdwn", "*.mkd", "*.mkdn", "*.mkdown", "*.ronn"],
-		"block_comments": [["<!--", "-->"]]
+		"block_comments": [["<!--", "-->"]],
 	},
 	{
 		"name": "MATLAB",
 		"file_patterns": ["*.m"],
 		"line_comments": ["%"],
 		"block_comments": [["%{", "%}"]],
-		"keywords": ["function", "classdef", "end", "disp", "plot", "elseif"]
+		"keywords": ["function", "classdef", "end", "disp", "plot", "elseif"],
 	},
 	{
 		"name": "Maven",
 		"file_patterns": ["pom.xml"],
-		"block_comments": [["<!--", "-->"]]
+		"block_comments": [["<!--", "-->"]],
 	},
 	{
 		"name": "max",
-		"file_patterns": ["*.maxpat"]
+		"file_patterns": ["*.maxpat"],
 	},
 	{
 		"name": "Menhir",
 		"file_patterns": ["*.menhir", "*.vy"],
 		"line_comments": ["//"],
 		"block_comments": [["(*", "*)"], ["/*", "*/"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Mercury",
 		"file_patterns": ["*.m"],
 		"line_comments": ["%"],
 		"block_comments": [["/*", "*/"]],
-		"keywords": [":- module", ":- pred", ":- func", ":- type", "io.write_string"]
+		"keywords": [":- module", ":- pred", ":- func", ":- type", "io.write_string"],
 	},
 	{
 		"name": "Meson",
 		"file_patterns": ["meson.build", "meson_options.txt"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "MessagePack",
-		"file_patterns": ["*.msgpack"]
+		"file_patterns": ["*.msgpack"],
 	},
 	{
 		"name": "Metal Shading Language",
 		"file_patterns": ["*.metal"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Mint",
-		"file_patterns": ["*.mint"]
+		"file_patterns": ["*.mint"],
 	},
 	{
 		"name": "Mlatu",
 		"file_patterns": ["*.mlt"],
-		"line_comments": ["//"]
+		"line_comments": ["//"],
 	},
 	{
 		"name": "Modelica",
 		"file_patterns": ["*.mo", "*.mos"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Modula-2/3",
 		"file_patterns": ["*.m3", "*.mi"],
 		"block_comments": [["(*", "*)"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Module Definition",
 		"file_patterns": ["*.def"],
-		"line_comments": [";"]
+		"line_comments": [";"],
 	},
 	{
 		"name": "Mojo",
 		"file_patterns": ["*.mojo", "*.🔥"],
 		"line_comments": ["#"],
-		"block_comments": [["\"\"\"", "\"\"\""], ["'''", "'''"]]
+		"block_comments": [["\"\"\"", "\"\"\""], ["'''", "'''"]],
 	},
 	{
 		"name": "Monkey C",
 		"file_patterns": ["*.mc"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Moo",
 		"file_patterns": ["*.moo"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "MoonBit",
 		"file_patterns": ["*.mbt", "*.mbti"],
-		"line_comments": ["//"]
+		"line_comments": ["//"],
 	},
 	{
 		"name": "MoonScript",
 		"file_patterns": ["*.moon"],
 		"line_comments": ["--"],
-		"block_comments": [["--[[", "--]]"]]
+		"block_comments": [["--[[", "--]]"]],
 	},
 	{
 		"name": "Motoko",
 		"file_patterns": ["*.mot"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Move",
 		"file_patterns": ["*.move"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "MSBuild",
 		"file_patterns": ["*.csproj", "*.vbproj", "*.fsproj", "*.props", "*.targets"],
-		"block_comments": [["<!--", "-->"]]
+		"block_comments": [["<!--", "-->"]],
 	},
 	{
 		"name": "Mustache",
 		"file_patterns": ["*.mustache"],
-		"block_comments": [["{{!", "}}"]]
+		"block_comments": [["{{!", "}}"]],
 	},
 	{
 		"name": "NASM",
 		"file_patterns": ["*.nasm"],
 		"line_comments": [";", "#"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Nearley",
 		"file_patterns": ["*.ne"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "Nemerle",
 		"file_patterns": ["*.n"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Nextflow",
 		"file_patterns": ["*.nextflow", "*.nf"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Nginx Config",
 		"file_patterns": ["nginx.conf", "*.nginx"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "Nim",
 		"file_patterns": ["*.nim"],
 		"line_comments": ["#", "##"],
 		"block_comments": [["#[", "]#"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Ninja",
 		"file_patterns": ["build.ninja"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "Nix",
 		"file_patterns": ["*.nix"],
 		"line_comments": ["#"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},	
 	{
 		"name": "Not Quite Perl",
 		"file_patterns": ["*.nqp"],
 		"line_comments": ["#"],
-		"block_comments": [["=begin", "=end"]]
+		"block_comments": [["=begin", "=end"]],
 	},
 	{
 		"name": "NSIS",
 		"file_patterns": ["*.nsi", "*.nsh"],
 		"line_comments": [";", "#"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "NuGet Config",
 		"file_patterns": ["nuget.config", "packages.config", "nugetdefaults.config"],
-		"block_comments": [["<!--", "-->"]]
+		"block_comments": [["<!--", "-->"]],
 	},
 	{
 		"name": "Nunjucks Templates",
 		"file_patterns": ["*.njk"],
-		"block_comments": [["{#", "#}"]]
+		"block_comments": [["{#", "#}"]],
 	},
 	{
 		"name": "Nushell",
 		"file_patterns": ["*.nu"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "NVGT",
 		"file_patterns": ["*.nvgt", ".nvgtrc"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
+	// Trailing commas end here.
 	{
 		"name": "Oberon",
 		"file_patterns": ["*.ob", "*.ob2", "*.obx", "*.oberon"],
