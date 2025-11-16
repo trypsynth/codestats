@@ -4,67 +4,67 @@
 		"file_patterns": ["*.8th"],
 		"line_comments": ["\\\\ ", "-- "],
 		"block_comments": [["(*", "*)"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "ABAP",
 		"file_patterns": ["*.abap"],
-		"line_comments": ["*"]
+		"line_comments": ["*"],
 	},
 	{
 		"name": "ABNF",
 		"file_patterns": ["*.abnf"],
-		"line_comments": [";"]
+		"line_comments": [";"],
 	},
 	{
 		"name": "ActionScript",
 		"file_patterns": ["*.actionscript"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Ada",
 		"file_patterns": ["*.ada", "*.adb", "*.ads"],
-		"line_comments": ["--"]
+		"line_comments": ["--"],
 	},
 	{
 		"name": "Agda",
 		"file_patterns": ["*.agda", "*.lagda"],
 		"line_comments": ["--"],
 		"block_comments": [["{-", "-}"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Alex",
-		"file_patterns": ["*.x"]
+		"file_patterns": ["*.x"],
 	},
 	{
 		"name": "Alloy",
 		"file_patterns": ["*.als"],
 		"line_comments": ["//", "--"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "AngelScript",
 		"file_patterns": ["*.as", "*.angelscript"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Apache Config",
 		"file_patterns": [".htaccess", "*.conf", "httpd.conf", "apache2.conf"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "Apex",
 		"file_patterns": ["*.apex", "*.apexcls", "*.trigger"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "APL",
 		"file_patterns": ["*.apl", "*.aplf", "*.apls"],
-		"line_comments": ["⍝"]
+		"line_comments": ["⍝"],
 	},
 	{
 		"name": "AppleScript",
