@@ -924,7 +924,13 @@
 	},
 	{
 		"name": "JSON",
-		"file_patterns": ["*.json", "*.geojson", "*.jsonc", "*.ndjson", "*.jsonl"]
+		"file_patterns": ["*.json", "*.geojson", "*.ndjson", "*.jsonl"]
+	},
+	{
+		"name": "JSONC",
+		"file_patterns": ["*.jsonc"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Jsonet",
