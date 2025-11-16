@@ -334,96 +334,95 @@
 		"line_comments": [";"],
 		"block_comments": [["(comment", ")"]],
 	},
-	// Trailing commas end here.
 	{
 		"name": "CMake",
 		"file_patterns": ["*.cmake", "*.cmake.in", "*.cmake.rule", "cmakelists.txt"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "COBOL",
 		"file_patterns": ["*.cob", "*.cbl", "*.ccp", "*.cobol", "*.cpy"],
-		"line_comments": ["*"]
+		"line_comments": ["*"],
 	},
 	{
 		"name": "Cobra",
 		"file_patterns": ["*.cobra"],
 		"line_comments": ["#"],
-		"block_comments": [["/#", "#/"]]
+		"block_comments": [["/#", "#/"]],
 	},
 	{
 		"name": "CodeQL",
 		"file_patterns": ["*.ql", "*.qll"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "CoffeeScript",
 		"file_patterns": ["*.coffee", "*.cjsx"],
 		"line_comments": ["#"],
-		"block_comments": [["###", "###"]]
+		"block_comments": [["###", "###"]],
 	},
 	{
 		"name": "Cogent",
 		"file_patterns": ["*.cogent"],
-		"line_comments": ["--"]
+		"line_comments": ["--"],
 	},
 	{
 		"name": "ColdFusion",
 		"file_patterns": ["*.cfm", "*.cfc"],
 		"line_comments": ["//"],
-		"block_comments": [["<!---", "--->"], ["/*", "*/"]]
+		"block_comments": [["<!---", "--->"], ["/*", "*/"]],
 	},
 	{
 		"name": "Common Lisp",
 		"file_patterns": ["*.lisp", "*.lsp", "*.asd", "*.cl"],
 		"line_comments": [";"],
 		"block_comments": [["#|", "|#"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Coq",
 		"file_patterns": ["*.coq"],
 		"block_comments": [["(*", "*)"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Crystal",
 		"file_patterns": ["*.cr"],
 		"line_comments": ["#"],
-		"shebangs": ["#!/usr/bin/crystal"]
+		"shebangs": ["#!/usr/bin/crystal"],
 	},
 	{
 		"name": "CSON",
 		"file_patterns": ["*.cson"],
 		"line_comments": ["#"],
-		"block_comments": [["###", "###"]]
+		"block_comments": [["###", "###"]],
 	},
 	{
 		"name": "CSS",
 		"file_patterns": ["*.css", "*.sass", "*.scss", "*.postcss"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "CSV",
-		"file_patterns": ["*.csv"]
+		"file_patterns": ["*.csv"],
 	},
 	{
 		"name": "CUDA",
 		"file_patterns": ["*.cu", "*.cuh", "*.ptx"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "CUE",
 		"file_patterns": ["*.cue"],
-		"line_comments": ["//"]
+		"line_comments": ["//"],
 	},
 	{
 		"name": "Cython",
 		"file_patterns": ["*.pyx", "*.pxd", "*.pyi", "*.pxi"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "D",
@@ -431,260 +430,260 @@
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"], ["/+", "+/"]],
 		"nested_blocks": true,
-		"shebangs": ["#!"]
+		"shebangs": ["#!"],
 	},
 	{
 		"name": "D2",
 		"file_patterns": ["*.d2"],
 		"line_comments": ["#"],
-		"block_comments": [["\"\"\"", "\"\"\""]]
+		"block_comments": [["\"\"\"", "\"\"\""]],
 	},
 	{
 		"name": "Dafny",
 		"file_patterns": ["*.dfy"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "DAML",
 		"file_patterns": ["*.daml"],
 		"line_comments": ["--"],
 		"block_comments": [["{-", "-}"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Dart",
 		"file_patterns": ["*.dart"],
 		"line_comments": ["//", "///"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Delphi/Object Pascal",
 		"file_patterns": ["*.dpr", "*.dpk"],
 		"line_comments": ["//"],
-		"block_comments": [["(*", "*)"], ["{", "}"]]
+		"block_comments": [["(*", "*)"], ["{", "}"]],
 	},	
 	{
 		"name": "Device Tree",
 		"file_patterns": ["*.dts", "*.dtsi"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Dhall",
 		"file_patterns": ["*.dhall"],
 		"line_comments": ["--"],
 		"block_comments": [["{-", "-}"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Dockerfile",
 		"file_patterns": ["*.dockerfile", "*.dockerignore", "Dockerfile"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "DotNet Resource",
 		"file_patterns": ["*.resx"],
-		"block_comments": [["<!--", "-->"]]
+		"block_comments": [["<!--", "-->"]],
 	},
 	{
 		"name": "Dream Maker",
 		"file_patterns": ["*.dm", "*.dme"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Dust.js",
 		"file_patterns": ["*.dust"],
-		"block_comments": [["{!", "!}"]]
+		"block_comments": [["{!", "!}"]],
 	},
 	{
 		"name": "Dylan",
 		"file_patterns": ["*.dylan", "*.lid"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "EBNF",
 		"file_patterns": ["*.ebnf"],
 		"line_comments": ["//"],
-		"block_comments": [["(*", "*)"]]
+		"block_comments": [["(*", "*)"]],
 	},
 	{
 		"name": "Ebuild",
 		"file_patterns": ["*.ebuild", "*.eclass"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "EdgeQL",
 		"file_patterns": ["*.edgeql"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "Effekt",
 		"file_patterns": ["*.effekt"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Eiffel",
 		"file_patterns": ["*.e"],
 		"line_comments": ["--"],
-		"keywords": ["class", "feature", "is", "do", "end", "require", "ensure", "invariant"]
+		"keywords": ["class", "feature", "is", "do", "end", "require", "ensure", "invariant"],
 	},
-		
 	{
 		"name": "EJS",
 		"file_patterns": ["*.ejs"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"], ["<!--", "-->"]]
+		"block_comments": [["/*", "*/"], ["<!--", "-->"]],
 	},
 	{
 		"name": "Elixir",
 		"file_patterns": ["*.ex", "*.exs"],
 		"line_comments": ["#"],
-		"keywords": ["defmodule", "def", "defp", "do", "end", "|>"]
+		"keywords": ["defmodule", "def", "defp", "do", "end", "|>"],
 	},
 	{
 		"name": "Elm",
 		"file_patterns": ["*.elm"],
 		"line_comments": ["--"],
 		"block_comments": [["{-", "-}"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Elvish",
 		"file_patterns": ["*.elv"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "Emacs Dev Env",
 		"file_patterns": ["*.ede"],
-		"line_comments": [";"]
+		"line_comments": [";"],
 	},
 	{
 		"name": "Emacs Lisp",
 		"file_patterns": ["*.el"],
-		"line_comments": [";"]
+		"line_comments": [";"],
 	},
 	{
 		"name": "EmberScript",
 		"file_patterns": ["*.em"],
 		"line_comments": ["#"],
-		"block_comments": [["###", "###"]]
+		"block_comments": [["###", "###"]],
 	},
 	{
 		"name": "Emojicode",
 		"file_patterns": ["*.emojic", "*.🍇"],
 		"line_comments": ["💭"],
-		"block_comments": [["💭🔜", "🔚💭"], ["📗", "📗"], ["📘", "📘"]]
+		"block_comments": [["💭🔜", "🔚💭"], ["📗", "📗"], ["📘", "📘"]],
 	},
 	{
 		"name": "Erlang",
 		"file_patterns": ["*.erl", "*.hrl"],
-		"line_comments": ["%"]
+		"line_comments": ["%"],
 	},
 	{
 		"name": "Euphoria",
 		"file_patterns": ["*.e", "*.ex", "*.exw", "*.ew", "*.eu"],
 		"line_comments": ["--"],
 		"block_comments": [["/*", "*/"]],
-		"keywords": ["procedure", "function", "end procedure", "end function", "with", "without"]
+		"keywords": ["procedure", "function", "end procedure", "end function", "with", "without"],
 	},
 	{
 		"name": "F#",
 		"file_patterns": ["*.fs", "*.fsi", "*.fsx", "*.fsscript"],
 		"line_comments": ["//"],
 		"block_comments": [["(*", "*)"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "F*",
 		"file_patterns": ["*.fst", "*.fsti"],
 		"line_comments": ["//"],
 		"block_comments": [["(*", "*)"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Factor",
 		"file_patterns": ["*.factor"],
 		"line_comments": ["!", "#!"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Fantom",
 		"file_patterns": ["*.fan"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Faust",
 		"file_patterns": ["*.dsp"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Felix",
 		"file_patterns": ["*.flx"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Fennel",
 		"file_patterns": ["*.fnl"],
 		"line_comments": [";"],
 		"block_comments": [["#|", "|#"]],
-		"nested_blocks": true
+		"nested_blocks": true,
 	},
 	{
 		"name": "Fish",
 		"file_patterns": ["*.fish"],
 		"line_comments": ["#"],
-		"shebangs": ["#!/bin/fish"]
+		"shebangs": ["#!/bin/fish"],
 	},
 	{
 		"name": "FlatBuffers Schema",
 		"file_patterns": ["*.fbs"],
 		"line_comments": ["//"],
-		"block_comments": [["/*", "*/"]]
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Forth",
 		"file_patterns": ["*.4th", "*.forth", "*.fr", "*.fth", "*.frt", "*.f83", "*.fb", "*.fpm", "*.e4", "*.rx", "*.ft"],
 		"line_comments": ["\\\\"],
-		"block_comments": [["( ", ")"]]
+		"block_comments": [["( ", ")"]],
 	},
 	{
 		"name": "Fortran",
 		"file_patterns": ["*.f", "*.for", "*.f77", "*.f90", "*.f95", "*.f03"],
-		"line_comments": ["!", "C", "c"]
+		"line_comments": ["!", "C", "c"],
 	},
 	{
 		"name": "FreeMarker",
 		"file_patterns": ["*.ftl", "*.ftlh", "*.ftlx"],
-		"block_comments": [["<#--", "-->"]]
+		"block_comments": [["<#--", "-->"]],
 	},
 	{
 		"name": "Futhark",
 		"file_patterns": ["*.fut"],
-		"line_comments": ["--"]
+		"line_comments": ["--"],
 	},
 	{
 		"name": "GDB Script",
 		"file_patterns": ["*.gdb"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "GDScript",
 		"file_patterns": ["*.gd"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
 	{
 		"name": "Gettext",
 		"file_patterns": ["*.po", "*.pot"],
-		"line_comments": ["#"]
+		"line_comments": ["#"],
 	},
+	// Trailing commas end here.
 	{
 		"name": "Gleam",
 		"file_patterns": ["*.gleam"],
