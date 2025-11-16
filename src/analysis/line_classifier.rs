@@ -89,9 +89,12 @@ pub fn classify_line(
 	}
 	if is_first_line && trimmed.starts_with("#!") {
 		if let Some(lang) = lang_info {
-			if !lang.shebangs.is_empty() && lang.shebangs.iter().any(|shebang| trimmed.starts_with(shebang)) {
+			if lang.shebangs.is_empty() || lang.shebangs.iter().any(|shebang| trimmed.starts_with(shebang)) {
 				return LineType::Shebang;
 			}
+		} else {
+			// For unknown languages, treat #! on the first line as as shebang.
+			return LineType::Shebang;
 		}
 	}
 	let Some(lang) = lang_info else {
@@ -146,17 +149,10 @@ pub fn classify_line(
 /// Finds the earliest block comment start marker in the line.
 #[inline]
 fn find_block_comment_start(line: &str, block_comments: &[(&str, &str)]) -> Option<(usize, usize)> {
-	let mut min_pos = None;
-	for (start, _) in block_comments {
-		if let Some(pos) = line.find(start) {
-			match min_pos {
-				None => min_pos = Some((pos, start.len())),
-				Some((min, _)) if pos < min => min_pos = Some((pos, start.len())),
-				_ => {}
-			}
-		}
-	}
-	min_pos
+	block_comments
+		.iter()
+		.filter_map(|(start, _)| line.find(start).map(|pos| (pos, start.len())))
+		.min_by_key(|(pos, _)| *pos)
 }
 
 /// Finds the earliest end of block comment or nested start.
@@ -182,15 +178,5 @@ fn find_block_comment_end_or_nested_start(
 /// Finds the position of the earliest line comment start marker.
 #[inline]
 fn find_line_comment_start(line: &str, line_comments: &[&str]) -> Option<usize> {
-	let mut min_pos = None;
-	for comment in line_comments {
-		if let Some(pos) = line.find(comment) {
-			match min_pos {
-				None => min_pos = Some(pos),
-				Some(min) if pos < min => min_pos = Some(pos),
-				_ => {}
-			}
-		}
-	}
-	min_pos
+	line_comments.iter().filter_map(|comment| line.find(comment)).min()
 }

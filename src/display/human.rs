@@ -130,7 +130,7 @@ impl HumanFormatter {
 	}
 
 	fn build_line_breakdown_parts(results: &AnalysisResults) -> Vec<String> {
-		let mut parts = Vec::new();
+		let mut parts = Vec::with_capacity(4);
 		if results.total_code_lines() > 0 {
 			parts.push(format!(
 				"{} code {}",
@@ -163,7 +163,7 @@ impl HumanFormatter {
 	}
 
 	fn build_percentage_parts(results: &AnalysisResults) -> Vec<String> {
-		let mut parts = Vec::new();
+		let mut parts = Vec::with_capacity(4);
 		if results.total_code_lines() > 0 {
 			parts.push(format!("{:.1}% code", results.code_percentage()));
 		}

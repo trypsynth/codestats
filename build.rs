@@ -4,6 +4,7 @@ use std::{
 	collections::{HashMap, HashSet},
 	env,
 	error::Error,
+	fmt::Write,
 	fs,
 	path::Path,
 	result,
@@ -86,30 +87,30 @@ fn render_languages(languages: &[ProcessedLanguage], pattern_mappings: &[(String
 	output.push_str("#[derive(Debug, Clone, PartialEq, Eq)]\n");
 	output.push_str("pub struct Language {\n");
 	for (field, ty) in get_language_schema() {
-		output.push_str(&format!("\tpub {field}: {ty},\n"));
+		let _ = writeln!(output, "\tpub {field}: {ty},");
 	}
 	output.push_str("}\n\n");
 	output.push_str("pub static LANGUAGES: &[Language] = &[\n");
 	for lang in languages {
 		output.push_str("\tLanguage {\n");
-		output.push_str(&format!("\t\tname: {},\n", render_str(&lang.name)));
-		output.push_str(&format!("\t\tfile_patterns: {},\n", render_str_slice(&lang.file_patterns)));
-		output.push_str(&format!("\t\tline_comments: {},\n", render_str_slice(&lang.line_comments)));
-		output.push_str(&format!("\t\tblock_comments: {},\n", render_block_comments(&lang.block_comments)));
-		output.push_str(&format!("\t\tnested_blocks: {},\n", lang.nested_blocks));
-		output.push_str(&format!("\t\tshebangs: {},\n", render_str_slice(&lang.shebangs)));
-		output.push_str(&format!("\t\tkeywords: {},\n", render_str_slice(&lang.keywords)));
+		let _ = writeln!(output, "\t\tname: {},", render_str(&lang.name));
+		let _ = writeln!(output, "\t\tfile_patterns: {},", render_str_slice(&lang.file_patterns));
+		let _ = writeln!(output, "\t\tline_comments: {},", render_str_slice(&lang.line_comments));
+		let _ = writeln!(output, "\t\tblock_comments: {},", render_block_comments(&lang.block_comments));
+		let _ = writeln!(output, "\t\tnested_blocks: {},", lang.nested_blocks);
+		let _ = writeln!(output, "\t\tshebangs: {},", render_str_slice(&lang.shebangs));
+		let _ = writeln!(output, "\t\tkeywords: {},", render_str_slice(&lang.keywords));
 		output.push_str("\t},\n");
 	}
 	output.push_str("];\n\n");
 	output.push_str("pub static LANGUAGE_MAP: Map<&'static str, &Language> = phf_map! {\n");
 	for (index, lang) in languages.iter().enumerate() {
-		output.push_str(&format!("\t{} => &LANGUAGES[{index}],\n", render_str(&lang.name)));
+		let _ = writeln!(output, "\t{} => &LANGUAGES[{index}],", render_str(&lang.name));
 	}
 	output.push_str("};\n\n");
 	output.push_str("pub static PATTERN_MAP: Map<&'static str, &Language> = phf_map! {\n");
 	for (pattern, index) in pattern_mappings {
-		output.push_str(&format!("\t{} => &LANGUAGES[{index}],\n", render_str(pattern)));
+		let _ = writeln!(output, "\t{} => &LANGUAGES[{index}],", render_str(pattern));
 	}
 	output.push_str("};\n");
 	output

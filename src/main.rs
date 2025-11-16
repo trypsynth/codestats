@@ -17,7 +17,10 @@ fn main() -> Result<()> {
 		}
 		Commands::Analyze { path, verbose, no_gitignore, hidden, symlinks, output } => {
 			ensure!(path.exists(), "Path `{}` not found", path.display());
-			let options = AnalysisOptions::new(path.clone())
+			if path.is_file() {
+				ensure!(path.metadata().is_ok(), "Cannot read file metadata for `{}`", path.display());
+			}
+			let options = AnalysisOptions::new(&path)
 				.verbose(verbose)
 				.respect_gitignore(!no_gitignore)
 				.include_hidden(hidden)

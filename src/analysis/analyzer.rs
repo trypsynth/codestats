@@ -1,6 +1,5 @@
 use std::{
-	fs::File,
-	io::{BufRead, BufReader, Seek},
+	fs,
 	path::{Path, PathBuf},
 	sync::{Arc, Mutex, PoisonError},
 };
@@ -182,18 +181,14 @@ impl CodeAnalyzer {
 
 	fn process_file(file_path: &Path, results: &Arc<Mutex<AnalysisResults>>) -> Result<()> {
 		let filename = file_path.file_name().and_then(|name| name.to_str()).context("Invalid UTF-8 in file name")?;
-		let file = File::open(file_path).with_context(|| format!("Failed to open file {}", file_path.display()))?;
-		let file_size =
-			file.metadata().with_context(|| format!("Failed to retrieve metadata for {}", file_path.display()))?.len();
-		let mut reader = BufReader::new(file);
-		let preview = Self::read_file_preview(&mut reader, 50)
-			.with_context(|| format!("Failed to read preview from {}", file_path.display()))?;
-		reader.rewind().with_context(|| format!("Failed to rewind file {}", file_path.display()))?;
-		let Some(language) = langs::detect_language(filename, Some(preview.as_str())) else {
+		let content =
+			fs::read_to_string(file_path).with_context(|| format!("Failed to read file {}", file_path.display()))?;
+		let file_size = content.len() as u64;
+		let Some(language) = langs::detect_language(filename, Some(&content)) else {
 			return Ok(());
 		};
 		let (total_lines, code_lines, comment_lines, blank_lines, shebang_lines) =
-			Self::analyze_file_lines(&mut reader, file_path, language)?;
+			Self::analyze_file_lines(&content, language);
 		let file_path_str = file_path.display().to_string();
 		let file_stats = FileStats::new(
 			file_path_str,
@@ -208,33 +203,14 @@ impl CodeAnalyzer {
 		Ok(())
 	}
 
-	fn read_file_preview(reader: &mut BufReader<File>, max_lines: usize) -> Result<String> {
-		let mut content = String::new();
-		for (i, line_result) in reader.lines().enumerate() {
-			if i >= max_lines {
-				break;
-			}
-			let line = line_result?;
-			content.push_str(&line);
-			content.push('\n');
-		}
-		Ok(content)
-	}
-
-	fn analyze_file_lines(
-		reader: &mut BufReader<File>,
-		file_path: &Path,
-		language: &str,
-	) -> Result<(u64, u64, u64, u64, u64)> {
+	fn analyze_file_lines(content: &str, language: &str) -> (u64, u64, u64, u64, u64) {
 		let lang_info = langs::get_language_info(language);
 		let mut line_counts = (0, 0, 0, 0, 0); // total, code, comment, blank, shebang
 		let mut comment_state = CommentState::new();
-		let mut line_number = 0;
-		for line_result in reader.lines() {
-			let line = line_result.with_context(|| format!("Failed to read line from {}", file_path.display()))?;
+		for (line_number, line) in content.lines().enumerate() {
 			line_counts.0 += 1; // total_lines
-			line_number += 1;
-			let line_type = line_classifier::classify_line(&line, lang_info, &mut comment_state, line_number == 1);
+			let is_first_line = line_number == 0;
+			let line_type = line_classifier::classify_line(line, lang_info, &mut comment_state, is_first_line);
 			match line_type {
 				LineType::Code => line_counts.1 += 1,
 				LineType::Comment => line_counts.2 += 1,
@@ -242,6 +218,6 @@ impl CodeAnalyzer {
 				LineType::Shebang => line_counts.4 += 1,
 			}
 		}
-		Ok(line_counts)
+		line_counts
 	}
 }

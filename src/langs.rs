@@ -21,26 +21,38 @@ fn get_candidates(filename: &str) -> Vec<&'static Language> {
 #[inline]
 fn score_language(lang: &Language, content: &str) -> i32 {
 	let mut score: i32 = 0;
+	if lang.line_comments.is_empty() && lang.keywords.is_empty() {
+		return 0;
+	}
+	let sample_content = if content.len() > 10000 {
+		content.lines().take(200).collect::<Vec<_>>().join("\n")
+	} else {
+		content.to_string()
+	};
 	for comment in lang.line_comments {
-		if content.contains(comment) {
+		if sample_content.contains(comment) {
 			score = score.saturating_add(50);
 		}
 	}
 	for keyword in lang.keywords {
-		let count = content.matches(keyword).count();
+		let count = sample_content.matches(keyword).count();
 		let clamped_count = count.min(usize::try_from(i32::MAX / 10).unwrap_or(usize::MAX));
 		// We now know that this is safe because we've clamped the value.
 		#[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
 		let count_i32 = clamped_count as i32;
-		score = score.saturating_add(count_i32 * 10);
+		score = score.saturating_add(count_i32.saturating_mul(10));
 	}
 	score
 }
 
 #[inline]
 fn disambiguate(candidates: &[&'static Language], content: &str) -> Option<&'static str> {
-	let scores: Vec<_> = candidates.iter().map(|lang| (*lang, score_language(lang, content))).collect();
-	scores.iter().max_by_key(|(_, score)| score).filter(|(_, score)| *score > 0).map(|(lang, _)| lang.name)
+	candidates
+		.iter()
+		.map(|lang| (*lang, score_language(lang, content)))
+		.max_by_key(|(_, score)| *score)
+		.filter(|(_, score)| *score > 0)
+		.map(|(lang, _)| lang.name)
 }
 
 #[must_use]
@@ -79,9 +91,10 @@ pub fn get_language_info(language_name: &str) -> Option<&'static Language> {
 /// and analyzed by the library. The output includes the total count and names
 /// of all supported languages.
 pub fn print_all_languages() {
+	let lang_count = u64::try_from(LANGUAGES.len()).unwrap_or(u64::MAX);
 	println!(
 		"Total number of supported programming {}: {}",
-		pluralize(LANGUAGES.len() as u64, "language", "languages"),
+		pluralize(lang_count, "language", "languages"),
 		LANGUAGES.len()
 	);
 	let last_idx = LANGUAGES.len().saturating_sub(1);
