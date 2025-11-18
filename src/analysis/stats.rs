@@ -6,7 +6,7 @@ use crate::utils;
 
 /// Aggregated data about a single file, used for updating totals without always storing per-file detail.
 #[derive(Debug, Clone, Copy)]
-pub(crate) struct FileContribution {
+pub struct FileContribution {
 	total_lines: u64,
 	code_lines: u64,
 	comment_lines: u64,

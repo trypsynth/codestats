@@ -1,7 +1,7 @@
 use crate::langs::Language;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum LineType {
+pub enum LineType {
 	Code,
 	Comment,
 	Blank,
@@ -9,7 +9,7 @@ pub(crate) enum LineType {
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
-pub(crate) struct CommentState {
+pub struct CommentState {
 	in_block_comment: bool,
 	block_comment_depth: usize,
 }
@@ -21,7 +21,7 @@ impl CommentState {
 	}
 
 	#[inline]
-	fn enter_block(&mut self, nested: bool) {
+	const fn enter_block(&mut self, nested: bool) {
 		self.in_block_comment = true;
 		if nested {
 			self.block_comment_depth = 1;
@@ -29,7 +29,7 @@ impl CommentState {
 	}
 
 	#[inline]
-	fn exit_block(&mut self, nested: bool) {
+	const fn exit_block(&mut self, nested: bool) {
 		if nested {
 			self.block_comment_depth = self.block_comment_depth.saturating_sub(1);
 			if self.block_comment_depth == 0 {
@@ -42,7 +42,7 @@ impl CommentState {
 	}
 
 	#[inline]
-	fn enter_nested_block(&mut self) {
+	const fn enter_nested_block(&mut self) {
 		self.block_comment_depth += 1;
 	}
 
@@ -53,7 +53,7 @@ impl CommentState {
 }
 
 #[inline]
-pub(crate) fn classify_line(
+pub fn classify_line(
 	line: &str,
 	lang_info: Option<&Language>,
 	comment_state: &mut CommentState,
