@@ -23,7 +23,7 @@ path = "src/lib.rs"
 
 [dependencies]
 anyhow = "1.0.100"
-clap = { version = "4.5.51", features = ["derive"] }
+clap = { version = "4.5.52", features = ["derive"] }
 ignore = "0.4.25"
 phf = { version = "0.13", features = ["macros"] }
 serde = { version = "1.0.228", features = ["derive"] }
