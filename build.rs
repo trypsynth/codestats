@@ -88,6 +88,7 @@ fn render_languages(languages: &[ProcessedLanguage], pattern_mappings: &[(String
 	let mut output = String::new();
 	output.push_str("use phf::{Map, phf_map};\n\n");
 	output.push_str("#[derive(Debug, Clone, PartialEq, Eq)]\n");
+	output.push_str("/// Holds information about a single programming language.\n");
 	output.push_str("pub struct Language {\n");
 	for (field, ty) in get_language_schema() {
 		let _ = writeln!(output, "\tpub {field}: {ty},");

@@ -115,6 +115,7 @@ pub fn get_language_info(language_name: &str) -> Option<&'static Language> {
 	LANGUAGE_MAP.get(language_name).copied()
 }
 
+/// Print all supported programming languages to stdout.
 pub fn print_all_languages() {
 	let lang_count = u64::try_from(LANGUAGES.len()).unwrap_or(u64::MAX);
 	println!(

@@ -39,8 +39,7 @@ pub trait OutputFormatter {
 	///
 	/// # Errors
 	///
-	/// Returns an error if formatting fails, such as when CSV writing, JSON serialization,
-	/// or string conversion operations encounter issues.
+	/// Returns an error if formatting fails, (e.g. JSON serialization encounters an issue).
 	fn format(&self, results: &AnalysisResults, path: &Path, verbose: bool) -> Result<String>;
 }
 
