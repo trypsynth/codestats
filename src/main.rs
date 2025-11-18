@@ -1,12 +1,11 @@
 #![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 
+mod cli;
+
 use anyhow::{Result, ensure};
 use clap::Parser;
-use codestats::{
-	AnalyzerConfig, CodeAnalyzer, DetailLevel, TraversalOptions,
-	cli::{Cli, Commands},
-	get_formatter, langs,
-};
+use cli::{Cli, Commands};
+use codestats::{AnalyzerConfig, CodeAnalyzer, DetailLevel, TraversalOptions, get_formatter, langs};
 
 fn main() -> Result<()> {
 	let cli = Cli::parse();

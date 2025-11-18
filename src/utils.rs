@@ -6,52 +6,18 @@ fn u64_to_f64(value: u64) -> f64 {
 	f64::from(high) * SHIFT + f64::from(low)
 }
 
-/// Return the singular or plural form of a word based on `count`.
-///
-/// # Examples
-/// ```
-/// use codestats::utils::pluralize;
-///
-/// assert_eq!(pluralize(1, "file", "files"), "file");
-/// assert_eq!(pluralize(2, "file", "files"), "files");
-/// assert_eq!(pluralize(0, "file", "files"), "files");
-/// ```
 #[inline]
-pub const fn pluralize<'a>(count: u64, singular: &'a str, plural: &'a str) -> &'a str {
+pub(crate) const fn pluralize<'a>(count: u64, singular: &'a str, plural: &'a str) -> &'a str {
 	if count == 1 { singular } else { plural }
 }
 
-/// Calculate the percentage of `part` relative to `total`, returning 0.0 when `total` is zero.
-///
-/// # Examples
-/// ```
-/// use codestats::utils::percentage;
-///
-/// assert_eq!(percentage(0, 100), 0.0);
-/// assert_eq!(percentage(50, 100), 50.0);
-/// assert_eq!(percentage(25, 100), 25.0);
-/// assert_eq!(percentage(100, 100), 100.0);
-/// assert_eq!(percentage(10, 0), 0.0);
-/// ```
 #[inline]
-pub fn percentage(part: u64, total: u64) -> f64 {
+pub(crate) fn percentage(part: u64, total: u64) -> f64 {
 	if total == 0 { 0.0 } else { (u64_to_f64(part) / u64_to_f64(total)) * 100.0 }
 }
 
-/// Convert a byte size into a human-readable string.
-///
-/// # Examples
-/// ```
-/// use codestats::utils::human_size;
-///
-/// assert_eq!(human_size(0), "0 B");
-/// assert_eq!(human_size(1), "1 B");
-/// assert_eq!(human_size(1024), "1.00 KiB");
-/// assert_eq!(human_size(1536), "1.50 KiB");
-/// assert!(human_size(1024 * 1024).contains("MiB"));
-/// ```
 #[must_use]
-pub fn human_size(size: u64) -> String {
+pub(crate) fn human_size(size: u64) -> String {
 	const UNITS: [&str; 6] = ["B", "KiB", "MiB", "GiB", "TiB", "PiB"];
 	let mut value = u64_to_f64(size);
 	let mut unit_index = 0;

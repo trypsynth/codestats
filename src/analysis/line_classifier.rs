@@ -1,29 +1,27 @@
 use crate::langs::Language;
 
-/// Represents different types of lines in a file.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum LineType {
+pub(crate) enum LineType {
 	Code,
 	Comment,
 	Blank,
 	Shebang,
 }
 
-/// Tracks block comment state for a language, including nesting.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
-pub struct CommentState {
+pub(crate) struct CommentState {
 	in_block_comment: bool,
 	block_comment_depth: usize,
 }
 
 impl CommentState {
 	#[must_use]
-	pub fn new() -> Self {
+	pub(crate) fn new() -> Self {
 		Self::default()
 	}
 
 	#[inline]
-	pub const fn enter_block(&mut self, nested: bool) {
+	fn enter_block(&mut self, nested: bool) {
 		self.in_block_comment = true;
 		if nested {
 			self.block_comment_depth = 1;
@@ -31,7 +29,7 @@ impl CommentState {
 	}
 
 	#[inline]
-	pub const fn exit_block(&mut self, nested: bool) {
+	fn exit_block(&mut self, nested: bool) {
 		if nested {
 			self.block_comment_depth = self.block_comment_depth.saturating_sub(1);
 			if self.block_comment_depth == 0 {
@@ -44,34 +42,18 @@ impl CommentState {
 	}
 
 	#[inline]
-	pub const fn enter_nested_block(&mut self) {
+	fn enter_nested_block(&mut self) {
 		self.block_comment_depth += 1;
 	}
 
 	#[must_use]
-	pub const fn is_in_comment(&self) -> bool {
+	const fn is_in_comment(&self) -> bool {
 		self.in_block_comment
 	}
 }
 
-/// Classify a line of source code into its appropriate type
-///
-/// This function analyzes a single line of code and determines whether it contains
-/// code, comments, is blank, or contains a shebang. It handles both single-line
-/// and multi-line block comments, including nested block comments for supported languages.
-///
-/// # Arguments
-///
-/// * `line` - The line of code to classify
-/// * `lang_info` - Language configuration containing comment patterns, or `None` for unknown languages
-/// * `comment_state` - Mutable state tracker for multi-line block comments
-/// * `is_first_line` - Whether this is the first line of the file (for shebang detection)
-///
-/// # Returns
-///
-/// Returns the [`LineType`] representing the primary content of the line.
 #[inline]
-pub fn classify_line(
+pub(crate) fn classify_line(
 	line: &str,
 	lang_info: Option<&Language>,
 	comment_state: &mut CommentState,
