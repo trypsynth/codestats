@@ -160,13 +160,13 @@ fn find_block_comment_end_or_nested_start(
 	for (start, end) in block_comments {
 		if nested {
 			if let Some(pos) = line.find(start) {
-				if best.map_or(true, |(best_pos, _, is_nested)| pos < best_pos || (pos == best_pos && !is_nested)) {
+				if best.is_none_or(|(best_pos, _, is_nested)| pos < best_pos || (pos == best_pos && !is_nested)) {
 					best = Some((pos, start.len(), true));
 				}
 			}
 		}
 		if let Some(pos) = line.find(end) {
-			if best.map_or(true, |(best_pos, _, is_nested)| pos < best_pos || (pos == best_pos && is_nested)) {
+			if best.is_none_or(|(best_pos, _, is_nested)| pos < best_pos || (pos == best_pos && is_nested)) {
 				best = Some((pos, end.len(), false));
 			}
 		}

@@ -8,8 +8,8 @@ pub mod langs;
 mod utils;
 
 pub use analysis::{
-	AnalysisFlags, AnalysisOptions, AnalysisResults, CodeAnalyzer, CommentState, FileStats, LanguageStats, LineType,
-	classify_line,
+	AnalysisResults, AnalyzerConfig, CodeAnalyzer, CommentState, DetailLevel, FileStats, LanguageStats, LineType,
+	TraversalOptions, classify_line,
 };
 pub use display::{OutputFormat, OutputFormatter, get_formatter};
 pub use langs::{detect_language, detect_language_info, get_language_info};

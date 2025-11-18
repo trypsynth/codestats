@@ -6,7 +6,6 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use bitflags::bitflags;
 use ignore::WalkBuilder;
 
 use super::{
@@ -15,130 +14,55 @@ use super::{
 };
 use crate::langs;
 
-bitflags! {
-	/// Configuration flags for analysis behavior
-	#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-	pub struct AnalysisFlags: u8 {
-		/// Enable verbose output
-		const VERBOSE = 1 << 0;
-		/// Respect .gitignore files (enabled by default)
-		const RESPECT_GITIGNORE = 1 << 1;
-		/// Include hidden files and directories
-		const INCLUDE_HIDDEN = 1 << 2;
-		/// Follow symbolic links
-		const FOLLOW_SYMLINKS = 1 << 3;
-	}
-}
-
-impl Default for AnalysisFlags {
-	fn default() -> Self {
-		Self::RESPECT_GITIGNORE
-	}
-}
-
-/// Configuration options for code analysis
 #[derive(Debug, Clone)]
-pub struct AnalysisOptions {
-	path: PathBuf,
-	flags: AnalysisFlags,
-	collect_file_details: bool,
+pub struct AnalyzerConfig {
+	pub verbose: bool,
+	pub traversal: TraversalOptions,
+	pub detail_level: DetailLevel,
 }
 
-impl AnalysisOptions {
-	/// Create new analysis options with default flags
-	pub fn new(path: impl Into<PathBuf>) -> Self {
-		Self { path: path.into(), flags: AnalysisFlags::default(), collect_file_details: false }
+impl Default for AnalyzerConfig {
+	fn default() -> Self {
+		Self { verbose: false, traversal: TraversalOptions::default(), detail_level: DetailLevel::Summary }
 	}
+}
 
-	/// Create new analysis options with custom flags
-	pub fn with_flags(path: impl Into<PathBuf>, flags: AnalysisFlags) -> Self {
-		Self { path: path.into(), flags, collect_file_details: false }
+#[derive(Debug, Clone, Copy)]
+pub struct TraversalOptions {
+	pub respect_gitignore: bool,
+	pub include_hidden: bool,
+	pub follow_symlinks: bool,
+}
+
+impl Default for TraversalOptions {
+	fn default() -> Self {
+		Self { respect_gitignore: true, include_hidden: false, follow_symlinks: false }
 	}
+}
 
-	/// Enable or disable verbose output
+#[derive(Debug, Clone, Copy, Default)]
+pub enum DetailLevel {
+	#[default]
+	Summary,
+	PerFile,
+}
+
+impl DetailLevel {
 	#[must_use]
-	pub const fn verbose(mut self, verbose: bool) -> Self {
-		if verbose {
-			self.flags = self.flags.union(AnalysisFlags::VERBOSE);
-		} else {
-			self.flags = self.flags.difference(AnalysisFlags::VERBOSE);
-		}
-		self
-	}
-
-	/// Enable or disable respecting .gitignore files
-	#[must_use]
-	pub const fn respect_gitignore(mut self, respect: bool) -> Self {
-		if respect {
-			self.flags = self.flags.union(AnalysisFlags::RESPECT_GITIGNORE);
-		} else {
-			self.flags = self.flags.difference(AnalysisFlags::RESPECT_GITIGNORE);
-		}
-		self
-	}
-
-	/// Enable or disable including hidden files
-	#[must_use]
-	pub const fn include_hidden(mut self, include: bool) -> Self {
-		if include {
-			self.flags = self.flags.union(AnalysisFlags::INCLUDE_HIDDEN);
-		} else {
-			self.flags = self.flags.difference(AnalysisFlags::INCLUDE_HIDDEN);
-		}
-		self
-	}
-
-	/// Enable or disable following symbolic links
-	#[must_use]
-	pub const fn follow_symlinks(mut self, follow: bool) -> Self {
-		if follow {
-			self.flags = self.flags.union(AnalysisFlags::FOLLOW_SYMLINKS);
-		} else {
-			self.flags = self.flags.difference(AnalysisFlags::FOLLOW_SYMLINKS);
-		}
-		self
-	}
-
-	/// Enable or disable collecting per-file detail
-	#[must_use]
-	pub const fn include_file_details(mut self, include: bool) -> Self {
-		self.collect_file_details = include;
-		self
-	}
-
-	/// Get the path to analyze
-	#[must_use]
-	pub fn path(&self) -> &Path {
-		&self.path
-	}
-
-	/// Check if verbose output is enabled
-	#[must_use]
-	pub const fn is_verbose(&self) -> bool {
-		self.flags.contains(AnalysisFlags::VERBOSE)
-	}
-
-	/// Get the analysis flags
-	#[must_use]
-	pub const fn flags(&self) -> AnalysisFlags {
-		self.flags
-	}
-
-	/// Check if file-level statistics should be retained
-	#[must_use]
-	pub const fn collect_file_details(&self) -> bool {
-		self.collect_file_details
+	const fn collect_file_details(self) -> bool {
+		matches!(self, Self::PerFile)
 	}
 }
 
 pub struct CodeAnalyzer {
-	options: AnalysisOptions,
+	root: PathBuf,
+	config: AnalyzerConfig,
 }
 
 impl CodeAnalyzer {
 	#[must_use]
-	pub const fn new(options: AnalysisOptions) -> Self {
-		Self { options }
+	pub fn new(path: impl Into<PathBuf>, config: AnalyzerConfig) -> Self {
+		Self { root: path.into(), config }
 	}
 
 	/// Analyze the configured path for code statistics
@@ -155,26 +79,25 @@ impl CodeAnalyzer {
 	/// May panic if the internal Arc or Mutex operations fail unexpectedly,
 	/// which should hopefully never happen.
 	pub fn analyze(&self) -> Result<AnalysisResults> {
-		let flags = self.options.flags();
-		if flags.contains(AnalysisFlags::VERBOSE) {
-			println!("Analyzing directory {}", self.options.path.display());
+		if self.config.verbose {
+			println!("Analyzing directory {}", self.root.display());
 		}
 		let results = Arc::new(Mutex::new(AnalysisResults::default()));
-		let verbose = flags.contains(AnalysisFlags::VERBOSE);
-		let collect_details = self.options.collect_file_details();
-		WalkBuilder::new(&self.options.path)
-			.follow_links(flags.contains(AnalysisFlags::FOLLOW_SYMLINKS))
-			.ignore(flags.contains(AnalysisFlags::RESPECT_GITIGNORE))
-			.git_ignore(flags.contains(AnalysisFlags::RESPECT_GITIGNORE))
-			.hidden(!flags.contains(AnalysisFlags::INCLUDE_HIDDEN))
+		let verbose = self.config.verbose;
+		let collect_details = self.config.detail_level.collect_file_details();
+		WalkBuilder::new(&self.root)
+			.follow_links(self.config.traversal.follow_symlinks)
+			.ignore(self.config.traversal.respect_gitignore)
+			.git_ignore(self.config.traversal.respect_gitignore)
+			.hidden(!self.config.traversal.include_hidden)
 			.build_parallel()
 			.run(|| {
 				let results = Arc::clone(&results);
-				let collect_details = collect_details;
+				let detail_collection = collect_details;
 				Box::new(move |entry_result| {
 					match entry_result {
 						Ok(entry) if entry.file_type().is_some_and(|ft| ft.is_file()) => {
-							if let Err(e) = Self::process_file(entry.path(), &results, collect_details) {
+							if let Err(e) = Self::process_file(entry.path(), &results, detail_collection) {
 								if verbose {
 									eprintln!("Error processing file {}: {e}", entry.path().display());
 								}

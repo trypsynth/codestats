@@ -3,7 +3,7 @@
 use anyhow::{Result, ensure};
 use clap::Parser;
 use codestats::{
-	AnalysisOptions, CodeAnalyzer,
+	AnalyzerConfig, CodeAnalyzer, DetailLevel, TraversalOptions,
 	cli::{Cli, Commands},
 	get_formatter, langs,
 };
@@ -20,13 +20,16 @@ fn main() -> Result<()> {
 			if path.is_file() {
 				ensure!(path.metadata().is_ok(), "Cannot read file metadata for `{}`", path.display());
 			}
-			let options = AnalysisOptions::new(&path)
-				.verbose(verbose)
-				.respect_gitignore(!no_gitignore)
-				.include_hidden(hidden)
-				.follow_symlinks(symlinks)
-				.include_file_details(verbose);
-			let analyzer = CodeAnalyzer::new(options);
+			let config = AnalyzerConfig {
+				verbose,
+				traversal: TraversalOptions {
+					respect_gitignore: !no_gitignore,
+					include_hidden: hidden,
+					follow_symlinks: symlinks,
+				},
+				detail_level: if verbose { DetailLevel::PerFile } else { DetailLevel::Summary },
+			};
+			let analyzer = CodeAnalyzer::new(path.clone(), config);
 			let results = analyzer.analyze()?;
 			let formatter = get_formatter(output);
 			let output_text = formatter.format(&results, &path, verbose)?;

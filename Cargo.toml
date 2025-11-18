@@ -23,7 +23,6 @@ path = "src/lib.rs"
 
 [dependencies]
 anyhow = "1.0.100"
-bitflags = "2.10"
 clap = { version = "4.5.51", features = ["derive"] }
 ignore = "0.4.25"
 phf = { version = "0.13", features = ["macros"] }

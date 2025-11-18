@@ -407,11 +407,10 @@ fn remove_trailing_commas(input: &str) -> String {
 		whitespace: String,
 	}
 	let mut output = String::with_capacity(input.len());
-	let mut chars = input.chars().peekable();
 	let mut in_string = false;
 	let mut escape = false;
 	let mut pending_comma: Option<PendingComma> = None;
-	while let Some(c) = chars.next() {
+	for c in input.chars() {
 		if in_string {
 			output.push(c);
 			if escape {

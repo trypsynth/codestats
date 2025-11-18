@@ -4,7 +4,21 @@ include!(concat!(env!("OUT_DIR"), "/languages.rs"));
 
 #[inline]
 fn matches_pattern(filename: &str, pattern: &str) -> bool {
-	pattern.strip_prefix('*').map_or_else(|| filename == pattern, |suffix| filename.ends_with(suffix))
+	pattern.strip_prefix('*').map_or_else(
+		|| filename == pattern || filename.eq_ignore_ascii_case(pattern),
+		|suffix| filename.ends_with(suffix) || ends_with_ignore_ascii_case(filename, suffix),
+	)
+}
+
+#[inline]
+fn ends_with_ignore_ascii_case(value: &str, suffix: &str) -> bool {
+	if suffix.is_empty() {
+		return true;
+	}
+	let Some(start) = value.len().checked_sub(suffix.len()) else {
+		return false;
+	};
+	value.get(start..).is_some_and(|tail| tail.eq_ignore_ascii_case(suffix))
 }
 
 #[inline]
