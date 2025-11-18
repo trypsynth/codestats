@@ -163,7 +163,7 @@
 	},
 	{
 		"name": "Bazel",
-		"file_patterns": ["*.bzl", "*.bazel", "*.bzlmod", "build", "build.bazel", "workspace", "module"],
+		"file_patterns": ["*.bzl", "*.bazel", "*.bzlmod", "BUILD", "BUILD.bazel", "build", "build.bazel", "WORKSPACE", "WORKSPACE.bazel", "workspace", "MODULE", "MODULE.bazel", "module"],
 		"line_comments": ["#"],
 	},
 	{
@@ -188,6 +188,11 @@
 		"file_patterns": ["*.bgt"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
+	},
+	{
+		"name": "BibTeX",
+		"file_patterns": ["*.bib", "*.bst"],
+		"line_comments": ["%"],
 	},
 	{
 		"name": "Bicep",
@@ -336,7 +341,7 @@
 	},
 	{
 		"name": "CMake",
-		"file_patterns": ["*.cmake", "*.cmake.in", "*.cmake.rule", "cmakelists.txt"],
+		"file_patterns": ["*.cmake", "*.cmake.in", "*.cmake.rule", "CMakeLists.txt", "cmakelists.txt"],
 		"line_comments": ["#"],
 	},
 	{
@@ -400,8 +405,7 @@
 	},
 	{
 		"name": "CSS",
-		"file_patterns": ["*.css", "*.sass", "*.scss", "*.postcss"],
-		"line_comments": ["//"],
+		"file_patterns": ["*.css", "*.postcss"],
 		"block_comments": [["/*", "*/"]],
 	},
 	{
@@ -430,7 +434,7 @@
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"], ["/+", "+/"]],
 		"nested_blocks": true,
-		"shebangs": ["#!"],
+		"shebangs": ["#!/usr/bin/env rdmd", "#!/usr/bin/rdmd"],
 	},
 	{
 		"name": "D2",
@@ -684,6 +688,11 @@
 		"line_comments": ["#"],
 	},
 	{
+		"name": "Gherkin",
+		"file_patterns": ["*.feature"],
+		"line_comments": ["#"],
+	},
+	{
 		"name": "Gleam",
 		"file_patterns": ["*.gleam"],
 		"line_comments": ["//", "///", "////"],
@@ -729,6 +738,12 @@
 		"name": "GraphQL",
 		"file_patterns": ["*.graphql", "*.gql"],
 		"line_comments": ["#"],
+	},
+	{
+		"name": "Graphviz/DOT",
+		"file_patterns": ["*.dot", "*.gv"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Groovy",
@@ -931,8 +946,8 @@
 		"block_comments": [["/*", "*/"]],
 	},
 	{
-		"name": "Jsonet",
-		"file_patterns": ["*.jsonet", "*.libsonnet"],
+		"name": "Jsonnet",
+		"file_patterns": ["*.jsonnet", "*.libsonnet"],
 		"line_comments": ["//", "#"],
 		"block_comments": [["/*", "*/"]],
 	},
@@ -949,7 +964,7 @@
 	},
 	{
 		"name": "Just",
-		"file_patterns": ["*.jjust", "justfile"],
+		"file_patterns": ["justfile", "Justfile"],
 		"line_comments": ["#"],
 		"shebangs": ["#!/usr/bin/env just --justfile"],
 	},
@@ -1076,7 +1091,7 @@
 	},
 	{
 		"name": "Luau",
-		"file_patterns": ["*.luau", "*.project.json", ".robloxrc"],
+		"file_patterns": ["*.luau", "default.project.json", "test.project.json", ".robloxrc"],
 		"line_comments": ["--"],
 		"block_comments": [["--[[", "--]]"]],
 		"shebangs": ["#!/usr/bin/env luau"],
@@ -1101,6 +1116,11 @@
 		"name": "Markdown",
 		"file_patterns": ["*.md", "*.markdown", "*.mdx", "*.mdown", "*.mdwn", "*.mkd", "*.mkdn", "*.mkdown", "*.ronn"],
 		"block_comments": [["<!--", "-->"]],
+	},
+	{
+		"name": "Mathematica/Wolfram",
+		"file_patterns": ["*.wl", "*.wls"],
+		"block_comments": [["(*", "*)"]],
 	},
 	{
 		"name": "MATLAB",
@@ -1332,7 +1352,7 @@
 	},
 	{
 		"name": "OCaml",
-		"file_patterns": ["*.ml", "*.mli", "*.cmx", "*.cmxa", "*.mll", "*.mly"],
+		"file_patterns": ["*.ml", "*.mli", "*.mll", "*.mly"],
 		"block_comments": [["(*", "*)"]],
 		"nested_blocks": true,
 	},
@@ -1641,7 +1661,7 @@
 	},
 	{
 		"name": "Rust",
-		"file_patterns": ["*.rs", "*.rs.in", "*.rslib", "*.rlib"],
+		"file_patterns": ["*.rs", "*.rs.in"],
 		"line_comments": ["//", "///", "//!"],
 		"block_comments": [["/*", "*/"], ["/**", "*/"], ["/*!", "*/"]],
 		"nested_blocks": true,
@@ -1651,6 +1671,12 @@
 		"file_patterns": ["*.sage", "*.sagews"],
 		"line_comments": ["#"],
 		"block_comments": [["\"\"\"", "\"\"\""], ["'''", "'''"]],
+	},
+	{
+		"name": "Sass",
+		"file_patterns": ["*.sass"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Scala",
@@ -1665,6 +1691,12 @@
 		"line_comments": [";"],
 		"block_comments": [["#|", "|#"]],
 		"nested_blocks": true,
+	},
+	{
+		"name": "SCSS",
+		"file_patterns": ["*.scss"],
+		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Sed",
@@ -1817,7 +1849,7 @@
 	},
 	{
 		"name": "TeX/LaTeX",
-		"file_patterns": ["*.tex", "*.sty", ".latexmkrc"],
+		"file_patterns": ["*.tex", "*.sty", "*.bbx", "*.cbx", "*.lbx", ".latexmkrc"],
 		"line_comments": ["%"],
 	},
 	{
@@ -1858,7 +1890,7 @@
 	},
 	{
 		"name": "TypeScript",
-		"file_patterns": ["*.ts", "*.tsx", "*.cts", "*.mts"],
+		"file_patterns": ["*.ts", "*.tsx", "*.d.ts", "*.cts", "*.mts", "*.d.cts", "*.d.mts"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
 		"nested_blocks": true,
