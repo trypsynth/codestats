@@ -4,7 +4,7 @@ use std::{
 	collections::{BTreeMap, HashMap, HashSet},
 	env,
 	error::Error,
-	fmt::Write,
+	fmt::Write as _,
 	fs,
 	path::Path,
 	result,
@@ -18,15 +18,15 @@ struct Language {
 	name: String,
 	file_patterns: Vec<String>,
 	#[serde(default)]
-	line_comments: Option<Vec<String>>,
+	line_comments: Vec<String>,
 	#[serde(default)]
-	block_comments: Option<Vec<Vec<String>>>,
+	block_comments: Vec<Vec<String>>,
 	#[serde(default)]
-	nested_blocks: Option<bool>,
+	nested_blocks: bool,
 	#[serde(default)]
-	shebangs: Option<Vec<String>>,
+	shebangs: Vec<String>,
 	#[serde(default)]
-	keywords: Option<Vec<String>>,
+	keywords: Vec<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -42,20 +42,17 @@ struct ProcessedLanguage {
 
 impl From<Language> for ProcessedLanguage {
 	fn from(lang: Language) -> Self {
-		Self {
-			name: lang.name,
-			file_patterns: lang.file_patterns,
-			line_comments: lang.line_comments.unwrap_or_default(),
-			block_comments: lang
-				.block_comments
-				.unwrap_or_default()
-				.into_iter()
-				.filter_map(|pair| if pair.len() == 2 { Some((pair[0].clone(), pair[1].clone())) } else { None })
-				.collect(),
-			nested_blocks: lang.nested_blocks.unwrap_or(false),
-			shebangs: lang.shebangs.unwrap_or_default(),
-			keywords: lang.keywords.unwrap_or_default(),
-		}
+		let Language { name, file_patterns, line_comments, block_comments, nested_blocks, shebangs, keywords } = lang;
+		let block_comments = block_comments
+			.into_iter()
+			.filter_map(|pair| {
+				let mut iter = pair.into_iter();
+				let start = iter.next()?;
+				let end = iter.next()?;
+				Some((start, end))
+			})
+			.collect();
+		Self { name, file_patterns, line_comments, block_comments, nested_blocks, shebangs, keywords }
 	}
 }
 
@@ -74,15 +71,14 @@ fn get_language_schema() -> Vec<(&'static str, &'static str)> {
 fn build_pattern_mappings(languages: &[ProcessedLanguage]) -> Vec<(String, Vec<usize>)> {
 	let mut literal_map: BTreeMap<String, Vec<usize>> = BTreeMap::new();
 	for (lang_idx, lang) in languages.iter().enumerate() {
-		let mut seen_patterns = HashSet::new();
 		for pattern in &lang.file_patterns {
 			if pattern.contains('*') {
 				continue;
 			}
-			if !seen_patterns.insert(pattern) {
-				continue;
+			let indexes = literal_map.entry(pattern.clone()).or_default();
+			if !indexes.contains(&lang_idx) {
+				indexes.push(lang_idx);
 			}
-			literal_map.entry(pattern.clone()).or_default().push(lang_idx);
 		}
 	}
 	literal_map.into_iter().collect()
@@ -117,7 +113,7 @@ fn render_languages(languages: &[ProcessedLanguage], pattern_mappings: &[(String
 	output.push_str("};\n\n");
 	output.push_str("pub static PATTERN_MAP: Map<&'static str, &'static [&'static Language]> = phf_map! {\n");
 	for (pattern, indexes) in pattern_mappings {
-		let lang_refs = indexes.iter().map(|index| format!("&LANGUAGES[{index}]")).collect::<Vec<_>>().join(", ");
+		let lang_refs = indexes.iter().map(|index| format!("&LANGUAGES[{index}]")).collect::<Vec<String>>().join(", ");
 		let _ = writeln!(output, "\t{} => &[{lang_refs}],", render_str(pattern));
 	}
 	output.push_str("};\n");
@@ -125,14 +121,14 @@ fn render_languages(languages: &[ProcessedLanguage], pattern_mappings: &[(String
 }
 
 fn render_str(value: &str) -> String {
-	format!("\"{}\"", escape_rust_string(value))
+	format!("{value:?}")
 }
 
 fn render_str_slice(values: &[String]) -> String {
 	if values.is_empty() {
 		"&[]".to_string()
 	} else {
-		let joined = values.iter().map(|value| render_str(value)).collect::<Vec<_>>().join(", ");
+		let joined = values.iter().map(|value| render_str(value)).collect::<Vec<String>>().join(", ");
 		format!("&[{joined}]")
 	}
 }
@@ -144,7 +140,7 @@ fn render_block_comments(values: &[(String, String)]) -> String {
 		let joined = values
 			.iter()
 			.map(|(start, end)| format!("({}, {})", render_str(start), render_str(end)))
-			.collect::<Vec<_>>()
+			.collect::<Vec<String>>()
 			.join(", ");
 		format!("&[{joined}]")
 	}
@@ -153,38 +149,25 @@ fn render_block_comments(values: &[(String, String)]) -> String {
 type Result<T> = result::Result<T, Box<dyn Error>>;
 
 fn main() -> Result<()> {
-	let manifest_dir = env::var("CARGO_MANIFEST_DIR")?;
+	let manifest_dir: String = env::var("CARGO_MANIFEST_DIR")?;
 	let json_path = Path::new(&manifest_dir).join("languages.jsonc");
 	println!("cargo:rerun-if-changed={}", json_path.display());
-	let json_content = fs::read_to_string(&json_path)?;
+	let json_content: String = fs::read_to_string(&json_path)?;
 	let json_content = normalize_jsonc(&json_content);
 	let languages: Vec<Language> = serde_json::from_str(&json_content)?;
 	validate_languages(&languages)?;
 	let processed_languages: Vec<ProcessedLanguage> = languages.into_iter().map(ProcessedLanguage::from).collect();
 	let pattern_mappings = build_pattern_mappings(&processed_languages);
 	let rendered = render_languages(&processed_languages, &pattern_mappings);
-	let out_dir = env::var("OUT_DIR")?;
+	let out_dir: String = env::var("OUT_DIR")?;
 	let dest_path = Path::new(&out_dir).join("languages.rs");
 	fs::write(dest_path, rendered)?;
 	println!("Generated language data for {} languages", processed_languages.len());
 	Ok(())
 }
 
-fn escape_rust_string(s: &str) -> String {
-	s.chars()
-		.map(|c| match c {
-			'\\' => "\\\\".to_string(),
-			'"' => "\\\"".to_string(),
-			'\n' => "\\n".to_string(),
-			'\r' => "\\r".to_string(),
-			'\t' => "\\t".to_string(),
-			c => c.to_string(),
-		})
-		.collect()
-}
-
 fn validate_languages(languages: &[Language]) -> Result<()> {
-	let mut errors = Vec::new();
+	let mut errors: Vec<String> = Vec::new();
 	validate_alphabetical_order(languages, &mut errors);
 	let seen_patterns = validate_language_fields(languages, &mut errors);
 	validate_pattern_disambiguation(languages, seen_patterns, &mut errors);
@@ -212,7 +195,7 @@ fn validate_alphabetical_order(languages: &[Language], errors: &mut Vec<String>)
 }
 
 fn validate_language_fields(languages: &[Language], errors: &mut Vec<String>) -> HashMap<String, Vec<String>> {
-	let mut seen_names = HashSet::new();
+	let mut seen_names: HashSet<String> = HashSet::new();
 	let mut seen_patterns: HashMap<String, Vec<String>> = HashMap::new();
 	for (index, lang) in languages.iter().enumerate() {
 		let position = format!("Language at position {}", index + 1);
@@ -231,7 +214,7 @@ fn validate_basic_fields(lang: &Language, position: &str, seen_names: &mut HashS
 		errors.push(format!("{} ('{}'): 'file_patterns' field cannot be empty", position, lang.name));
 	}
 	if !seen_names.insert(lang.name.clone()) {
-		errors.push(format!("{}: Duplicate language name '{}'", position, lang.name));
+		errors.push(format!("{position}: Duplicate language name '{}'", lang.name));
 	}
 	if lang.name.trim() != lang.name {
 		errors.push(format!("{} ('{}'): Language name has leading/trailing whitespace", position, lang.name));
@@ -267,22 +250,19 @@ fn validate_file_patterns(
 }
 
 fn validate_comment_fields(lang: &Language, position: &str, errors: &mut Vec<String>) {
-	if let Some(ref line_comments) = lang.line_comments {
-		for (comment_idx, comment) in line_comments.iter().enumerate() {
-			if comment.is_empty() {
-				errors.push(format!(
-					"{} ('{}'), line comment {}: Line comment cannot be empty",
-					position,
-					lang.name,
-					comment_idx + 1
-				));
-			}
+	for (comment_idx, comment) in lang.line_comments.iter().enumerate() {
+		if comment.is_empty() {
+			errors.push(format!(
+				"{} ('{}'), line comment {}: Line comment cannot be empty",
+				position,
+				lang.name,
+				comment_idx + 1
+			));
 		}
 	}
-	if let Some(ref block_comments) = lang.block_comments {
-		for (comment_idx, comment_pair) in block_comments.iter().enumerate() {
-			if comment_pair.len() == 2 {
-				let (start, end) = (&comment_pair[0], &comment_pair[1]);
+	for (comment_idx, comment_pair) in lang.block_comments.iter().enumerate() {
+		match comment_pair.as_slice() {
+			[start, end] => {
 				if start.is_empty() {
 					errors.push(format!(
 						"{} ('{}'), block comment {}: Block comment start cannot be empty",
@@ -299,7 +279,8 @@ fn validate_comment_fields(lang: &Language, position: &str, errors: &mut Vec<Str
 						comment_idx + 1
 					));
 				}
-			} else {
+			}
+			_ => {
 				errors.push(format!(
 					"{} ('{}'), block comment {}: Block comment must have exactly 2 elements (start, end)",
 					position,
@@ -318,13 +299,9 @@ fn validate_pattern_disambiguation(
 ) {
 	for (pattern, language_names) in seen_patterns {
 		if language_names.len() > 1 {
-			let all_have_keywords = language_names.iter().all(|name| {
-				languages
-					.iter()
-					.find(|l| l.name == *name)
-					.and_then(|l| l.keywords.as_ref())
-					.is_some_and(|k| !k.is_empty())
-			});
+			let all_have_keywords = language_names
+				.iter()
+				.all(|name| languages.iter().find(|l| l.name == *name).is_some_and(|l| !l.keywords.is_empty()));
 			if !all_have_keywords {
 				errors.push(format!(
 					"Duplicate pattern '{}' in [{}] - all must have 'keywords' for disambiguation",
@@ -428,7 +405,7 @@ fn remove_trailing_commas(input: &str) -> String {
 				pending_comma = Some(pending);
 				continue;
 			}
-			if matches!(c, ']' | '}') {
+			if c == ']' || c == '}' {
 				output.truncate(pending.idx);
 				output.push_str(&pending.whitespace);
 				output.push(c);
