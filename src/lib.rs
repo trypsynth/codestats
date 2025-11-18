@@ -4,8 +4,7 @@ pub mod analysis;
 pub mod cli;
 pub mod display;
 pub mod langs;
-
-mod utils;
+pub mod utils;
 
 pub use analysis::{
 	AnalysisResults, AnalyzerConfig, CodeAnalyzer, CommentState, DetailLevel, FileStats, LanguageStats, LineType,
