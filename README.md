@@ -88,5 +88,365 @@ TOML:
 		Blanks: 5 lines (9.3%).
 ```
 
+## Supported programming languages
+Codestats currently supports 356 unique programming languages, with more being added all the time. They are all listed below:
+
+* 8th
+* ABAP
+* ABNF
+* ActionScript
+* Ada
+* Agda
+* Alex
+* Alloy
+* AngelScript
+* Apache Config
+* Apex
+* APL
+* AppleScript
+* Arturo
+* AsciiDoc
+* ASN.1
+* ASP
+* ASP.NET
+* Assembly
+* Astro
+* Ats
+* Austral
+* AutoHotkey
+* AutoIt
+* Automake
+* AWK
+* Ballerina
+* Bash
+* Batch Script
+* Bazel
+* BCX/FreeBASIC
+* Bean
+* Beef
+* BGT
+* BibTeX
+* Bicep
+* Bison
+* BlitzBasic
+* Boo
+* BQN
+* Brainfuck
+* BrightScript
+* Buck
+* C
+* C Shell
+* C#
+* C++
+* C3
+* Cabal
+* Caddyfile
+* Cairo
+* Cangjie
+* Carbon
+* Cassius
+* Ceylon
+* ChaiScript
+* Chapel
+* ChucK
+* Circom
+* Clojure
+* CMake
+* COBOL
+* Cobra
+* CodeQL
+* CoffeeScript
+* Cogent
+* ColdFusion
+* Common Lisp
+* Coq
+* Crystal
+* CSON
+* CSS
+* CSV
+* CUDA
+* CUE
+* Cython
+* D
+* D2
+* Dafny
+* DAML
+* Dart
+* Delphi/Object Pascal
+* Device Tree
+* Dhall
+* Dockerfile
+* DotNet Resource
+* Dream Maker
+* Dust.js
+* Dylan
+* EBNF
+* Ebuild
+* EdgeQL
+* Effekt
+* Eiffel
+* EJS
+* Elixir
+* Elm
+* Elvish
+* Emacs Dev Env
+* Emacs Lisp
+* EmberScript
+* Emojicode
+* Erlang
+* Euphoria
+* F#
+* F*
+* Factor
+* Fantom
+* Faust
+* Felix
+* Fennel
+* Fish
+* FlatBuffers Schema
+* Forth
+* Fortran
+* FreeMarker
+* Futhark
+* GDB Script
+* GDScript
+* Gettext
+* Gherkin
+* Gleam
+* GLSL
+* GML
+* Go
+* Gosu
+* Gradle
+* Grain
+* GraphQL
+* Graphviz/DOT
+* Groovy
+* Gwion
+* Hack
+* Haml
+* Hamlet
+* Handlebars
+* Happy
+* Haskell
+* Haxe
+* HCL
+* Headache
+* HLSL
+* HolyC
+* HTML
+* Hy
+* Icon
+* IDL
+* Idris
+* Inform 7
+* INI
+* Inno Setup
+* Io
+* Isabelle
+* J
+* Jai
+* Janet
+* Java
+* Java Server Pages
+* JavaScript
+* JAWS Script
+* Jinja2
+* jq
+* JSLT
+* JSON
+* JSONC
+* Jsonnet
+* Julia
+* Jupyter Notebook
+* Just
+* K
+* Kaitai Struct
+* Kakoune script
+* Koka
+* Korn Shell
+* Kotlin
+* KV Language
+* LALRPOP
+* Lauterbach CMM
+* LD Script
+* Lean
+* Less
+* Lex
+* LilyPond
+* Lingua Franca
+* Liquid Templates
+* LiveScript
+* LLVM IR
+* Logtalk
+* Lolcode
+* Lua
+* Luau
+* M4
+* Madlang
+* Makefile
+* Markdown
+* Mathematica/Wolfram
+* MATLAB
+* Maven
+* max
+* Menhir
+* Mercury
+* Meson
+* MessagePack
+* Metal Shading Language
+* Mint
+* Mlatu
+* Modelica
+* Modula-2/3
+* Module Definition
+* Mojo
+* Monkey C
+* Moo
+* MoonBit
+* MoonScript
+* Motoko
+* Move
+* MSBuild
+* Mustache
+* NASM
+* Nearley
+* Nemerle
+* Nextflow
+* Nginx Config
+* Nim
+* Ninja
+* Nix
+* Not Quite Perl
+* NSIS
+* NuGet Config
+* Nunjucks Templates
+* Nushell
+* NVGT
+* Oberon
+* Objective-C
+* Objective-C++
+* Objective-J
+* OCaml
+* Odin
+* Open Policy Agent
+* OpenCL
+* OpenQASM
+* OpenSCAD
+* OpenType Feature File
+* Org
+* Oz
+* Pan
+* Pascal
+* Perl
+* Pest
+* PHP
+* PicoLisp
+* Pike
+* Pine Script
+* PKGBUILD
+* PlantUML
+* PogoScript
+* Poke
+* Pony
+* PostCSS
+* PostScript
+* PowerShell
+* Prisma
+* Processing
+* Prolog
+* Promela
+* Protocol Buffers
+* Pug
+* Puppet
+* PureBasic
+* PureScript
+* Pyret
+* Python
+* Q
+* Q#
+* QCL
+* QML
+* R
+* Racket
+* Raku
+* Rebol
+* Red
+* ReScript
+* reStructuredText
+* REXX
+* Ring
+* Robot Framework
+* Roc
+* Ruby
+* Rust
+* SageMath
+* Sass
+* Scala
+* Scheme
+* SCSS
+* Sed
+* Shen
+* Slim
+* Slint
+* Smalltalk
+* Smarty
+* SNOBOL
+* Solidity
+* SpiderBasic
+* SQF
+* SQL
+* Squirrel
+* Stan
+* Standard ML
+* Stata
+* Stylus
+* SuperCollider
+* Svelte
+* SVG
+* Swift
+* Swig
+* TC Shell
+* Tcl
+* Teal
+* Templ
+* Tera
+* TeX/LaTeX
+* Textile
+* Thrift
+* TLA+
+* Tmux
+* TOML
+* Twig
+* txt2tags
+* TypeScript
+* Umka
+* Unison
+* UnrealScript
+* Uxntal
+* V
+* Vala
+* Vale
+* Verilog
+* VHDL
+* Vim script
+* Visual Basic/Visual Basic .NET
+* Vue
+* WebAssembly
+* WebIDL
+* Wenyan
+* WGSL
+* Windows Registry Entry
+* Windows Resource File
+* WiX
+* Wren
+* XML
+* Yacc
+* YAML
+* ZenCode
+* Zig
+* ZoKrates
+* ZSH
+
 ## License
 Codestats is licensed under the [Zlib License](LICENSE).
