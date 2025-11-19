@@ -53,41 +53,40 @@ Options:
 This is the result of running codestats on itself.
 
 ```
-Codestats for codestats: 19 files, 4030 total lines, 101 KiB total size.
-Line breakdown: 3674 code lines, 190 comment lines, 166 blank lines
-Percentages: 91.2% code, 4.7% comments, 4.1% blanks
+Codestats for .: 18 files, 4340 total lines, 110 KiB total size.
+Line breakdown: 3994 code lines, 148 comment lines, 195 blank lines, 3 shebang lines.
+Percentages: 92.0% code, 3.4% comments, 4.5% blanks, 0.1% shebangs.
 Language breakdown:
-JSON:
-	Files: 1 file (5.3% of total).
-	Lines: 2023 lines (50.2% of total).
-	Size: 44.1 KiB (43.6% of total).
-	Line breakdown:
-		Code: 2022 lines (100.0%).
-		Blanks: 1 lines (0.0%).
 Rust:
-	Files: 15 files (78.9% of total).
-	Lines: 1856 lines (46.1% of total).
-	Size: 52.9 KiB (52.4% of total).
+	Files: 14 files (77.8% of total).
+	Lines: 2133 lines (49.1% of total).
+	Size: 60.6 KiB (55.2% of total).
 	Line breakdown:
-		Code: 1521 lines (82.0%).
-		Comments: 190 lines (10.2%).
-		Blanks: 145 lines (7.8%).
+		Code: 1808 lines (84.8%).
+		Comments: 148 lines (6.9%).
+		Blanks: 174 lines (8.2%).
+		Shebangs: 3 lines (0.1%).
+JSONC:
+	Files: 1 file (5.6% of total).
+	Lines: 2060 lines (47.5% of total).
+	Size: 45.3 KiB (41.2% of total).
+	Line breakdown:
+		Code: 2060 lines (100.0%).
 Markdown:
-	Files: 1 file (5.3% of total).
-	Lines: 92 lines (2.3% of total).
-	Size: 2.5 KiB (2.5% of total).
+	Files: 1 file (5.6% of total).
+	Lines: 93 lines (2.1% of total).
+	Size: 2.54 KiB (2.3% of total).
 	Line breakdown:
-		Code: 77 lines (83.7%).
-		Blanks: 15 lines (16.3%).
+		Code: 77 lines (82.8%).
+		Blanks: 16 lines (17.2%).
 TOML:
-	Files: 2 files (10.5% of total).
-	Lines: 59 lines (1.5% of total).
-	Size: 1.5 KiB (1.5% of total).
+	Files: 2 files (11.1% of total).
+	Lines: 54 lines (1.2% of total).
+	Size: 1.40 KiB (1.3% of total).
 	Line breakdown:
-		Code: 54 lines (91.5%).
-		Blanks: 5 lines (8.5%).
+		Code: 49 lines (90.7%).
+		Blanks: 5 lines (9.3%).
 ```
 
 ## License
 Codestats is licensed under the [Zlib License](LICENSE).
-
