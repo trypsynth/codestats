@@ -6,16 +6,21 @@ fn u64_to_f64(value: u64) -> f64 {
 	f64::from(high) * SHIFT + f64::from(low)
 }
 
+/// Return `singular` when `count` equals 1, otherwise return `plural`.
 #[inline]
 pub const fn pluralize<'a>(count: u64, singular: &'a str, plural: &'a str) -> &'a str {
 	if count == 1 { singular } else { plural }
 }
 
+/// Calculate the percentage that `part` represents of `total`.
+///
+/// Returns `0.0` when `total` is `0` to avoid division-by-zero panics.
 #[inline]
 pub fn percentage(part: u64, total: u64) -> f64 {
 	if total == 0 { 0.0 } else { (u64_to_f64(part) / u64_to_f64(total)) * 100.0 }
 }
 
+/// Convert a byte count into a human-readable string using base-1024 units.
 #[must_use]
 pub fn human_size(size: u64) -> String {
 	const UNITS: [&str; 6] = ["B", "KiB", "MiB", "GiB", "TiB", "PiB"];

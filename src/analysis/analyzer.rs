@@ -14,23 +14,25 @@ use super::{
 };
 use crate::langs;
 
-#[derive(Debug, Clone)]
+/// Configuration that controls how [`CodeAnalyzer`] traverses the filesystem and how much information it gathers.
+#[derive(Debug, Clone, Default)]
 pub struct AnalyzerConfig {
+	/// Emit additional progress messages and per-file diagnostics.
 	pub verbose: bool,
+	/// Controls what should be considered while walking directories.
 	pub traversal: TraversalOptions,
+	/// Select whether only aggregated totals or per-file data should be collected.
 	pub detail_level: DetailLevel,
 }
 
-impl Default for AnalyzerConfig {
-	fn default() -> Self {
-		Self { verbose: false, traversal: TraversalOptions::default(), detail_level: DetailLevel::Summary }
-	}
-}
-
+/// Options that influence how [`CodeAnalyzer`] traverses directories.
 #[derive(Debug, Clone, Copy)]
 pub struct TraversalOptions {
+	/// Respect `.gitignore` files while walking.
 	pub respect_gitignore: bool,
+	/// Include hidden files and directories.
 	pub include_hidden: bool,
+	/// Follow symbolic links discovered during traversal.
 	pub follow_symlinks: bool,
 }
 
@@ -40,10 +42,13 @@ impl Default for TraversalOptions {
 	}
 }
 
+/// Controls how much information is tracked for each file that matches the filters.
 #[derive(Debug, Clone, Copy, Default)]
 pub enum DetailLevel {
+	/// Collect only aggregated totals per language.
 	#[default]
 	Summary,
+	/// Collect aggregated totals plus detailed statistics for every file.
 	PerFile,
 }
 
@@ -54,12 +59,14 @@ impl DetailLevel {
 	}
 }
 
+/// Walks source files within a directory tree and produces aggregated statistics.
 pub struct CodeAnalyzer {
 	root: PathBuf,
 	config: AnalyzerConfig,
 }
 
 impl CodeAnalyzer {
+	/// Create a new analyzer rooted at `path`.
 	#[must_use]
 	pub fn new(path: impl Into<PathBuf>, config: AnalyzerConfig) -> Self {
 		Self { root: path.into(), config }
