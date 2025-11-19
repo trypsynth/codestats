@@ -55,16 +55,12 @@ mod tests {
 	}
 
 	#[test]
-	fn test_percentage_basic() {
+	fn test_percentage() {
 		assert_eq!(percentage(0, 100), 0.0);
 		assert_eq!(percentage(50, 100), 50.0);
 		assert_eq!(percentage(25, 100), 25.0);
 		assert_eq!(percentage(100, 100), 100.0);
 		assert_eq!(percentage(10, 0), 0.0);
-	}
-
-	#[test]
-	fn test_percentage_large_values() {
 		let part = u64::MAX / 2;
 		let total = u64::MAX;
 		let pct = percentage(part, total);
