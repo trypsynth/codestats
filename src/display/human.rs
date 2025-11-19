@@ -35,11 +35,11 @@ impl HumanFormatter {
 		);
 		let line_breakdown_parts = Self::build_line_breakdown_parts(results);
 		if !line_breakdown_parts.is_empty() {
-			let _ = writeln!(output, "Line breakdown: {}", line_breakdown_parts.join(", "));
+			let _ = writeln!(output, "Line breakdown: {}.", line_breakdown_parts.join(", "));
 		}
 		let percentage_parts = Self::build_percentage_parts(results);
 		if !percentage_parts.is_empty() {
-			let _ = writeln!(output, "Percentages: {}", percentage_parts.join(", "));
+			let _ = writeln!(output, "Percentages: {}.", percentage_parts.join(", "));
 		}
 		output
 	}
