@@ -68,30 +68,18 @@ mod tests {
 	}
 
 	#[test]
-	fn test_human_size_bytes() {
+	fn test_human_size() {
 		assert_eq!(human_size(0), "0 B");
 		assert_eq!(human_size(1), "1 B");
 		assert_eq!(human_size(512), "512 B");
-	}
-
-	#[test]
-	fn test_human_size_kib() {
 		assert_eq!(human_size(1024), "1.00 KiB");
 		assert_eq!(human_size(1536), "1.50 KiB");
 		assert_eq!(human_size(10 * 1024), "10.0 KiB");
 		assert_eq!(human_size(99 * 1024), "99.0 KiB");
-	}
-
-	#[test]
-	fn test_human_size_mib() {
 		let one_mib = 1024 * 1024;
 		assert_eq!(human_size(one_mib), "1.00 MiB");
 		assert_eq!(human_size(one_mib * 20), "20.0 MiB");
 		assert_eq!(human_size(one_mib * 200), "200 MiB");
-	}
-
-	#[test]
-	fn test_human_size_gib_and_up() {
 		let gib = 1024_u64.pow(3);
 		let tib = 1024_u64.pow(4);
 		let pib = 1024_u64.pow(5);
