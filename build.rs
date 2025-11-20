@@ -150,17 +150,17 @@ fn render_block_comments(values: &[(String, String)]) -> String {
 type Result<T> = result::Result<T, Box<dyn Error>>;
 
 fn main() -> Result<()> {
-	let manifest_dir: String = env::var("CARGO_MANIFEST_DIR")?;
+	let manifest_dir = env::var("CARGO_MANIFEST_DIR")?;
 	let json_path = Path::new(&manifest_dir).join("languages.jsonc");
 	println!("cargo:rerun-if-changed={}", json_path.display());
-	let json_content: String = fs::read_to_string(&json_path)?;
+	let json_content = fs::read_to_string(&json_path)?;
 	let json_content = normalize_jsonc(&json_content);
 	let languages: Vec<Language> = serde_json::from_str(&json_content)?;
 	validate_languages(&languages)?;
 	let processed_languages: Vec<ProcessedLanguage> = languages.into_iter().map(ProcessedLanguage::from).collect();
 	let pattern_mappings = build_pattern_mappings(&processed_languages);
 	let rendered = render_languages(&processed_languages, &pattern_mappings);
-	let out_dir: String = env::var("OUT_DIR")?;
+	let out_dir = env::var("OUT_DIR")?;
 	let dest_path = Path::new(&out_dir).join("languages.rs");
 	fs::write(dest_path, rendered)?;
 	println!("Generated language data for {} languages", processed_languages.len());
@@ -168,7 +168,7 @@ fn main() -> Result<()> {
 }
 
 fn validate_languages(languages: &[Language]) -> Result<()> {
-	let mut errors: Vec<String> = Vec::new();
+	let mut errors = Vec::new();
 	validate_alphabetical_order(languages, &mut errors);
 	let seen_patterns = validate_language_fields(languages, &mut errors);
 	validate_pattern_disambiguation(languages, seen_patterns, &mut errors);

@@ -15,7 +15,7 @@ use super::{
 use crate::langs;
 
 /// Configuration that controls how [`CodeAnalyzer`] traverses the filesystem and how much information it gathers.
-#[derive(Debug, Clone, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct AnalyzerConfig {
 	/// Emit additional progress messages and per-file diagnostics.
 	pub verbose: bool,
@@ -26,7 +26,7 @@ pub struct AnalyzerConfig {
 }
 
 /// Options that influence how [`CodeAnalyzer`] traverses directories.
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct TraversalOptions {
 	/// Respect `.gitignore` files while walking.
 	pub respect_gitignore: bool,
@@ -43,7 +43,7 @@ impl Default for TraversalOptions {
 }
 
 /// Controls how much information is tracked for each file that matches the filters.
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Clone, Copy, Debug, Default)]
 pub enum DetailLevel {
 	/// Collect only aggregated totals per language.
 	#[default]

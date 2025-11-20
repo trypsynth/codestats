@@ -146,6 +146,11 @@
 		"shebangs": ["#!/bin/awk -f"],
 	},
 	{
+		"name": "AXAML",
+		"file_patterns": ["*.axaml"],
+		"block_comments": [["<!--", "-->"]],
+	},
+	{
 		"name": "Ballerina",
 		"file_patterns": ["*.bal"],
 		"line_comments": ["//", "#"],
@@ -157,7 +162,7 @@
 		"shebangs": ["#!/bin/bash", "#!/usr/bin/env bash", "#!/bin/sh", "#!/usr/bin/env sh"],
 	},
 	{
-		"name": "Batch Script",
+		"name": "Batch",
 		"file_patterns": ["*.bat", "*.cmd"],
 		"line_comments": ["rem", "::"],
 	},
@@ -654,7 +659,7 @@
 	{
 		"name": "Forth",
 		"file_patterns": ["*.4th", "*.forth", "*.fr", "*.fth", "*.frt", "*.f83", "*.fb", "*.fpm", "*.e4", "*.rx", "*.ft"],
-		"line_comments": ["\\\\"],
+		"line_comments": ["\\ "],
 		"block_comments": [["( ", ")"]],
 	},
 	{

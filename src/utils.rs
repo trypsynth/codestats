@@ -1,11 +1,3 @@
-#[inline]
-fn u64_to_f64(value: u64) -> f64 {
-	const SHIFT: f64 = 4_294_967_296.0; // 2^32
-	let high = u32::try_from(value >> 32).expect("shift keeps value within u32");
-	let low = u32::try_from(value & u64::from(u32::MAX)).expect("mask keeps value within u32");
-	f64::from(high) * SHIFT + f64::from(low)
-}
-
 /// Return `singular` when `count` equals 1, otherwise return `plural`.
 #[inline]
 pub const fn pluralize<'a>(count: u64, singular: &'a str, plural: &'a str) -> &'a str {
@@ -16,28 +8,27 @@ pub const fn pluralize<'a>(count: u64, singular: &'a str, plural: &'a str) -> &'
 ///
 /// Returns `0.0` when `total` is `0` to avoid division-by-zero panics.
 #[inline]
+#[allow(clippy::cast_precision_loss)]
 pub fn percentage(part: u64, total: u64) -> f64 {
-	if total == 0 { 0.0 } else { (u64_to_f64(part) / u64_to_f64(total)) * 100.0 }
+	if total == 0 { 0.0 } else { (part as f64 / total as f64) * 100.0 }
 }
 
 /// Convert a byte count into a human-readable string using base-1024 units.
 #[must_use]
+#[allow(clippy::cast_precision_loss)]
 pub fn human_size(size: u64) -> String {
 	const UNITS: [&str; 6] = ["B", "KiB", "MiB", "GiB", "TiB", "PiB"];
-	let mut value = u64_to_f64(size);
+	let mut value = size as f64;
 	let mut unit_index = 0;
 	while value >= 1024.0 && unit_index < UNITS.len() - 1 {
 		value /= 1024.0;
 		unit_index += 1;
 	}
-	if unit_index == 0 {
-		format!("{size} B")
-	} else if value < 10.0 {
-		format!("{value:.2} {}", UNITS[unit_index])
-	} else if value < 100.0 {
-		format!("{value:.1} {}", UNITS[unit_index])
-	} else {
-		format!("{value:.0} {}", UNITS[unit_index])
+	match unit_index {
+		0 => format!("{size} B"),
+		_ if value < 10.0 => format!("{value:.2} {}", UNITS[unit_index]),
+		_ if value < 100.0 => format!("{value:.1} {}", UNITS[unit_index]),
+		_ => format!("{value:.0} {}", UNITS[unit_index]),
 	}
 }
 
