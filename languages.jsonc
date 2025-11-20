@@ -1361,6 +1361,7 @@
 		"file_patterns": ["*.odin"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
+		"nested_blocks": true,
 	},
 	{
 		"name": "Open Policy Agent",
