@@ -12,7 +12,16 @@ fn matches_pattern(filename: &str, pattern: &str) -> bool {
 
 #[inline]
 fn ends_with_ignore_ascii_case(value: &str, suffix: &str) -> bool {
-	value.len() >= suffix.len() && value[value.len() - suffix.len()..].eq_ignore_ascii_case(suffix)
+	let value_bytes = value.as_bytes();
+	let suffix_bytes = suffix.as_bytes();
+	if value_bytes.len() < suffix_bytes.len() {
+		return false;
+	}
+	value_bytes
+		.iter()
+		.rev()
+		.zip(suffix_bytes.iter().rev())
+		.all(|(a, b)| a.to_ascii_lowercase() == b.to_ascii_lowercase())
 }
 
 #[inline]
@@ -181,6 +190,12 @@ mod tests {
 	fn get_candidates_supports_wildcards() {
 		let candidates = get_candidates("lib.rs");
 		assert!(candidates.iter().any(|lang| lang.name == "Rust"));
+	}
+
+	#[test]
+	fn matches_pattern_handles_unicode_filenames() {
+		let filename = "report \u{202f}PM.PDF";
+		assert!(matches_pattern(filename, "*.pdf"));
 	}
 
 	#[test]
