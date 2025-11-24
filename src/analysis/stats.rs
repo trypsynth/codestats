@@ -84,7 +84,7 @@ impl FileStats {
 	/// * `shebang_lines` - Number of shebang lines
 	/// * `size` - File size in bytes
 	#[must_use]
-	pub fn new(
+	pub const fn new(
 		path: String,
 		total_lines: u64,
 		code_lines: u64,
@@ -172,7 +172,7 @@ impl LanguageStats {
 		}
 	}
 
-	pub(crate) fn merge(&mut self, mut other: LanguageStats) {
+	pub(crate) fn merge(&mut self, mut other: Self) {
 		self.files += other.files;
 		self.lines += other.lines;
 		self.code_lines += other.code_lines;
@@ -292,7 +292,7 @@ impl AnalysisResults {
 		self.language_stats.entry(language.to_string()).or_default().add_file(&contribution, file_stats);
 	}
 
-	pub(crate) fn merge(&mut self, mut other: AnalysisResults) {
+	pub(crate) fn merge(&mut self, mut other: Self) {
 		self.total_files += other.total_files;
 		self.total_lines += other.total_lines;
 		self.total_code_lines += other.total_code_lines;

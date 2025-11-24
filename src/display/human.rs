@@ -77,7 +77,7 @@ impl HumanFormatter {
 			lang_stats.lines(),
 			utils::pluralize(lang_stats.lines(), "line", "lines")
 		);
-		let _ = writeln!(output, "\tSize: {} ({size_pct:.1}% of total).", size_human);
+		let _ = writeln!(output, "\tSize: {size_human} ({size_pct:.1}% of total).");
 		output.push_str("\tLine breakdown:\n");
 		if lang_stats.code_lines() > 0 {
 			let _ =
