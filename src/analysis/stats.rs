@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 use crate::utils;
 
@@ -60,7 +60,7 @@ impl FileContribution {
 }
 
 /// Statistics for a single file
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct FileStats {
 	path: String,
 	total_lines: u64,
@@ -69,7 +69,6 @@ pub struct FileStats {
 	blank_lines: u64,
 	shebang_lines: u64,
 	size: u64,
-	size_human: String,
 }
 
 impl FileStats {
@@ -94,16 +93,7 @@ impl FileStats {
 		shebang_lines: u64,
 		size: u64,
 	) -> Self {
-		Self {
-			path,
-			total_lines,
-			code_lines,
-			comment_lines,
-			blank_lines,
-			shebang_lines,
-			size,
-			size_human: utils::human_size(size),
-		}
+		Self { path, total_lines, code_lines, comment_lines, blank_lines, shebang_lines, size }
 	}
 
 	/// Get the file path
@@ -150,13 +140,13 @@ impl FileStats {
 
 	/// Get the file size in human-readable format
 	#[must_use]
-	pub fn size_human(&self) -> &str {
-		&self.size_human
+	pub fn size_human(&self) -> String {
+		utils::human_size(self.size)
 	}
 }
 
 /// Holds statistics about a programming language's usage throughout a project.
-#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize)]
 pub struct LanguageStats {
 	files: u64,
 	lines: u64,
@@ -165,7 +155,6 @@ pub struct LanguageStats {
 	blank_lines: u64,
 	shebang_lines: u64,
 	size: u64,
-	size_human: String,
 	file_list: Vec<FileStats>,
 }
 
@@ -183,8 +172,15 @@ impl LanguageStats {
 		}
 	}
 
-	pub(crate) fn finalize(&mut self) {
-		self.size_human = utils::human_size(self.size);
+	pub(crate) fn merge(&mut self, mut other: LanguageStats) {
+		self.files += other.files;
+		self.lines += other.lines;
+		self.code_lines += other.code_lines;
+		self.comment_lines += other.comment_lines;
+		self.blank_lines += other.blank_lines;
+		self.shebang_lines += other.shebang_lines;
+		self.size += other.size;
+		self.file_list.append(&mut other.file_list);
 	}
 
 	/// Get the number of files of this language
@@ -231,8 +227,8 @@ impl LanguageStats {
 
 	/// Get the total size in human-readable format across all files of this language
 	#[must_use]
-	pub fn size_human(&self) -> &str {
-		&self.size_human
+	pub fn size_human(&self) -> String {
+		utils::human_size(self.size)
 	}
 
 	/// Get the list of individual file statistics for this language
@@ -267,7 +263,7 @@ impl LanguageStats {
 }
 
 /// Results of a code analysis operation
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize)]
 pub struct AnalysisResults {
 	total_files: u64,
 	total_lines: u64,
@@ -276,7 +272,6 @@ pub struct AnalysisResults {
 	total_blank_lines: u64,
 	total_shebang_lines: u64,
 	total_size: u64,
-	total_size_human: String,
 	language_stats: HashMap<String, LanguageStats>,
 }
 
@@ -295,6 +290,19 @@ impl AnalysisResults {
 		self.total_shebang_lines += contribution.shebang_lines();
 		self.total_size += contribution.size();
 		self.language_stats.entry(language.to_string()).or_default().add_file(&contribution, file_stats);
+	}
+
+	pub(crate) fn merge(&mut self, mut other: AnalysisResults) {
+		self.total_files += other.total_files;
+		self.total_lines += other.total_lines;
+		self.total_code_lines += other.total_code_lines;
+		self.total_comment_lines += other.total_comment_lines;
+		self.total_blank_lines += other.total_blank_lines;
+		self.total_shebang_lines += other.total_shebang_lines;
+		self.total_size += other.total_size;
+		for (language, stats) in other.language_stats.drain() {
+			self.language_stats.entry(language).or_default().merge(stats);
+		}
 	}
 
 	/// Get the total number of files analyzed
@@ -341,8 +349,8 @@ impl AnalysisResults {
 
 	/// Get the total size in human-readable format across all files
 	#[must_use]
-	pub fn total_size_human(&self) -> &str {
-		&self.total_size_human
+	pub fn total_size_human(&self) -> String {
+		utils::human_size(self.total_size)
 	}
 
 	/// Get a map of all language statistics
@@ -385,12 +393,5 @@ impl AnalysisResults {
 	#[must_use]
 	pub fn shebang_percentage(&self) -> f64 {
 		utils::percentage(self.total_shebang_lines, self.total_lines)
-	}
-
-	pub(crate) fn finalize(&mut self) {
-		self.total_size_human = utils::human_size(self.total_size);
-		for lang_stats in self.language_stats.values_mut() {
-			lang_stats.finalize();
-		}
 	}
 }

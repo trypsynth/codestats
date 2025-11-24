@@ -24,6 +24,7 @@ impl OutputFormatter for HumanFormatter {
 
 impl HumanFormatter {
 	fn format_overview(results: &AnalysisResults, path: &Path) -> String {
+		let total_size_human = results.total_size_human();
 		let mut output = format!(
 			"Codestats for {}: {} {}, {} total {}, {} total size.\n",
 			path.display(),
@@ -31,7 +32,7 @@ impl HumanFormatter {
 			utils::pluralize(results.total_files(), "file", "files"),
 			results.total_lines(),
 			utils::pluralize(results.total_lines(), "line", "lines"),
-			results.total_size_human()
+			total_size_human
 		);
 		let line_breakdown_parts = Self::build_line_breakdown_parts(results);
 		if !line_breakdown_parts.is_empty() {
@@ -62,6 +63,7 @@ impl HumanFormatter {
 		let file_pct = utils::percentage(lang_stats.files(), overall_results.total_files());
 		let line_pct = utils::percentage(lang_stats.lines(), overall_results.total_lines());
 		let size_pct = utils::percentage(lang_stats.size(), overall_results.total_size());
+		let size_human = lang_stats.size_human();
 		let _ = writeln!(output, "{lang}:");
 		let _ = writeln!(
 			output,
@@ -75,7 +77,7 @@ impl HumanFormatter {
 			lang_stats.lines(),
 			utils::pluralize(lang_stats.lines(), "line", "lines")
 		);
-		let _ = writeln!(output, "\tSize: {} ({size_pct:.1}% of total).", lang_stats.size_human());
+		let _ = writeln!(output, "\tSize: {} ({size_pct:.1}% of total).", size_human);
 		output.push_str("\tLine breakdown:\n");
 		if lang_stats.code_lines() > 0 {
 			let _ =
@@ -117,12 +119,13 @@ impl HumanFormatter {
 		files.sort_by_key(|b| Reverse(b.total_lines()));
 		for file_stat in files {
 			let file_pct = utils::percentage(file_stat.total_lines(), overall_results.total_lines());
+			let size_human = file_stat.size_human();
 			let _ = writeln!(
 				output,
 				"\t\t{}: {} lines, {} ({:.1}% of total lines).",
 				file_stat.path(),
 				file_stat.total_lines(),
-				file_stat.size_human(),
+				size_human,
 				file_pct
 			);
 		}

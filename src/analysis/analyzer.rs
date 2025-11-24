@@ -1,6 +1,7 @@
 use std::{
 	fs::File,
 	io::{BufRead, BufReader, Seek, SeekFrom},
+	mem,
 	path::{Path, PathBuf},
 	sync::{Arc, Mutex, PoisonError},
 };
@@ -13,6 +14,18 @@ use super::{
 	stats::{AnalysisResults, FileContribution, FileStats},
 };
 use crate::langs;
+
+struct LocalAggregator {
+	shared: Arc<Mutex<AnalysisResults>>,
+	local: AnalysisResults,
+}
+
+impl Drop for LocalAggregator {
+	fn drop(&mut self) {
+		let mut shared = self.shared.lock().unwrap_or_else(PoisonError::into_inner);
+		shared.merge(mem::take(&mut self.local));
+	}
+}
 
 /// Configuration that controls how [`CodeAnalyzer`] traverses the filesystem and how much information it gathers.
 #[derive(Clone, Debug, Default)]
@@ -99,12 +112,13 @@ impl CodeAnalyzer {
 			.hidden(!self.config.traversal.include_hidden)
 			.build_parallel()
 			.run(|| {
-				let results = Arc::clone(&results);
+				let mut aggregator =
+					LocalAggregator { shared: Arc::clone(&results), local: AnalysisResults::default() };
 				let detail_collection = collect_details;
 				Box::new(move |entry_result| {
 					match entry_result {
 						Ok(entry) if entry.file_type().is_some_and(|ft| ft.is_file()) => {
-							if let Err(e) = Self::process_file(entry.path(), &results, detail_collection) {
+							if let Err(e) = Self::process_file(entry.path(), &mut aggregator.local, detail_collection) {
 								if verbose {
 									eprintln!("Error processing file {}: {e}", entry.path().display());
 								}
@@ -118,25 +132,30 @@ impl CodeAnalyzer {
 					ignore::WalkState::Continue
 				})
 			});
-		let mut results = Arc::try_unwrap(results)
+		let results = Arc::try_unwrap(results)
 			.map_err(|_| anyhow::anyhow!("Failed to unwrap Arc - parallel walker still holds references"))?
 			.into_inner()
 			.unwrap_or_else(PoisonError::into_inner);
-		results.finalize();
 		Ok(results)
 	}
 
-	fn process_file(file_path: &Path, results: &Arc<Mutex<AnalysisResults>>, collect_details: bool) -> Result<()> {
+	fn process_file(file_path: &Path, results: &mut AnalysisResults, collect_details: bool) -> Result<()> {
 		let filename = file_path.file_name().and_then(|name| name.to_str()).context("Invalid UTF-8 in file name")?;
 		let metadata =
 			file_path.metadata().with_context(|| format!("Failed to read metadata for {}", file_path.display()))?;
 		let file_size = metadata.len();
 		let file = File::open(file_path).with_context(|| format!("Failed to open file {}", file_path.display()))?;
 		let mut reader = BufReader::new(file);
-		let sample_content = Self::read_detection_sample(&mut reader)?;
-		let sample_ref = if sample_content.is_empty() { None } else { Some(sample_content) };
-		let Some(language) = langs::detect_language_info(filename, sample_ref.as_deref()) else {
+		let candidates = langs::get_candidates(filename);
+		if candidates.is_empty() {
 			return Ok(());
+		}
+		let language = if candidates.len() == 1 {
+			candidates[0]
+		} else {
+			let sample_content = Self::read_detection_sample(&mut reader)?;
+			langs::detect_language_info(filename, (!sample_content.is_empty()).then_some(sample_content.as_str()))
+				.unwrap_or(candidates[0])
 		};
 		let lang_info = Some(language);
 		let mut total_lines = 0;
@@ -180,7 +199,7 @@ impl CodeAnalyzer {
 		} else {
 			None
 		};
-		results.lock().unwrap_or_else(PoisonError::into_inner).add_file_stats(language.name, contribution, file_stats);
+		results.add_file_stats(language.name, contribution, file_stats);
 		Ok(())
 	}
 

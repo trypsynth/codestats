@@ -16,7 +16,7 @@ fn ends_with_ignore_ascii_case(value: &str, suffix: &str) -> bool {
 }
 
 #[inline]
-fn get_candidates(filename: &str) -> Vec<&'static Language> {
+pub(crate) fn get_candidates(filename: &str) -> Vec<&'static Language> {
 	if let Some(literal_matches) = PATTERN_MAP.get(filename) {
 		return literal_matches.to_vec();
 	}

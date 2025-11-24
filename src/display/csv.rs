@@ -41,6 +41,7 @@ impl CsvFormatter {
 		let shebang_lines = results.total_shebang_lines().to_string();
 		let shebang_pct = format!("{:.2}", results.shebang_percentage());
 		let total_size = results.total_size().to_string();
+		let total_size_human = results.total_size_human();
 		Self::write_record(output, &["Analysis Path", path_display.as_str(), "", ""]);
 		Self::write_record(output, &["Total Files", total_files.as_str(), "100.00", ""]);
 		Self::write_record(output, &["Total Lines", total_lines.as_str(), "100.00", ""]);
@@ -48,7 +49,7 @@ impl CsvFormatter {
 		Self::write_record(output, &["Comment Lines", comment_lines.as_str(), comment_pct.as_str(), ""]);
 		Self::write_record(output, &["Blank Lines", blank_lines.as_str(), blank_pct.as_str(), ""]);
 		Self::write_record(output, &["Shebang Lines", shebang_lines.as_str(), shebang_pct.as_str(), ""]);
-		Self::write_record(output, &["Total Size", total_size.as_str(), "100.00", results.total_size_human()]);
+		Self::write_record(output, &["Total Size", total_size.as_str(), "100.00", total_size_human.as_str()]);
 	}
 
 	fn write_language_section(languages: &[(&String, &LanguageStats)], output: &mut String) {
@@ -85,6 +86,7 @@ impl CsvFormatter {
 				let blank_lines = file_stat.blank_lines().to_string();
 				let shebang_lines = file_stat.shebang_lines().to_string();
 				let size = file_stat.size().to_string();
+				let size_human = file_stat.size_human();
 				Self::write_record(
 					output,
 					&[
@@ -95,7 +97,7 @@ impl CsvFormatter {
 						blank_lines.as_str(),
 						shebang_lines.as_str(),
 						size.as_str(),
-						file_stat.size_human(),
+						size_human.as_str(),
 					],
 				);
 			}
@@ -146,6 +148,7 @@ impl CsvFormatter {
 		let comment_pct = format!("{:.2}", stats.comment_percentage());
 		let blank_pct = format!("{:.2}", stats.blank_percentage());
 		let shebang_pct = format!("{:.2}", stats.shebang_percentage());
+		let size_human = stats.size_human();
 		Self::write_record(
 			output,
 			&[
@@ -157,7 +160,7 @@ impl CsvFormatter {
 				blank_lines.as_str(),
 				shebang_lines.as_str(),
 				size.as_str(),
-				stats.size_human(),
+				size_human.as_str(),
 				code_pct.as_str(),
 				comment_pct.as_str(),
 				blank_pct.as_str(),
