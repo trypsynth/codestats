@@ -17,11 +17,7 @@ fn ends_with_ignore_ascii_case(value: &str, suffix: &str) -> bool {
 	if value_bytes.len() < suffix_bytes.len() {
 		return false;
 	}
-	value_bytes
-		.iter()
-		.rev()
-		.zip(suffix_bytes.iter().rev())
-		.all(|(a, b)| a.eq_ignore_ascii_case(b))
+	value_bytes.iter().rev().zip(suffix_bytes.iter().rev()).all(|(a, b)| a.eq_ignore_ascii_case(b))
 }
 
 #[inline]
@@ -38,11 +34,16 @@ pub(crate) fn get_candidates(filename: &str) -> Vec<&'static Language> {
 #[inline]
 fn score_language(lang: &Language, content: &str) -> i32 {
 	let mut score: i32 = 0;
-	if lang.line_comments.is_empty() && lang.keywords.is_empty() {
+	if lang.line_comments.is_empty() && lang.block_comments.is_empty() && lang.keywords.is_empty() {
 		return 0;
 	}
 	for comment in lang.line_comments {
 		if content.contains(comment) {
+			score = score.saturating_add(50);
+		}
+	}
+	for comment_pair in lang.block_comments {
+		if content.contains(comment_pair.0) && content.contains(comment_pair.1) {
 			score = score.saturating_add(50);
 		}
 	}

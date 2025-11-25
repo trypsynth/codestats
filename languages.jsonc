@@ -630,6 +630,7 @@
 		"file_patterns": ["*.dsp"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
+		"keywords": ["process =", "process=", "import(", "declare ", "library(", "os.", "ba.", "si."],
 	},
 	{
 		"name": "Felix",
@@ -1171,6 +1172,12 @@
 		"file_patterns": ["*.metal"],
 		"line_comments": ["//"],
 		"block_comments": [["/*", "*/"]],
+	},
+	{
+		"name": "Microsoft Developer Studio",
+		"file_patterns": ["*.dsp"],
+		"line_comments": ["#"],
+		"keywords": ["# Microsoft Developer Studio", "TARGTYPE", "CFG=", "!IF", "PROP", "Package Owner"],
 	},
 	{
 		"name": "Mint",
