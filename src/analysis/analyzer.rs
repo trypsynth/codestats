@@ -147,10 +147,14 @@ impl CodeAnalyzer {
 		let file = File::open(file_path).with_context(|| format!("Failed to open file {}", file_path.display()))?;
 		let mut reader = BufReader::new(file);
 		let candidates = langs::get_candidates(filename);
-		if candidates.is_empty() {
-			return Ok(());
-		}
-		let language = if candidates.len() == 1 {
+		let language = if candidates.is_empty() {
+			// No filename match - try shebang detection
+			let sample_content = Self::read_detection_sample(&mut reader)?;
+			match langs::detect_language_info(filename, (!sample_content.is_empty()).then_some(sample_content.as_str())) {
+				Some(lang) => lang,
+				None => return Ok(()),
+			}
+		} else if candidates.len() == 1 {
 			candidates[0]
 		} else {
 			let sample_content = Self::read_detection_sample(&mut reader)?;

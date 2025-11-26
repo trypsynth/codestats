@@ -68,7 +68,24 @@ fn disambiguate<'a>(candidates: &[&'a Language], content: &str) -> Option<&'a La
 		.map(|(lang, _)| lang)
 }
 
+/// Detect language from shebang line (e.g., `#!/bin/bash`).
+///
+/// Returns the first language whose shebang patterns match the beginning of the content.
+#[inline]
+fn detect_from_shebang(content: &str) -> Option<&'static Language> {
+	let first_line = content.lines().next()?;
+	let trimmed = first_line.trim();
+	if !trimmed.starts_with("#!") {
+		return None;
+	}
+	LANGUAGES.iter().find(|lang| {
+		!lang.shebangs.is_empty() && lang.shebangs.iter().any(|shebang| trimmed.starts_with(shebang))
+	})
+}
+
 /// Detect the full [`Language`] metadata for a file, optionally using its contents for disambiguation between extensions that map to multiple languages.
+///
+/// If no filename patterns match, falls back to shebang detection when content is provided.
 ///
 /// # Examples
 /// ```
@@ -77,12 +94,15 @@ fn disambiguate<'a>(candidates: &[&'a Language], content: &str) -> Option<&'a La
 /// let language = detect_language_info("main.rs", None).unwrap();
 /// assert_eq!(language.name, "Rust");
 /// assert!(language.line_comments.contains(&"//"));
+/// // Extensionless file with shebang
+/// let script = detect_language_info("my-script", Some("#!/bin/bash\necho hello")).unwrap();
+/// assert_eq!(script.name, "Bash");
 /// ```
 #[must_use]
 pub fn detect_language_info(filename: &str, content: Option<&str>) -> Option<&'static Language> {
 	let candidates = get_candidates(filename);
 	match candidates.len() {
-		0 => None,
+		0 => content.and_then(detect_from_shebang),
 		1 => Some(candidates[0]),
 		_ => content
 			.and_then(|file_content| disambiguate(&candidates, file_content))
