@@ -13,7 +13,9 @@ fn main() -> Result<()> {
 	let cli = Cli::parse();
 	match cli.command {
 		Commands::Langs => {
-			langs::print_all_languages();
+			let mut stdout = io::stdout();
+			langs::print_all_languages(&mut stdout)?;
+			stdout.flush()?;
 			Ok(())
 		}
 		Commands::Analyze { path, verbose, no_gitignore, hidden, symlinks, output } => {

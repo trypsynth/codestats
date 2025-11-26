@@ -1,5 +1,6 @@
-use std::sync::LazyLock;
+use std::{io::Write, sync::LazyLock};
 
+use anyhow::Result;
 use globset::{GlobBuilder, GlobSet, GlobSetBuilder};
 
 use crate::utils::pluralize;
@@ -172,18 +173,19 @@ pub fn get_language_info(language_name: &str) -> Option<&'static Language> {
 }
 
 /// Print all supported programming languages to stdout.
-pub fn print_all_languages() {
+pub fn print_all_languages(writer: &mut dyn Write) -> Result<()> {
 	let lang_count = u64::try_from(LANGUAGES.len()).unwrap_or(u64::MAX);
-	println!(
+	writeln!(writer,
 		"Total number of supported programming {}: {}",
 		pluralize(lang_count, "language", "languages"),
 		LANGUAGES.len()
-	);
+	)?;
 	let last_idx = LANGUAGES.len().saturating_sub(1);
 	for (i, lang) in LANGUAGES.iter().enumerate() {
 		let suffix = if i == last_idx { "." } else { "," };
-		println!("{}{suffix}", lang.name);
+		writeln!(writer, "{}{suffix}", lang.name)?;
 	}
+	Ok(())
 }
 
 #[cfg(test)]
