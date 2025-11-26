@@ -124,7 +124,7 @@ impl CodeAnalyzer {
 							let should_consider = entry
 								.file_name()
 								.to_str()
-								.map_or(true, |name| language_globset.is_match(name) || !name.contains('.'));
+								.is_none_or(|name| language_globset.is_match(name) || !name.contains('.'));
 							if !should_consider {
 								return ignore::WalkState::Continue;
 							}
