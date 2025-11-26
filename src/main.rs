@@ -2,6 +2,8 @@
 
 mod cli;
 
+use std::io::{self, Write};
+
 use anyhow::{Result, ensure};
 use clap::Parser;
 use cli::{Cli, Commands};
@@ -31,8 +33,9 @@ fn main() -> Result<()> {
 			let analyzer = CodeAnalyzer::new(path.clone(), config);
 			let results = analyzer.analyze()?;
 			let formatter = get_formatter(output);
-			let output_text = formatter.format(&results, &path, verbose)?;
-			print!("{output_text}");
+			let mut stdout = io::stdout();
+			formatter.write_output(&results, &path, verbose, &mut stdout)?;
+			stdout.flush()?;
 			Ok(())
 		}
 	}

@@ -1,6 +1,25 @@
+use std::sync::LazyLock;
+
+use globset::{GlobBuilder, GlobSet, GlobSetBuilder};
+
 use crate::utils::pluralize;
 
 include!(concat!(env!("OUT_DIR"), "/languages.rs"));
+
+static LANGUAGE_GLOBSET: LazyLock<GlobSet> = LazyLock::new(|| {
+	let mut builder = GlobSetBuilder::new();
+	for lang in LANGUAGES {
+		for pattern in lang.file_patterns {
+			let mut glob_builder = GlobBuilder::new(pattern);
+			glob_builder.case_insensitive(true);
+			let glob = glob_builder
+				.build()
+				.unwrap_or_else(|e| panic!("Invalid glob pattern '{pattern}' for language {}: {e}", lang.name));
+			builder.add(glob);
+		}
+	}
+	builder.build().expect("Failed to build language globset")
+});
 
 #[inline]
 fn matches_pattern(filename: &str, pattern: &str) -> bool {
@@ -20,6 +39,12 @@ fn ends_with_ignore_ascii_case(value: &str, suffix: &str) -> bool {
 	value_bytes.iter().rev().zip(suffix_bytes.iter().rev()).all(|(a, b)| a.eq_ignore_ascii_case(b))
 }
 
+/// Precompiled, case-insensitive globset of all known language file patterns.
+#[must_use]
+pub(crate) fn language_globset() -> &'static GlobSet {
+	&LANGUAGE_GLOBSET
+}
+
 #[inline]
 pub(crate) fn get_candidates(filename: &str) -> Vec<&'static Language> {
 	if let Some(literal_matches) = PATTERN_MAP.get(filename) {
@@ -37,6 +62,8 @@ fn score_language(lang: &Language, content: &str) -> i32 {
 	if lang.line_comments.is_empty() && lang.block_comments.is_empty() && lang.keywords.is_empty() {
 		return 0;
 	}
+	let tokens: Vec<_> =
+		content.split(|c: char| !c.is_ascii_alphanumeric() && c != '_').filter(|token| !token.is_empty()).collect();
 	for comment in lang.line_comments {
 		if content.contains(comment) {
 			score = score.saturating_add(50);
@@ -48,7 +75,12 @@ fn score_language(lang: &Language, content: &str) -> i32 {
 		}
 	}
 	for keyword in lang.keywords {
-		let count = content.matches(keyword).count();
+		// If keyword contains special characters, use substring matching to handle cases like "@interface" in Objective-C, which wouldn't match via tokenization since @ is a delimiter.
+		let count = if keyword.chars().any(|c| !c.is_ascii_alphanumeric() && c != '_') {
+			content.matches(keyword).count()
+		} else {
+			tokens.iter().filter(|token| token.eq_ignore_ascii_case(keyword)).count()
+		};
 		let clamped_count = count.min(usize::try_from(i32::MAX / 10).unwrap_or(usize::MAX));
 		// We now know that this is safe because we've clamped the value.
 		#[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
@@ -211,6 +243,12 @@ mod tests {
 	fn get_candidates_supports_wildcards() {
 		let candidates = get_candidates("lib.rs");
 		assert!(candidates.iter().any(|lang| lang.name == "Rust"));
+	}
+
+	#[test]
+	fn globset_matches_common_extensions() {
+		assert!(language_globset().is_match("main.rs"));
+		assert!(language_globset().is_match("README.md"));
 	}
 
 	#[test]

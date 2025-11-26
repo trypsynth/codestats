@@ -103,21 +103,31 @@ impl CodeAnalyzer {
 			println!("Analyzing directory {}", self.root.display());
 		}
 		let results = Arc::new(Mutex::new(AnalysisResults::default()));
+		let shared_results = Arc::clone(&results);
 		let verbose = self.config.verbose;
 		let collect_details = self.config.detail_level.collect_file_details();
+		let language_globset = langs::language_globset();
 		WalkBuilder::new(&self.root)
 			.follow_links(self.config.traversal.follow_symlinks)
 			.ignore(self.config.traversal.respect_gitignore)
 			.git_ignore(self.config.traversal.respect_gitignore)
 			.hidden(!self.config.traversal.include_hidden)
 			.build_parallel()
-			.run(|| {
+			.run(move || {
 				let mut aggregator =
-					LocalAggregator { shared: Arc::clone(&results), local: AnalysisResults::default() };
+					LocalAggregator { shared: Arc::clone(&shared_results), local: AnalysisResults::default() };
 				let detail_collection = collect_details;
+				let language_globset = language_globset;
 				Box::new(move |entry_result| {
 					match entry_result {
 						Ok(entry) if entry.file_type().is_some_and(|ft| ft.is_file()) => {
+							let should_consider = entry
+								.file_name()
+								.to_str()
+								.map_or(true, |name| language_globset.is_match(name) || !name.contains('.'));
+							if !should_consider {
+								return ignore::WalkState::Continue;
+							}
 							if let Err(e) = Self::process_file(entry.path(), &mut aggregator.local, detail_collection) {
 								if verbose {
 									eprintln!("Error processing file {}: {e}", entry.path().display());
@@ -148,8 +158,8 @@ impl CodeAnalyzer {
 		let mut reader = BufReader::new(file);
 		let candidates = langs::get_candidates(filename);
 		let language = if candidates.is_empty() {
-			// No filename match - try shebang detection
-			let sample_content = Self::read_detection_sample(&mut reader)?;
+			// No filename match - try a tiny peek for shebang detection
+			let sample_content = Self::read_first_line(&mut reader)?;
 			match langs::detect_language_info(filename, (!sample_content.is_empty()).then_some(sample_content.as_str()))
 			{
 				Some(lang) => lang,
@@ -158,7 +168,8 @@ impl CodeAnalyzer {
 		} else if candidates.len() == 1 {
 			candidates[0]
 		} else {
-			let sample_content = Self::read_detection_sample(&mut reader)?;
+			// Multiple candidates - grab a small sample to disambiguate
+			let sample_content = Self::read_detection_sample(&mut reader, 4 * 1024)?;
 			langs::detect_language_info(filename, (!sample_content.is_empty()).then_some(sample_content.as_str()))
 				.unwrap_or(candidates[0])
 		};
@@ -208,19 +219,25 @@ impl CodeAnalyzer {
 		Ok(())
 	}
 
-	fn read_detection_sample(reader: &mut BufReader<File>) -> Result<String> {
-		const SAMPLE_BYTES: usize = 16 * 1024;
-		let mut sample_bytes = Vec::with_capacity(SAMPLE_BYTES);
-		while sample_bytes.len() < SAMPLE_BYTES {
+	fn read_detection_sample(reader: &mut BufReader<File>, max_bytes: usize) -> Result<String> {
+		let mut sample_bytes = Vec::with_capacity(max_bytes);
+		while sample_bytes.len() < max_bytes {
 			let buffer = reader.fill_buf()?;
 			if buffer.is_empty() {
 				break;
 			}
-			let take = SAMPLE_BYTES.saturating_sub(sample_bytes.len()).min(buffer.len());
+			let take = max_bytes.saturating_sub(sample_bytes.len()).min(buffer.len());
 			sample_bytes.extend_from_slice(&buffer[..take]);
 			reader.consume(take);
 		}
 		reader.seek(SeekFrom::Start(0)).context("Failed to rewind file for analysis")?;
 		Ok(String::from_utf8_lossy(&sample_bytes).into_owned())
+	}
+
+	fn read_first_line(reader: &mut BufReader<File>) -> Result<String> {
+		let mut line = String::new();
+		let _ = reader.read_line(&mut line)?;
+		reader.seek(SeekFrom::Start(0)).context("Failed to rewind file for analysis")?;
+		Ok(line)
 	}
 }

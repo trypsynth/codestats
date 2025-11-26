@@ -4,6 +4,7 @@ mod json;
 
 use std::{
 	fmt::{self, Display},
+	io::Write,
 	path::Path,
 };
 
@@ -38,12 +39,13 @@ impl Display for OutputFormat {
 
 /// Trait for formatting analysis results in a desired format.
 pub trait OutputFormatter {
-	/// Format and output the analysis results
+	/// Format and stream the analysis results to the provided writer
 	///
 	/// # Errors
 	///
 	/// Returns an error if formatting fails, (e.g. JSON serialization encounters an issue).
-	fn format(&self, results: &AnalysisResults, path: &Path, verbose: bool) -> Result<String>;
+	fn write_output(&self, results: &AnalysisResults, path: &Path, verbose: bool, writer: &mut dyn Write)
+	-> Result<()>;
 }
 
 /// Factory for creating output formatters

@@ -1,4 +1,4 @@
-use std::{cmp::Reverse, fmt::Write, path::Path};
+use std::{cmp::Reverse, io::Write, path::Path};
 
 use super::OutputFormatter;
 use crate::{
@@ -10,126 +10,139 @@ use crate::{
 pub struct HumanFormatter;
 
 impl OutputFormatter for HumanFormatter {
-	fn format(&self, results: &AnalysisResults, path: &Path, verbose: bool) -> anyhow::Result<String> {
-		let mut output = String::new();
-		output.push_str(&Self::format_overview(results, path));
+	fn write_output(
+		&self,
+		results: &AnalysisResults,
+		path: &Path,
+		verbose: bool,
+		writer: &mut dyn Write,
+	) -> anyhow::Result<()> {
+		Self::write_overview(results, path, writer)?;
 		if results.language_stats().is_empty() {
-			output.push_str("No recognized programming languages found.\n");
-			return Ok(output);
+			writeln!(writer, "No recognized programming languages found.")?;
+			return Ok(());
 		}
-		output.push_str(&Self::format_language_breakdown(results, verbose));
-		Ok(output)
+		Self::write_language_breakdown(results, verbose, writer)?;
+		Ok(())
 	}
 }
 
 impl HumanFormatter {
-	fn format_overview(results: &AnalysisResults, path: &Path) -> String {
+	fn write_overview(results: &AnalysisResults, path: &Path, writer: &mut dyn Write) -> anyhow::Result<()> {
 		let total_size_human = results.total_size_human();
-		let mut output = format!(
-			"Codestats for {}: {} {}, {} total {}, {} total size.\n",
+		writeln!(
+			writer,
+			"Codestats for {}: {} {}, {} total {}, {} total size.",
 			path.display(),
 			results.total_files(),
 			utils::pluralize(results.total_files(), "file", "files"),
 			results.total_lines(),
 			utils::pluralize(results.total_lines(), "line", "lines"),
 			total_size_human
-		);
+		)?;
 		let line_breakdown_parts = Self::build_line_breakdown_parts(results);
 		if !line_breakdown_parts.is_empty() {
-			let _ = writeln!(output, "Line breakdown: {}.", line_breakdown_parts.join(", "));
+			writeln!(writer, "Line breakdown: {}.", line_breakdown_parts.join(", "))?;
 		}
 		let percentage_parts = Self::build_percentage_parts(results);
 		if !percentage_parts.is_empty() {
-			let _ = writeln!(output, "Percentages: {}.", percentage_parts.join(", "));
+			writeln!(writer, "Percentages: {}.", percentage_parts.join(", "))?;
 		}
-		output
+		Ok(())
 	}
 
-	fn format_language_breakdown(results: &AnalysisResults, verbose: bool) -> String {
-		let mut output = String::from("Language breakdown:\n");
+	fn write_language_breakdown(
+		results: &AnalysisResults,
+		verbose: bool,
+		writer: &mut dyn Write,
+	) -> anyhow::Result<()> {
+		writeln!(writer, "Language breakdown:")?;
 		for (lang, lang_stats) in results.languages_by_lines() {
-			output.push_str(&Self::format_language_stats(lang, lang_stats, results, verbose));
+			Self::write_language_stats(lang, lang_stats, results, verbose, writer)?;
 		}
-		output
+		Ok(())
 	}
 
-	fn format_language_stats(
+	fn write_language_stats(
 		lang: &str,
 		lang_stats: &LanguageStats,
 		overall_results: &AnalysisResults,
 		verbose: bool,
-	) -> String {
-		let mut output = String::new();
+		writer: &mut dyn Write,
+	) -> anyhow::Result<()> {
 		let file_pct = utils::percentage(lang_stats.files(), overall_results.total_files());
 		let line_pct = utils::percentage(lang_stats.lines(), overall_results.total_lines());
 		let size_pct = utils::percentage(lang_stats.size(), overall_results.total_size());
 		let size_human = lang_stats.size_human();
-		let _ = writeln!(output, "{lang}:");
-		let _ = writeln!(
-			output,
+		writeln!(writer, "{lang}:")?;
+		writeln!(
+			writer,
 			"\tFiles: {} {} ({file_pct:.1}% of total).",
 			lang_stats.files(),
 			utils::pluralize(lang_stats.files(), "file", "files")
-		);
-		let _ = writeln!(
-			output,
+		)?;
+		writeln!(
+			writer,
 			"\tLines: {} {} ({line_pct:.1}% of total).",
 			lang_stats.lines(),
 			utils::pluralize(lang_stats.lines(), "line", "lines")
-		);
-		let _ = writeln!(output, "\tSize: {size_human} ({size_pct:.1}% of total).");
-		output.push_str("\tLine breakdown:\n");
+		)?;
+		writeln!(writer, "\tSize: {size_human} ({size_pct:.1}% of total).")?;
+		writeln!(writer, "\tLine breakdown:")?;
 		if lang_stats.code_lines() > 0 {
-			let _ =
-				writeln!(output, "\t\tCode: {} lines ({:.1}%).", lang_stats.code_lines(), lang_stats.code_percentage());
+			writeln!(writer, "\t\tCode: {} lines ({:.1}%).", lang_stats.code_lines(), lang_stats.code_percentage())?;
 		}
 		if lang_stats.comment_lines() > 0 {
-			let _ = writeln!(
-				output,
+			writeln!(
+				writer,
 				"\t\tComments: {} lines ({:.1}%).",
 				lang_stats.comment_lines(),
 				lang_stats.comment_percentage()
-			);
+			)?;
 		}
 		if lang_stats.blank_lines() > 0 {
-			let _ = writeln!(
-				output,
+			writeln!(
+				writer,
 				"\t\tBlanks: {} lines ({:.1}%).",
 				lang_stats.blank_lines(),
 				lang_stats.blank_percentage()
-			);
+			)?;
 		}
 		if lang_stats.shebang_lines() > 0 {
-			let _ = writeln!(
-				output,
+			writeln!(
+				writer,
 				"\t\tShebangs: {} lines ({:.1}%).",
 				lang_stats.shebang_lines(),
 				lang_stats.shebang_percentage()
-			);
+			)?;
 		}
 		if verbose {
-			output.push_str(&Self::format_file_breakdown(lang_stats, overall_results));
+			Self::write_file_breakdown(lang_stats, overall_results, writer)?;
 		}
-		output
+		Ok(())
 	}
 
-	fn format_file_breakdown(lang_stats: &LanguageStats, overall_results: &AnalysisResults) -> String {
-		let mut output = String::from("\tFile breakdown:\n");
+	fn write_file_breakdown(
+		lang_stats: &LanguageStats,
+		overall_results: &AnalysisResults,
+		writer: &mut dyn Write,
+	) -> anyhow::Result<()> {
+		writeln!(writer, "\tFile breakdown:")?;
 		let mut files: Vec<_> = lang_stats.files_list().iter().collect();
 		files.sort_by_key(|b| Reverse(b.total_lines()));
 		for file_stat in files {
 			let file_pct = utils::percentage(file_stat.total_lines(), overall_results.total_lines());
 			let size_human = file_stat.size_human();
-			let _ = writeln!(
-				output,
+			writeln!(
+				writer,
 				"\t\t{}: {} lines, {} ({:.1}% of total lines).",
 				file_stat.path(),
 				file_stat.total_lines(),
 				size_human,
 				file_pct
-			);
+			)?;
 		}
-		output
+		Ok(())
 	}
 
 	fn build_line_breakdown_parts(results: &AnalysisResults) -> Vec<String> {
