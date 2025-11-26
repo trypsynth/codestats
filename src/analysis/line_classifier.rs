@@ -65,7 +65,7 @@ pub fn classify_line(
 	}
 	if is_first_line && trimmed.starts_with("#!") {
 		if let Some(lang) = lang_info {
-			if lang.shebangs.is_empty() || lang.shebangs.iter().any(|shebang| trimmed.starts_with(shebang)) {
+			if !lang.shebangs.is_empty() && lang.shebangs.iter().any(|shebang| trimmed.starts_with(shebang)) {
 				return LineType::Shebang;
 			}
 		} else {
