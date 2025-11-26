@@ -78,9 +78,9 @@ fn detect_from_shebang(content: &str) -> Option<&'static Language> {
 	if !trimmed.starts_with("#!") {
 		return None;
 	}
-	LANGUAGES.iter().find(|lang| {
-		!lang.shebangs.is_empty() && lang.shebangs.iter().any(|shebang| trimmed.starts_with(shebang))
-	})
+	LANGUAGES
+		.iter()
+		.find(|lang| !lang.shebangs.is_empty() && lang.shebangs.iter().any(|shebang| trimmed.starts_with(shebang)))
 }
 
 /// Detect the full [`Language`] metadata for a file, optionally using its contents for disambiguation between extensions that map to multiple languages.

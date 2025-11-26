@@ -150,7 +150,8 @@ impl CodeAnalyzer {
 		let language = if candidates.is_empty() {
 			// No filename match - try shebang detection
 			let sample_content = Self::read_detection_sample(&mut reader)?;
-			match langs::detect_language_info(filename, (!sample_content.is_empty()).then_some(sample_content.as_str())) {
+			match langs::detect_language_info(filename, (!sample_content.is_empty()).then_some(sample_content.as_str()))
+			{
 				Some(lang) => lang,
 				None => return Ok(()),
 			}
