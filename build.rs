@@ -151,7 +151,7 @@ type Result<T> = result::Result<T, Box<dyn Error>>;
 
 fn main() -> Result<()> {
 	let manifest_dir = env::var("CARGO_MANIFEST_DIR")?;
-	let json_path = Path::new(&manifest_dir).join("languages.jsonc");
+	let json_path = Path::new(&manifest_dir).join("languages.json5");
 	println!("cargo:rerun-if-changed={}", json_path.display());
 	let json_content = fs::read_to_string(&json_path)?;
 	let languages: Vec<Language> = json5::from_str(&json_content)?;
