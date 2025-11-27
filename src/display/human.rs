@@ -18,7 +18,7 @@ impl OutputFormatter for HumanFormatter {
 		writer: &mut dyn Write,
 	) -> anyhow::Result<()> {
 		Self::write_overview(results, path, writer)?;
-		if results.language_stats().is_empty() {
+		if results.languages_by_lines().is_empty() {
 			writeln!(writer, "No recognized programming languages found.")?;
 			return Ok(());
 		}

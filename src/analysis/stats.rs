@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use serde::Serialize;
 
 use crate::{langs, utils};
@@ -272,7 +270,7 @@ pub struct AnalysisResults {
 	total_blank_lines: u64,
 	total_shebang_lines: u64,
 	total_size: u64,
-	language_stats: HashMap<&'static str, LanguageStats>,
+	language_stats: Vec<LanguageStats>,
 }
 
 impl Default for AnalysisResults {
@@ -285,7 +283,7 @@ impl Default for AnalysisResults {
 			total_blank_lines: 0,
 			total_shebang_lines: 0,
 			total_size: 0,
-			language_stats: HashMap::with_capacity(langs::LANGUAGES.len()),
+			language_stats: vec![LanguageStats::default(); langs::LANGUAGES.len()],
 		}
 	}
 }
@@ -293,7 +291,7 @@ impl Default for AnalysisResults {
 impl AnalysisResults {
 	pub(crate) fn add_file_stats(
 		&mut self,
-		language: &'static str,
+		language: &'static langs::Language,
 		contribution: FileContribution,
 		file_stats: Option<FileStats>,
 	) {
@@ -304,7 +302,7 @@ impl AnalysisResults {
 		self.total_blank_lines += contribution.blank_lines();
 		self.total_shebang_lines += contribution.shebang_lines();
 		self.total_size += contribution.size();
-		self.language_stats.entry(language).or_default().add_file(&contribution, file_stats);
+		self.language_stats[language.index].add_file(&contribution, file_stats);
 	}
 
 	pub(crate) fn merge(&mut self, mut other: Self) {
@@ -315,8 +313,8 @@ impl AnalysisResults {
 		self.total_blank_lines += other.total_blank_lines;
 		self.total_shebang_lines += other.total_shebang_lines;
 		self.total_size += other.total_size;
-		for (language, stats) in other.language_stats.drain() {
-			self.language_stats.entry(language).or_default().merge(stats);
+		for (idx, stats) in other.language_stats.drain(..).enumerate() {
+			self.language_stats[idx].merge(stats);
 		}
 	}
 
@@ -368,12 +366,6 @@ impl AnalysisResults {
 		utils::human_size(self.total_size)
 	}
 
-	/// Get a map of all language statistics
-	#[must_use]
-	pub const fn language_stats(&self) -> &HashMap<&'static str, LanguageStats> {
-		&self.language_stats
-	}
-
 	/// Get languages sorted by total lines in descending order
 	///
 	/// Returns a vector of tuples containing (`language_name`, `language_stats`)
@@ -381,7 +373,13 @@ impl AnalysisResults {
 	/// with the most lines coming first.
 	#[must_use]
 	pub fn languages_by_lines(&self) -> Vec<(&'static str, &LanguageStats)> {
-		let mut stats_vec: Vec<_> = self.language_stats.iter().map(|(lang, stats)| (*lang, stats)).collect();
+		let mut stats_vec: Vec<_> = langs::LANGUAGES
+			.iter()
+			.filter_map(|lang| {
+				let stats = &self.language_stats[lang.index];
+				(stats.files() > 0).then_some((lang.name, stats))
+			})
+			.collect();
 		stats_vec.sort_by_key(|(_, lang_stats)| std::cmp::Reverse(lang_stats.lines));
 		stats_vec
 	}

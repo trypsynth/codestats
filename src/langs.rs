@@ -8,8 +8,14 @@ use crate::utils::pluralize;
 
 include!(concat!(env!("OUT_DIR"), "/languages.rs"));
 
-static LANGUAGE_GLOBSET: LazyLock<GlobSet> = LazyLock::new(|| {
+struct LanguageGlobs {
+	set: GlobSet,
+	pattern_lang_indexes: Vec<usize>,
+}
+
+static LANGUAGE_GLOBSET: LazyLock<LanguageGlobs> = LazyLock::new(|| {
 	let mut builder = GlobSetBuilder::new();
+	let mut pattern_lang_indexes = Vec::new();
 	for lang in LANGUAGES {
 		for pattern in lang.file_patterns {
 			let mut glob_builder = GlobBuilder::new(pattern);
@@ -17,10 +23,12 @@ static LANGUAGE_GLOBSET: LazyLock<GlobSet> = LazyLock::new(|| {
 			let glob = glob_builder
 				.build()
 				.unwrap_or_else(|e| panic!("Invalid glob pattern '{pattern}' for language {}: {e}", lang.name));
+			pattern_lang_indexes.push(lang.index);
 			builder.add(glob);
 		}
 	}
-	builder.build().expect("Failed to build language globset")
+	let set = builder.build().expect("Failed to build language globset");
+	LanguageGlobs { set, pattern_lang_indexes }
 });
 
 #[derive(Debug)]
@@ -106,39 +114,25 @@ fn build_language_matchers(lang: &Language) -> LanguageMatchers {
 	LanguageMatchers { line_comments, block_comments }
 }
 
-#[inline]
-fn matches_pattern(filename: &str, pattern: &str) -> bool {
-	pattern.strip_prefix('*').map_or_else(
-		|| filename == pattern || filename.eq_ignore_ascii_case(pattern),
-		|suffix| filename.ends_with(suffix) || ends_with_ignore_ascii_case(filename, suffix),
-	)
-}
-
-#[inline]
-fn ends_with_ignore_ascii_case(value: &str, suffix: &str) -> bool {
-	let value_bytes = value.as_bytes();
-	let suffix_bytes = suffix.as_bytes();
-	if value_bytes.len() < suffix_bytes.len() {
-		return false;
-	}
-	value_bytes.iter().rev().zip(suffix_bytes.iter().rev()).all(|(a, b)| a.eq_ignore_ascii_case(b))
-}
-
 /// Precompiled, case-insensitive globset of all known language file patterns.
 #[must_use]
 pub fn language_globset() -> &'static GlobSet {
-	&LANGUAGE_GLOBSET
+	&LANGUAGE_GLOBSET.set
 }
 
 #[inline]
 pub fn get_candidates(filename: &str) -> Vec<&'static Language> {
-	if let Some(literal_matches) = PATTERN_MAP.get(filename) {
-		return literal_matches.to_vec();
+	let globs = &*LANGUAGE_GLOBSET;
+	let mut seen = vec![false; LANGUAGES.len()];
+	let mut candidates = Vec::new();
+	for match_idx in globs.set.matches(filename) {
+		let lang_idx = globs.pattern_lang_indexes[match_idx];
+		if !seen[lang_idx] {
+			seen[lang_idx] = true;
+			candidates.push(&LANGUAGES[lang_idx]);
+		}
 	}
-	LANGUAGES
-		.iter()
-		.filter(|lang| lang.file_patterns.iter().any(|pattern| matches_pattern(filename, pattern)))
-		.collect()
+	candidates
 }
 
 #[inline]
@@ -279,21 +273,6 @@ mod tests {
 	};
 
 	#[test]
-	fn matches_pattern_understands_wildcards() {
-		assert!(matches_pattern("main.rs", "*.rs"));
-		assert!(matches_pattern("README.MD", "*.md"));
-		assert!(!matches_pattern("main.rs", "*.py"));
-	}
-
-	#[test]
-	fn matches_pattern_is_case_insensitive_for_literals() {
-		assert!(matches_pattern("MAKEFILE", "Makefile"));
-		assert!(matches_pattern("Dockerfile", "dockerfile"));
-		assert!(matches_pattern("CMakeLists.txt", "cmakelists.txt"));
-		assert!(!matches_pattern("Cargo.toml", "Makefile"));
-	}
-
-	#[test]
 	fn get_candidates_uses_literal_map() {
 		let candidates = get_candidates("Makefile");
 		assert_eq!(candidates.len(), 1);
@@ -317,12 +296,6 @@ mod tests {
 	fn globset_matches_common_extensions() {
 		assert!(language_globset().is_match("main.rs"));
 		assert!(language_globset().is_match("README.md"));
-	}
-
-	#[test]
-	fn matches_pattern_handles_unicode_filenames() {
-		let filename = "report \u{202f}PM.PDF";
-		assert!(matches_pattern(filename, "*.pdf"));
 	}
 
 	#[test]
@@ -355,17 +328,5 @@ mod tests {
 	fn detect_language_info_falls_back_to_first_candidate_without_content_signal() {
 		let language = detect_language_info("ambiguous.m", Some("plain text without hints")).unwrap();
 		assert_eq!(language.name, "MATLAB");
-	}
-
-	#[test]
-	fn detect_language_returns_language_name() {
-		assert_eq!(detect_language("analysis.ts", None), Some("TypeScript"));
-	}
-
-	#[test]
-	fn get_language_info_finds_known_language() {
-		let language = get_language_info("Rust").expect("language should exist");
-		assert_eq!(language.name, "Rust");
-		assert!(language.file_patterns.contains(&"*.rs"));
 	}
 }

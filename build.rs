@@ -1,7 +1,7 @@
 #![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 
 use std::{
-	collections::{BTreeMap, HashMap, HashSet},
+	collections::{HashMap, HashSet},
 	env,
 	error::Error,
 	fmt::Write as _,
@@ -69,25 +69,8 @@ fn get_language_schema() -> Vec<(&'static str, &'static str)> {
 	]
 }
 
-fn build_pattern_mappings(languages: &[ProcessedLanguage]) -> Vec<(String, Vec<usize>)> {
-	let mut literal_map: BTreeMap<String, Vec<usize>> = BTreeMap::new();
-	for (lang_idx, lang) in languages.iter().enumerate() {
-		for pattern in &lang.file_patterns {
-			if pattern.contains('*') {
-				continue;
-			}
-			let indexes = literal_map.entry(pattern.clone()).or_default();
-			if !indexes.contains(&lang_idx) {
-				indexes.push(lang_idx);
-			}
-		}
-	}
-	literal_map.into_iter().collect()
-}
-
-fn render_languages(languages: &[ProcessedLanguage], pattern_mappings: &[(String, Vec<usize>)]) -> String {
+fn render_languages(languages: &[ProcessedLanguage]) -> String {
 	let mut output = String::new();
-	output.push_str("use phf::{Map, phf_map};\n\n");
 	output.push_str("#[derive(Debug, Clone, PartialEq, Eq)]\n");
 	output.push_str("/// Holds information about a single programming language.\n");
 	output.push_str("pub struct Language {\n");
@@ -109,12 +92,6 @@ fn render_languages(languages: &[ProcessedLanguage], pattern_mappings: &[(String
 		output.push_str("\t},\n");
 	}
 	output.push_str("];\n\n");
-	output.push_str("pub static PATTERN_MAP: Map<&'static str, &'static [&'static Language]> = phf_map! {\n");
-	for (pattern, indexes) in pattern_mappings {
-		let lang_refs = indexes.iter().map(|index| format!("&LANGUAGES[{index}]")).collect::<Vec<String>>().join(", ");
-		let _ = writeln!(output, "\t{} => &[{lang_refs}],", render_str(pattern));
-	}
-	output.push_str("};\n");
 	output
 }
 
@@ -179,8 +156,7 @@ fn main() -> Result<()> {
 		json5::from_str(&json_content).map_err(|e| format!("Failed to parse languages.json5: {e}"))?;
 	let languages = normalize_languages(language_map)?;
 	validate_languages(&languages)?;
-	let pattern_mappings = build_pattern_mappings(&languages);
-	let rendered = render_languages(&languages, &pattern_mappings);
+	let rendered = render_languages(&languages);
 	let out_dir = env::var("OUT_DIR")?;
 	let dest_path = Path::new(&out_dir).join("languages.rs");
 	fs::write(dest_path, rendered)?;

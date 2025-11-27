@@ -4,7 +4,10 @@ use std::{
 	mem,
 	path::{Path, PathBuf},
 	str,
-	sync::{Arc, Mutex, PoisonError},
+	sync::{
+		Arc, Mutex, PoisonError,
+		atomic::{AtomicU64, Ordering},
+	},
 };
 
 use anyhow::{Context, Result};
@@ -105,6 +108,8 @@ impl CodeAnalyzer {
 		}
 		let results = Arc::new(Mutex::new(AnalysisResults::default()));
 		let shared_results = Arc::clone(&results);
+		let error_counter = Arc::new(AtomicU64::new(0));
+		let shared_error_counter = Arc::clone(&error_counter);
 		let verbose = self.config.verbose;
 		let collect_details = self.config.detail_level.collect_file_details();
 		let language_globset = langs::language_globset();
@@ -119,6 +124,7 @@ impl CodeAnalyzer {
 					LocalAggregator { shared: Arc::clone(&shared_results), local: AnalysisResults::default() };
 				let detail_collection = collect_details;
 				let language_globset = language_globset;
+				let error_counter = Arc::clone(&shared_error_counter);
 				Box::new(move |entry_result| {
 					match entry_result {
 						Ok(entry) if entry.file_type().is_some_and(|ft| ft.is_file()) => {
@@ -130,6 +136,7 @@ impl CodeAnalyzer {
 								return ignore::WalkState::Continue;
 							}
 							if let Err(e) = Self::process_file(entry.path(), &mut aggregator.local, detail_collection) {
+								error_counter.fetch_add(1, Ordering::Relaxed);
 								if verbose {
 									eprintln!("Error processing file {}: {e}", entry.path().display());
 								}
@@ -137,6 +144,10 @@ impl CodeAnalyzer {
 						}
 						Err(e) if verbose => {
 							eprintln!("Error walking directory: {e}");
+							error_counter.fetch_add(1, Ordering::Relaxed);
+						}
+						Err(_) => {
+							error_counter.fetch_add(1, Ordering::Relaxed);
 						}
 						_ => {}
 					}
@@ -147,6 +158,14 @@ impl CodeAnalyzer {
 			.map_err(|_| anyhow::anyhow!("Failed to unwrap Arc - parallel walker still holds references"))?
 			.into_inner()
 			.unwrap_or_else(PoisonError::into_inner);
+		let skipped = error_counter.load(Ordering::Relaxed);
+		if skipped > 0 {
+			if verbose {
+				eprintln!("Skipped {skipped} entries due to errors.");
+			} else {
+				eprintln!("Skipped {skipped} entries due to errors (re-run with --verbose for details).");
+			}
+		}
 		Ok(results)
 	}
 
@@ -219,7 +238,7 @@ impl CodeAnalyzer {
 		} else {
 			None
 		};
-		results.add_file_stats(language.name, contribution, file_stats);
+		results.add_file_stats(language, contribution, file_stats);
 		Ok(())
 	}
 
@@ -233,14 +252,11 @@ impl CodeAnalyzer {
 		if sample.is_empty() {
 			return false;
 		}
-		let non_text = sample
-			.iter()
-			.filter(|b| {
-				let byte = **b;
-				byte == 0 || (byte < 0x09) || (byte > 0x7E && byte < 0xA0)
-			})
-			.count();
-		// Consider binary if more than 10% of the sampled bytes look non-textual.
-		non_text * 10 > sample.len()
+		if sample.iter().any(|b| *b == 0) {
+			return true;
+		}
+		let non_text = sample.iter().filter(|b| matches!(**b, 0x00..=0x08 | 0x0B | 0x0C | 0x0E..=0x1F | 0x7F)).count();
+		// Consider binary if more than 20% of the sampled bytes look non-textual.
+		non_text * 5 > sample.len()
 	}
 }
