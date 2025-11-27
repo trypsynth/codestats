@@ -252,7 +252,7 @@ impl CodeAnalyzer {
 		if sample.is_empty() {
 			return false;
 		}
-		if sample.iter().any(|b| *b == 0) {
+		if sample.contains(&0) {
 			return true;
 		}
 		let non_text = sample.iter().filter(|b| matches!(**b, 0x00..=0x08 | 0x0B | 0x0C | 0x0E..=0x1F | 0x7F)).count();
