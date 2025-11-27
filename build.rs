@@ -10,6 +10,7 @@ use std::{
 	result,
 };
 
+use indexmap::IndexMap;
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
@@ -157,9 +158,10 @@ fn render_block_comments(values: &[(String, String)]) -> String {
 	}
 }
 
-fn normalize_languages(entries: BTreeMap<String, LanguageConfig>) -> Result<Vec<Language>> {
+fn normalize_languages(entries: IndexMap<String, LanguageConfig>) -> Result<Vec<Language>> {
 	let mut errors = Vec::new();
-	let mut languages: Vec<Language> = entries
+	let mut prev_name: Option<String> = None;
+	let languages: Vec<Language> = entries
 		.into_iter()
 		.enumerate()
 		.filter_map(|(index, (name, entry))| {
@@ -167,11 +169,19 @@ fn normalize_languages(entries: BTreeMap<String, LanguageConfig>) -> Result<Vec<
 				errors.push(format!("Language at position {}: name cannot be empty", index + 1));
 				return None;
 			}
+			if let Some(prev) = &prev_name {
+				if name.to_lowercase() < prev.to_lowercase() {
+					errors.push(format!(
+						"Language '{}' is not in alphabetical order (should come before '{}')",
+						name, prev
+					));
+				}
+			}
+			prev_name = Some(name.clone());
 			let LanguageConfig { file_patterns, line_comments, block_comments, nested_blocks, shebangs, keywords } = entry;
 			Some(Language { name, file_patterns, line_comments, block_comments, nested_blocks, shebangs, keywords })
 		})
 		.collect();
-	languages.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
 	if errors.is_empty() {
 		Ok(languages)
 	} else {
@@ -186,7 +196,7 @@ fn main() -> Result<()> {
 	let json_path = Path::new(&manifest_dir).join("languages.json5");
 	println!("cargo:rerun-if-changed={}", json_path.display());
 	let json_content = fs::read_to_string(&json_path)?;
-	let language_map: BTreeMap<String, LanguageConfig> =
+	let language_map: IndexMap<String, LanguageConfig> =
 		json5::from_str(&json_content).map_err(|e| format!("Failed to parse languages.json5: {e}"))?;
 	let languages = normalize_languages(language_map)?;
 	validate_languages(&languages)?;
@@ -202,7 +212,6 @@ fn main() -> Result<()> {
 
 fn validate_languages(languages: &[Language]) -> Result<()> {
 	let mut errors = Vec::new();
-	validate_alphabetical_order(languages, &mut errors);
 	let seen_patterns = validate_language_fields(languages, &mut errors);
 	validate_pattern_disambiguation(languages, seen_patterns, &mut errors);
 	if !errors.is_empty() {
@@ -211,21 +220,6 @@ fn validate_languages(languages: &[Language]) -> Result<()> {
 		return Err(error_message.into());
 	}
 	Ok(())
-}
-
-fn validate_alphabetical_order(languages: &[Language], errors: &mut Vec<String>) {
-	let mut prev_name: Option<&str> = None;
-	for lang in languages {
-		if let Some(prev) = prev_name {
-			if lang.name.to_lowercase() < prev.to_lowercase() {
-				errors.push(format!(
-					"Language '{}' is not in alphabetical order (should come before '{}')",
-					lang.name, prev
-				));
-			}
-		}
-		prev_name = Some(&lang.name);
-	}
 }
 
 fn validate_language_fields(languages: &[Language], errors: &mut Vec<String>) -> HashMap<String, Vec<String>> {
