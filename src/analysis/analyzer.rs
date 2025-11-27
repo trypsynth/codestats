@@ -1,8 +1,9 @@
 use std::{
 	fs::File,
-	io::{BufRead, BufReader, Seek, SeekFrom},
+	io::{BufRead, BufReader},
 	mem,
 	path::{Path, PathBuf},
+	str,
 	sync::{Arc, Mutex, PoisonError},
 };
 
@@ -156,22 +157,21 @@ impl CodeAnalyzer {
 		let file_size = metadata.len();
 		let file = File::open(file_path).with_context(|| format!("Failed to open file {}", file_path.display()))?;
 		let mut reader = BufReader::new(file);
+		let sample_bytes = Self::peek_sample(&mut reader, 4 * 1024)?;
+		if Self::is_probably_binary(&sample_bytes) {
+			return Ok(());
+		}
+		let sample_str = str::from_utf8(&sample_bytes).ok();
 		let candidates = langs::get_candidates(filename);
 		let language = if candidates.is_empty() {
-			// No filename match - try a tiny peek for shebang detection
-			let sample_content = Self::read_first_line(&mut reader)?;
-			match langs::detect_language_info(filename, (!sample_content.is_empty()).then_some(sample_content.as_str()))
-			{
+			match langs::detect_language_info(filename, sample_str) {
 				Some(lang) => lang,
 				None => return Ok(()),
 			}
 		} else if candidates.len() == 1 {
 			candidates[0]
 		} else {
-			// Multiple candidates - grab a small sample to disambiguate
-			let sample_content = Self::read_detection_sample(&mut reader, 4 * 1024)?;
-			langs::detect_language_info(filename, (!sample_content.is_empty()).then_some(sample_content.as_str()))
-				.unwrap_or(candidates[0])
+			langs::detect_language_info(filename, sample_str).unwrap_or(candidates[0])
 		};
 		let lang_info = Some(language);
 		let mut total_lines = 0;
@@ -219,25 +219,24 @@ impl CodeAnalyzer {
 		Ok(())
 	}
 
-	fn read_detection_sample(reader: &mut BufReader<File>, max_bytes: usize) -> Result<String> {
-		let mut sample_bytes = Vec::with_capacity(max_bytes);
-		while sample_bytes.len() < max_bytes {
-			let buffer = reader.fill_buf()?;
-			if buffer.is_empty() {
-				break;
-			}
-			let take = max_bytes.saturating_sub(sample_bytes.len()).min(buffer.len());
-			sample_bytes.extend_from_slice(&buffer[..take]);
-			reader.consume(take);
-		}
-		reader.seek(SeekFrom::Start(0)).context("Failed to rewind file for analysis")?;
-		Ok(String::from_utf8_lossy(&sample_bytes).into_owned())
+	fn peek_sample(reader: &mut BufReader<File>, max_bytes: usize) -> Result<Vec<u8>> {
+		let buffer = reader.fill_buf()?;
+		let take = buffer.len().min(max_bytes);
+		Ok(buffer[..take].to_vec())
 	}
 
-	fn read_first_line(reader: &mut BufReader<File>) -> Result<String> {
-		let mut line = String::new();
-		let _ = reader.read_line(&mut line)?;
-		reader.seek(SeekFrom::Start(0)).context("Failed to rewind file for analysis")?;
-		Ok(line)
+	fn is_probably_binary(sample: &[u8]) -> bool {
+		if sample.is_empty() {
+			return false;
+		}
+		let non_text = sample
+			.iter()
+			.filter(|b| {
+				let byte = **b;
+				byte == 0 || (byte < 0x09) || (byte > 0x7E && byte < 0xA0)
+			})
+			.count();
+		// Consider binary if more than 10% of the sampled bytes look non-textual.
+		non_text * 10 > sample.len()
 	}
 }

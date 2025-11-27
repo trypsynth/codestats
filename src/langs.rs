@@ -58,13 +58,11 @@ pub(crate) fn get_candidates(filename: &str) -> Vec<&'static Language> {
 }
 
 #[inline]
-fn score_language(lang: &Language, content: &str) -> i32 {
+fn score_language(lang: &Language, content: &str, tokens: &[&str]) -> i32 {
 	let mut score: i32 = 0;
 	if lang.line_comments.is_empty() && lang.block_comments.is_empty() && lang.keywords.is_empty() {
 		return 0;
 	}
-	let tokens: Vec<_> =
-		content.split(|c: char| !c.is_ascii_alphanumeric() && c != '_').filter(|token| !token.is_empty()).collect();
 	for comment in lang.line_comments {
 		if content.contains(comment) {
 			score = score.saturating_add(50);
@@ -93,12 +91,18 @@ fn score_language(lang: &Language, content: &str) -> i32 {
 
 #[inline]
 fn disambiguate<'a>(candidates: &[&'a Language], content: &str) -> Option<&'a Language> {
+	let tokens = tokenize(content);
 	candidates
 		.iter()
-		.map(|lang| (*lang, score_language(lang, content)))
+		.map(|lang| (*lang, score_language(lang, content, &tokens)))
 		.max_by_key(|(_, score)| *score)
 		.filter(|(_, score)| *score > 0)
 		.map(|(lang, _)| lang)
+}
+
+#[inline]
+fn tokenize(content: &str) -> Vec<&str> {
+	content.split(|c: char| !c.is_ascii_alphanumeric() && c != '_').filter(|token| !token.is_empty()).collect()
 }
 
 /// Detect language from shebang line (e.g., `#!/bin/bash`).
@@ -173,9 +177,14 @@ pub fn get_language_info(language_name: &str) -> Option<&'static Language> {
 }
 
 /// Print all supported programming languages to stdout.
+///
+/// # Errors
+///
+/// Returns an error if writing to the provided writer fails.
 pub fn print_all_languages(writer: &mut dyn Write) -> Result<()> {
 	let lang_count = u64::try_from(LANGUAGES.len()).unwrap_or(u64::MAX);
-	writeln!(writer,
+	writeln!(
+		writer,
 		"Total number of supported programming {}: {}",
 		pluralize(lang_count, "language", "languages"),
 		LANGUAGES.len()
@@ -262,7 +271,8 @@ mod tests {
 	#[test]
 	fn score_language_combines_comments_and_keywords() {
 		let content = "// comment\nalpha beta alpha";
-		let score = score_language(&TEST_LANGUAGE_ALPHA, content);
+		let tokens = tokenize(content);
+		let score = score_language(&TEST_LANGUAGE_ALPHA, content, &tokens);
 		assert_eq!(score, 50 + 3 * 10);
 	}
 

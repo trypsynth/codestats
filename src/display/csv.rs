@@ -58,17 +58,17 @@ impl CsvFormatter {
 		Ok(())
 	}
 
-	fn write_language_section(languages: &[(&String, &LanguageStats)], output: &mut dyn Write) -> Result<()> {
+	fn write_language_section(languages: &[(&'static str, &LanguageStats)], output: &mut dyn Write) -> Result<()> {
 		output.write_all(b"Language breakdown:\n")?;
 		Self::write_language_header(output)?;
 		for (lang, stats) in languages {
-			Self::write_language_row(lang.as_str(), stats, output)?;
+			Self::write_language_row(lang, stats, output)?;
 		}
 		output.write_all(b"\n")?;
 		Ok(())
 	}
 
-	fn write_files_sections(languages: &[(&String, &LanguageStats)], output: &mut dyn Write) -> Result<()> {
+	fn write_files_sections(languages: &[(&'static str, &LanguageStats)], output: &mut dyn Write) -> Result<()> {
 		for (lang_name, lang_stats) in languages {
 			writeln!(output, "{lang_name} files:")?;
 			Self::write_record(
@@ -117,7 +117,7 @@ impl CsvFormatter {
 		let languages = results.languages_by_lines();
 		Self::write_language_header(output)?;
 		for (lang, stats) in languages {
-			Self::write_language_row(lang.as_str(), stats, output)?;
+			Self::write_language_row(lang, stats, output)?;
 		}
 		Ok(())
 	}

@@ -427,6 +427,7 @@
 		"name": "CUE",
 		"file_patterns": ["*.cue"],
 		"line_comments": ["//"],
+		"block_comments": [["/*", "*/"]],
 	},
 	{
 		"name": "Cython",
@@ -1692,6 +1693,12 @@
 		"block_comments": [["\"\"\"", "\"\"\""], ["'''", "'''"]],
 	},
 	{
+		"name": "SAS",
+		"file_patterns": ["*.sas"],
+		"line_comments": ["*"],
+		"block_comments": [["/*", "*/"]],
+	},
+	{
 		"name": "Sass",
 		"file_patterns": ["*.sass"],
 		"line_comments": ["//"],
@@ -1795,6 +1802,11 @@
 		"line_comments": [],
 		"block_comments": [["(*", "*)"]],
 		"nested_blocks": true,
+	},
+	{
+		"name": "Starlark",
+		"file_patterns": ["*.star"],
+		"line_comments": ["#"],
 	},
 	{
 		"name": "Stata",
