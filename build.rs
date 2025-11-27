@@ -58,6 +58,7 @@ impl ProcessedLanguage {
 
 fn get_language_schema() -> Vec<(&'static str, &'static str)> {
 	vec![
+		("index", "usize"),
 		("name", "&'static str"),
 		("file_patterns", "&'static [&'static str]"),
 		("line_comments", "&'static [&'static str]"),
@@ -95,8 +96,9 @@ fn render_languages(languages: &[ProcessedLanguage], pattern_mappings: &[(String
 	}
 	output.push_str("}\n\n");
 	output.push_str("pub static LANGUAGES: &[Language] = &[\n");
-	for lang in languages {
+	for (idx, lang) in languages.iter().enumerate() {
 		output.push_str("\tLanguage {\n");
+		let _ = writeln!(output, "\t\tindex: {idx},");
 		let _ = writeln!(output, "\t\tname: {},", render_str(&lang.name));
 		let _ = writeln!(output, "\t\tfile_patterns: {},", render_str_slice(&lang.file_patterns));
 		let _ = writeln!(output, "\t\tline_comments: {},", render_str_slice(&lang.line_comments));

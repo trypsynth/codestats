@@ -1,4 +1,6 @@
-use crate::langs::Language;
+use memchr::{memchr2, memrchr};
+
+use crate::langs::{Language, language_matchers};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LineType {
@@ -59,7 +61,7 @@ pub fn classify_line(
 	comment_state: &mut CommentState,
 	is_first_line: bool,
 ) -> LineType {
-	let trimmed = line.trim();
+	let trimmed = trim_ascii(line);
 	if trimmed.is_empty() {
 		return LineType::Blank;
 	}
@@ -68,22 +70,20 @@ pub fn classify_line(
 			if !lang.shebangs.is_empty() && lang.shebangs.iter().any(|shebang| trimmed.starts_with(shebang)) {
 				return LineType::Shebang;
 			}
-		} else {
-			// For unknown languages, treat #! on the first line as as shebang.
-			return LineType::Shebang;
 		}
 	}
 	let Some(lang) = lang_info else {
 		return LineType::Code;
 	};
-	let mut line_remainder = trimmed;
+	let mut line_remainder: &str = trimmed;
+	let matchers = language_matchers(lang);
 	let mut has_code = false;
-	if !lang.block_comments.is_empty() {
+	if let Some(block_comments) = matchers.block_comments.as_ref() {
 		let nested = lang.nested_blocks;
 		while !line_remainder.is_empty() {
 			if !comment_state.is_in_comment() {
-				if let Some((pos, start_len)) = find_block_comment_start(line_remainder, lang.block_comments) {
-					if pos > 0 && !line_remainder[..pos].trim().is_empty() {
+				if let Some((pos, start_len)) = block_comments.find_block_start(line_remainder) {
+					if pos > 0 && contains_non_whitespace(&line_remainder[..pos]) {
 						has_code = true;
 					}
 					line_remainder = &line_remainder[pos + start_len..];
@@ -92,7 +92,7 @@ pub fn classify_line(
 					break;
 				}
 			} else if let Some((pos, len, found_nested_start)) =
-				find_block_comment_end_or_nested_start(line_remainder, lang.block_comments, nested)
+				block_comments.find_block_end_or_nested_start(line_remainder, nested)
 			{
 				if found_nested_start {
 					comment_state.enter_nested_block();
@@ -108,56 +108,62 @@ pub fn classify_line(
 	if comment_state.is_in_comment() {
 		return if has_code { LineType::Code } else { LineType::Comment };
 	}
-	if !lang.line_comments.is_empty() {
-		if let Some(pos) = find_line_comment_start(line_remainder, lang.line_comments) {
-			if pos > 0 && !line_remainder[..pos].trim().is_empty() {
+	if let Some(line_comments) = matchers.line_comments.as_ref() {
+		if let Some(matched) = line_comments.find(line_remainder) {
+			let pos = matched.start();
+			if pos > 0 && contains_non_whitespace(&line_remainder[..pos]) {
 				has_code = true;
 			}
 			return if has_code { LineType::Code } else { LineType::Comment };
 		}
 	}
-	if !line_remainder.trim().is_empty() {
+	if contains_non_whitespace(line_remainder) {
 		has_code = true;
 	}
 	if has_code { LineType::Code } else { LineType::Comment }
 }
 
-/// Finds the earliest block comment start marker in the line.
 #[inline]
-fn find_block_comment_start(line: &str, block_comments: &[(&str, &str)]) -> Option<(usize, usize)> {
-	block_comments
-		.iter()
-		.filter_map(|(start, _)| line.find(start).map(|pos| (pos, start.len())))
-		.min_by_key(|(pos, _)| *pos)
-}
-
-/// Finds the earliest end of block comment or nested start.
-#[inline]
-fn find_block_comment_end_or_nested_start(
-	line: &str,
-	block_comments: &[(&str, &str)],
-	nested: bool,
-) -> Option<(usize, usize, bool)> {
-	let mut best: Option<(usize, usize, bool)> = None;
-	for (start, end) in block_comments {
-		if nested {
-			if let Some(pos) = line.find(start) {
-				if best.is_none_or(|(best_pos, _, is_nested)| pos < best_pos || (pos == best_pos && !is_nested)) {
-					best = Some((pos, start.len(), true));
-				}
-			}
-		}
-		if let Some(pos) = line.find(end) {
-			if best.is_none_or(|(best_pos, _, is_nested)| pos < best_pos || (pos == best_pos && is_nested)) {
-				best = Some((pos, end.len(), false));
+fn trim_ascii(line: &str) -> &str {
+	let bytes = line.as_bytes();
+	let mut start = 0;
+	let mut end = bytes.len();
+	if let Some(pos) = memrchr(b'\n', &bytes[..end]) {
+		if pos + 1 == end {
+			end = pos;
+			if end > 0 && bytes[end - 1] == b'\r' {
+				end -= 1;
 			}
 		}
 	}
-	best
+	while start < end && is_ascii_ws(bytes[start]) {
+		start += 1;
+	}
+	while end > start && is_ascii_ws(bytes[end - 1]) {
+		end -= 1;
+	}
+	&line[start..end]
 }
 
-/// Finds the position of the earliest line comment start marker.
 #[inline]
-fn find_line_comment_start(line: &str, line_comments: &[&str]) -> Option<usize> {
-	line_comments.iter().filter_map(|comment| line.find(comment)).min()
+fn contains_non_whitespace(s: &str) -> bool {
+	let bytes = s.as_bytes();
+	let mut idx = 0;
+	while idx < bytes.len() {
+		if !is_ascii_ws(bytes[idx]) {
+			return true;
+		}
+		// Skip runs of common whitespace quickly.
+		if let Some(pos) = memchr2(b' ', b'\t', &bytes[idx..]) {
+			idx += pos + 1;
+		} else {
+			idx = bytes.len();
+		}
+	}
+	false
+}
+
+#[inline]
+const fn is_ascii_ws(b: u8) -> bool {
+	matches!(b, b' ' | b'\t' | b'\n' | b'\r' | 0x0B | 0x0C)
 }
