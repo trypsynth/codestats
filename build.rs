@@ -30,17 +30,6 @@ struct LanguageConfig {
 }
 
 #[derive(Debug, Clone)]
-struct Language {
-	name: String,
-	file_patterns: Vec<String>,
-	line_comments: Vec<String>,
-	block_comments: Vec<Vec<String>>,
-	nested_blocks: bool,
-	shebangs: Vec<String>,
-	keywords: Vec<String>,
-}
-
-#[derive(Debug, Clone)]
 struct ProcessedLanguage {
 	name: String,
 	file_patterns: Vec<String>,
@@ -51,9 +40,9 @@ struct ProcessedLanguage {
 	keywords: Vec<String>,
 }
 
-impl From<Language> for ProcessedLanguage {
-	fn from(lang: Language) -> Self {
-		let Language { name, file_patterns, line_comments, block_comments, nested_blocks, shebangs, keywords } = lang;
+impl ProcessedLanguage {
+	fn from_config(name: String, config: LanguageConfig) -> Self {
+		let LanguageConfig { file_patterns, line_comments, block_comments, nested_blocks, shebangs, keywords } = config;
 		let block_comments = block_comments
 			.into_iter()
 			.filter_map(|pair| {
@@ -158,13 +147,13 @@ fn render_block_comments(values: &[(String, String)]) -> String {
 	}
 }
 
-fn normalize_languages(entries: IndexMap<String, LanguageConfig>) -> Result<Vec<Language>> {
+fn normalize_languages(entries: IndexMap<String, LanguageConfig>) -> Result<Vec<ProcessedLanguage>> {
 	let mut errors = Vec::new();
 	let mut prev_name: Option<String> = None;
-	let languages: Vec<Language> = entries
+	let languages: Vec<ProcessedLanguage> = entries
 		.into_iter()
 		.enumerate()
-		.filter_map(|(index, (name, entry))| {
+		.filter_map(|(index, (name, config))| {
 			if name.trim().is_empty() {
 				errors.push(format!("Language at position {}: name cannot be empty", index + 1));
 				return None;
@@ -172,14 +161,12 @@ fn normalize_languages(entries: IndexMap<String, LanguageConfig>) -> Result<Vec<
 			if let Some(prev) = &prev_name {
 				if name.to_lowercase() < prev.to_lowercase() {
 					errors.push(format!(
-						"Language '{}' is not in alphabetical order (should come before '{}')",
-						name, prev
+						"Language '{name}' is not in alphabetical order (should come before '{prev}')"
 					));
 				}
 			}
 			prev_name = Some(name.clone());
-			let LanguageConfig { file_patterns, line_comments, block_comments, nested_blocks, shebangs, keywords } = entry;
-			Some(Language { name, file_patterns, line_comments, block_comments, nested_blocks, shebangs, keywords })
+			Some(ProcessedLanguage::from_config(name, config))
 		})
 		.collect();
 	if errors.is_empty() {
@@ -200,17 +187,16 @@ fn main() -> Result<()> {
 		json5::from_str(&json_content).map_err(|e| format!("Failed to parse languages.json5: {e}"))?;
 	let languages = normalize_languages(language_map)?;
 	validate_languages(&languages)?;
-	let processed_languages: Vec<ProcessedLanguage> = languages.into_iter().map(ProcessedLanguage::from).collect();
-	let pattern_mappings = build_pattern_mappings(&processed_languages);
-	let rendered = render_languages(&processed_languages, &pattern_mappings);
+	let pattern_mappings = build_pattern_mappings(&languages);
+	let rendered = render_languages(&languages, &pattern_mappings);
 	let out_dir = env::var("OUT_DIR")?;
 	let dest_path = Path::new(&out_dir).join("languages.rs");
 	fs::write(dest_path, rendered)?;
-	println!("Generated language data for {} languages", processed_languages.len());
+	println!("Generated language data for {} languages", languages.len());
 	Ok(())
 }
 
-fn validate_languages(languages: &[Language]) -> Result<()> {
+fn validate_languages(languages: &[ProcessedLanguage]) -> Result<()> {
 	let mut errors = Vec::new();
 	let seen_patterns = validate_language_fields(languages, &mut errors);
 	validate_pattern_disambiguation(languages, seen_patterns, &mut errors);
@@ -222,7 +208,7 @@ fn validate_languages(languages: &[Language]) -> Result<()> {
 	Ok(())
 }
 
-fn validate_language_fields(languages: &[Language], errors: &mut Vec<String>) -> HashMap<String, Vec<String>> {
+fn validate_language_fields(languages: &[ProcessedLanguage], errors: &mut Vec<String>) -> HashMap<String, Vec<String>> {
 	let mut seen_names: HashSet<String> = HashSet::new();
 	let mut seen_patterns: HashMap<String, Vec<String>> = HashMap::new();
 	for (index, lang) in languages.iter().enumerate() {
@@ -234,7 +220,7 @@ fn validate_language_fields(languages: &[Language], errors: &mut Vec<String>) ->
 	seen_patterns
 }
 
-fn validate_basic_fields(lang: &Language, position: &str, seen_names: &mut HashSet<String>, errors: &mut Vec<String>) {
+fn validate_basic_fields(lang: &ProcessedLanguage, position: &str, seen_names: &mut HashSet<String>, errors: &mut Vec<String>) {
 	if lang.name.is_empty() {
 		errors.push(format!("{position}: 'name' field cannot be empty"));
 	}
@@ -250,7 +236,7 @@ fn validate_basic_fields(lang: &Language, position: &str, seen_names: &mut HashS
 }
 
 fn validate_file_patterns(
-	lang: &Language,
+	lang: &ProcessedLanguage,
 	position: &str,
 	seen_patterns: &mut HashMap<String, Vec<String>>,
 	errors: &mut Vec<String>,
@@ -277,7 +263,7 @@ fn validate_file_patterns(
 	}
 }
 
-fn validate_comment_fields(lang: &Language, position: &str, errors: &mut Vec<String>) {
+fn validate_comment_fields(lang: &ProcessedLanguage, position: &str, errors: &mut Vec<String>) {
 	for (comment_idx, comment) in lang.line_comments.iter().enumerate() {
 		if comment.is_empty() {
 			errors.push(format!(
@@ -288,40 +274,28 @@ fn validate_comment_fields(lang: &Language, position: &str, errors: &mut Vec<Str
 			));
 		}
 	}
-	for (comment_idx, comment_pair) in lang.block_comments.iter().enumerate() {
-		match comment_pair.as_slice() {
-			[start, end] => {
-				if start.is_empty() {
-					errors.push(format!(
-						"{} ('{}'), block comment {}: Block comment start cannot be empty",
-						position,
-						lang.name,
-						comment_idx + 1
-					));
-				}
-				if end.is_empty() {
-					errors.push(format!(
-						"{} ('{}'), block comment {}: Block comment end cannot be empty",
-						position,
-						lang.name,
-						comment_idx + 1
-					));
-				}
-			}
-			_ => {
-				errors.push(format!(
-					"{} ('{}'), block comment {}: Block comment must have exactly 2 elements (start, end)",
-					position,
-					lang.name,
-					comment_idx + 1
-				));
-			}
+	for (comment_idx, block_comment) in lang.block_comments.iter().enumerate() {
+		if block_comment.0.is_empty() {
+			errors.push(format!(
+				"{} ('{}'), block comment {}: Block comment start cannot be empty",
+				position,
+				lang.name,
+				comment_idx + 1
+			));
+		}
+		if block_comment.1.is_empty() {
+			errors.push(format!(
+				"{} ('{}'), block comment {}: Block comment end cannot be empty",
+				position,
+				lang.name,
+				comment_idx + 1
+			));
 		}
 	}
 }
 
 fn validate_pattern_disambiguation(
-	languages: &[Language],
+	languages: &[ProcessedLanguage],
 	seen_patterns: HashMap<String, Vec<String>>,
 	errors: &mut Vec<String>,
 ) {
