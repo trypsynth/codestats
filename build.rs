@@ -14,8 +14,7 @@ use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct Language {
-	name: String,
+struct LanguageConfig {
 	file_patterns: Vec<String>,
 	#[serde(default)]
 	line_comments: Vec<String>,
@@ -26,6 +25,17 @@ struct Language {
 	#[serde(default)]
 	shebangs: Vec<String>,
 	#[serde(default)]
+	keywords: Vec<String>,
+}
+
+#[derive(Debug, Clone)]
+struct Language {
+	name: String,
+	file_patterns: Vec<String>,
+	line_comments: Vec<String>,
+	block_comments: Vec<Vec<String>>,
+	nested_blocks: bool,
+	shebangs: Vec<String>,
 	keywords: Vec<String>,
 }
 
@@ -147,6 +157,28 @@ fn render_block_comments(values: &[(String, String)]) -> String {
 	}
 }
 
+fn normalize_languages(entries: BTreeMap<String, LanguageConfig>) -> Result<Vec<Language>> {
+	let mut errors = Vec::new();
+	let mut languages: Vec<Language> = entries
+		.into_iter()
+		.enumerate()
+		.filter_map(|(index, (name, entry))| {
+			if name.trim().is_empty() {
+				errors.push(format!("Language at position {}: name cannot be empty", index + 1));
+				return None;
+			}
+			let LanguageConfig { file_patterns, line_comments, block_comments, nested_blocks, shebangs, keywords } = entry;
+			Some(Language { name, file_patterns, line_comments, block_comments, nested_blocks, shebangs, keywords })
+		})
+		.collect();
+	languages.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+	if errors.is_empty() {
+		Ok(languages)
+	} else {
+		Err(errors.join("\n").into())
+	}
+}
+
 type Result<T> = result::Result<T, Box<dyn Error>>;
 
 fn main() -> Result<()> {
@@ -154,7 +186,9 @@ fn main() -> Result<()> {
 	let json_path = Path::new(&manifest_dir).join("languages.json5");
 	println!("cargo:rerun-if-changed={}", json_path.display());
 	let json_content = fs::read_to_string(&json_path)?;
-	let languages: Vec<Language> = json5::from_str(&json_content)?;
+	let language_map: BTreeMap<String, LanguageConfig> =
+		json5::from_str(&json_content).map_err(|e| format!("Failed to parse languages.json5: {e}"))?;
+	let languages = normalize_languages(language_map)?;
 	validate_languages(&languages)?;
 	let processed_languages: Vec<ProcessedLanguage> = languages.into_iter().map(ProcessedLanguage::from).collect();
 	let pattern_mappings = build_pattern_mappings(&processed_languages);
