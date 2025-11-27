@@ -162,20 +162,15 @@ fn normalize_languages(entries: IndexMap<String, LanguageConfig>) -> Result<Vec<
 			}
 			if let Some(prev) = &prev_name {
 				if name.to_lowercase() < prev.to_lowercase() {
-					errors.push(format!(
-						"Language '{name}' is not in alphabetical order (should come before '{prev}')"
-					));
+					errors
+						.push(format!("Language '{name}' is not in alphabetical order (should come before '{prev}')"));
 				}
 			}
 			prev_name = Some(name.clone());
 			Some(ProcessedLanguage::from_config(name, config))
 		})
 		.collect();
-	if errors.is_empty() {
-		Ok(languages)
-	} else {
-		Err(errors.join("\n").into())
-	}
+	if errors.is_empty() { Ok(languages) } else { Err(errors.join("\n").into()) }
 }
 
 type Result<T> = result::Result<T, Box<dyn Error>>;
@@ -222,7 +217,12 @@ fn validate_language_fields(languages: &[ProcessedLanguage], errors: &mut Vec<St
 	seen_patterns
 }
 
-fn validate_basic_fields(lang: &ProcessedLanguage, position: &str, seen_names: &mut HashSet<String>, errors: &mut Vec<String>) {
+fn validate_basic_fields(
+	lang: &ProcessedLanguage,
+	position: &str,
+	seen_names: &mut HashSet<String>,
+	errors: &mut Vec<String>,
+) {
 	if lang.name.is_empty() {
 		errors.push(format!("{position}: 'name' field cannot be empty"));
 	}

@@ -2,12 +2,11 @@
 name = "codestats"
 version = "0.3.0"
 authors = ["Quin Gillespie <trypsynth@gmail.com>"]
-description = "A library and CLI tool for analyzing code statistics across different programming languages"
-keywords = ["code", "analysis", "cli", "tool", "library"]
+description = "A CLI tool for analyzing code statistics across different programming languages"
+keywords = ["code", "analysis", "cli", "tool"]
 categories = ["command-line-utilities", "development-tools", "filesystem"]
 repository = "https://github.com/trypsynth/codestats"
 homepage = "https://github.com/trypsynth/codestats"
-documentation = "https://docs.rs/codestats"
 readme = "README.md"
 license = "Zlib"
 edition = "2024"
@@ -16,10 +15,6 @@ rust-version = "1.85.1"
 [[bin]]
 name = "codestats"
 path = "src/main.rs"
-
-[lib]
-name = "codestats"
-path = "src/lib.rs"
 
 [dependencies]
 aho-corasick = "1.1.4"

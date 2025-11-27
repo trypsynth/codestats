@@ -1,13 +1,21 @@
 #![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 
+mod analysis;
 mod cli;
+mod display;
+mod langs;
+mod utils;
 
 use std::io::{self, Write};
 
 use anyhow::{Result, ensure};
 use clap::Parser;
 use cli::{Cli, Commands};
-use codestats::{AnalyzerConfig, CodeAnalyzer, DetailLevel, TraversalOptions, get_formatter, langs};
+
+use crate::{
+	analysis::{AnalyzerConfig, CodeAnalyzer, DetailLevel, TraversalOptions},
+	display::get_formatter,
+};
 
 fn main() -> Result<()> {
 	let cli = Cli::parse();

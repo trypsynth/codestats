@@ -1,7 +1,8 @@
 use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
-use codestats::display::OutputFormat;
+
+use crate::display::OutputFormat;
 
 /// A tool for analyzing code statistics across different programming languages
 #[derive(Parser)]

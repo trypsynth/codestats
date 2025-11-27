@@ -5,10 +5,7 @@ use serde::ser::{Serialize, SerializeMap, SerializeSeq, SerializeStruct, Seriali
 use serde_json::{Serializer as JsonSerializer, ser::PrettyFormatter};
 
 use super::OutputFormatter;
-use crate::{
-	FileStats,
-	analysis::{AnalysisResults, LanguageStats},
-};
+use crate::analysis::{AnalysisResults, FileStats, LanguageStats};
 
 /// JSON formatter
 pub struct JsonFormatter;
