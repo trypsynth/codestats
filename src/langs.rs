@@ -24,7 +24,7 @@ static LANGUAGE_GLOBSET: LazyLock<GlobSet> = LazyLock::new(|| {
 });
 
 #[derive(Debug)]
-pub(crate) struct LanguageMatchers {
+pub struct LanguageMatchers {
 	pub(crate) line_comments: Option<AhoCorasick>,
 	pub(crate) block_comments: Option<BlockCommentMatchers>,
 }
@@ -36,7 +36,7 @@ enum BlockPatternKind {
 }
 
 #[derive(Debug)]
-pub(crate) struct BlockCommentMatchers {
+pub struct BlockCommentMatchers {
 	automaton: AhoCorasick,
 	kinds: Vec<BlockPatternKind>,
 }
@@ -59,7 +59,7 @@ impl BlockCommentMatchers {
 			match self.kinds[m.pattern().as_usize()] {
 				BlockPatternKind::Start if nested => return Some((m.start(), m.len(), true)),
 				BlockPatternKind::End => return Some((m.start(), m.len(), false)),
-				_ => {}
+				BlockPatternKind::Start => {}
 			}
 		}
 		None
@@ -70,7 +70,7 @@ static LANGUAGE_MATCHERS: LazyLock<Vec<LanguageMatchers>> =
 	LazyLock::new(|| LANGUAGES.iter().map(build_language_matchers).collect());
 
 #[inline]
-pub(crate) fn language_matchers(lang: &Language) -> &'static LanguageMatchers {
+pub fn language_matchers(lang: &Language) -> &'static LanguageMatchers {
 	&LANGUAGE_MATCHERS[lang.index]
 }
 
@@ -126,12 +126,12 @@ fn ends_with_ignore_ascii_case(value: &str, suffix: &str) -> bool {
 
 /// Precompiled, case-insensitive globset of all known language file patterns.
 #[must_use]
-pub(crate) fn language_globset() -> &'static GlobSet {
+pub fn language_globset() -> &'static GlobSet {
 	&LANGUAGE_GLOBSET
 }
 
 #[inline]
-pub(crate) fn get_candidates(filename: &str) -> Vec<&'static Language> {
+pub fn get_candidates(filename: &str) -> Vec<&'static Language> {
 	if let Some(literal_matches) = PATTERN_MAP.get(filename) {
 		return literal_matches.to_vec();
 	}
