@@ -231,35 +231,6 @@ pub fn detect_language_info(filename: &str, content: Option<&str>) -> Option<&'s
 	}
 }
 
-/// Detect only the language name for a file. Prefer [`detect_language_info`] when you need the metadata associated with the language.
-///
-/// # Examples
-/// ```
-/// use codestats::langs::detect_language;
-///
-/// assert_eq!(detect_language("main.rs", None), Some("Rust"));
-/// assert_eq!(detect_language("script.py", None), Some("Python"));
-/// ```
-#[must_use]
-pub fn detect_language(filename: &str, content: Option<&str>) -> Option<&'static str> {
-	detect_language_info(filename, content).map(|lang| lang.name)
-}
-
-/// Look up language metadata by its canonical name.
-///
-/// # Examples
-/// ```
-/// use codestats::langs::get_language_info;
-///
-/// let rust = get_language_info("Rust").unwrap();
-/// assert_eq!(rust.name, "Rust");
-/// assert!(rust.file_patterns.contains(&"*.rs"));
-/// ```
-#[must_use]
-pub fn get_language_info(language_name: &str) -> Option<&'static Language> {
-	LANGUAGE_MAP.get(language_name).copied()
-}
-
 /// Print all supported programming languages to stdout.
 ///
 /// # Errors

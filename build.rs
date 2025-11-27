@@ -109,11 +109,6 @@ fn render_languages(languages: &[ProcessedLanguage], pattern_mappings: &[(String
 		output.push_str("\t},\n");
 	}
 	output.push_str("];\n\n");
-	output.push_str("pub static LANGUAGE_MAP: Map<&'static str, &Language> = phf_map! {\n");
-	for (index, lang) in languages.iter().enumerate() {
-		let _ = writeln!(output, "\t{} => &LANGUAGES[{index}],", render_str(&lang.name));
-	}
-	output.push_str("};\n\n");
 	output.push_str("pub static PATTERN_MAP: Map<&'static str, &'static [&'static Language]> = phf_map! {\n");
 	for (pattern, indexes) in pattern_mappings {
 		let lang_refs = indexes.iter().map(|index| format!("&LANGUAGES[{index}]")).collect::<Vec<String>>().join(", ");
