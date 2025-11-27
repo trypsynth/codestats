@@ -188,10 +188,12 @@ impl CodeAnalyzer {
 			if bytes_read == 0 {
 				break;
 			}
-			let line_type = if let Ok(line) = str::from_utf8(&buffer) { line_classifier::classify_line(line, lang_info, &mut comment_state, is_first_line) } else {
-   					let line = String::from_utf8_lossy(&buffer);
-   					line_classifier::classify_line(line.as_ref(), lang_info, &mut comment_state, is_first_line)
-   				};
+			let line_type = if let Ok(line) = str::from_utf8(&buffer) {
+				line_classifier::classify_line(line, lang_info, &mut comment_state, is_first_line)
+			} else {
+				let line = String::from_utf8_lossy(&buffer);
+				line_classifier::classify_line(line.as_ref(), lang_info, &mut comment_state, is_first_line)
+			};
 			match line_type {
 				LineType::Code => code_lines += 1,
 				LineType::Comment => comment_lines += 1,
