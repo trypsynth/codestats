@@ -1,5 +1,6 @@
 mod csv;
 mod human;
+mod html;
 mod json;
 mod markdown;
 mod report;
@@ -14,6 +15,7 @@ use anyhow::Result;
 use clap::ValueEnum;
 pub use csv::CsvFormatter;
 pub use human::HumanFormatter;
+pub use html::HtmlFormatter;
 pub use json::JsonFormatter;
 pub use markdown::MarkdownFormatter;
 pub use report::ReportData;
@@ -31,6 +33,8 @@ pub enum OutputFormat {
 	Csv,
 	/// Creates Markdown tables ideal for README snippets.
 	Markdown,
+	/// Generates a friendly HTML summary.
+	Html,
 }
 
 impl Display for OutputFormat {
@@ -40,6 +44,7 @@ impl Display for OutputFormat {
 			Self::Json => write!(f, "json"),
 			Self::Csv => write!(f, "csv"),
 			Self::Markdown => write!(f, "markdown"),
+			Self::Html => write!(f, "html"),
 		}
 	}
 }
@@ -55,7 +60,6 @@ pub trait OutputFormatter {
 	-> Result<()>;
 }
 
-/// Factory for creating output formatters
 #[must_use]
 pub fn get_formatter(format: OutputFormat) -> Box<dyn OutputFormatter> {
 	match format {
@@ -63,5 +67,6 @@ pub fn get_formatter(format: OutputFormat) -> Box<dyn OutputFormatter> {
 		OutputFormat::Json => Box::new(JsonFormatter),
 		OutputFormat::Csv => Box::new(CsvFormatter),
 		OutputFormat::Markdown => Box::new(MarkdownFormatter),
+		OutputFormat::Html => Box::new(HtmlFormatter),
 	}
 }

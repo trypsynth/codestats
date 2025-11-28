@@ -171,6 +171,7 @@ impl CodeAnalyzer {
 	}
 
 	fn process_file(file_path: &Path, results: &mut AnalysisResults, collect_details: bool) -> Result<()> {
+		const MMAP_THRESHOLD: u64 = 256 * 1024; // 256KB threshold
 		let filename = file_path.file_name().and_then(|name| name.to_str()).context("Invalid UTF-8 in file name")?;
 		let metadata =
 			file_path.metadata().with_context(|| format!("Failed to read metadata for {}", file_path.display()))?;
@@ -178,7 +179,6 @@ impl CodeAnalyzer {
 		if file_size == 0 {
 			return Ok(());
 		}
-		const MMAP_THRESHOLD: u64 = 256 * 1024; // 256KB threshold
 		if file_size >= MMAP_THRESHOLD {
 			Self::process_file_mmap(file_path, filename, file_size, results, collect_details)
 		} else {
@@ -285,7 +285,7 @@ impl CodeAnalyzer {
 		let mut pos = 0;
 		while pos < file_bytes.len() {
 			let line_end =
-				memchr::memchr(b'\n', &file_bytes[pos..]).map(|offset| pos + offset + 1).unwrap_or(file_bytes.len());
+				memchr::memchr(b'\n', &file_bytes[pos..]).map_or(file_bytes.len(), |offset| pos + offset + 1);
 			let line_bytes = &file_bytes[pos..line_end];
 			let line_type = if let Ok(line) = str::from_utf8(line_bytes) {
 				line_classifier::classify_line(line, lang_info, &mut comment_state, is_first_line)

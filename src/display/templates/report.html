@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Codestats for {{ title }}</title>
+</head>
+<body>
+	<h1>Codestats for {{ title }}</h1>
+	<details open>
+		<summary>
+			<h2>Summary</h2>
+		</summary>
+		<ul>
+			<li>Files: {{ summary.total_files }}</li>
+			<li>Lines: {{ summary.total_lines }}</li>
+			<li>Size: {{ summary.total_size_human }}</li>
+			{% if totals %}<li>Totals: {{ totals }}</li>{% endif %}
+		</ul>
+	</details>
+	<details>
+		<summary>
+			<h2>Languages</h2>
+		</summary>
+		{% if languages | length == 0 %}
+			<p>No recognized programming languages found.</p>
+		{% else %}
+			<table>
+				<tr>
+					<th>Language</th>
+					<th>Files</th>
+					<th>Lines</th>
+					<th>Code %</th>
+					<th>Comment %</th>
+					<th>Blank %</th>
+					<th>Shebang %</th>
+					<th>Size</th>
+				</tr>
+				{% for lang in languages %}
+					<tr>
+						<td>{{ lang.name }}</td>
+						<td>{{ lang.files }}</td>
+						<td>{{ lang.lines }}</td>
+						<td>{{ lang.code_percentage }}%</td>
+						<td>{{ lang.comment_percentage }}%</td>
+						<td>{{ lang.blank_percentage }}%</td>
+						<td>{{ lang.shebang_percentage }}%</td>
+						<td>{{ lang.size_human }}</td>
+					</tr>
+				{% endfor %}
+			</table>
+		{% endif %}
+	</details>
+	{% if show_files %}
+		<details>
+			<summary>
+				<h2>Files</h2>
+			</summary>
+			{% for lang in languages %}
+				{% if lang.files_detail %}
+					<h3>{{ lang.name }}</h3>
+					<table>
+						<tr>
+							<th>Path</th>
+							<th>Lines</th>
+							<th>Code</th>
+							<th>Comments</th>
+							<th>Blanks</th>
+							<th>Shebangs</th>
+							<th>Size</th>
+						</tr>
+						{% for file in lang.files_detail %}
+							<tr>
+								<td>{{ file.path }}</td>
+								<td>{{ file.total_lines }}</td>
+								<td>{{ file.code_lines }}</td>
+								<td>{{ file.comment_lines }}</td>
+								<td>{{ file.blank_lines }}</td>
+								<td>{{ file.shebang_lines }}</td>
+								<td>{{ file.size_human }}</td>
+							</tr>
+						{% endfor %}
+					</table>
+				{% endif %}
+			{% endfor %}
+		</details>
+	{% endif %}
+</body>
+</html>
