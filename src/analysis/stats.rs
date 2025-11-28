@@ -1,7 +1,5 @@
 use std::cmp::Reverse;
 
-use serde::Serialize;
-
 use crate::{langs, utils};
 
 macro_rules! getter {
@@ -22,7 +20,7 @@ macro_rules! size_human_getter {
 	};
 }
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 struct LineStats {
 	code: u64,
 	comment: u64,
@@ -69,7 +67,7 @@ impl FileContribution {
 }
 
 /// Statistics for a single file
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FileStats {
 	path: String,
 	total_lines: u64,
@@ -139,7 +137,7 @@ impl FileStats {
 }
 
 /// Holds statistics about a programming language's usage throughout a project.
-#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct LanguageStats {
 	files: u64,
 	lines: u64,
@@ -228,7 +226,7 @@ impl LanguageStats {
 }
 
 /// Results of a code analysis operation
-#[derive(Debug, Serialize)]
+#[derive(Debug)]
 pub struct AnalysisResults {
 	total_files: u64,
 	total_lines: u64,
