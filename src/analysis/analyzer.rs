@@ -106,7 +106,7 @@ impl CodeAnalyzer {
 		if self.config.verbose {
 			println!("Analyzing directory {}", self.root.display());
 		}
-		let results = Arc::new(Mutex::new(AnalysisResults::default()));
+		let results = Arc::new(Mutex::default());
 		let shared_results = Arc::clone(&results);
 		let error_counter = Arc::new(AtomicU64::new(0));
 		let shared_error_counter = Arc::clone(&error_counter);
@@ -181,16 +181,9 @@ impl CodeAnalyzer {
 			return Ok(());
 		}
 		let sample_str = str::from_utf8(&sample_bytes).ok();
-		let candidates = langs::get_candidates(filename);
-		let language = if candidates.is_empty() {
-			match langs::detect_language_info(filename, sample_str) {
-				Some(lang) => lang,
-				None => return Ok(()),
-			}
-		} else if candidates.len() == 1 {
-			candidates[0]
-		} else {
-			langs::detect_language_info(filename, sample_str).unwrap_or(candidates[0])
+		let language = match langs::detect_language_info(filename, sample_str) {
+			Some(lang) => lang,
+			None => return Ok(()),
 		};
 		let lang_info = Some(language);
 		let mut total_lines = 0;
@@ -199,7 +192,7 @@ impl CodeAnalyzer {
 		let mut blank_lines = 0;
 		let mut shebang_lines = 0;
 		let mut comment_state = CommentState::new();
-		let mut buffer = Vec::new();
+		let mut buffer = Vec::with_capacity(1024);
 		let mut is_first_line = true;
 		loop {
 			buffer.clear();

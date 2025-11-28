@@ -322,9 +322,10 @@
 		nested_blocks: true,
 	},
 	"Coq": {
-		file_patterns: ["*.coq"],
+		file_patterns: ["*.coq", "*.v"],
 		block_comments: [["(*", "*)"]],
 		nested_blocks: true,
+		keywords: ["Theorem", "Lemma", "Proof", "Qed", "Inductive", "Definition", "Require"],
 	},
 	"Crystal": {
 		file_patterns: ["*.cr"],
@@ -1345,6 +1346,11 @@
 		block_comments: [["#`(", ")"], ["=begin", "=end"]],
 		shebangs: ["#!/usr/bin/raku", "#!/usr/bin/perl6"],
 	},
+	"Razor": {
+		file_patterns: ["*.cshtml", "*.razor"],
+		block_comments: [["<!--", "-->"], ["@*", "*@"]],
+		keywords: ["@page", "@model", "@inject", "@code", "@functions"],
+	},
 	"Rebol": {
 		file_patterns: ["*.r", "*.reb", "*.rebol"],
 		line_comments: [";"],
@@ -1537,6 +1543,13 @@
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
 	},
+	"SystemVerilog": {
+		file_patterns: ["*.sv", "*.svh"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+		nested_blocks: true,
+		keywords: ["logic", "modport", "interface", "typedef", "package", "virtual", "class", "constraint"],
+	},
 	"TC Shell": {
 		file_patterns: ["*.tcsh"],
 		line_comments: ["#"],
@@ -1623,6 +1636,7 @@
 		file_patterns: ["*.v"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		keywords: ["fn", "struct", "enum", "pub", "mut", "module", "match"],
 		nested_blocks: true,
 	},
 	"Vala": {
@@ -1637,9 +1651,10 @@
 		block_comments: [["/*", "*/"]],
 	},
 	"Verilog": {
-		file_patterns: ["*.vh", "*.sv", "*.svh"],
+		file_patterns: ["*.v", "*.vh"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		keywords: ["module", "endmodule", "always", "assign", "posedge", "negedge", "wire", "reg"],
 		nested_blocks: true,
 	},
 	"VHDL": {

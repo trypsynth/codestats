@@ -17,12 +17,13 @@ impl OutputFormatter for HumanFormatter {
 		verbose: bool,
 		writer: &mut dyn Write,
 	) -> anyhow::Result<()> {
+		let languages = results.languages_by_lines();
 		Self::write_overview(results, path, writer)?;
-		if results.languages_by_lines().is_empty() {
+		if languages.is_empty() {
 			writeln!(writer, "No recognized programming languages found.")?;
 			return Ok(());
 		}
-		Self::write_language_breakdown(results, verbose, writer)?;
+		Self::write_language_breakdown(&languages, results, verbose, writer)?;
 		Ok(())
 	}
 }
@@ -52,13 +53,14 @@ impl HumanFormatter {
 	}
 
 	fn write_language_breakdown(
-		results: &AnalysisResults,
+		languages: &[(&'static str, &LanguageStats)],
+		overall_results: &AnalysisResults,
 		verbose: bool,
 		writer: &mut dyn Write,
 	) -> anyhow::Result<()> {
 		writeln!(writer, "Language breakdown:")?;
-		for (lang, lang_stats) in results.languages_by_lines() {
-			Self::write_language_stats(lang, lang_stats, results, verbose, writer)?;
+		for &(lang, lang_stats) in languages {
+			Self::write_language_stats(lang, lang_stats, overall_results, verbose, writer)?;
 		}
 		Ok(())
 	}

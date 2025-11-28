@@ -1,3 +1,5 @@
+use std::cmp::Reverse;
+
 use serde::Serialize;
 
 use crate::{langs, utils};
@@ -380,7 +382,7 @@ impl AnalysisResults {
 				(stats.files() > 0).then_some((lang.name, stats))
 			})
 			.collect();
-		stats_vec.sort_by_key(|(_, lang_stats)| std::cmp::Reverse(lang_stats.lines));
+		stats_vec.sort_by_key(|(_, lang_stats)| Reverse(lang_stats.lines()));
 		stats_vec
 	}
 
