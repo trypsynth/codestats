@@ -1,6 +1,8 @@
 mod csv;
 mod human;
 mod json;
+mod markdown;
+mod report;
 
 use std::{
 	fmt::{self, Display},
@@ -13,6 +15,8 @@ use clap::ValueEnum;
 pub use csv::CsvFormatter;
 pub use human::HumanFormatter;
 pub use json::JsonFormatter;
+pub use markdown::MarkdownFormatter;
+pub use report::ReportData;
 
 use crate::analysis::AnalysisResults;
 
@@ -25,6 +29,8 @@ pub enum OutputFormat {
 	Json,
 	/// Emits rows that can be piped into other tools or spreadsheets.
 	Csv,
+	/// Creates Markdown tables ideal for README snippets.
+	Markdown,
 }
 
 impl Display for OutputFormat {
@@ -33,6 +39,7 @@ impl Display for OutputFormat {
 			Self::Human => write!(f, "human"),
 			Self::Json => write!(f, "json"),
 			Self::Csv => write!(f, "csv"),
+			Self::Markdown => write!(f, "markdown"),
 		}
 	}
 }
@@ -55,5 +62,6 @@ pub fn get_formatter(format: OutputFormat) -> Box<dyn OutputFormatter> {
 		OutputFormat::Human => Box::new(HumanFormatter),
 		OutputFormat::Json => Box::new(JsonFormatter),
 		OutputFormat::Csv => Box::new(CsvFormatter),
+		OutputFormat::Markdown => Box::new(MarkdownFormatter),
 	}
 }

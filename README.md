@@ -39,6 +39,7 @@ Options:
 * -n, --no-gitignore Do not respect .gitignore/.ignore and similar files.
 * --hidden Search hidden files and directories.
 * -s, --symlinks Follow symlinks. When enabled, symbolic links will be followed and their targets will be included in the analysis. Use with caution as this can lead to infinite loops with circular symlinks.
+* -o, --output Choose how results are rendered. Options: `human` (default), `json`, `csv`, `markdown`.
 * -h, --help Print help
 
 ### Langs
