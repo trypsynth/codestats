@@ -181,10 +181,7 @@ impl CodeAnalyzer {
 			return Ok(());
 		}
 		let sample_str = str::from_utf8(&sample_bytes).ok();
-		let language = match langs::detect_language_info(filename, sample_str) {
-			Some(lang) => lang,
-			None => return Ok(()),
-		};
+		let Some(language) = langs::detect_language_info(filename, sample_str) else { return Ok(()) };
 		let lang_info = Some(language);
 		let mut total_lines = 0;
 		let mut code_lines = 0;
