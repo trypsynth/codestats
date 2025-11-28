@@ -66,26 +66,6 @@ impl FileContribution {
 
 	getter!(total_lines, u64);
 	getter!(size, u64);
-
-	#[must_use]
-	pub const fn code_lines(&self) -> u64 {
-		self.line_stats.code
-	}
-
-	#[must_use]
-	pub const fn comment_lines(&self) -> u64 {
-		self.line_stats.comment
-	}
-
-	#[must_use]
-	pub const fn blank_lines(&self) -> u64 {
-		self.line_stats.blank
-	}
-
-	#[must_use]
-	pub const fn shebang_lines(&self) -> u64 {
-		self.line_stats.shebang
-	}
 }
 
 /// Statistics for a single file
