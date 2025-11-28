@@ -5,7 +5,6 @@ use anyhow::Result;
 use super::OutputFormatter;
 use crate::analysis::{AnalysisResults, LanguageStats};
 
-/// CSV formatter
 pub struct CsvFormatter;
 
 impl OutputFormatter for CsvFormatter {

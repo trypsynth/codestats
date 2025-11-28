@@ -4,14 +4,50 @@ use serde::Serialize;
 
 use crate::{langs, utils};
 
+macro_rules! getter {
+	($name:ident, $type:ty) => {
+		#[must_use]
+		pub const fn $name(&self) -> $type {
+			self.$name
+		}
+	};
+}
+
+macro_rules! size_human_getter {
+	() => {
+		#[must_use]
+		pub fn size_human(&self) -> String {
+			utils::human_size(self.size)
+		}
+	};
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize)]
+struct LineStats {
+	code: u64,
+	comment: u64,
+	blank: u64,
+	shebang: u64,
+}
+
+impl LineStats {
+	const fn new(code: u64, comment: u64, blank: u64, shebang: u64) -> Self {
+		Self { code, comment, blank, shebang }
+	}
+
+	const fn merge(&mut self, other: &Self) {
+		self.code += other.code;
+		self.comment += other.comment;
+		self.blank += other.blank;
+		self.shebang += other.shebang;
+	}
+}
+
 /// Aggregated data about a single file, used for updating totals without always storing per-file detail.
 #[derive(Debug, Clone, Copy)]
 pub struct FileContribution {
 	total_lines: u64,
-	code_lines: u64,
-	comment_lines: u64,
-	blank_lines: u64,
-	shebang_lines: u64,
+	line_stats: LineStats,
 	size: u64,
 }
 
@@ -25,37 +61,30 @@ impl FileContribution {
 		shebang_lines: u64,
 		size: u64,
 	) -> Self {
-		Self { total_lines, code_lines, comment_lines, blank_lines, shebang_lines, size }
+		Self { total_lines, line_stats: LineStats::new(code_lines, comment_lines, blank_lines, shebang_lines), size }
 	}
 
-	#[must_use]
-	pub const fn total_lines(&self) -> u64 {
-		self.total_lines
-	}
+	getter!(total_lines, u64);
+	getter!(size, u64);
 
 	#[must_use]
 	pub const fn code_lines(&self) -> u64 {
-		self.code_lines
+		self.line_stats.code
 	}
 
 	#[must_use]
 	pub const fn comment_lines(&self) -> u64 {
-		self.comment_lines
+		self.line_stats.comment
 	}
 
 	#[must_use]
 	pub const fn blank_lines(&self) -> u64 {
-		self.blank_lines
+		self.line_stats.blank
 	}
 
 	#[must_use]
 	pub const fn shebang_lines(&self) -> u64 {
-		self.shebang_lines
-	}
-
-	#[must_use]
-	pub const fn size(&self) -> u64 {
-		self.size
+		self.line_stats.shebang
 	}
 }
 
@@ -64,10 +93,7 @@ impl FileContribution {
 pub struct FileStats {
 	path: String,
 	total_lines: u64,
-	code_lines: u64,
-	comment_lines: u64,
-	blank_lines: u64,
-	shebang_lines: u64,
+	line_stats: LineStats,
 	size: u64,
 }
 
@@ -93,7 +119,12 @@ impl FileStats {
 		shebang_lines: u64,
 		size: u64,
 	) -> Self {
-		Self { path, total_lines, code_lines, comment_lines, blank_lines, shebang_lines, size }
+		Self {
+			path,
+			total_lines,
+			line_stats: LineStats::new(code_lines, comment_lines, blank_lines, shebang_lines),
+			size,
+		}
 	}
 
 	/// Get the file path
@@ -102,46 +133,28 @@ impl FileStats {
 		&self.path
 	}
 
-	/// Get the total number of lines in the file
-	#[must_use]
-	pub const fn total_lines(&self) -> u64 {
-		self.total_lines
-	}
+	getter!(total_lines, u64);
+	getter!(size, u64);
+	size_human_getter!();
 
-	/// Get the number of lines containing code
 	#[must_use]
 	pub const fn code_lines(&self) -> u64 {
-		self.code_lines
+		self.line_stats.code
 	}
 
-	/// Get the number of lines containing comments
 	#[must_use]
 	pub const fn comment_lines(&self) -> u64 {
-		self.comment_lines
+		self.line_stats.comment
 	}
 
-	/// Get the number of blank lines
 	#[must_use]
 	pub const fn blank_lines(&self) -> u64 {
-		self.blank_lines
+		self.line_stats.blank
 	}
 
-	/// Get the number of shebang lines
 	#[must_use]
 	pub const fn shebang_lines(&self) -> u64 {
-		self.shebang_lines
-	}
-
-	/// Get the file size in bytes
-	#[must_use]
-	pub const fn size(&self) -> u64 {
-		self.size
-	}
-
-	/// Get the file size in human-readable format
-	#[must_use]
-	pub fn size_human(&self) -> String {
-		utils::human_size(self.size)
+		self.line_stats.shebang
 	}
 }
 
@@ -150,10 +163,7 @@ impl FileStats {
 pub struct LanguageStats {
 	files: u64,
 	lines: u64,
-	code_lines: u64,
-	comment_lines: u64,
-	blank_lines: u64,
-	shebang_lines: u64,
+	line_stats: LineStats,
 	size: u64,
 	file_list: Vec<FileStats>,
 }
@@ -162,10 +172,7 @@ impl LanguageStats {
 	pub(crate) fn add_file(&mut self, contribution: &FileContribution, file_stats: Option<FileStats>) {
 		self.files += 1;
 		self.lines += contribution.total_lines();
-		self.code_lines += contribution.code_lines();
-		self.comment_lines += contribution.comment_lines();
-		self.blank_lines += contribution.blank_lines();
-		self.shebang_lines += contribution.shebang_lines();
+		self.line_stats.merge(&contribution.line_stats);
 		self.size += contribution.size();
 		if let Some(stats) = file_stats {
 			self.file_list.push(stats);
@@ -175,60 +182,38 @@ impl LanguageStats {
 	pub(crate) fn merge(&mut self, mut other: Self) {
 		self.files += other.files;
 		self.lines += other.lines;
-		self.code_lines += other.code_lines;
-		self.comment_lines += other.comment_lines;
-		self.blank_lines += other.blank_lines;
-		self.shebang_lines += other.shebang_lines;
+		self.line_stats.merge(&other.line_stats);
 		self.size += other.size;
 		self.file_list.append(&mut other.file_list);
 	}
 
-	/// Get the number of files of this language
-	#[must_use]
-	pub const fn files(&self) -> u64 {
-		self.files
-	}
-
-	/// Get the total number of lines across all files of this language
-	#[must_use]
-	pub const fn lines(&self) -> u64 {
-		self.lines
-	}
+	getter!(files, u64);
+	getter!(lines, u64);
+	getter!(size, u64);
+	size_human_getter!();
 
 	/// Get the number of code lines across all files of this language
 	#[must_use]
 	pub const fn code_lines(&self) -> u64 {
-		self.code_lines
+		self.line_stats.code
 	}
 
 	/// Get the number of comment lines across all files of this language
 	#[must_use]
 	pub const fn comment_lines(&self) -> u64 {
-		self.comment_lines
+		self.line_stats.comment
 	}
 
 	/// Get the number of blank lines across all files of this language
 	#[must_use]
 	pub const fn blank_lines(&self) -> u64 {
-		self.blank_lines
+		self.line_stats.blank
 	}
 
 	/// Get the number of shebang lines across all files of this language
 	#[must_use]
 	pub const fn shebang_lines(&self) -> u64 {
-		self.shebang_lines
-	}
-
-	/// Get the total size in bytes across all files of this language
-	#[must_use]
-	pub const fn size(&self) -> u64 {
-		self.size
-	}
-
-	/// Get the total size in human-readable format across all files of this language
-	#[must_use]
-	pub fn size_human(&self) -> String {
-		utils::human_size(self.size)
+		self.line_stats.shebang
 	}
 
 	/// Get the list of individual file statistics for this language
@@ -240,25 +225,25 @@ impl LanguageStats {
 	/// Get the percentage of code lines relative to total lines for this language
 	#[must_use]
 	pub fn code_percentage(&self) -> f64 {
-		utils::percentage(self.code_lines, self.lines)
+		utils::percentage(self.line_stats.code, self.lines)
 	}
 
 	/// Get the percentage of comment lines relative to total lines for this language
 	#[must_use]
 	pub fn comment_percentage(&self) -> f64 {
-		utils::percentage(self.comment_lines, self.lines)
+		utils::percentage(self.line_stats.comment, self.lines)
 	}
 
 	/// Get the percentage of blank lines relative to total lines for this language
 	#[must_use]
 	pub fn blank_percentage(&self) -> f64 {
-		utils::percentage(self.blank_lines, self.lines)
+		utils::percentage(self.line_stats.blank, self.lines)
 	}
 
 	/// Get the percentage of shebang lines relative to total lines for this language
 	#[must_use]
 	pub fn shebang_percentage(&self) -> f64 {
-		utils::percentage(self.shebang_lines, self.lines)
+		utils::percentage(self.line_stats.shebang, self.lines)
 	}
 }
 
@@ -267,10 +252,7 @@ impl LanguageStats {
 pub struct AnalysisResults {
 	total_files: u64,
 	total_lines: u64,
-	total_code_lines: u64,
-	total_comment_lines: u64,
-	total_blank_lines: u64,
-	total_shebang_lines: u64,
+	line_stats: LineStats,
 	total_size: u64,
 	language_stats: Vec<LanguageStats>,
 }
@@ -280,10 +262,7 @@ impl Default for AnalysisResults {
 		Self {
 			total_files: 0,
 			total_lines: 0,
-			total_code_lines: 0,
-			total_comment_lines: 0,
-			total_blank_lines: 0,
-			total_shebang_lines: 0,
+			line_stats: LineStats::default(),
 			total_size: 0,
 			language_stats: vec![LanguageStats::default(); langs::LANGUAGES.len()],
 		}
@@ -299,10 +278,7 @@ impl AnalysisResults {
 	) {
 		self.total_files += 1;
 		self.total_lines += contribution.total_lines();
-		self.total_code_lines += contribution.code_lines();
-		self.total_comment_lines += contribution.comment_lines();
-		self.total_blank_lines += contribution.blank_lines();
-		self.total_shebang_lines += contribution.shebang_lines();
+		self.line_stats.merge(&contribution.line_stats);
 		self.total_size += contribution.size();
 		self.language_stats[language.index].add_file(&contribution, file_stats);
 	}
@@ -310,51 +286,15 @@ impl AnalysisResults {
 	pub(crate) fn merge(&mut self, mut other: Self) {
 		self.total_files += other.total_files;
 		self.total_lines += other.total_lines;
-		self.total_code_lines += other.total_code_lines;
-		self.total_comment_lines += other.total_comment_lines;
-		self.total_blank_lines += other.total_blank_lines;
-		self.total_shebang_lines += other.total_shebang_lines;
+		self.line_stats.merge(&other.line_stats);
 		self.total_size += other.total_size;
 		for (idx, stats) in other.language_stats.drain(..).enumerate() {
 			self.language_stats[idx].merge(stats);
 		}
 	}
 
-	/// Get the total number of files analyzed
-	#[must_use]
-	pub const fn total_files(&self) -> u64 {
-		self.total_files
-	}
-
-	/// Get the total number of lines across all files
-	#[must_use]
-	pub const fn total_lines(&self) -> u64 {
-		self.total_lines
-	}
-
-	/// Get the total number of code lines across all files
-	#[must_use]
-	pub const fn total_code_lines(&self) -> u64 {
-		self.total_code_lines
-	}
-
-	/// Get the total number of comment lines across all files
-	#[must_use]
-	pub const fn total_comment_lines(&self) -> u64 {
-		self.total_comment_lines
-	}
-
-	/// Get the total number of blank lines across all files
-	#[must_use]
-	pub const fn total_blank_lines(&self) -> u64 {
-		self.total_blank_lines
-	}
-
-	/// Get the total number of shebang lines across all files
-	#[must_use]
-	pub const fn total_shebang_lines(&self) -> u64 {
-		self.total_shebang_lines
-	}
+	getter!(total_files, u64);
+	getter!(total_lines, u64);
 
 	/// Get the total size in bytes across all files
 	#[must_use]
@@ -366,6 +306,30 @@ impl AnalysisResults {
 	#[must_use]
 	pub fn total_size_human(&self) -> String {
 		utils::human_size(self.total_size)
+	}
+
+	/// Get the total number of code lines across all files
+	#[must_use]
+	pub const fn total_code_lines(&self) -> u64 {
+		self.line_stats.code
+	}
+
+	/// Get the total number of comment lines across all files
+	#[must_use]
+	pub const fn total_comment_lines(&self) -> u64 {
+		self.line_stats.comment
+	}
+
+	/// Get the total number of blank lines across all files
+	#[must_use]
+	pub const fn total_blank_lines(&self) -> u64 {
+		self.line_stats.blank
+	}
+
+	/// Get the total number of shebang lines across all files
+	#[must_use]
+	pub const fn total_shebang_lines(&self) -> u64 {
+		self.line_stats.shebang
 	}
 
 	/// Get languages sorted by total lines in descending order
@@ -389,24 +353,24 @@ impl AnalysisResults {
 	/// Get the percentage of code lines relative to total lines
 	#[must_use]
 	pub fn code_percentage(&self) -> f64 {
-		utils::percentage(self.total_code_lines, self.total_lines)
+		utils::percentage(self.line_stats.code, self.total_lines)
 	}
 
 	/// Get the percentage of comment lines relative to total lines
 	#[must_use]
 	pub fn comment_percentage(&self) -> f64 {
-		utils::percentage(self.total_comment_lines, self.total_lines)
+		utils::percentage(self.line_stats.comment, self.total_lines)
 	}
 
 	/// Get the percentage of blank lines relative to total lines
 	#[must_use]
 	pub fn blank_percentage(&self) -> f64 {
-		utils::percentage(self.total_blank_lines, self.total_lines)
+		utils::percentage(self.line_stats.blank, self.total_lines)
 	}
 
 	/// Get the percentage of shebang lines relative to total lines
 	#[must_use]
 	pub fn shebang_percentage(&self) -> f64 {
-		utils::percentage(self.total_shebang_lines, self.total_lines)
+		utils::percentage(self.line_stats.shebang, self.total_lines)
 	}
 }

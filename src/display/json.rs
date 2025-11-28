@@ -7,7 +7,6 @@ use serde_json::to_writer_pretty;
 use super::OutputFormatter;
 use crate::analysis::AnalysisResults;
 
-/// JSON formatter
 pub struct JsonFormatter;
 
 impl OutputFormatter for JsonFormatter {

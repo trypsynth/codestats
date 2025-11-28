@@ -6,7 +6,6 @@ use crate::{
 	utils,
 };
 
-/// Human-readable formatter
 pub struct HumanFormatter;
 
 impl OutputFormatter for HumanFormatter {
