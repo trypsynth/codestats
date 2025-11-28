@@ -22,7 +22,7 @@ fn main() -> Result<()> {
 	match cli.command {
 		Commands::Langs => {
 			let mut stdout = io::stdout();
-			langs::print_all_languages(&mut stdout)?;
+			langs::printer::print_all_languages(&mut stdout)?;
 			stdout.flush()?;
 			Ok(())
 		}

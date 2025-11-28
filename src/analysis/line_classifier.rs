@@ -1,6 +1,6 @@
 use memchr::{memchr2, memrchr};
 
-use crate::langs::{Language, language_matchers};
+use crate::langs::{Language, matchers::language_matchers};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LineType {
