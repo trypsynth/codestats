@@ -9,40 +9,33 @@ pub struct LanguageMatchers {
 	pub(crate) block_comments: Option<BlockCommentMatchers>,
 }
 
-#[derive(Debug, Clone, Copy)]
-enum BlockPatternKind {
-	Start,
-	End,
-}
-
 #[derive(Debug)]
 pub struct BlockCommentMatchers {
-	automaton: AhoCorasick,
-	kinds: Vec<BlockPatternKind>,
+	start_automaton: AhoCorasick,
+	end_automaton: AhoCorasick,
 }
 
 impl BlockCommentMatchers {
 	#[inline]
 	pub(crate) fn find_block_start(&self, line: &str) -> Option<(usize, usize)> {
-		self.automaton.find_iter(line).find_map(|m| {
-			if matches!(self.kinds[m.pattern().as_usize()], BlockPatternKind::Start) {
-				Some((m.start(), m.len()))
-			} else {
-				None
-			}
-		})
+		self.start_automaton.find(line).map(|m| (m.start(), m.len()))
 	}
 
 	#[inline]
 	pub(crate) fn find_block_end_or_nested_start(&self, line: &str, nested: bool) -> Option<(usize, usize, bool)> {
-		for m in self.automaton.find_iter(line) {
-			match self.kinds[m.pattern().as_usize()] {
-				BlockPatternKind::Start if nested => return Some((m.start(), m.len(), true)),
-				BlockPatternKind::End => return Some((m.start(), m.len(), false)),
-				BlockPatternKind::Start => {}
+		if nested {
+			let start_match = self.start_automaton.find(line);
+			let end_match = self.end_automaton.find(line);
+			match (start_match, end_match) {
+				(Some(s), Some(e)) if s.start() < e.start() => Some((s.start(), s.len(), true)),
+				(Some(_), Some(e)) => Some((e.start(), e.len(), false)),
+				(Some(s), None) => Some((s.start(), s.len(), true)),
+				(None, Some(e)) => Some((e.start(), e.len(), false)),
+				(None, None) => None,
 			}
+		} else {
+			self.end_automaton.find(line).map(|m| (m.start(), m.len(), false))
 		}
-		None
 	}
 }
 
@@ -68,20 +61,21 @@ fn build_language_matchers(lang: &Language) -> LanguageMatchers {
 	let block_comments = if lang.block_comments.is_empty() {
 		None
 	} else {
-		let pattern_capacity = lang.block_comments.len().saturating_mul(2);
-		let mut patterns = Vec::with_capacity(pattern_capacity);
-		let mut kinds = Vec::with_capacity(pattern_capacity);
+		let mut start_patterns = Vec::with_capacity(lang.block_comments.len());
+		let mut end_patterns = Vec::with_capacity(lang.block_comments.len());
 		for (start, end) in lang.block_comments {
-			patterns.push(*start);
-			kinds.push(BlockPatternKind::Start);
-			patterns.push(*end);
-			kinds.push(BlockPatternKind::End);
+			start_patterns.push(*start);
+			end_patterns.push(*end);
 		}
-		let automaton = AhoCorasickBuilder::new()
+		let start_automaton = AhoCorasickBuilder::new()
 			.match_kind(MatchKind::LeftmostFirst)
-			.build(patterns)
-			.expect("Failed to build block comment matcher");
-		Some(BlockCommentMatchers { automaton, kinds })
+			.build(start_patterns)
+			.expect("Failed to build block start matcher");
+		let end_automaton = AhoCorasickBuilder::new()
+			.match_kind(MatchKind::LeftmostFirst)
+			.build(end_patterns)
+			.expect("Failed to build block end matcher");
+		Some(BlockCommentMatchers { start_automaton, end_automaton })
 	};
 	LanguageMatchers { line_comments, block_comments }
 }

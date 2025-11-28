@@ -12,6 +12,7 @@ use std::{
 
 use anyhow::{Context, Result};
 use ignore::WalkBuilder;
+use memmap2::Mmap;
 
 use super::{
 	line_classifier::{self, CommentState, LineType},
@@ -174,9 +175,31 @@ impl CodeAnalyzer {
 		let metadata =
 			file_path.metadata().with_context(|| format!("Failed to read metadata for {}", file_path.display()))?;
 		let file_size = metadata.len();
+		if file_size == 0 {
+			return Ok(());
+		}
+		const MMAP_THRESHOLD: u64 = 256 * 1024; // 256KB threshold
+		if file_size >= MMAP_THRESHOLD {
+			Self::process_file_mmap(file_path, filename, file_size, results, collect_details)
+		} else {
+			Self::process_file_buffered(file_path, filename, file_size, results, collect_details)
+		}
+	}
+
+	fn process_file_buffered(
+		file_path: &Path,
+		filename: &str,
+		file_size: u64,
+		results: &mut AnalysisResults,
+		collect_details: bool,
+	) -> Result<()> {
 		let file = File::open(file_path).with_context(|| format!("Failed to open file {}", file_path.display()))?;
-		let mut reader = BufReader::new(file);
-		let sample_bytes = Self::peek_sample(&mut reader, 4 * 1024)?;
+		let mut reader = BufReader::with_capacity(64 * 1024, file);
+		let sample_bytes = {
+			let buf = reader.fill_buf()?;
+			let len = buf.len().min(4 * 1024);
+			buf[..len].to_vec()
+		};
 		if Self::is_probably_binary(&sample_bytes) {
 			return Ok(());
 		}
@@ -232,10 +255,72 @@ impl CodeAnalyzer {
 		Ok(())
 	}
 
-	fn peek_sample(reader: &mut BufReader<File>, max_bytes: usize) -> Result<Vec<u8>> {
-		let buffer = reader.fill_buf()?;
-		let take = buffer.len().min(max_bytes);
-		Ok(buffer[..take].to_vec())
+	fn process_file_mmap(
+		file_path: &Path,
+		filename: &str,
+		file_size: u64,
+		results: &mut AnalysisResults,
+		collect_details: bool,
+	) -> Result<()> {
+		let file = File::open(file_path).with_context(|| format!("Failed to open file {}", file_path.display()))?;
+		// SAFETY: We only read from the mmap and don't modify the underlying read-only file during analysis.
+		let mmap = unsafe { Mmap::map(&file) }
+			.with_context(|| format!("Failed to memory-map file {}", file_path.display()))?;
+		let file_bytes = &mmap[..];
+		let sample_size = file_bytes.len().min(4 * 1024);
+		let sample_bytes = &file_bytes[..sample_size];
+		if Self::is_probably_binary(sample_bytes) {
+			return Ok(());
+		}
+		let sample_str = str::from_utf8(sample_bytes).ok();
+		let Some(language) = langs::detect_language_info(filename, sample_str) else { return Ok(()) };
+		let lang_info = Some(language);
+		let mut total_lines = 0;
+		let mut code_lines = 0;
+		let mut comment_lines = 0;
+		let mut blank_lines = 0;
+		let mut shebang_lines = 0;
+		let mut comment_state = CommentState::new();
+		let mut is_first_line = true;
+		let mut pos = 0;
+		while pos < file_bytes.len() {
+			let line_end =
+				memchr::memchr(b'\n', &file_bytes[pos..]).map(|offset| pos + offset + 1).unwrap_or(file_bytes.len());
+			let line_bytes = &file_bytes[pos..line_end];
+			let line_type = if let Ok(line) = str::from_utf8(line_bytes) {
+				line_classifier::classify_line(line, lang_info, &mut comment_state, is_first_line)
+			} else {
+				let line = String::from_utf8_lossy(line_bytes);
+				line_classifier::classify_line(line.as_ref(), lang_info, &mut comment_state, is_first_line)
+			};
+			match line_type {
+				LineType::Code => code_lines += 1,
+				LineType::Comment => comment_lines += 1,
+				LineType::Blank => blank_lines += 1,
+				LineType::Shebang => shebang_lines += 1,
+			}
+			total_lines += 1;
+			is_first_line = false;
+			pos = line_end;
+		}
+		let contribution =
+			FileContribution::new(total_lines, code_lines, comment_lines, blank_lines, shebang_lines, file_size);
+		let file_stats = if collect_details {
+			let file_path_str = file_path.display().to_string();
+			Some(FileStats::new(
+				file_path_str,
+				total_lines,
+				code_lines,
+				comment_lines,
+				blank_lines,
+				shebang_lines,
+				file_size,
+			))
+		} else {
+			None
+		};
+		results.add_file_stats(language, contribution, file_stats);
+		Ok(())
 	}
 
 	fn is_probably_binary(sample: &[u8]) -> bool {
