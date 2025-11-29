@@ -6,10 +6,10 @@ mod display;
 mod langs;
 mod utils;
 
-use std::io::{self, Write};
+use std::io::{self, Write as _};
 
 use anyhow::{Result, ensure};
-use clap::Parser;
+use clap::Parser as _;
 use cli::{Cli, Commands};
 
 use crate::{

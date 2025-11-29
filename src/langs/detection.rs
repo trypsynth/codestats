@@ -28,7 +28,7 @@ fn score_language(lang: &Language, content: &str, tokens: &[&str]) -> i32 {
 		};
 		let clamped_count = count.min(usize::try_from(i32::MAX / 10).unwrap_or(usize::MAX));
 		// We now know that this is safe because we've clamped the value.
-		#[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
+		#[expect(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
 		let count_i32 = clamped_count as i32;
 		score = score.saturating_add(count_i32.saturating_mul(10));
 	}

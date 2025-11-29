@@ -8,14 +8,14 @@ pub const fn pluralize<'a>(count: u64, singular: &'a str, plural: &'a str) -> &'
 ///
 /// Returns `0.0` when `total` is `0` to avoid division-by-zero panics.
 #[inline]
-#[allow(clippy::cast_precision_loss)]
+#[expect(clippy::cast_precision_loss)]
 pub fn percentage(part: u64, total: u64) -> f64 {
 	if total == 0 { 0.0 } else { (part as f64 / total as f64) * 100.0 }
 }
 
 /// Convert a byte count into a human-readable string using base-1024 units.
 #[must_use]
-#[allow(clippy::cast_precision_loss)]
+#[expect(clippy::cast_precision_loss)]
 pub fn human_size(size: u64) -> String {
 	const UNITS: [&str; 6] = ["B", "KiB", "MiB", "GiB", "TiB", "PiB"];
 	let mut value = size as f64;

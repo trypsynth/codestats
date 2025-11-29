@@ -146,7 +146,7 @@ pub fn classify_line(
 	};
 	let mut line_remainder: &str = trimmed;
 	let matchers = language_matchers(lang);
-	#[allow(clippy::option_if_let_else)]
+	#[expect(clippy::option_if_let_else)]
 	let mut has_code = if let Some(block_comments) = matchers.block_comments.as_ref() {
 		let (remainder, found_code) = if lang.nested_blocks {
 			handle_block_comments_nested(trimmed, block_comments, comment_state)

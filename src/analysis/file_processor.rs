@@ -1,11 +1,11 @@
 use std::{
 	fs::File,
-	io::{BufRead, BufReader},
+	io::{BufRead as _, BufReader},
 	path::Path,
 	str,
 };
 
-use anyhow::{Context, Result};
+use anyhow::{Context as _, Result};
 use memmap2::Mmap;
 
 use super::{
@@ -153,7 +153,7 @@ fn process_file_mmap(
 	// SAFETY: We only read from the mmap and don't modify the underlying read-only file during analysis.
 	let mmap =
 		unsafe { Mmap::map(&file) }.with_context(|| format!("Failed to memory-map file {}", file_path.display()))?;
-	let file_bytes = &mmap[..];
+	let file_bytes = &*mmap;
 	let sample_size = file_bytes.len().min(4 * 1024);
 	let sample_bytes = &file_bytes[..sample_size];
 	if is_probably_binary(sample_bytes) {
