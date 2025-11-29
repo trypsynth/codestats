@@ -105,12 +105,12 @@ struct MmapLineSource<'a> {
 }
 
 impl<'a> MmapLineSource<'a> {
-	fn new(bytes: &'a [u8]) -> Self {
+	const fn new(bytes: &'a [u8]) -> Self {
 		Self { bytes, pos: 0 }
 	}
 }
 
-impl<'a> LineSource for MmapLineSource<'a> {
+impl LineSource for MmapLineSource<'_> {
 	fn for_each_line(&mut self, f: &mut dyn FnMut(&[u8])) -> Result<()> {
 		while self.pos < self.bytes.len() {
 			let line_end =

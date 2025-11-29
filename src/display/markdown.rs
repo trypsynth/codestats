@@ -76,7 +76,7 @@ impl MarkdownFormatter {
 				lang.comment_percentage,
 				lang.blank_percentage,
 				lang.shebang_percentage,
-				escape_cell(&lang.size_human)
+				escape_cell(lang.size_human)
 			)?;
 		}
 		Ok(())
@@ -104,7 +104,7 @@ impl MarkdownFormatter {
 					file.comment_lines,
 					file.blank_lines,
 					file.shebang_lines,
-					escape_cell(&file.size_human)
+					escape_cell(file.size_human)
 				)?;
 			}
 		}
