@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
 
-use crate::display::OutputFormat;
+use crate::display::{LanguageSortKey, NumberStyle, OutputFormat, SizeStyle, SortDirection};
 
 /// A tool for analyzing code statistics across different programming languages
 #[derive(Parser)]
@@ -35,6 +35,21 @@ pub enum Commands {
 		/// lead to infinite loops with circular symlinks.
 		#[arg(short, long)]
 		symlinks: bool,
+		/// Output number formatting style
+		#[arg(long, value_enum, default_value = "plain")]
+		number_style: NumberStyle,
+		/// Human-readable size formatting style
+		#[arg(long, value_enum, default_value = "binary")]
+		size_style: SizeStyle,
+		/// Percentage precision
+		#[arg(long, default_value_t = 1, value_parser = clap::value_parser!(u8).range(0..=6))]
+		percent_precision: u8,
+		/// Sorting key for languages (and per-file details when verbose)
+		#[arg(long, value_enum, default_value = "lines")]
+		language_sort: LanguageSortKey,
+		/// Sorting direction
+		#[arg(long, value_enum, default_value = "desc")]
+		sort_direction: SortDirection,
 		/// Output format
 		#[arg(short, long, default_value = "human")]
 		output: OutputFormat,

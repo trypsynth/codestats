@@ -1,8 +1,10 @@
 mod csv;
+mod formatting;
 mod html;
 mod human;
 mod json;
 mod markdown;
+mod options;
 mod report;
 
 use std::{
@@ -14,10 +16,12 @@ use std::{
 use anyhow::Result;
 use clap::ValueEnum;
 pub use csv::CsvFormatter;
+pub use formatting::{FormatterContext, apply_sort};
 pub use html::HtmlFormatter;
 pub use human::HumanFormatter;
 pub use json::JsonFormatter;
 pub use markdown::MarkdownFormatter;
+pub use options::{LanguageSortKey, NumberStyle, SizeStyle, SortDirection, ViewOptions};
 pub use report::ReportData;
 
 use crate::analysis::AnalysisResults;
@@ -56,8 +60,14 @@ pub trait OutputFormatter {
 	/// # Errors
 	///
 	/// Returns an error if formatting fails, (e.g. JSON serialization encounters an issue).
-	fn write_output(&self, results: &AnalysisResults, path: &Path, verbose: bool, writer: &mut dyn Write)
-	-> Result<()>;
+	fn write_output(
+		&self,
+		results: &AnalysisResults,
+		path: &Path,
+		verbose: bool,
+		view_options: ViewOptions,
+		writer: &mut dyn Write,
+	) -> Result<()>;
 }
 
 #[must_use]

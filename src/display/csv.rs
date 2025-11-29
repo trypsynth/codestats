@@ -2,7 +2,7 @@ use std::{io::Write, path::Path};
 
 use anyhow::Result;
 
-use super::{OutputFormatter, ReportData};
+use super::{FormatterContext, OutputFormatter, ReportData, ViewOptions};
 use crate::{analysis::AnalysisResults, display::report::FormattedLanguage};
 
 pub struct CsvFormatter;
@@ -13,17 +13,28 @@ impl OutputFormatter for CsvFormatter {
 		results: &AnalysisResults,
 		path: &Path,
 		verbose: bool,
+		view_options: ViewOptions,
 		writer: &mut dyn Write,
 	) -> Result<()> {
-		let report = ReportData::from_results(results, path, verbose);
-		let languages = report.formatted_languages();
-		if verbose { Self::write_verbose(&report, &languages, writer) } else { Self::write_simple(&languages, writer) }
+		let ctx = FormatterContext::new(view_options);
+		let report = ReportData::from_results(results, path, verbose, &ctx);
+		let languages = report.formatted_languages(&ctx);
+		if verbose {
+			Self::write_verbose(&report, &languages, &ctx, writer)
+		} else {
+			Self::write_simple(&languages, writer)
+		}
 	}
 }
 
 impl CsvFormatter {
-	fn write_verbose(report: &ReportData, languages: &[FormattedLanguage], writer: &mut dyn Write) -> Result<()> {
-		Self::write_summary_section(report, writer)?;
+	fn write_verbose(
+		report: &ReportData,
+		languages: &[FormattedLanguage],
+		ctx: &FormatterContext,
+		writer: &mut dyn Write,
+	) -> Result<()> {
+		Self::write_summary_section(report, ctx, writer)?;
 		writer.write_all(b"\n")?;
 		Self::write_language_section(languages, writer)?;
 		writer.write_all(b"\n")?;
@@ -31,21 +42,21 @@ impl CsvFormatter {
 		Ok(())
 	}
 
-	fn write_summary_section(report: &ReportData, output: &mut dyn Write) -> Result<()> {
+	fn write_summary_section(report: &ReportData, ctx: &FormatterContext, output: &mut dyn Write) -> Result<()> {
 		output.write_all(b"Summary:\n")?;
 		Self::write_record(output, &["metric", "value", "percentage", "human_readable"])?;
 		let summary = &report.summary;
-		let total_files = summary.total_files.to_string();
-		let total_lines = summary.total_lines.to_string();
-		let code_lines = summary.total_code_lines.to_string();
-		let code_pct = format!("{:.2}", summary.code_percentage);
-		let comment_lines = summary.total_comment_lines.to_string();
-		let comment_pct = format!("{:.2}", summary.comment_percentage);
-		let blank_lines = summary.total_blank_lines.to_string();
-		let blank_pct = format!("{:.2}", summary.blank_percentage);
-		let shebang_lines = summary.total_shebang_lines.to_string();
-		let shebang_pct = format!("{:.2}", summary.shebang_percentage);
-		let total_size = summary.total_size.to_string();
+		let total_files = ctx.number(summary.total_files);
+		let total_lines = ctx.number(summary.total_lines);
+		let code_lines = ctx.number(summary.total_code_lines);
+		let code_pct = ctx.percent(summary.code_percentage);
+		let comment_lines = ctx.number(summary.total_comment_lines);
+		let comment_pct = ctx.percent(summary.comment_percentage);
+		let blank_lines = ctx.number(summary.total_blank_lines);
+		let blank_pct = ctx.percent(summary.blank_percentage);
+		let shebang_lines = ctx.number(summary.total_shebang_lines);
+		let shebang_pct = ctx.percent(summary.shebang_percentage);
+		let total_size = ctx.number(summary.total_size);
 		let total_size_human = &summary.total_size_human;
 		Self::write_record(output, &["Analysis Path", report.analysis_path.as_str(), "", ""])?;
 		Self::write_record(output, &["Total Files", total_files.as_str(), "100.00", ""])?;
@@ -88,22 +99,16 @@ impl CsvFormatter {
 				],
 			)?;
 			for file_stat in files {
-				let total_lines = file_stat.total_lines.to_string();
-				let code_lines = file_stat.code_lines.to_string();
-				let comment_lines = file_stat.comment_lines.to_string();
-				let blank_lines = file_stat.blank_lines.to_string();
-				let shebang_lines = file_stat.shebang_lines.to_string();
-				let size = file_stat.size.to_string();
 				Self::write_record(
 					output,
 					&[
 						file_stat.path,
-						total_lines.as_str(),
-						code_lines.as_str(),
-						comment_lines.as_str(),
-						blank_lines.as_str(),
-						shebang_lines.as_str(),
-						size.as_str(),
+						file_stat.total_lines.as_str(),
+						file_stat.code_lines.as_str(),
+						file_stat.comment_lines.as_str(),
+						file_stat.blank_lines.as_str(),
+						file_stat.shebang_lines.as_str(),
+						file_stat.size.as_str(),
 						file_stat.size_human,
 					],
 				)?;
@@ -144,24 +149,17 @@ impl CsvFormatter {
 	}
 
 	fn write_language_row(lang: &FormattedLanguage, output: &mut dyn Write) -> Result<()> {
-		let files = lang.files.to_string();
-		let lines = lang.lines.to_string();
-		let code_lines = lang.code_lines.to_string();
-		let comment_lines = lang.comment_lines.to_string();
-		let blank_lines = lang.blank_lines.to_string();
-		let shebang_lines = lang.shebang_lines.to_string();
-		let size = lang.size.to_string();
 		Self::write_record(
 			output,
 			&[
 				lang.name,
-				files.as_str(),
-				lines.as_str(),
-				code_lines.as_str(),
-				comment_lines.as_str(),
-				blank_lines.as_str(),
-				shebang_lines.as_str(),
-				size.as_str(),
+				lang.files.as_str(),
+				lang.lines.as_str(),
+				lang.code_lines.as_str(),
+				lang.comment_lines.as_str(),
+				lang.blank_lines.as_str(),
+				lang.shebang_lines.as_str(),
+				lang.size.as_str(),
 				lang.size_human,
 				lang.code_percentage.as_str(),
 				lang.comment_percentage.as_str(),

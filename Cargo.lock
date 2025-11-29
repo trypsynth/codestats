@@ -24,6 +24,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a23eb6b1614318a8071c9b2521f36b424b2c83db5eb3a0fead4a6c0809af6e61"
 
 [[package]]
+name = "arrayvec"
+version = "0.7.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7c02d123df017efcdfbd739ef81735b36c5ba83ec3c59c80a9d7ecc718f92e50"
+
+[[package]]
 name = "block-buffer"
 version = "0.10.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -100,6 +106,7 @@ dependencies = [
  "memchr",
  "memmap2",
  "minijinja",
+ "num-format",
  "serde",
  "serde_json",
 ]
@@ -278,6 +285,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a9f264d75233323f4b7d2f03aefe8a990690cdebfbfe26ea86bcbaec5e9ac990"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "num-format"
+version = "0.4.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a652d9771a63711fd3c3deb670acfbe5c30a4072e664d7a3bf5a9e1056ac72c3"
+dependencies = [
+ "arrayvec",
+ "itoa",
 ]
 
 [[package]]

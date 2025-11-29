@@ -3,7 +3,7 @@ use std::{io::Write, path::Path};
 use anyhow::Result;
 use minijinja::{AutoEscape, Environment, context};
 
-use super::{OutputFormatter, ReportData};
+use super::{FormatterContext, OutputFormatter, ReportData, ViewOptions};
 use crate::{analysis::AnalysisResults, display::report::FormattedLanguage};
 
 const HTML_TEMPLATE: &str = include_str!("templates/report.html");
@@ -16,11 +16,13 @@ impl OutputFormatter for HtmlFormatter {
 		results: &AnalysisResults,
 		path: &Path,
 		verbose: bool,
+		view_options: ViewOptions,
 		writer: &mut dyn Write,
 	) -> Result<()> {
-		let report = ReportData::from_results(results, path, verbose);
-		let languages = report.formatted_languages();
-		Self::write_document(&report, &languages, verbose, writer)
+		let ctx = FormatterContext::new(view_options);
+		let report = ReportData::from_results(results, path, verbose, &ctx);
+		let languages = report.formatted_languages(&ctx);
+		Self::write_document(&report, &languages, verbose, &ctx, writer)
 	}
 }
 
@@ -29,6 +31,7 @@ impl HtmlFormatter {
 		report: &ReportData,
 		languages: &[FormattedLanguage],
 		verbose: bool,
+		ctx: &FormatterContext,
 		writer: &mut dyn Write,
 	) -> Result<()> {
 		let mut env = Environment::new();
@@ -41,7 +44,7 @@ impl HtmlFormatter {
 		});
 		env.add_template("report.html", HTML_TEMPLATE)?;
 		let template = env.get_template("report.html")?;
-		let parts = report.summary.percentage_parts();
+		let parts = report.summary.percentage_parts(ctx);
 		let totals = (!parts.is_empty()).then(|| parts.join(", "));
 		let rendered = template.render(context! {
 			title => &report.analysis_path,

@@ -1,6 +1,4 @@
-use core::cmp::Reverse;
-
-use crate::{langs, utils};
+use crate::{langs::{Language, LANGUAGES}, utils};
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 struct LineStats {
@@ -111,11 +109,6 @@ impl FileStats {
 	}
 
 	#[must_use]
-	pub fn size_human(&self) -> String {
-		utils::human_size(self.size)
-	}
-
-	#[must_use]
 	pub const fn code_lines(&self) -> u64 {
 		self.line_stats.code
 	}
@@ -178,11 +171,6 @@ impl LanguageStats {
 	#[must_use]
 	pub const fn size(&self) -> u64 {
 		self.size
-	}
-
-	#[must_use]
-	pub fn size_human(&self) -> String {
-		utils::human_size(self.size)
 	}
 
 	/// Get the number of code lines across all files of this language
@@ -257,7 +245,7 @@ impl Default for AnalysisResults {
 			total_lines: 0,
 			line_stats: LineStats::default(),
 			total_size: 0,
-			language_stats: vec![LanguageStats::default(); langs::LANGUAGES.len()],
+			language_stats: vec![LanguageStats::default(); LANGUAGES.len()],
 		}
 	}
 }
@@ -265,7 +253,7 @@ impl Default for AnalysisResults {
 impl AnalysisResults {
 	pub(crate) fn add_file_stats(
 		&mut self,
-		language: &'static langs::Language,
+		language: &'static Language,
 		contribution: FileContribution,
 		file_stats: Option<FileStats>,
 	) {
@@ -302,12 +290,6 @@ impl AnalysisResults {
 		self.total_size
 	}
 
-	/// Get the total size in human-readable format across all files
-	#[must_use]
-	pub fn total_size_human(&self) -> String {
-		utils::human_size(self.total_size)
-	}
-
 	/// Get the total number of code lines across all files
 	#[must_use]
 	pub const fn total_code_lines(&self) -> u64 {
@@ -332,22 +314,12 @@ impl AnalysisResults {
 		self.line_stats.shebang
 	}
 
-	/// Get languages sorted by total lines in descending order
-	///
-	/// Returns a vector of tuples containing (`language_name`, `language_stats`)
-	/// sorted by the number of lines in each language, with the language
-	/// with the most lines coming first.
-	#[must_use]
-	pub fn languages_by_lines(&self) -> Vec<(&'static str, &LanguageStats)> {
-		let mut stats_vec: Vec<_> = langs::LANGUAGES
-			.iter()
-			.filter_map(|lang| {
-				let stats = &self.language_stats[lang.index];
-				(stats.files() > 0).then_some((lang.name, stats))
-			})
-			.collect();
-		stats_vec.sort_by_key(|(_, lang_stats)| Reverse(lang_stats.lines()));
-		stats_vec
+	/// Iterate over languages that have at least one file, yielding both metadata and stats.
+	pub fn languages(&self) -> impl Iterator<Item = (&'static Language, &LanguageStats)> {
+		LANGUAGES.iter().filter_map(|lang| {
+			let stats = &self.language_stats[lang.index];
+			(stats.files() > 0).then_some((lang, stats))
+		})
 	}
 
 	/// Get the percentage of code lines relative to total lines

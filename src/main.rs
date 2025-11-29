@@ -14,7 +14,7 @@ use cli::{Cli, Commands};
 
 use crate::{
 	analysis::{AnalyzerConfig, CodeAnalyzer, DetailLevel, TraversalOptions},
-	display::get_formatter,
+	display::{ViewOptions, get_formatter},
 };
 
 fn main() -> Result<()> {
@@ -26,7 +26,19 @@ fn main() -> Result<()> {
 			stdout.flush()?;
 			Ok(())
 		}
-		Commands::Analyze { path, verbose, no_gitignore, hidden, symlinks, output } => {
+		Commands::Analyze {
+			path,
+			verbose,
+			no_gitignore,
+			hidden,
+			symlinks,
+			number_style,
+			size_style,
+			percent_precision,
+			language_sort,
+			sort_direction,
+			output,
+		} => {
 			ensure!(path.exists(), "Path `{}` not found", path.display());
 			if path.is_file() {
 				ensure!(path.metadata().is_ok(), "Cannot read file metadata for `{}`", path.display());
@@ -42,9 +54,16 @@ fn main() -> Result<()> {
 			};
 			let analyzer = CodeAnalyzer::new(path.clone(), config);
 			let results = analyzer.analyze()?;
+			let view_options = ViewOptions {
+				number_style,
+				size_style,
+				percent_precision,
+				language_sort_key: language_sort,
+				sort_direction,
+			};
 			let formatter = get_formatter(output);
 			let mut stdout = io::stdout();
-			formatter.write_output(&results, &path, verbose, &mut stdout)?;
+			formatter.write_output(&results, &path, verbose, view_options, &mut stdout)?;
 			stdout.flush()?;
 			Ok(())
 		}

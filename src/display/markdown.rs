@@ -2,7 +2,7 @@ use std::{io::Write, path::Path};
 
 use anyhow::Result;
 
-use super::{OutputFormatter, ReportData};
+use super::{FormatterContext, OutputFormatter, ReportData, ViewOptions};
 use crate::{
 	analysis::AnalysisResults,
 	display::report::{FormattedLanguage, Summary},
@@ -16,11 +16,13 @@ impl OutputFormatter for MarkdownFormatter {
 		results: &AnalysisResults,
 		path: &Path,
 		verbose: bool,
+		view_options: ViewOptions,
 		writer: &mut dyn Write,
 	) -> Result<()> {
-		let report = ReportData::from_results(results, path, verbose);
-		let languages = report.formatted_languages();
-		Self::write_markdown(&report.summary, &report.analysis_path, &languages, verbose, writer)
+		let ctx = FormatterContext::new(view_options);
+		let report = ReportData::from_results(results, path, verbose, &ctx);
+		let languages = report.formatted_languages(&ctx);
+		Self::write_markdown(&report.summary, &report.analysis_path, &languages, verbose, &ctx, writer)
 	}
 }
 
@@ -30,10 +32,11 @@ impl MarkdownFormatter {
 		analysis_path: &str,
 		languages: &[FormattedLanguage],
 		verbose: bool,
+		ctx: &FormatterContext,
 		writer: &mut dyn Write,
 	) -> Result<()> {
 		writeln!(writer, "# Codestats for `{analysis_path}`")?;
-		Self::write_summary(summary, writer)?;
+		Self::write_summary(summary, ctx, writer)?;
 		if languages.is_empty() {
 			writeln!(writer, "\n_No recognized programming languages found._")?;
 			return Ok(());
@@ -45,16 +48,16 @@ impl MarkdownFormatter {
 		Ok(())
 	}
 
-	fn write_summary(summary: &Summary, writer: &mut dyn Write) -> Result<()> {
+	fn write_summary(summary: &Summary, ctx: &FormatterContext, writer: &mut dyn Write) -> Result<()> {
 		writeln!(writer, "\n## Summary")?;
-		writeln!(writer, "- Files: {}", summary.total_files,)?;
-		writeln!(writer, "- Lines: {}", summary.total_lines,)?;
+		writeln!(writer, "- Files: {}", ctx.number(summary.total_files),)?;
+		writeln!(writer, "- Lines: {}", ctx.number(summary.total_lines),)?;
 		writeln!(writer, "- Size: {}", summary.total_size_human)?;
-		let line_breakdown = summary.line_breakdown_parts(false);
+		let line_breakdown = summary.line_breakdown_parts(false, ctx);
 		if !line_breakdown.is_empty() {
 			writeln!(writer, "- Line types: {}", line_breakdown.join(", "))?;
 		}
-		let percentage_parts = summary.percentage_parts();
+		let percentage_parts = summary.percentage_parts(ctx);
 		if !percentage_parts.is_empty() {
 			writeln!(writer, "- Totals: {}", percentage_parts.join(", "))?;
 		}
