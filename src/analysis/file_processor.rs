@@ -87,13 +87,19 @@ impl<R: BufRead> BufLineSource<R> {
 
 impl<R: BufRead> LineSource for BufLineSource<R> {
 	fn for_each_line(&mut self, f: &mut dyn FnMut(&[u8])) -> Result<()> {
+		let mut last_line_ended_with_newline = false;
 		loop {
 			self.buffer.clear();
 			let bytes_read = self.reader.read_until(b'\n', &mut self.buffer)?;
 			if bytes_read == 0 {
 				break;
 			}
+			last_line_ended_with_newline = self.buffer.ends_with(b"\n");
 			f(&self.buffer);
+		}
+		if last_line_ended_with_newline {
+			// Account for trailing newline as an empty (blank) line.
+			f(b"");
 		}
 		Ok(())
 	}
@@ -118,6 +124,10 @@ impl LineSource for MmapLineSource<'_> {
 			let line_bytes = &self.bytes[self.pos..line_end];
 			f(line_bytes);
 			self.pos = line_end;
+		}
+		if self.bytes.last() == Some(&b'\n') {
+			// Account for trailing newline as an empty (blank) line.
+			f(b"");
 		}
 		Ok(())
 	}

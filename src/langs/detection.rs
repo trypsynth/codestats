@@ -69,9 +69,12 @@ pub fn detect_language_info(filename: &str, content: Option<&str>) -> Option<&'s
 	match candidates.len() {
 		0 => content.and_then(detect_from_shebang),
 		1 => Some(candidates[0]),
-		_ => content.and_then(|file_content| {
-			detect_from_shebang(file_content).or_else(|| disambiguate(&candidates, file_content))
-		}),
+		_ => {
+			let detected = content.and_then(|file_content| {
+				detect_from_shebang(file_content).or_else(|| disambiguate(&candidates, file_content))
+			});
+			detected.or_else(|| candidates.first().copied())
+		}
 	}
 }
 
