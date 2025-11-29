@@ -14,9 +14,10 @@
 		line_comments: [";"],
 	},
 	"ActionScript": {
-		file_patterns: ["*.actionscript"],
+		file_patterns: ["*.actionscript", "*.as"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		keywords: ["package", "import", "function", "var", "flash.display", "Vector.<"],
 	},
 	"Ada": {
 		file_patterns: ["*.ada", "*.adb", "*.ads"],
@@ -40,6 +41,7 @@
 		file_patterns: ["*.as", "*.angelscript"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		keywords: ["funcdef", "shared", "mixin", "dictionary", "array<", "uint8", "int64"],
 	},
 	"Apache Config": {
 		file_patterns: [".htaccess", "*.conf", "httpd.conf", "apache2.conf"],
