@@ -196,6 +196,11 @@
 		file_patterns: ["*.boo"],
 		line_comments: ["#"],
 	},
+	"Bosque": {
+		file_patterns: ["*.bsq"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+	},
 	"BQN": {
 		file_patterns: ["*.bqn"],
 		line_comments: ["#"],
@@ -247,6 +252,11 @@
 		file_patterns: ["Caddyfile", "*.caddyfile"],
 		line_comments: ["#"],
 	},
+	"Cadence": {
+		file_patterns: ["*.cdc"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+	},
 	"Cairo": {
 		file_patterns: ["*.cairo"],
 		line_comments: ["//"],
@@ -265,6 +275,10 @@
 		file_patterns: ["*.carbon"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+	},
+	"Carp": {
+		file_patterns: ["*.carp"],
+		line_comments: [";"],
 	},
 	"Cassius": {
 		file_patterns: ["*.cassius"],
@@ -460,6 +474,10 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
+	"Earthfile": {
+		file_patterns: ["Earthfile", "*.earth", "*.earthfile"],
+		line_comments: ["#"],
+	},
 	"EBNF": {
 		file_patterns: ["*.ebnf"],
 		line_comments: ["//"],
@@ -594,6 +612,8 @@
 	"Futhark": {
 		file_patterns: ["*.fut"],
 		line_comments: ["--"],
+		block_comments: [["{-", "-}"]],
+		nested_blocks: true,
 	},
 	"GDB Script": {
 		file_patterns: ["*.gdb"],
@@ -624,6 +644,10 @@
 		file_patterns: ["*.gml"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+	},
+	"GN Build": {
+		file_patterns: ["*.gn", "*.gni"],
+		line_comments: ["#"],
 	},
 	"Go": {
 		file_patterns: ["*.go", "*.tmpl", "*.gohtml", "*.gotmpl", "go.mod", "go.sum", "go.work", "go.work.sum"],
@@ -708,6 +732,11 @@
 		line_comments: ["#", "//"],
 		block_comments: [["/*", "*/"]],
 	},
+	"Hjson": {
+		file_patterns: ["*.hjson"],
+		line_comments: ["//", "#"],
+		block_comments: [["/*", "*/"]],
+	},
 	"HLSL": {
 		file_patterns: ["*.hlsl", "*.fx", "*.fxh", "*.hlsli"],
 		line_comments: ["//"],
@@ -717,6 +746,11 @@
 		file_patterns: ["*.hc", "*.zc"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+	},
+	"Hoon": {
+		file_patterns: ["*.hoon"],
+		line_comments: ["::"],
+		block_comments: [["/-", "-/"]],
 	},
 	"HTML": {
 		file_patterns: ["*.html", "*.htm", "*.xht", "*.xhtml"],
@@ -756,6 +790,11 @@
 	"INI": {
 		file_patterns: ["*.ini", "*.cfg", "*.prefs", ".editorconfig", ".gitconfig", "buildozer.spec"],
 		line_comments: [";", "#"],
+	},
+	"Ink": {
+		file_patterns: ["*.ink"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
 	},
 	"Inko": {
 		file_patterns: ["*.inko"],
@@ -876,6 +915,10 @@
 		file_patterns: ["*.kak"],
 		line_comments: ["#"],
 	},
+	"KCL": {
+		file_patterns: ["*.kcl"],
+		line_comments: ["#"],
+	},
 	"KDL": {
 		file_patterns: ["*.kdl"],
 		line_comments: ["//"],
@@ -896,6 +939,11 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
+	},
+	"Kusto": {
+		file_patterns: ["*.kql", "*.csl"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
 	},
 	"KV Language": {
 		file_patterns: ["*.kv"],
@@ -1019,6 +1067,7 @@
 		line_comments: ["//"],
 		block_comments: [["(*", "*)"], ["/*", "*/"]],
 		nested_blocks: true,
+		keywords: ["%%", "%token", "%start", "%left", "%right", "%nonassoc"],
 	},
 	"Mercury": {
 		file_patterns: ["*.m"],
@@ -1136,8 +1185,8 @@
 		line_comments: ["#"],
 	},
 	"Nickel": {
-		file_patterns: ["*.ncl"],
-		line_comments: ["#"],
+		file_patterns: ["*.ncl", "*.nickel"],
+		line_comments: ["#", "//"],
 		block_comments: [["/*", "*/"]],
 	},
 	"Nim": {
@@ -1214,10 +1263,6 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
-	},
-	"Open Policy Agent": {
-		file_patterns: ["*.rego"],
-		line_comments: ["#"],
 	},
 	"OpenCL": {
 		file_patterns: ["*.ocl", "*.cl"],
@@ -1313,6 +1358,10 @@
 	"Poke": {
 		file_patterns: ["*.pk"],
 		block_comments: [["/*", "*/"]],
+	},
+	"Polar": {
+		file_patterns: ["*.polar"],
+		line_comments: ["#"],
 	},
 	"Pony": {
 		file_patterns: ["*.pony"],
@@ -1436,6 +1485,11 @@
 		block_comments: [["<!--", "-->"], ["@*", "*@"]],
 		keywords: ["@page", "@model", "@inject", "@code", "@functions"],
 	},
+	"ReasonML": {
+		file_patterns: ["*.re", "*.rei"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+	},
 	"Rebol": {
 		file_patterns: ["*.r", "*.reb", "*.rebol"],
 		line_comments: [";"],
@@ -1445,6 +1499,12 @@
 		file_patterns: ["*.red", "*.reds"],
 		line_comments: [";"],
 		block_comments: [["comment {", "}"]],
+	},
+	"Rego": {
+		file_patterns: ["*.rego"],
+		line_comments: ["#"],
+		block_comments: [["/*", "*/"]],
+		keywords: ["package", "import", "default", "allow", "deny", "rule", "data", "else", "some"],
 	},
 	"ReScript": {
 		file_patterns: ["*.res", "*.resi"],
@@ -1554,6 +1614,11 @@
 		file_patterns: ["*.tpl"],
 		block_comments: [["{{*", "*}}"]],
 	},
+	"Smithy": {
+		file_patterns: ["*.smithy"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+	},
 	"SNOBOL": {
 		file_patterns: ["*.sno", "*.snob", "*.snobol"],
 		line_comments: ["*"],
@@ -1562,6 +1627,10 @@
 		file_patterns: ["*.sol"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+	},
+	"SPARQL": {
+		file_patterns: ["*.rq", "*.sparql"],
+		line_comments: ["#"],
 	},
 	"SpiderBasic": {
 		file_patterns: ["*.sb", "*.sbi", "*.sbf", "*.sbp"],
@@ -1625,6 +1694,11 @@
 	"SVG": {
 		file_patterns: ["*.svg"],
 		block_comments: [["<!--", "-->"]],
+	},
+	"Sway": {
+		file_patterns: ["*.sw"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
 	},
 	"Swift": {
 		file_patterns: ["*.swift", "*.swiftpm"],
@@ -1692,6 +1766,10 @@
 		file_patterns: ["*.toml"],
 		line_comments: ["#"],
 	},
+	"Turtle": {
+		file_patterns: ["*.ttl"],
+		line_comments: ["#"],
+	},
 	"Twig": {
 		file_patterns: ["*.twig"],
 		block_comments: [["{#", "#}"]],
@@ -1750,6 +1828,11 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
+	"VCL": {
+		file_patterns: ["*.vcl"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+	},
 	"Velocity": {
 		file_patterns: ["*.vm", "*.vtl"],
 		line_comments: ["##"],
@@ -1779,6 +1862,17 @@
 		line_comments: ["//"],
 		block_comments: [["<!--", "-->"], ["/*", "*/"]],
 		nested_blocks: true,
+	},
+	"Vyper": {
+		file_patterns: ["*.vy"],
+		line_comments: ["#"],
+		block_comments: [["\"\"\"", "\"\"\""], ["'''", "'''"]],
+		keywords: ["contract", "def", "event", "struct", "public", "external", "view", "pure"],
+	},
+	"WDL": {
+		file_patterns: ["*.wdl"],
+		line_comments: ["#", "//"],
+		block_comments: [["/*", "*/"]],
 	},
 	"WebAssembly": {
 		file_patterns: ["*.wat", "*.wasm"],
@@ -1811,6 +1905,11 @@
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
 	},
+	"WIT": {
+		file_patterns: ["*.wit"],
+		line_comments: [";;"],
+		block_comments: [["(;", ";)"]],
+	},
 	"WiX": {
 		file_patterns: ["*.wxs"],
 		block_comments: [["<!--", "-->"]],
@@ -1838,6 +1937,16 @@
 	"YAML": {
 		file_patterns: ["*.yaml", "*.yml", "*.yaml.tmpl", "*.yaml-tmpl", ".yamllint"],
 		line_comments: ["#"],
+	},
+	"YANG": {
+		file_patterns: ["*.yang"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+	},
+	"YARA": {
+		file_patterns: ["*.yar", "*.yara"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
 	},
 	"ZenCode": {
 		file_patterns: ["*.zs"],
