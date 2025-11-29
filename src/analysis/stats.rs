@@ -1,4 +1,7 @@
-use crate::{langs::{Language, LANGUAGES}, utils};
+use crate::{
+	langs::{LANGUAGES, Language},
+	utils,
+};
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 struct LineStats {

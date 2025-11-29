@@ -153,9 +153,7 @@ pub fn apply_sort<T>(
 		let ordering = match (lhs, rhs) {
 			(SortValue::Num(l), SortValue::Num(r)) => l.cmp(&r),
 			(SortValue::Text(l), SortValue::Text(r)) => l.cmp(r),
-			(SortValue::Num(_), SortValue::Text(_)) | (SortValue::Text(_), SortValue::Num(_)) => {
-				Ordering::Equal
-			}
+			(SortValue::Num(_), SortValue::Text(_)) | (SortValue::Text(_), SortValue::Num(_)) => Ordering::Equal,
 		};
 		if direction == SortDirection::Desc { ordering.reverse() } else { ordering }
 	});
