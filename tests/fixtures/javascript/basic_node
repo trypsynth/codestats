@@ -1,0 +1,6 @@
+#!/usr/bin/env node
+// expect: total=7 code=2 comment=2 blank=2 shebang=1
+// node script with no extension
+console.log("hi");
+
+const sum = 1 + 2;

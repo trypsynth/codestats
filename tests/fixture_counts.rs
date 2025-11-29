@@ -91,17 +91,32 @@ fn collect_fixtures(root: &Path) -> Vec<PathBuf> {
 fn parse_expectations(path: &Path) -> ExpectedCounts {
 	let contents =
 		fs::read_to_string(path).unwrap_or_else(|err| panic!("Failed to read fixture {}: {err}", path.display()));
-	let first_line = contents
-		.lines()
-		.next()
-		.unwrap_or_else(|| panic!("Fixture {} is empty; add an expectation comment on the first line", path.display()));
-	parse_expectation_line(first_line)
-		.unwrap_or_else(|| panic!("Fixture {} must start with an expectation comment", path.display()))
+	for line in contents.lines() {
+		let trimmed = line.trim_start();
+		if trimmed.starts_with("#!") || trimmed.is_empty() {
+			continue;
+		}
+		if let Some(expectation) = parse_expectation_line(line) {
+			return expectation;
+		}
+		break;
+	}
+	panic!(
+		"Fixture {} must start with an expectation comment (optionally after a shebang or blank line)",
+		path.display()
+	);
 }
 
 fn parse_expectation_line(line: &str) -> Option<ExpectedCounts> {
-	let trimmed = line.trim_start_matches(&['/', '#', ' ', '\t']).trim();
-	let rest = trimmed.strip_prefix("expect:")?.trim();
+	let trimmed = line.trim_start();
+	let without_prefix = trimmed
+		.strip_prefix("//")
+		.or_else(|| trimmed.strip_prefix('#'))
+		.or_else(|| trimmed.strip_prefix("--"))
+		.or_else(|| trimmed.strip_prefix(';'))
+		.unwrap_or(trimmed)
+		.trim();
+	let rest = without_prefix.strip_prefix("expect:")?.trim();
 	let mut counts = ExpectedCounts { total: 0, code: 0, comment: 0, blank: 0, shebang: 0 };
 	let mut seen_mask = 0u8;
 	for token in rest.split_whitespace() {
