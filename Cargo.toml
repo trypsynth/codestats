@@ -2,20 +2,24 @@
 name = "codestats"
 version = "0.3.1"
 authors = ["Quin Gillespie <trypsynth@gmail.com>"]
-description = "A CLI tool for analyzing code statistics across different programming languages"
-keywords = ["code", "analysis", "cli", "tool"]
-categories = ["command-line-utilities", "development-tools", "filesystem"]
-repository = "https://github.com/trypsynth/codestats"
-homepage = "https://github.com/trypsynth/codestats"
-readme = "README.md"
-license = "Zlib"
 edition = "2024"
 rust-version = "1.85.1"
+description = "A CLI tool for analyzing code statistics across different programming languages"
+readme = "README.md"
+homepage = "https://github.com/trypsynth/codestats"
+repository = "https://github.com/trypsynth/codestats"
+license = "Zlib"
+keywords = ["code", "analysis", "cli", "tool"]
+categories = ["command-line-utilities", "development-tools", "filesystem"]
+
+[[bin]]
+name = "cs"
+path = "src/main.rs"
 
 [dependencies]
 aho-corasick = "1.1.4"
 anyhow = "1.0.100"
-clap = { version = "4.5.53", default-features = false, features = ["std", "derive", "help", "usage"] }
+clap = { version = "4.5.53", default-features = false, features = ["std", "derive", "help", "wrap_help"] }
 globset = "0.4.18"
 ignore = "0.4.25"
 memchr = "2.7.6"
