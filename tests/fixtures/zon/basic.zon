@@ -1,0 +1,7 @@
+// expect: total=8 code=6 comment=1 blank=1 shebang=0
+.{
+    .name = .test,
+    .version = "0.0.0",
+    .dependencies = .{},
+    .paths = .{""},
+}

@@ -1964,6 +1964,10 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
+	"Zon": {
+		"file_patterns": ["*.zon"],
+		line_comments: ["//", "///", "//!"],
+	},
 	"ZSH": {
 		file_patterns: ["*.zsh", ".zlogin", ".zlogout", ".zprofile", ".zshenv", ".zshrc"],
 		line_comments: ["#"],

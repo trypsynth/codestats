@@ -1,0 +1,10 @@
+// expect: total=11 code=3 comment=5 blank=3 shebang=0
+
+/*This is a multi-line comment
+    written across multiple lines.
+*/
+
+def main() -> field {
+	// an inline comment
+	return 42; // on a line.
+}
