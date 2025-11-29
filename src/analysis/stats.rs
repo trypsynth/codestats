@@ -2,24 +2,6 @@ use std::cmp::Reverse;
 
 use crate::{langs, utils};
 
-macro_rules! getter {
-	($name:ident, $type:ty) => {
-		#[must_use]
-		pub const fn $name(&self) -> $type {
-			self.$name
-		}
-	};
-}
-
-macro_rules! size_human_getter {
-	() => {
-		#[must_use]
-		pub fn size_human(&self) -> String {
-			utils::human_size(self.size)
-		}
-	};
-}
-
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 struct LineStats {
 	code: u64,
@@ -62,8 +44,15 @@ impl FileContribution {
 		Self { total_lines, line_stats: LineStats::new(code_lines, comment_lines, blank_lines, shebang_lines), size }
 	}
 
-	getter!(total_lines, u64);
-	getter!(size, u64);
+	#[must_use]
+	pub const fn total_lines(&self) -> u64 {
+		self.total_lines
+	}
+
+	#[must_use]
+	pub const fn size(&self) -> u64 {
+		self.size
+	}
 }
 
 /// Statistics for a single file
@@ -111,9 +100,20 @@ impl FileStats {
 		&self.path
 	}
 
-	getter!(total_lines, u64);
-	getter!(size, u64);
-	size_human_getter!();
+	#[must_use]
+	pub const fn total_lines(&self) -> u64 {
+		self.total_lines
+	}
+
+	#[must_use]
+	pub const fn size(&self) -> u64 {
+		self.size
+	}
+
+	#[must_use]
+	pub fn size_human(&self) -> String {
+		utils::human_size(self.size)
+	}
 
 	#[must_use]
 	pub const fn code_lines(&self) -> u64 {
@@ -165,10 +165,25 @@ impl LanguageStats {
 		self.file_list.append(&mut other.file_list);
 	}
 
-	getter!(files, u64);
-	getter!(lines, u64);
-	getter!(size, u64);
-	size_human_getter!();
+	#[must_use]
+	pub const fn files(&self) -> u64 {
+		self.files
+	}
+
+	#[must_use]
+	pub const fn lines(&self) -> u64 {
+		self.lines
+	}
+
+	#[must_use]
+	pub const fn size(&self) -> u64 {
+		self.size
+	}
+
+	#[must_use]
+	pub fn size_human(&self) -> String {
+		utils::human_size(self.size)
+	}
 
 	/// Get the number of code lines across all files of this language
 	#[must_use]
@@ -271,8 +286,15 @@ impl AnalysisResults {
 		}
 	}
 
-	getter!(total_files, u64);
-	getter!(total_lines, u64);
+	#[must_use]
+	pub const fn total_files(&self) -> u64 {
+		self.total_files
+	}
+
+	#[must_use]
+	pub const fn total_lines(&self) -> u64 {
+		self.total_lines
+	}
 
 	/// Get the total size in bytes across all files
 	#[must_use]
