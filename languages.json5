@@ -348,6 +348,7 @@
 		line_comments: [";"],
 		block_comments: [["#|", "|#"]],
 		nested_blocks: true,
+		keywords: ["defun", "defvar", "defclass", "let", "lambda", "setf"],
 	},
 	"Coq": {
 		file_patterns: ["*.coq", "*.v"],
@@ -1221,6 +1222,7 @@
 	"OpenCL": {
 		file_patterns: ["*.ocl", "*.cl"],
 		block_comments: [["/*", "*/"]],
+		keywords: ["__kernel", "__global", "__local", "__constant", "get_global_id", "get_local_id", "barrier"],
 	},
 	"OpenQASM": {
 		file_patterns: ["*.qasm"],
@@ -1345,6 +1347,7 @@
 		file_patterns: ["*.pro"],
 		line_comments: ["%"],
 		block_comments: [["/*", "*/"]],
+		keywords: [":-", "?-", "assert", "retract", "findall", "bagof"],
 	},
 	"Promela": {
 		file_patterns: ["*.pml"],
