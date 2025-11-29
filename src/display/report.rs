@@ -197,3 +197,72 @@ pub struct FileRecord<'a> {
 	pub size: u64,
 	pub size_human: String,
 }
+
+#[derive(Debug, Serialize)]
+pub struct FormattedLanguage<'a> {
+	pub name: &'a str,
+	pub files: u64,
+	pub lines: u64,
+	pub code_lines: u64,
+	pub comment_lines: u64,
+	pub blank_lines: u64,
+	pub shebang_lines: u64,
+	pub size: u64,
+	pub size_human: &'a str,
+	pub code_percentage: String,
+	pub comment_percentage: String,
+	pub blank_percentage: String,
+	pub shebang_percentage: String,
+	pub files_detail: Option<Vec<FormattedFile<'a>>>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct FormattedFile<'a> {
+	pub path: &'a str,
+	pub total_lines: u64,
+	pub code_lines: u64,
+	pub comment_lines: u64,
+	pub blank_lines: u64,
+	pub shebang_lines: u64,
+	pub size: u64,
+	pub size_human: &'a str,
+}
+
+impl<'a> ReportData<'a> {
+	#[must_use]
+	pub fn formatted_languages(&'a self) -> Vec<FormattedLanguage<'a>> {
+		self.languages
+			.iter()
+			.map(|lang| FormattedLanguage {
+				name: lang.name,
+				files: lang.files,
+				lines: lang.lines,
+				code_lines: lang.code_lines,
+				comment_lines: lang.comment_lines,
+				blank_lines: lang.blank_lines,
+				shebang_lines: lang.shebang_lines,
+				size: lang.size,
+				size_human: &lang.size_human,
+				code_percentage: format!("{:.1}", lang.code_percentage),
+				comment_percentage: format!("{:.1}", lang.comment_percentage),
+				blank_percentage: format!("{:.1}", lang.blank_percentage),
+				shebang_percentage: format!("{:.1}", lang.shebang_percentage),
+				files_detail: lang.files_detail.as_ref().map(|files| {
+					files
+						.iter()
+						.map(|file| FormattedFile {
+							path: file.path,
+							total_lines: file.total_lines,
+							code_lines: file.code_lines,
+							comment_lines: file.comment_lines,
+							blank_lines: file.blank_lines,
+							shebang_lines: file.shebang_lines,
+							size: file.size,
+							size_human: &file.size_human,
+						})
+						.collect()
+				}),
+			})
+			.collect()
+	}
+}

@@ -1,6 +1,6 @@
 use std::{
 	fs::File,
-	io::{BufRead as _, BufReader},
+	io::{BufRead, BufReader},
 	path::Path,
 	str,
 };
@@ -12,7 +12,7 @@ use super::{
 	line_classifier::{self, CommentState, LineType},
 	stats::{AnalysisResults, FileContribution, FileStats},
 };
-use crate::langs;
+use crate::langs::{self, Language};
 
 pub struct LineCounts {
 	total: u64,
@@ -30,7 +30,7 @@ impl LineCounts {
 	pub(crate) fn classify_and_count(
 		&mut self,
 		line_bytes: &[u8],
-		lang_info: Option<&langs::Language>,
+		lang_info: Option<&Language>,
 		comment_state: &mut CommentState,
 		is_first_line: bool,
 	) {
@@ -70,6 +70,59 @@ impl LineCounts {
 	}
 }
 
+trait LineSource {
+	fn for_each_line(&mut self, f: &mut dyn FnMut(&[u8])) -> Result<()>;
+}
+
+struct BufLineSource<R: BufRead> {
+	reader: R,
+	buffer: Vec<u8>,
+}
+
+impl<R: BufRead> BufLineSource<R> {
+	fn new(reader: R) -> Self {
+		Self { reader, buffer: Vec::with_capacity(1024) }
+	}
+}
+
+impl<R: BufRead> LineSource for BufLineSource<R> {
+	fn for_each_line(&mut self, f: &mut dyn FnMut(&[u8])) -> Result<()> {
+		loop {
+			self.buffer.clear();
+			let bytes_read = self.reader.read_until(b'\n', &mut self.buffer)?;
+			if bytes_read == 0 {
+				break;
+			}
+			f(&self.buffer);
+		}
+		Ok(())
+	}
+}
+
+struct MmapLineSource<'a> {
+	bytes: &'a [u8],
+	pos: usize,
+}
+
+impl<'a> MmapLineSource<'a> {
+	fn new(bytes: &'a [u8]) -> Self {
+		Self { bytes, pos: 0 }
+	}
+}
+
+impl<'a> LineSource for MmapLineSource<'a> {
+	fn for_each_line(&mut self, f: &mut dyn FnMut(&[u8])) -> Result<()> {
+		while self.pos < self.bytes.len() {
+			let line_end =
+				memchr::memchr(b'\n', &self.bytes[self.pos..]).map_or(self.bytes.len(), |offset| self.pos + offset + 1);
+			let line_bytes = &self.bytes[self.pos..line_end];
+			f(line_bytes);
+			self.pos = line_end;
+		}
+		Ok(())
+	}
+}
+
 const MMAP_THRESHOLD: u64 = 256 * 1024; // 256KB threshold
 
 pub fn process_file(file_path: &Path, results: &mut AnalysisResults, collect_details: bool) -> Result<()> {
@@ -106,40 +159,8 @@ fn process_file_buffered(
 	}
 	let sample_str = str::from_utf8(&sample_bytes).ok();
 	let Some(language) = langs::detect_language_info(filename, sample_str) else { return Ok(()) };
-	let mut line_counts = LineCounts::new();
-	let mut comment_state = CommentState::new();
-	let mut buffer = Vec::with_capacity(1024);
-	let mut is_first_line = true;
-	loop {
-		buffer.clear();
-		let bytes_read = reader.read_until(b'\n', &mut buffer)?;
-		if bytes_read == 0 {
-			break;
-		}
-		line_counts.classify_and_count(&buffer, Some(language), &mut comment_state, is_first_line);
-		is_first_line = false;
-	}
-	let contribution = FileContribution::new(
-		line_counts.total(),
-		line_counts.code(),
-		line_counts.comment(),
-		line_counts.blank(),
-		line_counts.shebang(),
-		file_size,
-	);
-	let file_stats = collect_details.then(|| {
-		FileStats::new(
-			file_path.display().to_string(),
-			line_counts.total(),
-			line_counts.code(),
-			line_counts.comment(),
-			line_counts.blank(),
-			line_counts.shebang(),
-			file_size,
-		)
-	});
-	results.add_file_stats(language, contribution, file_stats);
-	Ok(())
+	let mut source = BufLineSource::new(reader);
+	process_lines(file_path, file_size, results, collect_details, language, &mut source)
 }
 
 fn process_file_mmap(
@@ -161,17 +182,25 @@ fn process_file_mmap(
 	}
 	let sample_str = str::from_utf8(sample_bytes).ok();
 	let Some(language) = langs::detect_language_info(filename, sample_str) else { return Ok(()) };
+	let mut source = MmapLineSource::new(file_bytes);
+	process_lines(file_path, file_size, results, collect_details, language, &mut source)
+}
+
+fn process_lines(
+	file_path: &Path,
+	file_size: u64,
+	results: &mut AnalysisResults,
+	collect_details: bool,
+	language: &'static Language,
+	source: &mut dyn LineSource,
+) -> Result<()> {
 	let mut line_counts = LineCounts::new();
 	let mut comment_state = CommentState::new();
 	let mut is_first_line = true;
-	let mut pos = 0;
-	while pos < file_bytes.len() {
-		let line_end = memchr::memchr(b'\n', &file_bytes[pos..]).map_or(file_bytes.len(), |offset| pos + offset + 1);
-		let line_bytes = &file_bytes[pos..line_end];
+	source.for_each_line(&mut |line_bytes| {
 		line_counts.classify_and_count(line_bytes, Some(language), &mut comment_state, is_first_line);
 		is_first_line = false;
-		pos = line_end;
-	}
+	})?;
 	let contribution = FileContribution::new(
 		line_counts.total(),
 		line_counts.code(),

@@ -3,7 +3,7 @@ use std::{io::Write, path::Path};
 use anyhow::Result;
 
 use super::{OutputFormatter, ReportData};
-use crate::{analysis::AnalysisResults, display::report::LanguageRecord};
+use crate::{analysis::AnalysisResults, display::report::FormattedLanguage};
 
 pub struct CsvFormatter;
 
@@ -16,17 +16,18 @@ impl OutputFormatter for CsvFormatter {
 		writer: &mut dyn Write,
 	) -> Result<()> {
 		let report = ReportData::from_results(results, path, verbose);
-		if verbose { Self::write_verbose(&report, writer) } else { Self::write_simple(&report, writer) }
+		let languages = report.formatted_languages();
+		if verbose { Self::write_verbose(&report, &languages, writer) } else { Self::write_simple(&languages, writer) }
 	}
 }
 
 impl CsvFormatter {
-	fn write_verbose(report: &ReportData, writer: &mut dyn Write) -> Result<()> {
+	fn write_verbose(report: &ReportData, languages: &[FormattedLanguage], writer: &mut dyn Write) -> Result<()> {
 		Self::write_summary_section(report, writer)?;
 		writer.write_all(b"\n")?;
-		Self::write_language_section(&report.languages, writer)?;
+		Self::write_language_section(languages, writer)?;
 		writer.write_all(b"\n")?;
-		Self::write_files_sections(&report.languages, writer)?;
+		Self::write_files_sections(languages, writer)?;
 		Ok(())
 	}
 
@@ -57,7 +58,7 @@ impl CsvFormatter {
 		Ok(())
 	}
 
-	fn write_language_section(languages: &[LanguageRecord], output: &mut dyn Write) -> Result<()> {
+	fn write_language_section(languages: &[FormattedLanguage], output: &mut dyn Write) -> Result<()> {
 		output.write_all(b"Language breakdown:\n")?;
 		Self::write_language_header(output)?;
 		for lang in languages {
@@ -67,7 +68,7 @@ impl CsvFormatter {
 		Ok(())
 	}
 
-	fn write_files_sections(languages: &[LanguageRecord], output: &mut dyn Write) -> Result<()> {
+	fn write_files_sections(languages: &[FormattedLanguage], output: &mut dyn Write) -> Result<()> {
 		for language in languages {
 			let Some(files) = &language.files_detail else {
 				continue;
@@ -93,7 +94,6 @@ impl CsvFormatter {
 				let blank_lines = file_stat.blank_lines.to_string();
 				let shebang_lines = file_stat.shebang_lines.to_string();
 				let size = file_stat.size.to_string();
-				let size_human = &file_stat.size_human;
 				Self::write_record(
 					output,
 					&[
@@ -104,7 +104,7 @@ impl CsvFormatter {
 						blank_lines.as_str(),
 						shebang_lines.as_str(),
 						size.as_str(),
-						size_human.as_str(),
+						file_stat.size_human,
 					],
 				)?;
 			}
@@ -113,9 +113,9 @@ impl CsvFormatter {
 		Ok(())
 	}
 
-	fn write_simple(report: &ReportData, output: &mut dyn Write) -> Result<()> {
+	fn write_simple(languages: &[FormattedLanguage], output: &mut dyn Write) -> Result<()> {
 		Self::write_language_header(output)?;
-		for lang in &report.languages {
+		for lang in languages {
 			Self::write_language_row(lang, output)?;
 		}
 		Ok(())
@@ -143,7 +143,7 @@ impl CsvFormatter {
 		Ok(())
 	}
 
-	fn write_language_row(lang: &LanguageRecord, output: &mut dyn Write) -> Result<()> {
+	fn write_language_row(lang: &FormattedLanguage, output: &mut dyn Write) -> Result<()> {
 		let files = lang.files.to_string();
 		let lines = lang.lines.to_string();
 		let code_lines = lang.code_lines.to_string();
@@ -151,11 +151,6 @@ impl CsvFormatter {
 		let blank_lines = lang.blank_lines.to_string();
 		let shebang_lines = lang.shebang_lines.to_string();
 		let size = lang.size.to_string();
-		let code_pct = format!("{:.2}", lang.code_percentage);
-		let comment_pct = format!("{:.2}", lang.comment_percentage);
-		let blank_pct = format!("{:.2}", lang.blank_percentage);
-		let shebang_pct = format!("{:.2}", lang.shebang_percentage);
-		let size_human = &lang.size_human;
 		Self::write_record(
 			output,
 			&[
@@ -167,11 +162,11 @@ impl CsvFormatter {
 				blank_lines.as_str(),
 				shebang_lines.as_str(),
 				size.as_str(),
-				size_human.as_str(),
-				code_pct.as_str(),
-				comment_pct.as_str(),
-				blank_pct.as_str(),
-				shebang_pct.as_str(),
+				lang.size_human,
+				lang.code_percentage.as_str(),
+				lang.comment_percentage.as_str(),
+				lang.blank_percentage.as_str(),
+				lang.shebang_percentage.as_str(),
 			],
 		)?;
 		Ok(())

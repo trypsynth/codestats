@@ -5,7 +5,7 @@ use anyhow::Result;
 use super::{OutputFormatter, ReportData};
 use crate::{
 	analysis::AnalysisResults,
-	display::report::{LanguageRecord, Summary},
+	display::report::{FormattedLanguage, Summary},
 };
 
 pub struct MarkdownFormatter;
@@ -19,21 +19,28 @@ impl OutputFormatter for MarkdownFormatter {
 		writer: &mut dyn Write,
 	) -> Result<()> {
 		let report = ReportData::from_results(results, path, verbose);
-		Self::write_markdown(&report, verbose, writer)
+		let languages = report.formatted_languages();
+		Self::write_markdown(&report.summary, &report.analysis_path, &languages, verbose, writer)
 	}
 }
 
 impl MarkdownFormatter {
-	fn write_markdown(report: &ReportData, verbose: bool, writer: &mut dyn Write) -> Result<()> {
-		writeln!(writer, "# Codestats for `{}`", report.analysis_path)?;
-		Self::write_summary(&report.summary, writer)?;
-		if report.languages.is_empty() {
+	fn write_markdown(
+		summary: &Summary,
+		analysis_path: &str,
+		languages: &[FormattedLanguage],
+		verbose: bool,
+		writer: &mut dyn Write,
+	) -> Result<()> {
+		writeln!(writer, "# Codestats for `{analysis_path}`")?;
+		Self::write_summary(summary, writer)?;
+		if languages.is_empty() {
 			writeln!(writer, "\n_No recognized programming languages found._")?;
 			return Ok(());
 		}
-		Self::write_language_table(&report.languages, writer)?;
+		Self::write_language_table(languages, writer)?;
 		if verbose {
-			Self::write_file_tables(&report.languages, writer)?;
+			Self::write_file_tables(languages, writer)?;
 		}
 		Ok(())
 	}
@@ -54,14 +61,14 @@ impl MarkdownFormatter {
 		Ok(())
 	}
 
-	fn write_language_table(languages: &[LanguageRecord], writer: &mut dyn Write) -> Result<()> {
+	fn write_language_table(languages: &[FormattedLanguage], writer: &mut dyn Write) -> Result<()> {
 		writeln!(writer, "\n## Languages")?;
 		writeln!(writer, "| Language | Files | Lines | Code % | Comment % | Blank % | Shebang % | Size |")?;
 		writeln!(writer, "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")?;
 		for lang in languages {
 			writeln!(
 				writer,
-				"| {} | {} | {} | {:.1}% | {:.1}% | {:.1}% | {:.1}% | {} |",
+				"| {} | {} | {} | {}% | {}% | {}% | {}% | {} |",
 				escape_cell(lang.name),
 				lang.files,
 				lang.lines,
@@ -75,7 +82,7 @@ impl MarkdownFormatter {
 		Ok(())
 	}
 
-	fn write_file_tables(languages: &[LanguageRecord], writer: &mut dyn Write) -> Result<()> {
+	fn write_file_tables(languages: &[FormattedLanguage], writer: &mut dyn Write) -> Result<()> {
 		writeln!(writer, "\n## Files")?;
 		for lang in languages {
 			let Some(files) = &lang.files_detail else {

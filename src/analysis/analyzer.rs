@@ -14,14 +14,14 @@ use super::{config::AnalyzerConfig, file_processor, stats::AnalysisResults};
 use crate::langs;
 
 struct LocalAggregator {
-	shared: Arc<Mutex<AnalysisResults>>,
+	sink: Arc<Mutex<Vec<AnalysisResults>>>,
 	local: AnalysisResults,
 }
 
 impl Drop for LocalAggregator {
 	fn drop(&mut self) {
-		let mut shared = self.shared.lock().unwrap_or_else(PoisonError::into_inner);
-		shared.merge(mem::take(&mut self.local));
+		let mut sink = self.sink.lock().unwrap_or_else(PoisonError::into_inner);
+		sink.push(mem::take(&mut self.local));
 	}
 }
 
@@ -55,13 +55,13 @@ impl CodeAnalyzer {
 		if self.config.verbose {
 			println!("Analyzing directory {}", self.root.display());
 		}
-		let results = Arc::new(Mutex::default());
-		let shared_results = Arc::clone(&results);
 		let error_counter = Arc::new(AtomicU64::new(0));
-		let shared_error_counter = Arc::clone(&error_counter);
 		let verbose = self.config.verbose;
 		let collect_details = self.config.detail_level.collect_file_details();
 		let language_globset = langs::language_globset();
+		let aggregates = Arc::new(Mutex::new(Vec::new()));
+		let aggregates_for_walk = Arc::clone(&aggregates);
+		let error_counter_for_walk = Arc::clone(&error_counter);
 		WalkBuilder::new(&self.root)
 			.follow_links(self.config.traversal.follow_symlinks)
 			.ignore(self.config.traversal.respect_gitignore)
@@ -71,10 +71,8 @@ impl CodeAnalyzer {
 			.build_parallel()
 			.run(move || {
 				let mut aggregator =
-					LocalAggregator { shared: Arc::clone(&shared_results), local: AnalysisResults::default() };
-				let detail_collection = collect_details;
-				let language_globset = language_globset;
-				let error_counter = Arc::clone(&shared_error_counter);
+					LocalAggregator { sink: Arc::clone(&aggregates_for_walk), local: AnalysisResults::default() };
+				let error_counter = Arc::clone(&error_counter_for_walk);
 				Box::new(move |entry_result| {
 					match entry_result {
 						Ok(entry) if entry.file_type().is_some_and(|ft| ft.is_file()) => {
@@ -82,34 +80,36 @@ impl CodeAnalyzer {
 								.file_name()
 								.to_str()
 								.is_none_or(|name| language_globset.is_match(name) || !name.contains('.'));
-							if !should_consider {
-								return ignore::WalkState::Continue;
-							}
-							if let Err(e) =
-								file_processor::process_file(entry.path(), &mut aggregator.local, detail_collection)
-							{
-								error_counter.fetch_add(1, Ordering::Relaxed);
-								if verbose {
-									eprintln!("Error processing file {}: {e}", entry.path().display());
+							if should_consider {
+								if let Err(e) =
+									file_processor::process_file(entry.path(), &mut aggregator.local, collect_details)
+								{
+									error_counter.fetch_add(1, Ordering::Relaxed);
+									if verbose {
+										eprintln!("Error processing file {}: {e}", entry.path().display());
+									}
 								}
 							}
 						}
-						Err(e) if verbose => {
-							eprintln!("Error walking directory: {e}");
+						Err(e) => {
 							error_counter.fetch_add(1, Ordering::Relaxed);
-						}
-						Err(_) => {
-							error_counter.fetch_add(1, Ordering::Relaxed);
+							if verbose {
+								eprintln!("Error walking directory: {e}");
+							}
 						}
 						_ => {}
 					}
 					ignore::WalkState::Continue
 				})
 			});
-		let results = Arc::try_unwrap(results)
-			.map_err(|_| anyhow::anyhow!("Failed to unwrap Arc - parallel walker still holds references"))?
+		let partials = Arc::try_unwrap(aggregates)
+			.map_err(|_| anyhow::anyhow!("Failed to unwrap aggregates Arc - walker still holds references"))?
 			.into_inner()
 			.unwrap_or_else(PoisonError::into_inner);
+		let results = partials.into_iter().fold(AnalysisResults::default(), |mut acc, mut local| {
+			acc.merge(mem::take(&mut local));
+			acc
+		});
 		let skipped = error_counter.load(Ordering::Relaxed);
 		if skipped > 0 {
 			if verbose {
