@@ -81,7 +81,7 @@
 		block_comments: [["<!--", "-->"], ["<%--", "--%>"]],
 	},
 	"Assembly": {
-		file_patterns: ["*.asm", "*.s"],
+		file_patterns: ["*.asm", "*.s", "*.S"],
 		line_comments: [";", "#", "//"],
 		block_comments: [["/*", "*/"]],
 	},
@@ -122,7 +122,7 @@
 	"AWK": {
 		file_patterns: ["*.awk", "*.gawk", "*.nawk"],
 		line_comments: ["#"],
-		shebangs: ["#!/bin/awk -f"],
+		shebangs: ["#!/bin/awk -f", "#!/usr/bin/awk -f", "#!/usr/bin/env awk", "#!/usr/bin/env gawk"],
 	},
 	"AXAML": {
 		file_patterns: ["*.axaml"],
@@ -566,8 +566,6 @@
 	"Fennel": {
 		file_patterns: ["*.fnl"],
 		line_comments: [";"],
-		block_comments: [["#|", "|#"]],
-		nested_blocks: true,
 	},
 	"Fish": {
 		file_patterns: ["*.fish"],
@@ -627,7 +625,7 @@
 		block_comments: [["/*", "*/"]],
 	},
 	"Go": {
-		file_patterns: ["*.go", "*.tmpl", "*.gohtml", "*.gotmpl"],
+		file_patterns: ["*.go", "*.tmpl", "*.gohtml", "*.gotmpl", "go.mod", "go.sum", "go.work", "go.work.sum"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
@@ -648,7 +646,7 @@
 		nested_blocks: true,
 	},
 	"GraphQL": {
-		file_patterns: ["*.graphql", "*.gql"],
+		file_patterns: ["*.graphql", "*.gql", "*.graphqls"],
 		line_comments: ["#"],
 	},
 	"Graphviz/DOT": {
@@ -801,6 +799,10 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
+	"Java Properties": {
+		file_patterns: ["*.properties"],
+		line_comments: ["#", "!"],
+	},
 	"Java Server Pages": {
 		file_patterns: ["*.jsp"],
 		line_comments: ["//"],
@@ -819,7 +821,6 @@
 	},
 	"Jinja2": {
 		file_patterns: ["*.j2", "*.jinja", "*.jinja2"],
-		line_comments: ["{#"],
 		block_comments: [["{#", "#}"]],
 	},
 	"jq": {
@@ -897,7 +898,7 @@
 	},
 	"KV Language": {
 		file_patterns: ["*.kv"],
-		line_comments: ["# "],
+		line_comments: ["#"],
 	},
 	"LALRPOP": {
 		file_patterns: ["*.lalrpop"],
@@ -1218,7 +1219,7 @@
 		line_comments: ["#"],
 	},
 	"OpenCL": {
-		file_patterns: ["*.ocl"],
+		file_patterns: ["*.ocl", "*.cl"],
 		block_comments: [["/*", "*/"]],
 	},
 	"OpenQASM": {
@@ -1400,13 +1401,18 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
+	"QMake": {
+		file_patterns: ["*.pro", "*.pri"],
+		line_comments: ["#"],
+		keywords: ["TEMPLATE", "CONFIG", "QT", "TARGET", "SOURCES", "HEADERS", "INCLUDEPATH"],
+	},
 	"QML": {
 		file_patterns: ["*.qml"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
 	"R": {
-		file_patterns: ["*.r", "*.rmd", ".Rprofile"],
+		file_patterns: ["*.r", "*.R", "*.rmd", "*.Rmd", ".Rprofile"],
 		line_comments: ["#"],
 		keywords: ["<-", "function", "library", "data.frame", "ggplot", "lm"],
 	},
@@ -1758,7 +1764,7 @@
 		line_comments: ["--"],
 	},
 	"Vim script": {
-		file_patterns: ["*.vim"],
+		file_patterns: ["*.vim", "*.vimrc", "*.gvimrc", ".vimrc", "_vimrc", ".gvimrc", "_gvimrc", "gvimrc"],
 		line_comments: ["\""],
 	},
 	"Visual Basic/Visual Basic .NET": {
@@ -1812,8 +1818,13 @@
 		block_comments: [["/*", "*/"]],
 	},
 	"XML": {
-		file_patterns: ["*.xml"],
+		file_patterns: ["*.xml", "*.xsl", "*.xslt"],
 		block_comments: [["<!--", "-->"]],
+	},
+	"XQuery": {
+		file_patterns: ["*.xq", "*.xql", "*.xqm", "*.xqy", "*.xquery"],
+		block_comments: [["(:", ":)"]],
+		keywords: ["declare", "namespace", "module", "import", "for", "let", "return", "where", "if", "then", "else"],
 	},
 	"Yacc": {
 		file_patterns: ["*.y", "*.yacc"],
