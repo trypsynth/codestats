@@ -14,7 +14,7 @@ use super::{
 };
 use crate::langs;
 
-pub(crate) struct LineCounts {
+pub struct LineCounts {
 	total: u64,
 	code: u64,
 	comment: u64,
@@ -72,7 +72,7 @@ impl LineCounts {
 
 const MMAP_THRESHOLD: u64 = 256 * 1024; // 256KB threshold
 
-pub(crate) fn process_file(file_path: &Path, results: &mut AnalysisResults, collect_details: bool) -> Result<()> {
+pub fn process_file(file_path: &Path, results: &mut AnalysisResults, collect_details: bool) -> Result<()> {
 	let filename = file_path.file_name().and_then(|name| name.to_str()).context("Invalid UTF-8 in file name")?;
 	let metadata =
 		file_path.metadata().with_context(|| format!("Failed to read metadata for {}", file_path.display()))?;
