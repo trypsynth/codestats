@@ -25,10 +25,10 @@ pub enum Commands {
 		#[arg(short, long)]
 		verbose: bool,
 		/// Do not respect .gitignore files
-		#[arg(short, long)]
+		#[arg(short = 'i', long)]
 		no_gitignore: bool,
 		/// Search hidden files and directories
-		#[arg(long)]
+		#[arg(short = 'H', long = "hidden")]
 		hidden: bool,
 		/// Follow symbolic links and include their targets
 		/// in the analysis. Use with caution as this can
@@ -36,19 +36,19 @@ pub enum Commands {
 		#[arg(short, long)]
 		symlinks: bool,
 		/// Output number formatting style
-		#[arg(long, value_enum, default_value = "plain")]
+		#[arg(short = 'n', long, value_enum, default_value = "plain")]
 		number_style: NumberStyle,
-		/// Human-readable size formatting style
-		#[arg(long, value_enum, default_value = "binary")]
+		/// Human-readable size units
+		#[arg(short = 'u', long = "size-units", value_enum, default_value = "binary")]
 		size_style: SizeStyle,
 		/// Percentage precision
-		#[arg(long, default_value_t = 1, value_parser = clap::value_parser!(u8).range(0..=6))]
+		#[arg(short = 'p', long = "precision", default_value_t = 1, value_parser = clap::value_parser!(u8).range(0..=6))]
 		percent_precision: u8,
 		/// Sorting key for languages (and per-file details when verbose)
-		#[arg(long, value_enum, default_value = "lines")]
+		#[arg(short = 'S', long = "sort-by", value_enum, default_value = "lines")]
 		language_sort: LanguageSortKey,
 		/// Sorting direction
-		#[arg(long, value_enum, default_value = "desc")]
+		#[arg(short = 'd', long = "sort-dir", value_enum, default_value = "desc")]
 		sort_direction: SortDirection,
 		/// Output format
 		#[arg(short, long, default_value = "human")]
