@@ -66,6 +66,7 @@ impl CodeAnalyzer {
 			.follow_links(self.config.traversal.follow_symlinks)
 			.ignore(self.config.traversal.respect_gitignore)
 			.git_ignore(self.config.traversal.respect_gitignore)
+			.require_git(false)
 			.hidden(!self.config.traversal.include_hidden)
 			.build_parallel()
 			.run(move || {
