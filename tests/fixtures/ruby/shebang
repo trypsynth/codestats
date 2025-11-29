@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+# expect: total=10 code=4 comment=2 blank=3 shebang=1
+# ruby script with shebang
+
+def greet(name)
+	puts "Hello #{name}"
+end
+
+greet("world")

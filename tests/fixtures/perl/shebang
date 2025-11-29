@@ -1,0 +1,8 @@
+#!/usr/bin/env perl
+# expect: total=9 code=3 comment=3 blank=2 shebang=1
+# perl script without extension
+
+my $x = 1;
+my $y = 2;
+# inline comment line
+print $x + $y;
