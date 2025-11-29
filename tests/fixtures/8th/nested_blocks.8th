@@ -1,0 +1,10 @@
+\ expect: total=11 code=2 comment=5 blank=4 shebang=0
+(* Top-level multiline
+  ( with nested content )
+  continues here *)
+: inc ( n -- n )  1 +
+
+
+\ Another pure comment line.
+
+10 inc .   \ prints 11

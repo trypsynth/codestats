@@ -114,6 +114,7 @@ fn parse_expectation_line(line: &str) -> Option<ExpectedCounts> {
 		.or_else(|| trimmed.strip_prefix('#'))
 		.or_else(|| trimmed.strip_prefix("--"))
 		.or_else(|| trimmed.strip_prefix(';'))
+		.or_else(|| trimmed.strip_prefix("\\"))
 		.unwrap_or(trimmed)
 		.trim();
 	let rest = without_prefix.strip_prefix("expect:")?.trim();

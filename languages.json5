@@ -1,7 +1,7 @@
 {
 	"8th": {
 		file_patterns: ["*.8th"],
-		line_comments: ["\\\\ ", "-- "],
+		line_comments: ["\\"],
 		block_comments: [["(*", "*)"]],
 		nested_blocks: true,
 	},
