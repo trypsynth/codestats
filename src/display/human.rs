@@ -44,11 +44,11 @@ impl HumanFormatter {
 			utils::pluralize(summary.total_lines, "line", "lines"),
 			total_size_human
 		)?;
-		let line_breakdown_parts = Self::build_line_breakdown_parts(summary);
+		let line_breakdown_parts = summary.line_breakdown_parts(true);
 		if !line_breakdown_parts.is_empty() {
 			writeln!(writer, "Line breakdown: {}.", line_breakdown_parts.join(", "))?;
 		}
-		let percentage_parts = Self::build_percentage_parts(summary);
+		let percentage_parts = summary.percentage_parts();
 		if !percentage_parts.is_empty() {
 			writeln!(writer, "Percentages: {}.", percentage_parts.join(", "))?;
 		}
@@ -121,55 +121,5 @@ impl HumanFormatter {
 			)?;
 		}
 		Ok(())
-	}
-
-	fn build_line_breakdown_parts(summary: &Summary) -> Vec<String> {
-		let mut parts = Vec::with_capacity(4);
-		if summary.total_code_lines > 0 {
-			parts.push(format!(
-				"{} code {}",
-				summary.total_code_lines,
-				utils::pluralize(summary.total_code_lines, "line", "lines")
-			));
-		}
-		if summary.total_comment_lines > 0 {
-			parts.push(format!(
-				"{} comment {}",
-				summary.total_comment_lines,
-				utils::pluralize(summary.total_comment_lines, "line", "lines")
-			));
-		}
-		if summary.total_blank_lines > 0 {
-			parts.push(format!(
-				"{} blank {}",
-				summary.total_blank_lines,
-				utils::pluralize(summary.total_blank_lines, "line", "lines")
-			));
-		}
-		if summary.total_shebang_lines > 0 {
-			parts.push(format!(
-				"{} shebang {}",
-				summary.total_shebang_lines,
-				utils::pluralize(summary.total_shebang_lines, "line", "lines")
-			));
-		}
-		parts
-	}
-
-	fn build_percentage_parts(summary: &Summary) -> Vec<String> {
-		let mut parts = Vec::with_capacity(4);
-		if summary.total_code_lines > 0 {
-			parts.push(format!("{:.1}% code", summary.code_percentage));
-		}
-		if summary.total_comment_lines > 0 {
-			parts.push(format!("{:.1}% comments", summary.comment_percentage));
-		}
-		if summary.total_blank_lines > 0 {
-			parts.push(format!("{:.1}% blanks", summary.blank_percentage));
-		}
-		if summary.total_shebang_lines > 0 {
-			parts.push(format!("{:.1}% shebangs", summary.shebang_percentage));
-		}
-		parts
 	}
 }

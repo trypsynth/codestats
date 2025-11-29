@@ -2,7 +2,10 @@ use std::{cmp::Reverse, path::Path};
 
 use serde::Serialize;
 
-use crate::analysis::{AnalysisResults, LanguageStats};
+use crate::{
+	analysis::{AnalysisResults, LanguageStats},
+	utils,
+};
 
 #[derive(Debug, Serialize)]
 pub struct ReportData<'a> {
@@ -53,6 +56,70 @@ impl Summary {
 			blank_percentage: results.blank_percentage(),
 			shebang_percentage: results.shebang_percentage(),
 		}
+	}
+
+	#[must_use]
+	pub fn percentage_parts(&self) -> Vec<String> {
+		let mut parts = Vec::with_capacity(4);
+		if self.total_code_lines > 0 {
+			parts.push(format!("{:.1}% code", self.code_percentage));
+		}
+		if self.total_comment_lines > 0 {
+			parts.push(format!("{:.1}% comments", self.comment_percentage));
+		}
+		if self.total_blank_lines > 0 {
+			parts.push(format!("{:.1}% blanks", self.blank_percentage));
+		}
+		if self.total_shebang_lines > 0 {
+			parts.push(format!("{:.1}% shebangs", self.shebang_percentage));
+		}
+		parts
+	}
+
+	#[must_use]
+	pub fn line_breakdown_parts(&self, pluralize: bool) -> Vec<String> {
+		let mut parts = Vec::with_capacity(4);
+		if self.total_code_lines > 0 {
+			parts.push(if pluralize {
+				format!("{} code {}", self.total_code_lines, utils::pluralize(self.total_code_lines, "line", "lines"))
+			} else {
+				format!("{} code", self.total_code_lines)
+			});
+		}
+		if self.total_comment_lines > 0 {
+			parts.push(if pluralize {
+				format!(
+					"{} comment {}",
+					self.total_comment_lines,
+					utils::pluralize(self.total_comment_lines, "line", "lines")
+				)
+			} else {
+				format!("{} comments", self.total_comment_lines)
+			});
+		}
+		if self.total_blank_lines > 0 {
+			parts.push(if pluralize {
+				format!(
+					"{} blank {}",
+					self.total_blank_lines,
+					utils::pluralize(self.total_blank_lines, "line", "lines")
+				)
+			} else {
+				format!("{} blanks", self.total_blank_lines)
+			});
+		}
+		if self.total_shebang_lines > 0 {
+			parts.push(if pluralize {
+				format!(
+					"{} shebang {}",
+					self.total_shebang_lines,
+					utils::pluralize(self.total_shebang_lines, "line", "lines")
+				)
+			} else {
+				format!("{} shebangs", self.total_shebang_lines)
+			});
+		}
+		parts
 	}
 }
 

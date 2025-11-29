@@ -146,16 +146,18 @@ pub fn classify_line(
 	};
 	let mut line_remainder: &str = trimmed;
 	let matchers = language_matchers(lang);
-	let mut has_code = false;
-	if let Some(block_comments) = matchers.block_comments.as_ref() {
+	#[allow(clippy::option_if_let_else)]
+	let mut has_code = if let Some(block_comments) = matchers.block_comments.as_ref() {
 		let (remainder, found_code) = if lang.nested_blocks {
 			handle_block_comments_nested(trimmed, block_comments, comment_state)
 		} else {
 			handle_block_comments_non_nested(trimmed, block_comments, comment_state)
 		};
 		line_remainder = remainder;
-		has_code = found_code;
-	}
+		found_code
+	} else {
+		false
+	};
 	if comment_state.is_in_comment() {
 		return if has_code { LineType::Code } else { LineType::Comment };
 	}

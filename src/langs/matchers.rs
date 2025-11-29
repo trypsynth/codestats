@@ -28,9 +28,8 @@ impl BlockCommentMatchers {
 			let end_match = self.end_automaton.find(line);
 			match (start_match, end_match) {
 				(Some(s), Some(e)) if s.start() < e.start() => Some((s.start(), s.len(), true)),
-				(Some(_), Some(e)) => Some((e.start(), e.len(), false)),
 				(Some(s), None) => Some((s.start(), s.len(), true)),
-				(None, Some(e)) => Some((e.start(), e.len(), false)),
+				(_, Some(e)) => Some((e.start(), e.len(), false)),
 				(None, None) => None,
 			}
 		} else {

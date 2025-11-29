@@ -43,11 +43,11 @@ impl MarkdownFormatter {
 		writeln!(writer, "- Files: {}", summary.total_files,)?;
 		writeln!(writer, "- Lines: {}", summary.total_lines,)?;
 		writeln!(writer, "- Size: {}", summary.total_size_human)?;
-		let line_breakdown = Self::line_breakdown(summary);
+		let line_breakdown = summary.line_breakdown_parts(false);
 		if !line_breakdown.is_empty() {
 			writeln!(writer, "- Line types: {}", line_breakdown.join(", "))?;
 		}
-		let percentage_parts = Self::percentage_parts(summary);
+		let percentage_parts = summary.percentage_parts();
 		if !percentage_parts.is_empty() {
 			writeln!(writer, "- Totals: {}", percentage_parts.join(", "))?;
 		}
@@ -82,7 +82,10 @@ impl MarkdownFormatter {
 				continue;
 			};
 			writeln!(writer, "\n#### {}", lang.name)?;
-			writeln!(writer, "| File | Total lines | Code lines | Comment lines | Blank lines | Shebang lines | Size |")?;
+			writeln!(
+				writer,
+				"| File | Total lines | Code lines | Comment lines | Blank lines | Shebang lines | Size |"
+			)?;
 			writeln!(writer, "| --- | ---: | ---: | ---: | ---: | ---: | ---: |")?;
 			for file in files {
 				writeln!(
@@ -99,40 +102,6 @@ impl MarkdownFormatter {
 			}
 		}
 		Ok(())
-	}
-
-	fn line_breakdown(summary: &Summary) -> Vec<String> {
-		let mut parts = Vec::with_capacity(4);
-		if summary.total_code_lines > 0 {
-			parts.push(format!("{} code", summary.total_code_lines));
-		}
-		if summary.total_comment_lines > 0 {
-			parts.push(format!("{} comments", summary.total_comment_lines));
-		}
-		if summary.total_blank_lines > 0 {
-			parts.push(format!("{} blanks", summary.total_blank_lines));
-		}
-		if summary.total_shebang_lines > 0 {
-			parts.push(format!("{} shebangs", summary.total_shebang_lines));
-		}
-		parts
-	}
-
-	fn percentage_parts(summary: &Summary) -> Vec<String> {
-		let mut parts = Vec::with_capacity(4);
-		if summary.total_code_lines > 0 {
-			parts.push(format!("{:.1}% code", summary.code_percentage));
-		}
-		if summary.total_comment_lines > 0 {
-			parts.push(format!("{:.1}% comments", summary.comment_percentage));
-		}
-		if summary.total_blank_lines > 0 {
-			parts.push(format!("{:.1}% blanks", summary.blank_percentage));
-		}
-		if summary.total_shebang_lines > 0 {
-			parts.push(format!("{:.1}% shebangs", summary.shebang_percentage));
-		}
-		parts
 	}
 }
 

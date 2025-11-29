@@ -32,6 +32,42 @@ impl Drop for LocalAggregator {
 	}
 }
 
+struct LineCounts {
+	total: u64,
+	code: u64,
+	comment: u64,
+	blank: u64,
+	shebang: u64,
+}
+
+impl LineCounts {
+	const fn new() -> Self {
+		Self { total: 0, code: 0, comment: 0, blank: 0, shebang: 0 }
+	}
+
+	fn classify_and_count(
+		&mut self,
+		line_bytes: &[u8],
+		lang_info: Option<&langs::Language>,
+		comment_state: &mut CommentState,
+		is_first_line: bool,
+	) {
+		let line_type = if let Ok(line) = str::from_utf8(line_bytes) {
+			line_classifier::classify_line(line, lang_info, comment_state, is_first_line)
+		} else {
+			let line = String::from_utf8_lossy(line_bytes);
+			line_classifier::classify_line(line.as_ref(), lang_info, comment_state, is_first_line)
+		};
+		match line_type {
+			LineType::Code => self.code += 1,
+			LineType::Comment => self.comment += 1,
+			LineType::Blank => self.blank += 1,
+			LineType::Shebang => self.shebang += 1,
+		}
+		self.total += 1;
+	}
+}
+
 /// Configuration that controls how [`CodeAnalyzer`] traverses the filesystem and how much information it gathers.
 #[derive(Clone, Debug, Default)]
 pub struct AnalyzerConfig {
@@ -205,12 +241,7 @@ impl CodeAnalyzer {
 		}
 		let sample_str = str::from_utf8(&sample_bytes).ok();
 		let Some(language) = langs::detect_language_info(filename, sample_str) else { return Ok(()) };
-		let lang_info = Some(language);
-		let mut total_lines = 0;
-		let mut code_lines = 0;
-		let mut comment_lines = 0;
-		let mut blank_lines = 0;
-		let mut shebang_lines = 0;
+		let mut line_counts = LineCounts::new();
 		let mut comment_state = CommentState::new();
 		let mut buffer = Vec::with_capacity(1024);
 		let mut is_first_line = true;
@@ -220,37 +251,28 @@ impl CodeAnalyzer {
 			if bytes_read == 0 {
 				break;
 			}
-			let line_type = if let Ok(line) = str::from_utf8(&buffer) {
-				line_classifier::classify_line(line, lang_info, &mut comment_state, is_first_line)
-			} else {
-				let line = String::from_utf8_lossy(&buffer);
-				line_classifier::classify_line(line.as_ref(), lang_info, &mut comment_state, is_first_line)
-			};
-			match line_type {
-				LineType::Code => code_lines += 1,
-				LineType::Comment => comment_lines += 1,
-				LineType::Blank => blank_lines += 1,
-				LineType::Shebang => shebang_lines += 1,
-			}
-			total_lines += 1;
+			line_counts.classify_and_count(&buffer, Some(language), &mut comment_state, is_first_line);
 			is_first_line = false;
 		}
-		let contribution =
-			FileContribution::new(total_lines, code_lines, comment_lines, blank_lines, shebang_lines, file_size);
-		let file_stats = if collect_details {
-			let file_path_str = file_path.display().to_string();
-			Some(FileStats::new(
-				file_path_str,
-				total_lines,
-				code_lines,
-				comment_lines,
-				blank_lines,
-				shebang_lines,
+		let contribution = FileContribution::new(
+			line_counts.total,
+			line_counts.code,
+			line_counts.comment,
+			line_counts.blank,
+			line_counts.shebang,
+			file_size,
+		);
+		let file_stats = collect_details.then(|| {
+			FileStats::new(
+				file_path.display().to_string(),
+				line_counts.total,
+				line_counts.code,
+				line_counts.comment,
+				line_counts.blank,
+				line_counts.shebang,
 				file_size,
-			))
-		} else {
-			None
-		};
+			)
+		});
 		results.add_file_stats(language, contribution, file_stats);
 		Ok(())
 	}
@@ -274,12 +296,7 @@ impl CodeAnalyzer {
 		}
 		let sample_str = str::from_utf8(sample_bytes).ok();
 		let Some(language) = langs::detect_language_info(filename, sample_str) else { return Ok(()) };
-		let lang_info = Some(language);
-		let mut total_lines = 0;
-		let mut code_lines = 0;
-		let mut comment_lines = 0;
-		let mut blank_lines = 0;
-		let mut shebang_lines = 0;
+		let mut line_counts = LineCounts::new();
 		let mut comment_state = CommentState::new();
 		let mut is_first_line = true;
 		let mut pos = 0;
@@ -287,38 +304,29 @@ impl CodeAnalyzer {
 			let line_end =
 				memchr::memchr(b'\n', &file_bytes[pos..]).map_or(file_bytes.len(), |offset| pos + offset + 1);
 			let line_bytes = &file_bytes[pos..line_end];
-			let line_type = if let Ok(line) = str::from_utf8(line_bytes) {
-				line_classifier::classify_line(line, lang_info, &mut comment_state, is_first_line)
-			} else {
-				let line = String::from_utf8_lossy(line_bytes);
-				line_classifier::classify_line(line.as_ref(), lang_info, &mut comment_state, is_first_line)
-			};
-			match line_type {
-				LineType::Code => code_lines += 1,
-				LineType::Comment => comment_lines += 1,
-				LineType::Blank => blank_lines += 1,
-				LineType::Shebang => shebang_lines += 1,
-			}
-			total_lines += 1;
+			line_counts.classify_and_count(line_bytes, Some(language), &mut comment_state, is_first_line);
 			is_first_line = false;
 			pos = line_end;
 		}
-		let contribution =
-			FileContribution::new(total_lines, code_lines, comment_lines, blank_lines, shebang_lines, file_size);
-		let file_stats = if collect_details {
-			let file_path_str = file_path.display().to_string();
-			Some(FileStats::new(
-				file_path_str,
-				total_lines,
-				code_lines,
-				comment_lines,
-				blank_lines,
-				shebang_lines,
+		let contribution = FileContribution::new(
+			line_counts.total,
+			line_counts.code,
+			line_counts.comment,
+			line_counts.blank,
+			line_counts.shebang,
+			file_size,
+		);
+		let file_stats = collect_details.then(|| {
+			FileStats::new(
+				file_path.display().to_string(),
+				line_counts.total,
+				line_counts.code,
+				line_counts.comment,
+				line_counts.blank,
+				line_counts.shebang,
 				file_size,
-			))
-		} else {
-			None
-		};
+			)
+		});
 		results.add_file_stats(language, contribution, file_stats);
 		Ok(())
 	}

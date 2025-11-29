@@ -1,6 +1,6 @@
 mod csv;
-mod human;
 mod html;
+mod human;
 mod json;
 mod markdown;
 mod report;
@@ -14,8 +14,8 @@ use std::{
 use anyhow::Result;
 use clap::ValueEnum;
 pub use csv::CsvFormatter;
-pub use human::HumanFormatter;
 pub use html::HtmlFormatter;
+pub use human::HumanFormatter;
 pub use json::JsonFormatter;
 pub use markdown::MarkdownFormatter;
 pub use report::ReportData;

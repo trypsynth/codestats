@@ -1,14 +1,11 @@
 use std::{io::Write, path::Path};
 
 use anyhow::Result;
-use minijinja::{context, AutoEscape, Environment};
+use minijinja::{AutoEscape, Environment, context};
 use serde::Serialize;
 
 use super::{OutputFormatter, ReportData};
-use crate::{
-	analysis::AnalysisResults,
-	display::report::Summary,
-};
+use crate::analysis::AnalysisResults;
 
 const HTML_TEMPLATE: &str = include_str!("templates/report.html");
 
@@ -55,37 +52,26 @@ impl HtmlFormatter {
 	fn write_document(report: &ReportData, verbose: bool, writer: &mut dyn Write) -> Result<()> {
 		let mut env = Environment::new();
 		env.set_auto_escape_callback(|name| {
-			if name.ends_with(".html") { AutoEscape::Html } else { AutoEscape::None }
+			if Path::new(name).extension().is_some_and(|ext| ext.eq_ignore_ascii_case("html")) {
+				AutoEscape::Html
+			} else {
+				AutoEscape::None
+			}
 		});
 		env.add_template("report.html", HTML_TEMPLATE)?;
 		let template = env.get_template("report.html")?;
 		let languages = render_languages(report);
+		let parts = report.summary.percentage_parts();
+		let totals = (!parts.is_empty()).then(|| parts.join(", "));
 		let rendered = template.render(context! {
 			title => &report.analysis_path,
 			summary => &report.summary,
-			totals => Self::percentage_parts(&report.summary),
+			totals,
 			languages => &languages,
 			show_files => verbose,
 		})?;
 		writer.write_all(rendered.as_bytes())?;
 		Ok(())
-	}
-
-	fn percentage_parts(summary: &Summary) -> Option<String> {
-		let mut parts = Vec::with_capacity(4);
-		if summary.total_code_lines > 0 {
-			parts.push(format!("{:.1}% code", summary.code_percentage));
-		}
-		if summary.total_comment_lines > 0 {
-			parts.push(format!("{:.1}% comments", summary.comment_percentage));
-		}
-		if summary.total_blank_lines > 0 {
-			parts.push(format!("{:.1}% blanks", summary.blank_percentage));
-		}
-		if summary.total_shebang_lines > 0 {
-			parts.push(format!("{:.1}% shebangs", summary.shebang_percentage));
-		}
-		(!parts.is_empty()).then(|| parts.join(", "))
 	}
 }
 
