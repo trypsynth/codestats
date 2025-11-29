@@ -15,14 +15,14 @@
 			<li>Files: {{ summary.total_files }}</li>
 			<li>Lines: {{ summary.total_lines }}</li>
 			<li>Size: {{ summary.total_size_human }}</li>
-			{% if totals %}<li>Totals: {{ totals }}</li>{% endif %}
+			{% if !totals.is_empty() %}<li>Totals: {{ totals }}</li>{% endif %}
 		</ul>
 	</details>
 	<details>
 		<summary>
 			<h2>Languages</h2>
 		</summary>
-		{% if languages | length == 0 %}
+		{% if languages.is_empty() %}
 			<p>No recognized programming languages found.</p>
 		{% else %}
 			<table>
@@ -57,7 +57,7 @@
 				<h2>Files</h2>
 			</summary>
 			{% for lang in languages %}
-				{% if lang.files_detail %}
+				{% if let Some(files) = lang.files_detail %}
 					<h3>{{ lang.name }}</h3>
 					<table>
 						<tr>
@@ -69,7 +69,7 @@
 							<th>Shebangs</th>
 							<th>Size</th>
 						</tr>
-						{% for file in lang.files_detail %}
+						{% for file in files %}
 							<tr>
 								<td>{{ file.path }}</td>
 								<td>{{ file.total_lines }}</td>

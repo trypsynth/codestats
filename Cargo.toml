@@ -19,12 +19,12 @@ path = "src/main.rs"
 [dependencies]
 aho-corasick = "1.1.4"
 anyhow = "1.0.100"
+askama = "0.14.0"
 clap = { version = "4.5.53", default-features = false, features = ["std", "derive", "help", "wrap_help"] }
 globset = "0.4.18"
 ignore = "0.4.25"
 memchr = "2.7.6"
 memmap2 = "0.9.9"
-minijinja = { version = "2.12.0", default-features = false, features = ["builtins", "serde"] }
 num-format = { version = "0.4", default-features = false, features = ["std"] }
 serde = { version = "1.0.228", default-features = false, features = ["std", "derive"] }
 serde_json = { version = "1.0.145", default-features = false, features = ["std"] }
