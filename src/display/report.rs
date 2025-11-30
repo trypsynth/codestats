@@ -100,7 +100,7 @@ struct LineTypeInfo {
 	label: &'static str,
 }
 
-fn sort_key_for_language_record<'a>(record: &(&'a str, &'a LanguageStats), key: LanguageSortKey) -> SortValue<'a> {
+const fn sort_key_for_language_record<'a>(record: &(&'a str, &'a LanguageStats), key: LanguageSortKey) -> SortValue<'a> {
 	let (name, stats) = record;
 	match key {
 		LanguageSortKey::Lines => SortValue::Num(stats.lines()),
