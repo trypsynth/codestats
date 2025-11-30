@@ -1,6 +1,6 @@
 [package]
 name = "codestats"
-version = "0.3.1"
+version = "0.4.0"
 authors = ["Quin Gillespie <trypsynth@gmail.com>"]
 edition = "2024"
 rust-version = "1.85.1"
