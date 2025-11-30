@@ -3,7 +3,7 @@ use std::path::Path;
 use serde::Serialize;
 
 use crate::{
-	analysis::{AnalysisResults, LanguageStats},
+	analysis::{AnalysisResults, FileStats, LanguageStats},
 	display::{
 		apply_sort,
 		formatting::{FormatterContext, SortValue},
@@ -63,64 +63,64 @@ impl Summary {
 		}
 	}
 
+	fn iter_line_types(&self) -> impl Iterator<Item = LineTypeInfo> + '_ {
+		[
+			LineTypeInfo { count: self.total_code_lines, pct: self.code_percentage, label: "code" },
+			LineTypeInfo { count: self.total_comment_lines, pct: self.comment_percentage, label: "comments" },
+			LineTypeInfo { count: self.total_blank_lines, pct: self.blank_percentage, label: "blanks" },
+			LineTypeInfo { count: self.total_shebang_lines, pct: self.shebang_percentage, label: "shebangs" },
+		]
+		.into_iter()
+		.filter(|info| info.count > 0)
+	}
+
 	#[must_use]
 	pub fn percentage_parts(&self, ctx: &FormatterContext) -> Vec<String> {
-		let mut parts = Vec::with_capacity(4);
-		if self.total_code_lines > 0 {
-			let pct = ctx.percent(self.code_percentage);
-			parts.push(format!("{pct}% code"));
-		}
-		if self.total_comment_lines > 0 {
-			let pct = ctx.percent(self.comment_percentage);
-			parts.push(format!("{pct}% comments"));
-		}
-		if self.total_blank_lines > 0 {
-			let pct = ctx.percent(self.blank_percentage);
-			parts.push(format!("{pct}% blanks"));
-		}
-		if self.total_shebang_lines > 0 {
-			let pct = ctx.percent(self.shebang_percentage);
-			parts.push(format!("{pct}% shebangs"));
-		}
-		parts
+		self.iter_line_types().map(|info| format!("{}% {}", ctx.percent(info.pct), info.label)).collect()
 	}
 
 	#[must_use]
 	pub fn line_breakdown_parts(&self, pluralize: bool, ctx: &FormatterContext) -> Vec<String> {
-		let mut parts = Vec::with_capacity(4);
-		if self.total_code_lines > 0 {
-			let code_lines = ctx.number(self.total_code_lines);
-			parts.push(if pluralize {
-				format!("{code_lines} code {}", utils::pluralize(self.total_code_lines, "line", "lines"))
-			} else {
-				format!("{code_lines} code")
-			});
-		}
-		if self.total_comment_lines > 0 {
-			let comment_lines = ctx.number(self.total_comment_lines);
-			parts.push(if pluralize {
-				format!("{comment_lines} comment {}", utils::pluralize(self.total_comment_lines, "line", "lines"))
-			} else {
-				format!("{comment_lines} comments")
-			});
-		}
-		if self.total_blank_lines > 0 {
-			let blank_lines = ctx.number(self.total_blank_lines);
-			parts.push(if pluralize {
-				format!("{blank_lines} blank {}", utils::pluralize(self.total_blank_lines, "line", "lines"))
-			} else {
-				format!("{blank_lines} blanks")
-			});
-		}
-		if self.total_shebang_lines > 0 {
-			let shebang_lines = ctx.number(self.total_shebang_lines);
-			parts.push(if pluralize {
-				format!("{shebang_lines} shebang {}", utils::pluralize(self.total_shebang_lines, "line", "lines"))
-			} else {
-				format!("{shebang_lines} shebangs")
-			});
-		}
-		parts
+		self.iter_line_types()
+			.map(|info| {
+				let formatted = ctx.number(info.count);
+				if pluralize {
+					format!("{formatted} {} {}", info.label, utils::pluralize(info.count, "line", "lines"))
+				} else {
+					format!("{formatted} {}", info.label)
+				}
+			})
+			.collect()
+	}
+}
+
+struct LineTypeInfo {
+	count: u64,
+	pct: f64,
+	label: &'static str,
+}
+
+fn sort_key_for_language_record<'a>(record: &(&'a str, &'a LanguageStats), key: LanguageSortKey) -> SortValue<'a> {
+	let (name, stats) = record;
+	match key {
+		LanguageSortKey::Lines => SortValue::Num(stats.lines()),
+		LanguageSortKey::Code => SortValue::Num(stats.code_lines()),
+		LanguageSortKey::Comments => SortValue::Num(stats.comment_lines()),
+		LanguageSortKey::Blanks => SortValue::Num(stats.blank_lines()),
+		LanguageSortKey::Files => SortValue::Num(stats.files()),
+		LanguageSortKey::Size => SortValue::Num(stats.size()),
+		LanguageSortKey::Name => SortValue::Text(name),
+	}
+}
+
+fn sort_key_for_file_record(file: &FileStats, key: LanguageSortKey) -> SortValue<'_> {
+	match key {
+		LanguageSortKey::Lines | LanguageSortKey::Files => SortValue::Num(file.total_lines()),
+		LanguageSortKey::Code => SortValue::Num(file.code_lines()),
+		LanguageSortKey::Comments => SortValue::Num(file.comment_lines()),
+		LanguageSortKey::Blanks => SortValue::Num(file.blank_lines()),
+		LanguageSortKey::Size => SortValue::Num(file.size()),
+		LanguageSortKey::Name => SortValue::Text(file.path()),
 	}
 }
 
@@ -147,19 +147,10 @@ impl<'a> LanguageRecord<'a> {
 	#[must_use]
 	fn from_results(results: &'a AnalysisResults, verbose: bool, ctx: &FormatterContext) -> Vec<Self> {
 		let mut stats_vec: Vec<_> = results.languages().map(|(lang, stats)| (lang.name, stats)).collect();
-		stats_vec =
-			apply_sort(stats_vec, ctx.options.language_sort_key, ctx.options.sort_direction, |(name, stats)| match ctx
-				.options
-				.language_sort_key
-			{
-				LanguageSortKey::Lines => SortValue::Num(stats.lines()),
-				LanguageSortKey::Code => SortValue::Num(stats.code_lines()),
-				LanguageSortKey::Comments => SortValue::Num(stats.comment_lines()),
-				LanguageSortKey::Blanks => SortValue::Num(stats.blank_lines()),
-				LanguageSortKey::Files => SortValue::Num(stats.files()),
-				LanguageSortKey::Size => SortValue::Num(stats.size()),
-				LanguageSortKey::Name => SortValue::Text(name),
-			});
+		let sort_key = ctx.options.language_sort_key;
+		stats_vec = apply_sort(stats_vec, sort_key, ctx.options.sort_direction, |record| {
+			sort_key_for_language_record(record, sort_key)
+		});
 		stats_vec.into_iter().map(|(name, stats)| Self::from_stats(name, stats, verbose, ctx)).collect()
 	}
 
@@ -167,15 +158,9 @@ impl<'a> LanguageRecord<'a> {
 	fn from_stats(name: &'a str, stats: &'a LanguageStats, verbose: bool, ctx: &FormatterContext) -> Self {
 		let files_detail = verbose.then(|| {
 			let mut files: Vec<_> = stats.files_list().iter().collect();
-			files = apply_sort(files, ctx.options.language_sort_key, ctx.options.sort_direction, |file| {
-				match ctx.options.language_sort_key {
-					LanguageSortKey::Lines | LanguageSortKey::Files => SortValue::Num(file.total_lines()),
-					LanguageSortKey::Code => SortValue::Num(file.code_lines()),
-					LanguageSortKey::Comments => SortValue::Num(file.comment_lines()),
-					LanguageSortKey::Blanks => SortValue::Num(file.blank_lines()),
-					LanguageSortKey::Size => SortValue::Num(file.size()),
-					LanguageSortKey::Name => SortValue::Text(file.path()),
-				}
+			let sort_key = ctx.options.language_sort_key;
+			files = apply_sort(files, sort_key, ctx.options.sort_direction, |file| {
+				sort_key_for_file_record(file, sort_key)
 			});
 			files
 				.into_iter()

@@ -51,10 +51,7 @@ fn build_language_matchers(lang: &Language) -> LanguageMatchers {
 		None
 	} else {
 		Some(
-			AhoCorasickBuilder::new()
-				.match_kind(MatchKind::LeftmostFirst)
-				.build(lang.line_comments)
-				.expect("Failed to build line comment matcher"),
+			AhoCorasickBuilder::new().match_kind(MatchKind::LeftmostFirst).build(lang.line_comments).unwrap(),
 		)
 	};
 	let block_comments = if lang.block_comments.is_empty() {
@@ -66,14 +63,9 @@ fn build_language_matchers(lang: &Language) -> LanguageMatchers {
 			start_patterns.push(*start);
 			end_patterns.push(*end);
 		}
-		let start_automaton = AhoCorasickBuilder::new()
-			.match_kind(MatchKind::LeftmostFirst)
-			.build(start_patterns)
-			.expect("Failed to build block start matcher");
-		let end_automaton = AhoCorasickBuilder::new()
-			.match_kind(MatchKind::LeftmostFirst)
-			.build(end_patterns)
-			.expect("Failed to build block end matcher");
+		let start_automaton =
+			AhoCorasickBuilder::new().match_kind(MatchKind::LeftmostFirst).build(start_patterns).unwrap();
+		let end_automaton = AhoCorasickBuilder::new().match_kind(MatchKind::LeftmostFirst).build(end_patterns).unwrap();
 		Some(BlockCommentMatchers { start_automaton, end_automaton })
 	};
 	LanguageMatchers { line_comments, block_comments }

@@ -3,7 +3,7 @@ use std::{io::Write, path::Path};
 use anyhow::Result;
 
 use super::{FormatterContext, OutputFormatter, ReportData, ViewOptions};
-use crate::{analysis::AnalysisResults, display::report::FormattedLanguage};
+use crate::{analysis::AnalysisResults, display::report::FormattedLanguage, utils};
 
 pub struct CsvFormatter;
 
@@ -182,22 +182,7 @@ impl CsvFormatter {
 	}
 
 	fn write_csv_field(output: &mut dyn Write, field: &str) -> Result<()> {
-		let needs_quotes = field.contains(',') || field.contains('"') || field.contains('\n') || field.contains('\r');
-		if needs_quotes {
-			output.write_all(b"\"")?;
-		}
-		for ch in field.chars() {
-			if ch == '"' {
-				output.write_all(b"\"\"")?;
-			} else {
-				let mut buf = [0; 4];
-				let s = ch.encode_utf8(&mut buf);
-				output.write_all(s.as_bytes())?;
-			}
-		}
-		if needs_quotes {
-			output.write_all(b"\"")?;
-		}
+		output.write_all(utils::escape_csv_field(field).as_bytes())?;
 		Ok(())
 	}
 }

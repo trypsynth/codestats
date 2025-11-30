@@ -49,25 +49,13 @@ impl NumberFormatter {
 		let format = match style {
 			NumberStyle::Plain => None,
 			NumberStyle::Comma => Some(
-				CustomFormat::builder()
-					.grouping(Grouping::Standard)
-					.separator(",")
-					.build()
-					.expect("valid comma format"),
+				CustomFormat::builder().grouping(Grouping::Standard).separator(",").build().unwrap(),
 			),
 			NumberStyle::Underscore => Some(
-				CustomFormat::builder()
-					.grouping(Grouping::Standard)
-					.separator("_")
-					.build()
-					.expect("valid underscore format"),
+				CustomFormat::builder().grouping(Grouping::Standard).separator("_").build().unwrap(),
 			),
 			NumberStyle::Space => Some(
-				CustomFormat::builder()
-					.grouping(Grouping::Standard)
-					.separator(" ")
-					.build()
-					.expect("valid space format"),
+				CustomFormat::builder().grouping(Grouping::Standard).separator(" ").build().unwrap(),
 			),
 		};
 		Self { style, format }
@@ -75,9 +63,10 @@ impl NumberFormatter {
 
 	#[must_use]
 	pub fn format(&self, value: u64) -> String {
-		match self.style {
-			NumberStyle::Plain => value.to_string(),
-			_ => value.to_formatted_string(self.format.as_ref().expect("format present for grouped styles")),
+		match (&self.style, &self.format) {
+			(NumberStyle::Plain, _) => value.to_string(),
+			(_, Some(fmt)) => value.to_formatted_string(fmt),
+			_ => unreachable!("non-Plain NumberStyle must have format"),
 		}
 	}
 }
