@@ -35,7 +35,7 @@ fn fixtures_match_expected_counts() {
 	let fixtures_root = manifest_dir.join("tests/fixtures");
 	let fixtures = collect_fixtures(&fixtures_root);
 	assert!(!fixtures.is_empty(), "Add at least one fixture under {}", fixtures_root.display());
-	let binary = env!("CARGO_BIN_EXE_codestats");
+	let binary = env!("CARGO_BIN_EXE_cs");
 	for fixture in fixtures {
 		let expected = parse_expectations(&fixture);
 		let output = Command::new(binary)

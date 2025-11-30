@@ -1,4 +1,4 @@
-// expect: total=15 code=5 comment=5 blank=5 shebang=0
+// expect: total=14 code=5 comment=5 blank=4 shebang=0
 // simple swift fixture
 
 /*

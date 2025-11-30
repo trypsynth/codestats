@@ -1,4 +1,4 @@
-// expect: total=15 code=6 comment=5 blank=4 shebang=0
+// expect: total=14 code=6 comment=5 blank=3 shebang=0
 // simple java fixture
 
 package fixtures;

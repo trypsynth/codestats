@@ -19,7 +19,8 @@ impl OutputFormatter for JsonFormatter {
 	) -> Result<()> {
 		let ctx = FormatterContext::new(view_options);
 		let report = ReportData::from_results(results, path, verbose, &ctx);
-		to_writer_pretty(writer, &report)?;
+		to_writer_pretty(&mut *writer, &report)?;
+		writeln!(writer)?;
 		Ok(())
 	}
 }

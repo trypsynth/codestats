@@ -1,4 +1,4 @@
-// expect: total=14 code=6 comment=4 blank=4 shebang=0
+// expect: total=13 code=6 comment=4 blank=3 shebang=0
 // simple c++ fixture
 
 #include <iostream>

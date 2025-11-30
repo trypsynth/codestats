@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# expect: total=10 code=4 comment=2 blank=3 shebang=1
+# expect: total=9 code=4 comment=2 blank=2 shebang=1
 # ruby script with shebang
 
 def greet(name)

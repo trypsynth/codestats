@@ -43,7 +43,7 @@ impl HtmlFormatter {
 		writer: &mut dyn Write,
 	) -> Result<()> {
 		let parts = report.summary.percentage_parts(ctx);
-		let totals = if !parts.is_empty() { parts.join(", ") } else { String::new() };
+		let totals = if parts.is_empty() { String::new() } else { parts.join(", ") };
 		let template = ReportTemplate {
 			title: &report.analysis_path,
 			summary: &report.summary,

@@ -79,7 +79,7 @@ impl CodeAnalyzer {
 							let should_consider = entry
 								.file_name()
 								.to_str()
-								.is_none_or(|name| language_globset.is_match(name) || !name.contains('.'));
+								.is_some_and(|name| language_globset.is_match(name) || !name.contains('.'));
 							if should_consider {
 								if let Err(e) =
 									file_processor::process_file(entry.path(), &mut aggregator.local, collect_details)

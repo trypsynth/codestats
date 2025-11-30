@@ -1,4 +1,4 @@
--- expect: total=13 code=4 comment=5 blank=4 shebang=0
+-- expect: total=12 code=4 comment=5 blank=3 shebang=0
 -- simple sql fixture
 
 /* multi-line

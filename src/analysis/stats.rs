@@ -149,6 +149,10 @@ impl LanguageStats {
 		self.line_stats.merge(&contribution.line_stats);
 		self.size += contribution.size();
 		if let Some(stats) = file_stats {
+			// Reserve capacity on first file to reduce reallocations
+			if self.file_list.is_empty() && self.files == 1 {
+				self.file_list.reserve(256);
+			}
 			self.file_list.push(stats);
 		}
 	}

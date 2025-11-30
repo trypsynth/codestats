@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# expect: total=8 code=3 comment=2 blank=2 shebang=1
+# expect: total=7 code=3 comment=2 blank=1 shebang=1
 # python script with shebang
 print("hi")
 

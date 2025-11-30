@@ -1,4 +1,4 @@
-// expect: total=15 code=8 comment=3 blank=4 shebang=0
+// expect: total=14 code=8 comment=3 blank=3 shebang=0
 // simple csharp fixture
 
 using System;

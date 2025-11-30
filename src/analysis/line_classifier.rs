@@ -26,7 +26,7 @@ impl CommentState {
 	}
 
 	#[inline]
-	const fn enter_block(&mut self, nested: bool) {
+	const fn enter_first_block(&mut self, nested: bool) {
 		self.in_block_comment = true;
 		if nested {
 			self.block_comment_depth = 1;
@@ -103,7 +103,7 @@ fn handle_block_comments_nested<'a>(
 					has_code = true;
 				}
 				line_remainder = &line_remainder[pos + start_len..];
-				comment_state.enter_block(true);
+				comment_state.enter_first_block(true);
 			} else {
 				break;
 			}

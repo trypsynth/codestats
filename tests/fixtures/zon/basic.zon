@@ -1,4 +1,4 @@
-// expect: total=8 code=6 comment=1 blank=1 shebang=0
+// expect: total=7 code=6 comment=1 blank=0 shebang=0
 .{
     .name = .test,
     .version = "0.0.0",

@@ -87,19 +87,13 @@ impl<R: BufRead> BufLineSource<R> {
 
 impl<R: BufRead> LineSource for BufLineSource<R> {
 	fn for_each_line(&mut self, f: &mut dyn FnMut(&[u8])) -> Result<()> {
-		let mut last_line_ended_with_newline = false;
 		loop {
 			self.buffer.clear();
 			let bytes_read = self.reader.read_until(b'\n', &mut self.buffer)?;
 			if bytes_read == 0 {
 				break;
 			}
-			last_line_ended_with_newline = self.buffer.ends_with(b"\n");
 			f(&self.buffer);
-		}
-		if last_line_ended_with_newline {
-			// Account for trailing newline as an empty (blank) line.
-			f(b"");
 		}
 		Ok(())
 	}
@@ -125,15 +119,13 @@ impl LineSource for MmapLineSource<'_> {
 			f(line_bytes);
 			self.pos = line_end;
 		}
-		if self.bytes.last() == Some(&b'\n') {
-			// Account for trailing newline as an empty (blank) line.
-			f(b"");
-		}
 		Ok(())
 	}
 }
 
 const MMAP_THRESHOLD: u64 = 256 * 1024; // 256KB threshold
+const SAMPLE_SIZE: usize = 4 * 1024; // 4KB sample for binary/language detection
+const BINARY_THRESHOLD_PERCENT: usize = 20; // 20% non-text bytes threshold
 
 pub fn process_file(file_path: &Path, results: &mut AnalysisResults, collect_details: bool) -> Result<()> {
 	let filename = file_path.file_name().and_then(|name| name.to_str()).context("Invalid UTF-8 in file name")?;
@@ -150,6 +142,14 @@ pub fn process_file(file_path: &Path, results: &mut AnalysisResults, collect_det
 	}
 }
 
+fn detect_language_from_sample(filename: &str, sample: &[u8]) -> Option<&'static Language> {
+	if is_probably_binary(sample) {
+		return None;
+	}
+	let sample_str = str::from_utf8(sample).ok();
+	langs::detect_language_info(filename, sample_str)
+}
+
 fn process_file_buffered(
 	file_path: &Path,
 	filename: &str,
@@ -161,14 +161,10 @@ fn process_file_buffered(
 	let mut reader = BufReader::with_capacity(64 * 1024, file);
 	let sample_bytes = {
 		let buf = reader.fill_buf()?;
-		let len = buf.len().min(4 * 1024);
+		let len = buf.len().min(SAMPLE_SIZE);
 		buf[..len].to_vec()
 	};
-	if is_probably_binary(&sample_bytes) {
-		return Ok(());
-	}
-	let sample_str = str::from_utf8(&sample_bytes).ok();
-	let Some(language) = langs::detect_language_info(filename, sample_str) else { return Ok(()) };
+	let Some(language) = detect_language_from_sample(filename, &sample_bytes) else { return Ok(()) };
 	let mut source = BufLineSource::new(reader);
 	process_lines(file_path, file_size, results, collect_details, language, &mut source)
 }
@@ -185,13 +181,9 @@ fn process_file_mmap(
 	let mmap =
 		unsafe { Mmap::map(&file) }.with_context(|| format!("Failed to memory-map file {}", file_path.display()))?;
 	let file_bytes = &*mmap;
-	let sample_size = file_bytes.len().min(4 * 1024);
+	let sample_size = file_bytes.len().min(SAMPLE_SIZE);
 	let sample_bytes = &file_bytes[..sample_size];
-	if is_probably_binary(sample_bytes) {
-		return Ok(());
-	}
-	let sample_str = str::from_utf8(sample_bytes).ok();
-	let Some(language) = langs::detect_language_info(filename, sample_str) else { return Ok(()) };
+	let Some(language) = detect_language_from_sample(filename, sample_bytes) else { return Ok(()) };
 	let mut source = MmapLineSource::new(file_bytes);
 	process_lines(file_path, file_size, results, collect_details, language, &mut source)
 }
@@ -242,6 +234,5 @@ fn is_probably_binary(sample: &[u8]) -> bool {
 		return true;
 	}
 	let non_text = sample.iter().filter(|b| matches!(**b, 0x00..=0x08 | 0x0B | 0x0C | 0x0E..=0x1F | 0x7F)).count();
-	// Consider binary if more than 20% of the sampled bytes look non-textual.
-	non_text * 5 > sample.len()
+	non_text * 100 / sample.len() > BINARY_THRESHOLD_PERCENT
 }

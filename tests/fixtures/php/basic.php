@@ -1,4 +1,4 @@
-// expect: total=13 code=6 comment=3 blank=4 shebang=0
+// expect: total=12 code=6 comment=3 blank=3 shebang=0
 <?php
 // simple php fixture
 

@@ -1,4 +1,4 @@
-// expect: total=11 code=4 comment=4 blank=3 shebang=0
+// expect: total=10 code=4 comment=4 blank=2 shebang=0
 // simple kotlin fixture
 
 /* block comment line one

@@ -1,4 +1,4 @@
-// expect: total=12 code=5 comment=3 blank=4 shebang=0
+// expect: total=11 code=5 comment=3 blank=3 shebang=0
 // simple typescript fixture
 
 /* block comment */
