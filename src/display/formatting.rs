@@ -48,15 +48,15 @@ impl NumberFormatter {
 	pub fn new(style: NumberStyle) -> Self {
 		let format = match style {
 			NumberStyle::Plain => None,
-			NumberStyle::Comma => Some(
-				CustomFormat::builder().grouping(Grouping::Standard).separator(",").build().unwrap(),
-			),
-			NumberStyle::Underscore => Some(
-				CustomFormat::builder().grouping(Grouping::Standard).separator("_").build().unwrap(),
-			),
-			NumberStyle::Space => Some(
-				CustomFormat::builder().grouping(Grouping::Standard).separator(" ").build().unwrap(),
-			),
+			NumberStyle::Comma => {
+				Some(CustomFormat::builder().grouping(Grouping::Standard).separator(",").build().unwrap())
+			}
+			NumberStyle::Underscore => {
+				Some(CustomFormat::builder().grouping(Grouping::Standard).separator("_").build().unwrap())
+			}
+			NumberStyle::Space => {
+				Some(CustomFormat::builder().grouping(Grouping::Standard).separator(" ").build().unwrap())
+			}
 		};
 		Self { style, format }
 	}

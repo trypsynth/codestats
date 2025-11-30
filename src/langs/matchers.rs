@@ -50,9 +50,7 @@ fn build_language_matchers(lang: &Language) -> LanguageMatchers {
 	let line_comments = if lang.line_comments.is_empty() {
 		None
 	} else {
-		Some(
-			AhoCorasickBuilder::new().match_kind(MatchKind::LeftmostFirst).build(lang.line_comments).unwrap(),
-		)
+		Some(AhoCorasickBuilder::new().match_kind(MatchKind::LeftmostFirst).build(lang.line_comments).unwrap())
 	};
 	let block_comments = if lang.block_comments.is_empty() {
 		None
