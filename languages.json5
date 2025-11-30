@@ -29,13 +29,26 @@
 		block_comments: [["{-", "-}"]],
 		nested_blocks: true,
 	},
+	"Alchemist": {
+		file_patterns: ["*.crn"],
+		line_comments: ["#"],
+	},
 	"Alex": {
 		file_patterns: ["*.x"],
+	},
+	"Algol 68": {
+		file_patterns: ["*.a68"],
+		block_comments: [["#", "#"], ["CO", "CO"], ["COMMENT", "COMMENT"]],
 	},
 	"Alloy": {
 		file_patterns: ["*.als"],
 		line_comments: ["//", "--"],
 		block_comments: [["/*", "*/"]],
+	},
+	"Android Interface Definition Language": {
+		file_patterns: ["*.aidl"],
+		line_comments: ["//"],
+		block_comments: [["/**", "*/"], ["/*", "*/"]],
 	},
 	"AngelScript": {
 		file_patterns: ["*.as", "*.angelscript"],
@@ -59,6 +72,12 @@
 	"AppleScript": {
 		file_patterns: ["*.scpt", "*.applescript"],
 		line_comments: ["--", "#"],
+		block_comments: [["(*", "*)"]],
+	},
+	"ArkTs": {
+		file_patterns: ["*.ets"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
 	},
 	"Arturo": {
 		file_patterns: ["*.art"],
@@ -839,7 +858,7 @@
 	"Java": {
 		file_patterns: ["*.java", "*.jav"],
 		line_comments: ["//"],
-		block_comments: [["/*", "*/"]],
+		block_comments: [["/**", "*/"], ["/*", "*/"]],
 	},
 	"Java Properties": {
 		file_patterns: ["*.properties"],
@@ -1889,8 +1908,8 @@
 	},
 	"Wenyan": {
 		file_patterns: ["*.wy"],
-		line_comments: ["注曰"],
-		block_comments: [["批曰", "也"]],
+		line_comments: ["注曰", "//"],
+		block_comments: [["凡", "是謂"]],
 	},
 	"WGSL": {
 		file_patterns: ["*.wgsl"],
