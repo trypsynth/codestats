@@ -3,6 +3,7 @@
 mod analysis;
 mod cli;
 mod display;
+mod filters;
 mod langs;
 mod utils;
 
