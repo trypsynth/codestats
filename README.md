@@ -15,78 +15,45 @@ cargo install --path .
 ```
 
 ## Usage:
-Usage: `codestats <command>`
+Usage: `cs <command>`
 
-Commands:
+### Commands:
 * analyze: Analyze a directory or file for code statistics.
-* langs: List all supported programming languages.
+* langs: List all supported programming languages (currently 410 and counting).
 * help: Print program or command help.
 
-Options:
+### Options:
 * -h, --help: Print help
 * -V, --version: Print version
 
 ### Analyze
-Analyze a directory or file for code statistics
+Analyze a directory or file for code statistics.
 
-Usage: `codestats analyze [OPTIONS] <PATH>`
+Usage: cs analyze [OPTIONS] <PATH>
 
-Arguments:
-* `<PATH>`: The path to analyze. This can be either a directory (which will be recursively analyzed) or a single file. If a directory is provided, all supported source files within it will be analyzed.
+### Arguments
+* <PATH>  The path to analyze. This can be either a directory (which will be recursively analyzed) or a single file. If a directory is provided, all supported source files within it will be analyzed
 
-Options:
+### Options
 * -v, --verbose Enable verbose output.
-* -n, --no-gitignore Do not respect .gitignore/.ignore and similar files.
-* --hidden Search hidden files and directories.
-* -s, --symlinks Follow symlinks. When enabled, symbolic links will be followed and their targets will be included in the analysis. Use with caution as this can lead to infinite loops with circular symlinks.
-* -o, --output Choose how results are rendered. Options: `human` (default), `json`, `csv`, `markdown`.
-* -h, --help Print help
+* -i, --no-gitignore Do not respect .gitignore files.
+* -H, --hidden Search hidden files and directories.
+* -s, --symlinks Follow symbolic links and include their targets in the analysis. Use with caution as this can lead to infinite loops with circular symlinks.
+* -n, --number-style <NUMBER_STYLE> Output number formatting style [default: plain] [possible values: plain, comma, underscore, space].
+* -u, --size-units <SIZE_STYLE> Human-readable size units [default: binary] [possible values: binary, decimal].
+* -p, --precision <PERCENT_PRECISION> Percentage precision [default: 1].
+* -S, --sort-by <LANGUAGE_SORT> Sorting key for languages (and per-file details when verbose) [default: lines] [possible values: lines, code, comments, blanks, files, size, name].
+* -d, --sort-dir <SORT_DIRECTION> Sorting direction [default: desc] [possible values: asc, desc].
+* -o, --output <OUTPUT> Output format [default: human] [possible values: human, json, csv, markdown, html].
+* -h, --help Print help.
 
 ### Langs
 List all supported programming languages
 
 Usage: `codestats langs`
 
-Options:
+### Options
 * -h, --help  Print help
-
-## Sample output
-This is the result of running codestats on itself.
-
-```
-Codestats for .: 22 files, 4320 total lines, 113 KiB total size.
-Line breakdown: 4006 code lines, 106 comment lines, 208 blank lines.
-Percentages: 92.7% code, 2.5% comments, 4.8% blanks.
-Language breakdown:
-Rust:
-	Files: 18 files (81.8% of total).
-	Lines: 2331 lines (54.0% of total).
-	Size: 65.5 KiB (58.0% of total).
-	Line breakdown:
-		Code: 2036 lines (87.3%).
-		Comments: 106 lines (4.5%).
-		Blanks: 189 lines (8.1%).
-JSON5:
-	Files: 1 file (4.5% of total).
-	Lines: 1847 lines (42.8% of total).
-	Size: 43.4 KiB (38.4% of total).
-	Line breakdown:
-		Code: 1847 lines (100.0%).
-Markdown:
-	Files: 1 file (4.5% of total).
-	Lines: 91 lines (2.1% of total).
-	Size: 2.51 KiB (2.2% of total).
-	Line breakdown:
-		Code: 76 lines (83.5%).
-		Blanks: 15 lines (16.5%).
-TOML:
-	Files: 2 files (9.1% of total).
-	Lines: 51 lines (1.2% of total).
-	Size: 1.48 KiB (1.3% of total).
-	Line breakdown:
-		Code: 47 lines (92.2%).
-		Blanks: 4 lines (7.8%).
-```
 
 ## License
 Codestats is licensed under the [Zlib License](LICENSE).
