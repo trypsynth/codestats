@@ -25,10 +25,26 @@ pub fn print_all_languages(writer: &mut dyn Write) -> Result<()> {
 		pluralize(lang_count, "language", "languages"),
 		LANGUAGES.len()
 	)?;
-	let last_idx = LANGUAGES.len().saturating_sub(1);
+	let terminal_width = terminal_size::terminal_size().map_or(80, |(w, _)| usize::from(w.0));
+	let mut lines: Vec<String> = Vec::new();
+	let mut current_line = String::new();
 	for (i, lang) in LANGUAGES.iter().enumerate() {
-		let suffix = if i == last_idx { "." } else { "," };
-		writeln!(writer, "{}{suffix}", lang.name)?;
+		let is_last = i == LANGUAGES.len() - 1;
+		let separator = if is_last { "." } else { ", " };
+		let item = format!("{}{}", lang.name, separator);
+		let would_exceed = !current_line.is_empty() && current_line.len() + item.len() > terminal_width;
+		if would_exceed {
+			lines.push(current_line);
+			current_line = item;
+		} else {
+			current_line.push_str(&item);
+		}
+	}
+	if !current_line.is_empty() {
+		lines.push(current_line);
+	}
+	for line in lines {
+		writeln!(writer, "{line}")?;
 	}
 	Ok(())
 }

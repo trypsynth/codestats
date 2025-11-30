@@ -167,6 +167,7 @@ dependencies = [
  "num-format",
  "serde",
  "serde_json",
+ "terminal_size",
 ]
 
 [[package]]
