@@ -1,40 +1,50 @@
 # Codestats
+
 This is a CLI tool written in Rust to provide detailed analysis about a folder containing source code, with features such as rspecting gitignores, following symlinks, ignoring hidden files, etc.
 
 ## Installation
+
 ### With cargo
-```
+
+```bash
 cargo install codestats
 ```
 
 ### From source
-```
+
+```bash
 git clone https://github.com/trypsynth/codestats
 cd codestats
 cargo install --path .
 ```
 
-## Usage:
+## Usage
+
 Usage: `cs <command>`
 
-### Commands:
+### Commands
+
 * analyze: Analyze a directory or file for code statistics.
 * langs: List all supported programming languages (currently 410 and counting).
 * help: Print program or command help.
 
-### Options:
+### Options
+
 * -h, --help: Print help
 * -V, --version: Print version
 
 ### Analyze
+
 Analyze a directory or file for code statistics.
 
 Usage: cs analyze [OPTIONS] <PATH>
 
 ### Arguments
+
 * <PATH>  The path to analyze. This can be either a directory (which will be recursively analyzed) or a single file. If a directory is provided, all supported source files within it will be analyzed
 
 ### Options
+
 * -v, --verbose Enable verbose output.
 * -i, --no-gitignore Do not respect .gitignore files.
 * -H, --hidden Search hidden files and directories.
@@ -48,12 +58,15 @@ Usage: cs analyze [OPTIONS] <PATH>
 * -h, --help Print help.
 
 ### Langs
+
 List all supported programming languages
 
 Usage: `codestats langs`
 
 ### Options
+
 * -h, --help  Print help
 
 ## License
+
 Codestats is licensed under the [Zlib License](LICENSE).
