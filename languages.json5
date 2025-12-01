@@ -512,6 +512,10 @@
 		file_patterns: ["*.edgeql"],
 		line_comments: ["#"],
 	},
+	"EEx": {
+		file_patterns: ["*.eex", "*.leex", "*.heex"],
+		block_comments: [["<!--", "-->"]],
+	},
 	"Effekt": {
 		file_patterns: ["*.effekt"],
 		line_comments: ["//"],
@@ -569,6 +573,10 @@
 		line_comments: ["--"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["procedure", "function", "end procedure", "end function", "with", "without"],
+	},
+	"Expect": {
+		file_patterns: ["*.exp"],
+		line_comments: ["#"],
 	},
 	"F#": {
 		file_patterns: ["*.fs", "*.fsi", "*.fsx", "*.fsscript"],
