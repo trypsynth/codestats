@@ -54,13 +54,8 @@ fn main() -> Result<()> {
 	};
 	let analyzer = CodeAnalyzer::new(path.clone(), config);
 	let results = analyzer.analyze()?;
-	let view_options = ViewOptions {
-		number_style,
-		size_style,
-		percent_precision,
-		language_sort_key: language_sort,
-		sort_direction,
-	};
+	let view_options =
+		ViewOptions { number_style, size_style, percent_precision, language_sort_key: language_sort, sort_direction };
 	let formatter = get_formatter(output);
 	let mut stdout = io::stdout();
 	formatter.write_output(&results, &path, verbose, view_options, &mut stdout)?;

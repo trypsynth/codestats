@@ -7,6 +7,8 @@ use crate::display::{LanguageSortKey, NumberStyle, OutputFormat, SizeStyle, Sort
 /// A tool for analyzing code statistics across different programming languages
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
+// CLI flags necessarily map to booleans, so clippy::struct_excessive_bools would just add noise here.
+#[allow(clippy::struct_excessive_bools)]
 pub struct Cli {
 	/// List all supported programming languages and exit without running analysis.
 	#[arg(short = 'l', long = "langs")]
