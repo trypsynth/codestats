@@ -779,7 +779,6 @@
 	"Hoon": {
 		file_patterns: ["*.hoon"],
 		line_comments: ["::"],
-		block_comments: [["/-", "-/"]],
 	},
 	"HTML": {
 		file_patterns: ["*.html", "*.htm", "*.xht", "*.xhtml"],
@@ -1255,6 +1254,10 @@
 		file_patterns: ["*.nu"],
 		line_comments: ["#"],
 	},
+	"nuspec": {
+		file_patterns: ["*.nuspec"],
+		block_comments: [["<!--", "-->"]],
+	},
 	"NVGT": {
 		file_patterns: ["*.nvgt", ".nvgtrc"],
 		line_comments: ["//"],
@@ -1508,6 +1511,10 @@
 		line_comments: ["#"],
 		block_comments: [["#`(", ")"], ["=begin", "=end"]],
 		shebangs: ["#!/usr/bin/raku", "#!/usr/bin/perl6"],
+	},
+	"RAML": {
+		file_patterns: ["*.raml", "*.rml"],
+		line_comments: ["#"],
 	},
 	"Razor": {
 		file_patterns: ["*.cshtml", "*.razor"],
@@ -1948,6 +1955,10 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
+	"Xcode Config": {
+		file_patterns: ["*.xcconfig"],
+		line_comments: ["//"],
+	},
 	"XML": {
 		file_patterns: ["*.xml", "*.xsl", "*.xslt"],
 		block_comments: [["<!--", "-->"]],
@@ -1956,6 +1967,11 @@
 		file_patterns: ["*.xq", "*.xql", "*.xqm", "*.xqy", "*.xquery"],
 		block_comments: [["(:", ":)"]],
 		keywords: ["declare", "namespace", "module", "import", "for", "let", "return", "where", "if", "then", "else"],
+	},
+	"Xtend": {
+		file_patterns: ["*.xtend"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
 	},
 	"Yacc": {
 		file_patterns: ["*.y", "*.yacc"],
