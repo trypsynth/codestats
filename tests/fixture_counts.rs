@@ -39,12 +39,12 @@ fn fixtures_match_expected_counts() {
 	for fixture in fixtures {
 		let expected = parse_expectations(&fixture);
 		let output = Command::new(binary)
-			.args(["analyze", fixture.to_str().expect("Non-UTF-8 fixture path"), "-o", "json"])
+			.args([fixture.to_str().expect("Non-UTF-8 fixture path"), "-o", "json"])
 			.output()
 			.unwrap_or_else(|err| panic!("Failed to run codestats for {}: {err}", fixture.display()));
 		assert!(
 			output.status.success(),
-			"codestats analyze failed for {}\nstatus: {:?}\nstderr: {}",
+			"codestats run failed for {}\nstatus: {:?}\nstderr: {}",
 			fixture.display(),
 			output.status.code(),
 			String::from_utf8_lossy(&output.stderr),

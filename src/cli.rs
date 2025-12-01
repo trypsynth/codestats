@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use clap::{Parser, Subcommand};
+use clap::Parser;
 
 use crate::display::{LanguageSortKey, NumberStyle, OutputFormat, SizeStyle, SortDirection};
 
@@ -8,52 +8,45 @@ use crate::display::{LanguageSortKey, NumberStyle, OutputFormat, SizeStyle, Sort
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
 pub struct Cli {
-	#[command(subcommand)]
-	pub command: Commands,
-}
-
-#[derive(Subcommand)]
-pub enum Commands {
-	/// Analyze a directory or file for code statistics.
-	Analyze {
-		/// The path to analyze.
-		/// This can be either a directory (which will be recursively analyzed)
-		/// or a single file. If a directory is provided, all supported source
-		/// files within it will be analyzed.
-		path: PathBuf,
-		/// Enable verbose output.
-		#[arg(short, long)]
-		verbose: bool,
-		/// Do not respect .gitignore files.
-		#[arg(short = 'i', long)]
-		no_gitignore: bool,
-		/// Search hidden files and directories.
-		#[arg(short = 'H', long = "hidden")]
-		hidden: bool,
-		/// Follow symbolic links and include their targets
-		/// in the analysis. Use with caution as this can
-		/// lead to infinite loops with circular symlinks.
-		#[arg(short, long)]
-		symlinks: bool,
-		/// Output number formatting style.
-		#[arg(short = 'n', long, value_enum, default_value = "plain")]
-		number_style: NumberStyle,
-		/// Human-readable size units.
-		#[arg(short = 'u', long = "size-units", value_enum, default_value = "binary")]
-		size_style: SizeStyle,
-		/// Percentage precision.
-		#[arg(short = 'p', long = "precision", default_value_t = 1, value_parser = clap::value_parser!(u8).range(0..=6))]
-		percent_precision: u8,
-		/// Sorting key for languages (and per-file details when verbose).
-		#[arg(short = 'S', long = "sort-by", value_enum, default_value = "lines")]
-		language_sort: LanguageSortKey,
-		/// Sorting direction.
-		#[arg(short = 'd', long = "sort-dir", value_enum, default_value = "desc")]
-		sort_direction: SortDirection,
-		/// Output format.
-		#[arg(short, long, default_value = "human")]
-		output: OutputFormat,
-	},
-	/// List all supported programming languages.
-	Langs,
+	/// List all supported programming languages and exit without running analysis.
+	#[arg(short = 'l', long = "langs")]
+	pub langs: bool,
+	/// The path to analyze (defaults to the current directory).
+	/// This can be either a directory (which will be recursively analyzed)
+	/// or a single file. If a directory is provided, all supported source
+	/// files within it will be analyzed.
+	#[arg(value_name = "PATH", default_value = ".")]
+	pub path: PathBuf,
+	/// Enable verbose output.
+	#[arg(short, long)]
+	pub verbose: bool,
+	/// Do not respect .gitignore files.
+	#[arg(short = 'i', long)]
+	pub no_gitignore: bool,
+	/// Search hidden files and directories.
+	#[arg(short = 'H', long = "hidden")]
+	pub hidden: bool,
+	/// Follow symbolic links and include their targets
+	/// in the analysis. Use with caution as this can
+	/// lead to infinite loops with circular symlinks.
+	#[arg(short, long)]
+	pub symlinks: bool,
+	/// Output number formatting style.
+	#[arg(short = 'n', long, value_enum, default_value = "plain")]
+	pub number_style: NumberStyle,
+	/// Human-readable size units.
+	#[arg(short = 'u', long = "size-units", value_enum, default_value = "binary")]
+	pub size_style: SizeStyle,
+	/// Percentage precision.
+	#[arg(short = 'p', long = "precision", default_value_t = 1, value_parser = clap::value_parser!(u8).range(0..=6))]
+	pub percent_precision: u8,
+	/// Sorting key for languages (and per-file details when verbose).
+	#[arg(short = 'S', long = "sort-by", value_enum, default_value = "lines")]
+	pub language_sort: LanguageSortKey,
+	/// Sorting direction.
+	#[arg(short = 'd', long = "sort-dir", value_enum, default_value = "desc")]
+	pub sort_direction: SortDirection,
+	/// Output format.
+	#[arg(short, long, default_value = "human")]
+	pub output: OutputFormat,
 }
