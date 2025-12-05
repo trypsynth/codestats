@@ -16,7 +16,7 @@ use crate::utils::pluralize;
 /// # Errors
 ///
 /// Returns an error if writing to the provided writer fails.
-pub fn print_all_languages(writer: &mut dyn Write) -> Result<()> {
+pub fn print_all_languages(writer: &mut dyn Write, terminal_width: usize) -> Result<()> {
 	let lang_count = u64::try_from(LANGUAGES.len()).unwrap_or(u64::MAX);
 	writeln!(
 		writer,
@@ -24,7 +24,6 @@ pub fn print_all_languages(writer: &mut dyn Write) -> Result<()> {
 		pluralize(lang_count, "language", "languages"),
 		LANGUAGES.len()
 	)?;
-	let terminal_width = terminal_size::terminal_size().map_or(80, |(w, _)| usize::from(w.0));
 	let mut lines: Vec<String> = Vec::new();
 	let mut current_line = String::new();
 	for (i, lang) in LANGUAGES.iter().enumerate() {

@@ -12,6 +12,7 @@ use std::io::{self, Write as _};
 use anyhow::{Result, ensure};
 use clap::Parser as _;
 use cli::Cli;
+use terminal_size::terminal_size;
 
 use crate::{
 	analysis::{AnalyzerConfig, CodeAnalyzer, DetailLevel, TraversalOptions},
@@ -35,7 +36,8 @@ fn main() -> Result<()> {
 	} = Cli::parse();
 	if langs {
 		let mut stdout = io::stdout();
-		langs::print_all_languages(&mut stdout)?;
+		let terminal_width = terminal_size().map_or(80, |(w, _)| usize::from(w.0));
+		langs::print_all_languages(&mut stdout, terminal_width)?;
 		stdout.flush()?;
 		return Ok(());
 	}
