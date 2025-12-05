@@ -65,10 +65,30 @@ impl Summary {
 
 	fn iter_line_types(&self) -> impl Iterator<Item = LineTypeInfo> + '_ {
 		[
-			LineTypeInfo { count: self.total_code_lines, pct: self.code_percentage, label: "code" },
-			LineTypeInfo { count: self.total_comment_lines, pct: self.comment_percentage, label: "comments" },
-			LineTypeInfo { count: self.total_blank_lines, pct: self.blank_percentage, label: "blanks" },
-			LineTypeInfo { count: self.total_shebang_lines, pct: self.shebang_percentage, label: "shebangs" },
+			LineTypeInfo {
+				count: self.total_code_lines,
+				pct: self.code_percentage,
+				singular_label: "code",
+				plural_label: "code",
+			},
+			LineTypeInfo {
+				count: self.total_comment_lines,
+				pct: self.comment_percentage,
+				singular_label: "comment",
+				plural_label: "comments",
+			},
+			LineTypeInfo {
+				count: self.total_blank_lines,
+				pct: self.blank_percentage,
+				singular_label: "blank",
+				plural_label: "blanks",
+			},
+			LineTypeInfo {
+				count: self.total_shebang_lines,
+				pct: self.shebang_percentage,
+				singular_label: "shebang",
+				plural_label: "shebangs",
+			},
 		]
 		.into_iter()
 		.filter(|info| info.count > 0)
@@ -76,7 +96,7 @@ impl Summary {
 
 	#[must_use]
 	pub fn percentage_parts(&self, ctx: &FormatterContext) -> Vec<String> {
-		self.iter_line_types().map(|info| format!("{}% {}", ctx.percent(info.pct), info.label)).collect()
+		self.iter_line_types().map(|info| format!("{}% {}", ctx.percent(info.pct), info.plural_label)).collect()
 	}
 
 	#[must_use]
@@ -85,9 +105,9 @@ impl Summary {
 			.map(|info| {
 				let formatted = ctx.number(info.count);
 				if pluralize {
-					format!("{formatted} {} {}", info.label, utils::pluralize(info.count, "line", "lines"))
+					format!("{formatted} {} {}", info.singular_label, utils::pluralize(info.count, "line", "lines"))
 				} else {
-					format!("{formatted} {}", info.label)
+					format!("{formatted} {}", info.plural_label)
 				}
 			})
 			.collect()
@@ -97,7 +117,8 @@ impl Summary {
 struct LineTypeInfo {
 	count: u64,
 	pct: f64,
-	label: &'static str,
+	singular_label: &'static str,
+	plural_label: &'static str,
 }
 
 const fn sort_key_for_language_record<'a>(
