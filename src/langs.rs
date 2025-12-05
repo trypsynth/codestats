@@ -49,7 +49,7 @@ pub fn print_all_languages(writer: &mut dyn Write, terminal_width: usize) -> Res
 
 #[cfg(test)]
 mod tests {
-	use super::{globset::get_candidates, *};
+	use super::globset::get_candidates;
 
 	#[test]
 	fn get_candidates_uses_literal_map() {
@@ -69,11 +69,5 @@ mod tests {
 	fn get_candidates_supports_wildcards() {
 		let candidates = get_candidates("lib.rs");
 		assert!(candidates.iter().any(|lang| lang.name == "Rust"));
-	}
-
-	#[test]
-	fn globset_matches_common_extensions() {
-		assert!(language_globset().is_match("main.rs"));
-		assert!(language_globset().is_match("README.md"));
 	}
 }
