@@ -41,18 +41,36 @@ struct ProcessedLanguage {
 }
 
 impl ProcessedLanguage {
-	fn from_config(name: String, config: LanguageConfig) -> Self {
+	fn from_config(name: String, config: LanguageConfig) -> result::Result<Self, String> {
 		let LanguageConfig { file_patterns, line_comments, block_comments, nested_blocks, shebangs, keywords } = config;
-		let block_comments = block_comments
-			.into_iter()
-			.filter_map(|pair| {
-				let mut iter = pair.into_iter();
-				let start = iter.next()?;
-				let end = iter.next()?;
-				Some((start, end))
+		let mut errors = Vec::new();
+		let mut parsed_block_comments = Vec::new();
+		for (idx, pair) in block_comments.into_iter().enumerate() {
+			match pair.as_slice() {
+				[start, end] => parsed_block_comments.push((start.clone(), end.clone())),
+				[] => errors.push(format!("Language '{name}', block comment {}: start/end cannot be empty", idx + 1)),
+				[_single] => {
+					errors.push(format!("Language '{name}', block comment {}: missing end delimiter", idx + 1));
+				}
+				[_, _, ..] => errors.push(format!(
+					"Language '{name}', block comment {}: only start and end delimiters are supported",
+					idx + 1
+				)),
+			}
+		}
+		if errors.is_empty() {
+			Ok(Self {
+				name,
+				file_patterns,
+				line_comments,
+				block_comments: parsed_block_comments,
+				nested_blocks,
+				shebangs,
+				keywords,
 			})
-			.collect();
-		Self { name, file_patterns, line_comments, block_comments, nested_blocks, shebangs, keywords }
+		} else {
+			Err(errors.join("\n"))
+		}
 	}
 }
 
@@ -139,7 +157,13 @@ fn normalize_languages(entries: IndexMap<String, LanguageConfig>) -> Result<Vec<
 				}
 			}
 			prev_name = Some(name.clone());
-			Some(ProcessedLanguage::from_config(name, config))
+			match ProcessedLanguage::from_config(name, config) {
+				Ok(lang) => Some(lang),
+				Err(err) => {
+					errors.push(err);
+					None
+				}
+			}
 		})
 		.collect();
 	if errors.is_empty() { Ok(languages) } else { Err(errors.join("\n").into()) }

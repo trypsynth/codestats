@@ -9,7 +9,6 @@ pub mod matchers;
 
 pub use data::{LANGUAGES, Language};
 pub use detection::detect_language_info;
-pub use globset::language_globset;
 
 use crate::utils::pluralize;
 

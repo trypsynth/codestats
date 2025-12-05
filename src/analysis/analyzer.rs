@@ -11,7 +11,6 @@ use anyhow::Result;
 use ignore::WalkBuilder;
 
 use super::{config::AnalyzerConfig, file_processor, stats::AnalysisResults};
-use crate::langs;
 
 struct LocalAggregator {
 	sink: Arc<Mutex<Vec<AnalysisResults>>>,
@@ -58,7 +57,6 @@ impl CodeAnalyzer {
 		let error_counter = Arc::new(AtomicU64::new(0));
 		let verbose = self.config.verbose;
 		let collect_details = self.config.detail_level.collect_file_details();
-		let language_globset = langs::language_globset();
 		let aggregates = Arc::new(Mutex::new(Vec::new()));
 		let aggregates_for_walk = Arc::clone(&aggregates);
 		let error_counter_for_walk = Arc::clone(&error_counter);
@@ -76,18 +74,15 @@ impl CodeAnalyzer {
 				Box::new(move |entry_result| {
 					match entry_result {
 						Ok(entry) if entry.file_type().is_some_and(|ft| ft.is_file()) => {
-							let should_consider = entry
-								.file_name()
-								.to_str()
-								.is_some_and(|name| language_globset.is_match(name) || !name.contains('.'));
-							if should_consider {
-								if let Err(e) =
+							// Consider all UTF-8 file names; language detection will skip binaries/unknowns.
+							let should_consider = entry.file_name().to_str().is_some();
+							if should_consider
+								&& let Err(e) =
 									file_processor::process_file(entry.path(), &mut aggregator.local, collect_details)
-								{
-									error_counter.fetch_add(1, Ordering::Relaxed);
-									if verbose {
-										eprintln!("Error processing file {}: {e}", entry.path().display());
-									}
+							{
+								error_counter.fetch_add(1, Ordering::Relaxed);
+								if verbose {
+									eprintln!("Error processing file {}: {e}", entry.path().display());
 								}
 							}
 						}

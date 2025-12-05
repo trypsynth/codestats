@@ -27,12 +27,6 @@ pub(super) static LANGUAGE_GLOBSET: LazyLock<LanguageGlobs> = LazyLock::new(|| {
 	LanguageGlobs { set, pattern_lang_indexes }
 });
 
-/// Precompiled, case-insensitive globset of all known language file patterns.
-#[must_use]
-pub fn language_globset() -> &'static GlobSet {
-	&LANGUAGE_GLOBSET.set
-}
-
 #[inline]
 pub fn get_candidates(filename: &str) -> Vec<&'static Language> {
 	let globs = &*LANGUAGE_GLOBSET;

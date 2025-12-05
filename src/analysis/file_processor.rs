@@ -132,7 +132,14 @@ pub fn process_file(file_path: &Path, results: &mut AnalysisResults, collect_det
 	let metadata =
 		file_path.metadata().with_context(|| format!("Failed to read metadata for {}", file_path.display()))?;
 	let file_size = metadata.len();
+	let language_from_name = langs::detect_language_info(filename, None);
 	if file_size == 0 {
+		if let Some(language) = language_from_name {
+			let contribution = FileContribution::new(0, 0, 0, 0, 0, file_size);
+			let file_stats =
+				collect_details.then(|| FileStats::new(file_path.display().to_string(), 0, 0, 0, 0, 0, file_size));
+			results.add_file_stats(language, contribution, file_stats);
+		}
 		return Ok(());
 	}
 	if file_size >= MMAP_THRESHOLD {
