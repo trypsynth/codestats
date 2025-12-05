@@ -67,6 +67,17 @@ Usage: `codestats langs`
 
 * -h, --help  Print help
 
+## Benchmarks
+
+`hyperfine --warmup 1 "target/release/cs /home/quin" "tokei /home/quin"`
+
+| Command | Mean ± σ | Min … Max |
+| --- | --- | --- |
+| `cs /home/quin` | 2.606 s ± 0.024 s | 2.587 s … 2.643 s |
+| `tokei /home/quin` | 9.396 s ± 0.029 s | 9.364 s … 9.442 s |
+
+Codestats ran about 3.6 times faster than tokei on this machine (a moddist Beelinks mini PC) when scanning my large home directory with caches warmed up.
+
 ## License
 
 Codestats is licensed under the [Zlib License](LICENSE).
