@@ -240,6 +240,9 @@ fn is_probably_binary(sample: &[u8]) -> bool {
 	if sample.contains(&0) {
 		return true;
 	}
+	if str::from_utf8(sample).is_ok() {
+		return false;
+	}
 	let non_text = sample.iter().filter(|b| matches!(**b, 0x00..=0x08 | 0x0B | 0x0C | 0x0E..=0x1F | 0x7F)).count();
 	non_text * 100 / sample.len() > BINARY_THRESHOLD_PERCENT
 }
