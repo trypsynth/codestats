@@ -56,6 +56,11 @@
 		block_comments: [["/*", "*/"]],
 		keywords: ["funcdef", "shared", "mixin", "dictionary", "array<", "uint8", "int64"],
 	},
+	"ANTLR": {
+		file_patterns: ["*.g4"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+	},
 	"Apache Config": {
 		file_patterns: [".htaccess", "*.conf", "httpd.conf", "apache2.conf"],
 		line_comments: ["#"],
@@ -204,9 +209,15 @@
 		block_comments: [["/*", "*/"]],
 		keywords: ["%token", "%type", "%start", "yyparse"],
 	},
+	"BitBake": {
+		file_patterns: ["*.bb", "*.bbappend", "*.bbclass", "*.inc"],
+		line_comments: ["#"],
+		keywords: ["DESCRIPTION", "LICENSE", "SRC_URI", "do_compile", "do_install", "inherit", "DEPENDS"],
+	},
 	"BlitzBasic": {
 		file_patterns: ["*.bb", "*.decls", "*.bb2"],
 		line_comments: [";"],
+		keywords: ["Graphics", "Graphics3D", "Camera", "Mesh", "Type", "Field", "New", "Repeat", "Until", "Forever"],
 	},
 	"Bluespec": {
 		file_patterns: ["*.bsv"],
@@ -248,7 +259,7 @@
 		shebangs: ["#!/bin/csh"],
 	},
 	"C#": {
-		file_patterns: ["*.cs", "*.csx", "*.cake"],
+		file_patterns: ["*.cs", "*.csx", "*.cake", "*.cshtml.cs", "*.razor.cs"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
@@ -424,6 +435,11 @@
 		block_comments: [["{-", "-}"]],
 		nested_blocks: true,
 	},
+	"Cypher": {
+		file_patterns: ["*.cypher", "*.cyp", "*.cql"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+	},
 	"Cython": {
 		file_patterns: ["*.pyx", "*.pxd", "*.pxi"],
 		line_comments: ["#"],
@@ -456,6 +472,11 @@
 		line_comments: ["//", "///"],
 		block_comments: [["/*", "*/"]],
 	},
+	"Datalog": {
+		file_patterns: ["*.dl", "*.datalog"],
+		line_comments: ["//", "%"],
+		block_comments: [["/*", "*/"]],
+	},
 	"Delphi/Object Pascal": {
 		file_patterns: ["*.dpr", "*.dpk"],
 		line_comments: ["//"],
@@ -473,7 +494,7 @@
 		nested_blocks: true,
 	},
 	"Dockerfile": {
-		file_patterns: ["*.dockerfile", "*.dockerignore", "Dockerfile"],
+		file_patterns: ["*.dockerfile", "Dockerfile"],
 		line_comments: ["#"],
 	},
 	"DotNet Resource": {
@@ -564,8 +585,12 @@
 		line_comments: ["💭"],
 		block_comments: [["💭🔜", "🔚💭"], ["📗", "📗"], ["📘", "📘"]],
 	},
+	"ERB": {
+		file_patterns: ["*.erb", "*.html.erb", "*.erb.html"],
+		block_comments: [["<!--", "-->"]],
+	},
 	"Erlang": {
-		file_patterns: ["*.erl", "*.hrl"],
+		file_patterns: ["*.erl", "*.hrl", "*.app.src", "*.yrl", "*.xrl"],
 		line_comments: ["%"],
 	},
 	"Euphoria": {
@@ -631,7 +656,7 @@
 		block_comments: [["( ", ")"]],
 	},
 	"Fortran": {
-		file_patterns: ["*.f", "*.for", "*.f77", "*.f90", "*.f95", "*.f03"],
+		file_patterns: ["*.f", "*.for", "*.f77", "*.f90", "*.f95", "*.f03", "*.f08", "*.f15", "*.f18", "*.f23"],
 		line_comments: ["!", "C", "c"],
 	},
 	"FreeMarker": {
@@ -643,6 +668,10 @@
 		line_comments: ["--"],
 		block_comments: [["{-", "-}"]],
 		nested_blocks: true,
+	},
+	"GCode": {
+		file_patterns: ["*.gcode", "*.nc", "*.ngc", "*.cnc"],
+		line_comments: [";"],
 	},
 	"GDB Script": {
 		file_patterns: ["*.gdb"],
@@ -806,6 +835,10 @@
 		line_comments: ["--"],
 		block_comments: [["{-", "-}"]],
 		nested_blocks: true,
+	},
+	"Ignore": {
+		file_patterns: [".gitignore", ".dockerignore", ".npmignore", ".eslintignore", ".prettierignore", "*.ignore", "*.dockerignore"],
+		line_comments: ["#"],
 	},
 	"Imba": {
 		file_patterns: ["*.imba"],
@@ -1091,7 +1124,7 @@
 		file_patterns: ["*.maxpat"],
 	},
 	"Menhir": {
-		file_patterns: ["*.menhir", "*.vy"],
+		file_patterns: ["*.menhir"],
 		line_comments: ["//"],
 		block_comments: [["(*", "*)"], ["/*", "*/"]],
 		nested_blocks: true,
@@ -1218,7 +1251,7 @@
 		block_comments: [["/*", "*/"]],
 	},
 	"Nim": {
-		file_patterns: ["*.nim"],
+		file_patterns: ["*.nim", "*.nims", "*.nimble", "*.nimrod"],
 		line_comments: ["#", "##"],
 		block_comments: [["#[", "]#"]],
 		nested_blocks: true,
@@ -1425,7 +1458,7 @@
 		block_comments: [["/*", "*/"]],
 	},
 	"Prolog": {
-		file_patterns: ["*.pro"],
+		file_patterns: ["*.pro", "*.P", "*.prolog", "*.yap"],
 		line_comments: ["%"],
 		block_comments: [["/*", "*/"]],
 		keywords: [":-", "?-", "assert", "retract", "findall", "bagof"],
@@ -1678,7 +1711,7 @@
 		block_comments: [["/*", "*/"]],
 	},
 	"SQL": {
-		file_patterns: ["*.sql"],
+		file_patterns: ["*.sql", "*.ddl", "*.dml", "*.pgsql", "*.psql", "*.mysql"],
 		line_comments: ["--"],
 		block_comments: [["/*", "*/"]],
 	},
@@ -1737,7 +1770,7 @@
 		block_comments: [["/*", "*/"]],
 	},
 	"Swift": {
-		file_patterns: ["*.swift", "*.swiftpm"],
+		file_patterns: ["*.swift", "*.swiftpm", "*.swiftinterface"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
@@ -1799,7 +1832,7 @@
 		line_comments: ["#"],
 	},
 	"TOML": {
-		file_patterns: ["*.toml"],
+		file_patterns: ["*.toml", "Cargo.lock", "poetry.lock", "Pipfile.lock"],
 		line_comments: ["#"],
 	},
 	"Turtle": {
@@ -1963,6 +1996,11 @@
 		file_patterns: ["*.xml", "*.xsl", "*.xslt"],
 		block_comments: [["<!--", "-->"]],
 	},
+	"Xonsh": {
+		file_patterns: ["*.xsh"],
+		line_comments: ["#"],
+		shebangs: ["#!/usr/bin/env xonsh", "#!/usr/bin/xonsh"],
+	},
 	"XQuery": {
 		file_patterns: ["*.xq", "*.xql", "*.xqm", "*.xqy", "*.xquery"],
 		block_comments: [["(:", ":)"]],
@@ -1980,7 +2018,7 @@
 		keywords: ["%token", "%type", "%start", "yyparse"],
 	},
 	"YAML": {
-		file_patterns: ["*.yaml", "*.yml", "*.yaml.tmpl", "*.yaml-tmpl", ".yamllint"],
+		file_patterns: ["*.yaml", "*.yml", "*.yaml.tmpl", "*.yaml-tmpl", ".yamllint", ".clang-format", ".clang-tidy", ".gemrc"],
 		line_comments: ["#"],
 	},
 	"YANG": {
@@ -2008,7 +2046,7 @@
 		block_comments: [["/*", "*/"]],
 	},
 	"Zon": {
-		"file_patterns": ["*.zon"],
+		file_patterns: ["*.zon"],
 		line_comments: ["//", "///", "//!"],
 	},
 	"ZSH": {
