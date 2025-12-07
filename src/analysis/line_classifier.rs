@@ -21,6 +21,7 @@ pub struct CommentState {
 
 impl CommentState {
 	#[must_use]
+	#[inline]
 	pub(crate) fn new() -> Self {
 		Self::default()
 	}
@@ -52,6 +53,7 @@ impl CommentState {
 	}
 
 	#[must_use]
+	#[inline]
 	const fn is_in_comment(&self) -> bool {
 		self.in_block_comment
 	}

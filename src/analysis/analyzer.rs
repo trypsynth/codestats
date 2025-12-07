@@ -1,6 +1,6 @@
 use std::{
 	mem,
-	path::PathBuf,
+	path::{Path, PathBuf},
 	sync::{
 		Arc, Mutex, PoisonError,
 		atomic::{AtomicU64, Ordering},
@@ -33,8 +33,8 @@ pub struct CodeAnalyzer {
 impl CodeAnalyzer {
 	/// Create a new analyzer rooted at `path`.
 	#[must_use]
-	pub fn new(path: impl Into<PathBuf>, config: AnalyzerConfig) -> Self {
-		Self { root: path.into(), config }
+	pub fn new(path: &Path, config: AnalyzerConfig) -> Self {
+		Self { root: path.to_path_buf(), config }
 	}
 
 	/// Analyze the configured path for code statistics

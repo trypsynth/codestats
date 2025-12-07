@@ -54,7 +54,7 @@ fn main() -> Result<()> {
 		},
 		detail_level: if verbose { DetailLevel::PerFile } else { DetailLevel::Summary },
 	};
-	let analyzer = CodeAnalyzer::new(path.clone(), config);
+	let analyzer = CodeAnalyzer::new(&path, config);
 	let results = analyzer.analyze()?;
 	let view_options =
 		ViewOptions { number_style, size_style, percent_precision, language_sort_key: language_sort, sort_direction };
