@@ -38,35 +38,36 @@ impl FormatterContext {
 }
 
 #[derive(Debug, Clone)]
-pub struct NumberFormatter {
-	style: NumberStyle,
-	format: Option<CustomFormat>,
+pub enum NumberFormatter {
+	Plain,
+	Formatted { format: CustomFormat },
 }
 
 impl NumberFormatter {
 	#[must_use]
 	pub fn new(style: NumberStyle) -> Self {
-		let format = match style {
-			NumberStyle::Plain => None,
+		match style {
+			NumberStyle::Plain => Self::Plain,
 			NumberStyle::Comma => {
-				Some(CustomFormat::builder().grouping(Grouping::Standard).separator(",").build().unwrap())
+				let format = CustomFormat::builder().grouping(Grouping::Standard).separator(",").build().unwrap();
+				Self::Formatted { format }
 			}
 			NumberStyle::Underscore => {
-				Some(CustomFormat::builder().grouping(Grouping::Standard).separator("_").build().unwrap())
+				let format = CustomFormat::builder().grouping(Grouping::Standard).separator("_").build().unwrap();
+				Self::Formatted { format }
 			}
 			NumberStyle::Space => {
-				Some(CustomFormat::builder().grouping(Grouping::Standard).separator(" ").build().unwrap())
+				let format = CustomFormat::builder().grouping(Grouping::Standard).separator(" ").build().unwrap();
+				Self::Formatted { format }
 			}
-		};
-		Self { style, format }
+		}
 	}
 
 	#[must_use]
 	pub fn format(&self, value: u64) -> String {
-		match (&self.style, &self.format) {
-			(NumberStyle::Plain, _) => value.to_string(),
-			(_, Some(fmt)) => value.to_formatted_string(fmt),
-			_ => unreachable!("non-Plain NumberStyle must have format"),
+		match self {
+			Self::Plain => value.to_string(),
+			Self::Formatted { format } => value.to_formatted_string(format),
 		}
 	}
 }

@@ -220,6 +220,61 @@ impl<'a> LanguageRecord<'a> {
 			files_detail,
 		}
 	}
+
+	#[must_use]
+	pub fn format_files(&self, ctx: &FormatterContext) -> String {
+		ctx.number(self.files)
+	}
+
+	#[must_use]
+	pub fn format_lines(&self, ctx: &FormatterContext) -> String {
+		ctx.number(self.lines)
+	}
+
+	#[must_use]
+	pub fn format_code_lines(&self, ctx: &FormatterContext) -> String {
+		ctx.number(self.code_lines)
+	}
+
+	#[must_use]
+	pub fn format_comment_lines(&self, ctx: &FormatterContext) -> String {
+		ctx.number(self.comment_lines)
+	}
+
+	#[must_use]
+	pub fn format_blank_lines(&self, ctx: &FormatterContext) -> String {
+		ctx.number(self.blank_lines)
+	}
+
+	#[must_use]
+	pub fn format_shebang_lines(&self, ctx: &FormatterContext) -> String {
+		ctx.number(self.shebang_lines)
+	}
+
+	#[must_use]
+	pub fn format_size(&self, ctx: &FormatterContext) -> String {
+		ctx.number(self.size)
+	}
+
+	#[must_use]
+	pub fn format_code_percentage(&self, ctx: &FormatterContext) -> String {
+		ctx.percent(self.code_percentage)
+	}
+
+	#[must_use]
+	pub fn format_comment_percentage(&self, ctx: &FormatterContext) -> String {
+		ctx.percent(self.comment_percentage)
+	}
+
+	#[must_use]
+	pub fn format_blank_percentage(&self, ctx: &FormatterContext) -> String {
+		ctx.percent(self.blank_percentage)
+	}
+
+	#[must_use]
+	pub fn format_shebang_percentage(&self, ctx: &FormatterContext) -> String {
+		ctx.percent(self.shebang_percentage)
+	}
 }
 
 #[derive(Debug, Serialize)]
@@ -232,6 +287,38 @@ pub struct FileRecord<'a> {
 	pub shebang_lines: u64,
 	pub size: u64,
 	pub size_human: String,
+}
+
+impl FileRecord<'_> {
+	#[must_use]
+	pub fn format_total_lines(&self, ctx: &FormatterContext) -> String {
+		ctx.number(self.total_lines)
+	}
+
+	#[must_use]
+	pub fn format_code_lines(&self, ctx: &FormatterContext) -> String {
+		ctx.number(self.code_lines)
+	}
+
+	#[must_use]
+	pub fn format_comment_lines(&self, ctx: &FormatterContext) -> String {
+		ctx.number(self.comment_lines)
+	}
+
+	#[must_use]
+	pub fn format_blank_lines(&self, ctx: &FormatterContext) -> String {
+		ctx.number(self.blank_lines)
+	}
+
+	#[must_use]
+	pub fn format_shebang_lines(&self, ctx: &FormatterContext) -> String {
+		ctx.number(self.shebang_lines)
+	}
+
+	#[must_use]
+	pub fn format_size(&self, ctx: &FormatterContext) -> String {
+		ctx.number(self.size)
+	}
 }
 
 #[derive(Debug, Serialize)]

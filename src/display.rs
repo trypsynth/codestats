@@ -68,6 +68,18 @@ pub trait OutputFormatter {
 		view_options: ViewOptions,
 		writer: &mut dyn Write,
 	) -> Result<()>;
+
+	fn prepare_report<'a>(
+		&self,
+		results: &'a AnalysisResults,
+		path: &Path,
+		verbose: bool,
+		view_options: ViewOptions,
+	) -> (FormatterContext, ReportData<'a>) {
+		let ctx = FormatterContext::new(view_options);
+		let report = ReportData::from_results(results, path, verbose, &ctx);
+		(ctx, report)
+	}
 }
 
 #[must_use]

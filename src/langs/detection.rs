@@ -37,7 +37,7 @@ fn score_language(lang: &Language, content: &str, tokens: &[&str]) -> i32 {
 
 #[inline]
 fn disambiguate<'a>(candidates: &[&'a Language], content: &str) -> Option<&'a Language> {
-	let tokens = tokenize(content);
+	let tokens: Vec<_> = tokenize(content).collect();
 	candidates
 		.iter()
 		.map(|lang| (*lang, score_language(lang, content, &tokens)))
@@ -47,8 +47,8 @@ fn disambiguate<'a>(candidates: &[&'a Language], content: &str) -> Option<&'a La
 }
 
 #[inline]
-fn tokenize(content: &str) -> Vec<&str> {
-	content.split(|c: char| !c.is_ascii_alphanumeric() && c != '_').filter(|token| !token.is_empty()).collect()
+fn tokenize(content: &str) -> impl Iterator<Item = &str> {
+	content.split(|c: char| !c.is_ascii_alphanumeric() && c != '_').filter(|token| !token.is_empty())
 }
 
 #[inline]
@@ -107,7 +107,7 @@ mod tests {
 	#[test]
 	fn score_language_combines_comments_and_keywords() {
 		let content = "// comment\nalpha beta alpha";
-		let tokens = tokenize(content);
+		let tokens: Vec<_> = tokenize(content).collect();
 		let score = score_language(&TEST_LANGUAGE_ALPHA, content, &tokens);
 		assert_eq!(score, 50 + 3 * 10);
 	}

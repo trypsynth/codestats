@@ -20,8 +20,7 @@ impl OutputFormatter for HumanFormatter {
 		view_options: ViewOptions,
 		writer: &mut dyn Write,
 	) -> Result<()> {
-		let ctx = FormatterContext::new(view_options);
-		let report = ReportData::from_results(results, path, verbose, &ctx);
+		let (ctx, report) = self.prepare_report(results, path, verbose, view_options);
 		Self::write_overview(&report, &ctx, writer)?;
 		if report.languages.is_empty() {
 			writeln!(writer, "No recognized programming languages found.")?;
@@ -30,6 +29,12 @@ impl OutputFormatter for HumanFormatter {
 		Self::write_language_breakdown(&report, &ctx, verbose, writer)?;
 		Ok(())
 	}
+}
+
+struct LanguageLineTypeInfo {
+	label: &'static str,
+	count: u64,
+	percentage: f64,
 }
 
 impl HumanFormatter {
@@ -50,6 +55,18 @@ impl HumanFormatter {
 				result
 			}
 		}
+	}
+
+	/// Iterator over language line types for consistent formatting.
+	fn iter_language_line_types(lang: &LanguageRecord<'_>) -> impl Iterator<Item = LanguageLineTypeInfo> {
+		[
+			LanguageLineTypeInfo { label: "Code", count: lang.code_lines, percentage: lang.code_percentage },
+			LanguageLineTypeInfo { label: "Comments", count: lang.comment_lines, percentage: lang.comment_percentage },
+			LanguageLineTypeInfo { label: "Blanks", count: lang.blank_lines, percentage: lang.blank_percentage },
+			LanguageLineTypeInfo { label: "Shebangs", count: lang.shebang_lines, percentage: lang.shebang_percentage },
+		]
+		.into_iter()
+		.filter(|info| info.count > 0)
 	}
 
 	fn write_overview(report: &ReportData, ctx: &FormatterContext, writer: &mut dyn Write) -> Result<()> {
@@ -122,36 +139,13 @@ impl HumanFormatter {
 		)?;
 		writeln!(writer, "\tSize: {size_human} ({size_pct_str}% of total).")?;
 		writeln!(writer, "\tLine breakdown:")?;
-		if language.code_lines > 0 {
+		for line_type in Self::iter_language_line_types(language) {
 			writeln!(
 				writer,
-				"\t\tCode: {} lines ({}%).",
-				ctx.number(language.code_lines),
-				ctx.percent(language.code_percentage)
-			)?;
-		}
-		if language.comment_lines > 0 {
-			writeln!(
-				writer,
-				"\t\tComments: {} lines ({}%).",
-				ctx.number(language.comment_lines),
-				ctx.percent(language.comment_percentage)
-			)?;
-		}
-		if language.blank_lines > 0 {
-			writeln!(
-				writer,
-				"\t\tBlanks: {} lines ({}%).",
-				ctx.number(language.blank_lines),
-				ctx.percent(language.blank_percentage)
-			)?;
-		}
-		if language.shebang_lines > 0 {
-			writeln!(
-				writer,
-				"\t\tShebangs: {} lines ({}%).",
-				ctx.number(language.shebang_lines),
-				ctx.percent(language.shebang_percentage)
+				"\t\t{}: {} lines ({}%).",
+				line_type.label,
+				ctx.number(line_type.count),
+				ctx.percent(line_type.percentage)
 			)?;
 		}
 		if verbose {

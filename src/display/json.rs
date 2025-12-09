@@ -3,7 +3,7 @@ use std::{io::Write, path::Path};
 use anyhow::Result;
 use serde_json::to_writer_pretty;
 
-use super::{FormatterContext, OutputFormatter, ReportData, ViewOptions};
+use super::{OutputFormatter, ViewOptions};
 use crate::analysis::AnalysisResults;
 
 pub struct JsonFormatter;
@@ -17,8 +17,7 @@ impl OutputFormatter for JsonFormatter {
 		view_options: ViewOptions,
 		writer: &mut dyn Write,
 	) -> Result<()> {
-		let ctx = FormatterContext::new(view_options);
-		let report = ReportData::from_results(results, path, verbose, &ctx);
+		let (_ctx, report) = self.prepare_report(results, path, verbose, view_options);
 		to_writer_pretty(&mut *writer, &report)?;
 		writeln!(writer)?;
 		Ok(())

@@ -1,4 +1,4 @@
-use std::sync::LazyLock;
+use std::{cell::RefCell, sync::LazyLock};
 
 use globset::{GlobBuilder, GlobSet, GlobSetBuilder};
 
@@ -27,17 +27,24 @@ pub(super) static LANGUAGE_GLOBSET: LazyLock<LanguageGlobs> = LazyLock::new(|| {
 	LanguageGlobs { set, pattern_lang_indexes }
 });
 
+thread_local! {
+	static SEEN_BUFFER: RefCell<Vec<bool>> = RefCell::new(vec![false; LANGUAGES.len()]);
+}
+
 #[inline]
 pub fn get_candidates(filename: &str) -> Vec<&'static Language> {
 	let globs = &*LANGUAGE_GLOBSET;
-	let mut seen = vec![false; LANGUAGES.len()];
-	let mut candidates = Vec::new();
-	for match_idx in globs.set.matches(filename) {
-		let lang_idx = globs.pattern_lang_indexes[match_idx];
-		if !seen[lang_idx] {
-			seen[lang_idx] = true;
-			candidates.push(&LANGUAGES[lang_idx]);
+	SEEN_BUFFER.with(|seen_cell| {
+		let mut seen = seen_cell.borrow_mut();
+		seen.fill(false);
+		let mut candidates = Vec::new();
+		for match_idx in globs.set.matches(filename) {
+			let lang_idx = globs.pattern_lang_indexes[match_idx];
+			if !seen[lang_idx] {
+				seen[lang_idx] = true;
+				candidates.push(&LANGUAGES[lang_idx]);
+			}
 		}
-	}
-	candidates
+		candidates
+	})
 }

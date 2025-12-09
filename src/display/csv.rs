@@ -3,7 +3,7 @@ use std::{io::Write, path::Path};
 use anyhow::Result;
 
 use super::{FormatterContext, OutputFormatter, ReportData, ViewOptions};
-use crate::{analysis::AnalysisResults, display::report::FormattedLanguage, utils};
+use crate::{analysis::AnalysisResults, display::report::LanguageRecord, utils};
 
 pub struct CsvFormatter;
 
@@ -16,29 +16,22 @@ impl OutputFormatter for CsvFormatter {
 		view_options: ViewOptions,
 		writer: &mut dyn Write,
 	) -> Result<()> {
-		let ctx = FormatterContext::new(view_options);
-		let report = ReportData::from_results(results, path, verbose, &ctx);
-		let languages = report.formatted_languages(&ctx);
+		let (ctx, report) = self.prepare_report(results, path, verbose, view_options);
 		if verbose {
-			Self::write_verbose(&report, &languages, &ctx, writer)
+			Self::write_verbose(&report, &ctx, writer)
 		} else {
-			Self::write_simple(&languages, writer)
+			Self::write_simple(&report.languages, &ctx, writer)
 		}
 	}
 }
 
 impl CsvFormatter {
-	fn write_verbose(
-		report: &ReportData,
-		languages: &[FormattedLanguage],
-		ctx: &FormatterContext,
-		writer: &mut dyn Write,
-	) -> Result<()> {
+	fn write_verbose(report: &ReportData, ctx: &FormatterContext, writer: &mut dyn Write) -> Result<()> {
 		Self::write_summary_section(report, ctx, writer)?;
 		writer.write_all(b"\n")?;
-		Self::write_language_section(languages, writer)?;
+		Self::write_language_section(&report.languages, ctx, writer)?;
 		writer.write_all(b"\n")?;
-		Self::write_files_sections(languages, writer)?;
+		Self::write_files_sections(&report.languages, ctx, writer)?;
 		Ok(())
 	}
 
@@ -69,17 +62,25 @@ impl CsvFormatter {
 		Ok(())
 	}
 
-	fn write_language_section(languages: &[FormattedLanguage], output: &mut dyn Write) -> Result<()> {
+	fn write_language_section(
+		languages: &[LanguageRecord],
+		ctx: &FormatterContext,
+		output: &mut dyn Write,
+	) -> Result<()> {
 		output.write_all(b"Language breakdown:\n")?;
 		Self::write_language_header(output)?;
 		for lang in languages {
-			Self::write_language_row(lang, output)?;
+			Self::write_language_row(lang, ctx, output)?;
 		}
 		output.write_all(b"\n")?;
 		Ok(())
 	}
 
-	fn write_files_sections(languages: &[FormattedLanguage], output: &mut dyn Write) -> Result<()> {
+	fn write_files_sections(
+		languages: &[LanguageRecord],
+		ctx: &FormatterContext,
+		output: &mut dyn Write,
+	) -> Result<()> {
 		for language in languages {
 			let Some(files) = &language.files_detail else {
 				continue;
@@ -103,13 +104,13 @@ impl CsvFormatter {
 					output,
 					&[
 						file_stat.path,
-						file_stat.total_lines.as_str(),
-						file_stat.code_lines.as_str(),
-						file_stat.comment_lines.as_str(),
-						file_stat.blank_lines.as_str(),
-						file_stat.shebang_lines.as_str(),
-						file_stat.size.as_str(),
-						file_stat.size_human,
+						&file_stat.format_total_lines(ctx),
+						&file_stat.format_code_lines(ctx),
+						&file_stat.format_comment_lines(ctx),
+						&file_stat.format_blank_lines(ctx),
+						&file_stat.format_shebang_lines(ctx),
+						&file_stat.format_size(ctx),
+						&file_stat.size_human,
 					],
 				)?;
 			}
@@ -118,10 +119,10 @@ impl CsvFormatter {
 		Ok(())
 	}
 
-	fn write_simple(languages: &[FormattedLanguage], output: &mut dyn Write) -> Result<()> {
+	fn write_simple(languages: &[LanguageRecord], ctx: &FormatterContext, output: &mut dyn Write) -> Result<()> {
 		Self::write_language_header(output)?;
 		for lang in languages {
-			Self::write_language_row(lang, output)?;
+			Self::write_language_row(lang, ctx, output)?;
 		}
 		Ok(())
 	}
@@ -148,23 +149,23 @@ impl CsvFormatter {
 		Ok(())
 	}
 
-	fn write_language_row(lang: &FormattedLanguage, output: &mut dyn Write) -> Result<()> {
+	fn write_language_row(lang: &LanguageRecord, ctx: &FormatterContext, output: &mut dyn Write) -> Result<()> {
 		Self::write_record(
 			output,
 			&[
 				lang.name,
-				lang.files.as_str(),
-				lang.lines.as_str(),
-				lang.code_lines.as_str(),
-				lang.comment_lines.as_str(),
-				lang.blank_lines.as_str(),
-				lang.shebang_lines.as_str(),
-				lang.size.as_str(),
-				lang.size_human,
-				lang.code_percentage.as_str(),
-				lang.comment_percentage.as_str(),
-				lang.blank_percentage.as_str(),
-				lang.shebang_percentage.as_str(),
+				&lang.format_files(ctx),
+				&lang.format_lines(ctx),
+				&lang.format_code_lines(ctx),
+				&lang.format_comment_lines(ctx),
+				&lang.format_blank_lines(ctx),
+				&lang.format_shebang_lines(ctx),
+				&lang.format_size(ctx),
+				&lang.size_human,
+				&lang.format_code_percentage(ctx),
+				&lang.format_comment_percentage(ctx),
+				&lang.format_blank_percentage(ctx),
+				&lang.format_shebang_percentage(ctx),
 			],
 		)?;
 		Ok(())

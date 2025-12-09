@@ -27,8 +27,7 @@ impl OutputFormatter for HtmlFormatter {
 		view_options: ViewOptions,
 		writer: &mut dyn Write,
 	) -> Result<()> {
-		let ctx = FormatterContext::new(view_options);
-		let report = ReportData::from_results(results, path, verbose, &ctx);
+		let (ctx, report) = self.prepare_report(results, path, verbose, view_options);
 		let languages = report.formatted_languages(&ctx);
 		Self::write_document(&report, &languages, verbose, &ctx, writer)
 	}
