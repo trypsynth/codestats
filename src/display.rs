@@ -26,18 +26,12 @@ pub use report::ReportData;
 
 use crate::analysis::AnalysisResults;
 
-/// Available output formats
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
 pub enum OutputFormat {
-	/// Emphasizes readability by printing a human-oriented summary.
 	Human,
-	/// Emits structured JSON that mirrors [`AnalysisResults`].
 	Json,
-	/// Emits rows that can be piped into other tools or spreadsheets.
 	Csv,
-	/// Creates Markdown tables ideal for README snippets.
 	Markdown,
-	/// Generates a friendly HTML summary.
 	Html,
 }
 
