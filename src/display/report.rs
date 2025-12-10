@@ -12,6 +12,21 @@ use crate::{
 	utils,
 };
 
+macro_rules! impl_formatters {
+	($type:ty {
+		$($method_name:ident => $field:ident : $formatter:ident),* $(,)?
+	}) => {
+		impl $type {
+			$(
+				#[must_use]
+				pub fn $method_name(&self, ctx: &FormatterContext) -> String {
+					ctx.$formatter(self.$field)
+				}
+			)*
+		}
+	};
+}
+
 #[derive(Debug, Serialize)]
 pub struct ReportData<'a> {
 	pub analysis_path: String,
@@ -220,62 +235,21 @@ impl<'a> LanguageRecord<'a> {
 			files_detail,
 		}
 	}
-
-	#[must_use]
-	pub fn format_files(&self, ctx: &FormatterContext) -> String {
-		ctx.number(self.files)
-	}
-
-	#[must_use]
-	pub fn format_lines(&self, ctx: &FormatterContext) -> String {
-		ctx.number(self.lines)
-	}
-
-	#[must_use]
-	pub fn format_code_lines(&self, ctx: &FormatterContext) -> String {
-		ctx.number(self.code_lines)
-	}
-
-	#[must_use]
-	pub fn format_comment_lines(&self, ctx: &FormatterContext) -> String {
-		ctx.number(self.comment_lines)
-	}
-
-	#[must_use]
-	pub fn format_blank_lines(&self, ctx: &FormatterContext) -> String {
-		ctx.number(self.blank_lines)
-	}
-
-	#[must_use]
-	pub fn format_shebang_lines(&self, ctx: &FormatterContext) -> String {
-		ctx.number(self.shebang_lines)
-	}
-
-	#[must_use]
-	pub fn format_size(&self, ctx: &FormatterContext) -> String {
-		ctx.number(self.size)
-	}
-
-	#[must_use]
-	pub fn format_code_percentage(&self, ctx: &FormatterContext) -> String {
-		ctx.percent(self.code_percentage)
-	}
-
-	#[must_use]
-	pub fn format_comment_percentage(&self, ctx: &FormatterContext) -> String {
-		ctx.percent(self.comment_percentage)
-	}
-
-	#[must_use]
-	pub fn format_blank_percentage(&self, ctx: &FormatterContext) -> String {
-		ctx.percent(self.blank_percentage)
-	}
-
-	#[must_use]
-	pub fn format_shebang_percentage(&self, ctx: &FormatterContext) -> String {
-		ctx.percent(self.shebang_percentage)
-	}
 }
+
+impl_formatters!(LanguageRecord<'_> {
+	format_files => files : number,
+	format_lines => lines : number,
+	format_code_lines => code_lines : number,
+	format_comment_lines => comment_lines : number,
+	format_blank_lines => blank_lines : number,
+	format_shebang_lines => shebang_lines : number,
+	format_size => size : number,
+	format_code_percentage => code_percentage : percent,
+	format_comment_percentage => comment_percentage : percent,
+	format_blank_percentage => blank_percentage : percent,
+	format_shebang_percentage => shebang_percentage : percent,
+});
 
 #[derive(Debug, Serialize)]
 pub struct FileRecord<'a> {
@@ -289,37 +263,14 @@ pub struct FileRecord<'a> {
 	pub size_human: String,
 }
 
-impl FileRecord<'_> {
-	#[must_use]
-	pub fn format_total_lines(&self, ctx: &FormatterContext) -> String {
-		ctx.number(self.total_lines)
-	}
-
-	#[must_use]
-	pub fn format_code_lines(&self, ctx: &FormatterContext) -> String {
-		ctx.number(self.code_lines)
-	}
-
-	#[must_use]
-	pub fn format_comment_lines(&self, ctx: &FormatterContext) -> String {
-		ctx.number(self.comment_lines)
-	}
-
-	#[must_use]
-	pub fn format_blank_lines(&self, ctx: &FormatterContext) -> String {
-		ctx.number(self.blank_lines)
-	}
-
-	#[must_use]
-	pub fn format_shebang_lines(&self, ctx: &FormatterContext) -> String {
-		ctx.number(self.shebang_lines)
-	}
-
-	#[must_use]
-	pub fn format_size(&self, ctx: &FormatterContext) -> String {
-		ctx.number(self.size)
-	}
-}
+impl_formatters!(FileRecord<'_> {
+	format_total_lines => total_lines : number,
+	format_code_lines => code_lines : number,
+	format_comment_lines => comment_lines : number,
+	format_blank_lines => blank_lines : number,
+	format_shebang_lines => shebang_lines : number,
+	format_size => size : number,
+});
 
 #[derive(Debug, Serialize)]
 pub struct FormattedLanguage<'a> {

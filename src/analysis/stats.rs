@@ -3,6 +3,29 @@ use crate::{
 	utils,
 };
 
+macro_rules! impl_percentage_methods {
+	($type:ty, $total_field:ident, $stats_field:ident) => {
+		impl $type {
+			#[must_use]
+			pub fn code_percentage(&self) -> f64 {
+				utils::percentage(self.$stats_field.code, self.$total_field)
+			}
+			#[must_use]
+			pub fn comment_percentage(&self) -> f64 {
+				utils::percentage(self.$stats_field.comment, self.$total_field)
+			}
+			#[must_use]
+			pub fn blank_percentage(&self) -> f64 {
+				utils::percentage(self.$stats_field.blank, self.$total_field)
+			}
+			#[must_use]
+			pub fn shebang_percentage(&self) -> f64 {
+				utils::percentage(self.$stats_field.shebang, self.$total_field)
+			}
+		}
+	};
+}
+
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 struct LineStats {
 	code: u64,
@@ -209,31 +232,9 @@ impl LanguageStats {
 	pub fn files_list(&self) -> &[FileStats] {
 		&self.file_list
 	}
-
-	/// Get the percentage of code lines relative to total lines for this language
-	#[must_use]
-	pub fn code_percentage(&self) -> f64 {
-		utils::percentage(self.line_stats.code, self.lines)
-	}
-
-	/// Get the percentage of comment lines relative to total lines for this language
-	#[must_use]
-	pub fn comment_percentage(&self) -> f64 {
-		utils::percentage(self.line_stats.comment, self.lines)
-	}
-
-	/// Get the percentage of blank lines relative to total lines for this language
-	#[must_use]
-	pub fn blank_percentage(&self) -> f64 {
-		utils::percentage(self.line_stats.blank, self.lines)
-	}
-
-	/// Get the percentage of shebang lines relative to total lines for this language
-	#[must_use]
-	pub fn shebang_percentage(&self) -> f64 {
-		utils::percentage(self.line_stats.shebang, self.lines)
-	}
 }
+
+impl_percentage_methods!(LanguageStats, lines, line_stats);
 
 /// Results of a code analysis operation
 #[derive(Debug)]
@@ -328,28 +329,6 @@ impl AnalysisResults {
 			(stats.files() > 0).then_some((lang, stats))
 		})
 	}
-
-	/// Get the percentage of code lines relative to total lines
-	#[must_use]
-	pub fn code_percentage(&self) -> f64 {
-		utils::percentage(self.line_stats.code, self.total_lines)
-	}
-
-	/// Get the percentage of comment lines relative to total lines
-	#[must_use]
-	pub fn comment_percentage(&self) -> f64 {
-		utils::percentage(self.line_stats.comment, self.total_lines)
-	}
-
-	/// Get the percentage of blank lines relative to total lines
-	#[must_use]
-	pub fn blank_percentage(&self) -> f64 {
-		utils::percentage(self.line_stats.blank, self.total_lines)
-	}
-
-	/// Get the percentage of shebang lines relative to total lines
-	#[must_use]
-	pub fn shebang_percentage(&self) -> f64 {
-		utils::percentage(self.line_stats.shebang, self.total_lines)
-	}
 }
+
+impl_percentage_methods!(AnalysisResults, total_lines, line_stats);

@@ -11,88 +11,117 @@ use std::{
 };
 
 use indexmap::IndexMap;
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer, de};
 
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct LanguageConfig {
-	file_patterns: Vec<String>,
-	#[serde(default)]
-	line_comments: Vec<String>,
-	#[serde(default)]
-	block_comments: Vec<Vec<String>>,
-	#[serde(default)]
-	nested_blocks: bool,
-	#[serde(default)]
-	shebangs: Vec<String>,
-	#[serde(default)]
-	keywords: Vec<String>,
-}
-
-#[derive(Debug, Clone)]
-struct ProcessedLanguage {
-	name: String,
-	file_patterns: Vec<String>,
-	line_comments: Vec<String>,
-	block_comments: Vec<(String, String)>,
-	nested_blocks: bool,
-	shebangs: Vec<String>,
-	keywords: Vec<String>,
-}
-
-impl ProcessedLanguage {
-	fn from_config(name: String, config: LanguageConfig) -> result::Result<Self, String> {
-		let LanguageConfig { file_patterns, line_comments, block_comments, nested_blocks, shebangs, keywords } = config;
-		let mut errors = Vec::new();
-		let mut parsed_block_comments = Vec::new();
-		for (idx, pair) in block_comments.into_iter().enumerate() {
-			match pair.as_slice() {
-				[start, end] => parsed_block_comments.push((start.clone(), end.clone())),
-				[] => errors.push(format!("Language '{name}', block comment {}: start/end cannot be empty", idx + 1)),
-				[_single] => {
-					errors.push(format!("Language '{name}', block comment {}: missing end delimiter", idx + 1));
-				}
-				[_, _, ..] => errors.push(format!(
-					"Language '{name}', block comment {}: only start and end delimiters are supported",
-					idx + 1
-				)),
-			}
-		}
-		if errors.is_empty() {
-			Ok(Self {
-				name,
-				file_patterns,
-				line_comments,
-				block_comments: parsed_block_comments,
-				nested_blocks,
-				shebangs,
-				keywords,
-			})
+fn validate_no_whitespace(s: &str, field: &str, idx: Option<usize>) -> result::Result<(), String> {
+	if s.trim() != s {
+		let msg = if let Some(i) = idx {
+			format!("{field} {}: has leading/trailing whitespace", i + 1)
 		} else {
-			Err(errors.join("\n"))
-		}
+			format!("{field}: has leading/trailing whitespace")
+		};
+		Err(msg)
+	} else {
+		Ok(())
 	}
 }
 
-fn get_language_schema() -> Vec<(&'static str, &'static str)> {
-	vec![
-		("index", "usize"),
-		("name", "&'static str"),
-		("file_patterns", "&'static [&'static str]"),
-		("line_comments", "&'static [&'static str]"),
-		("block_comments", "&'static [(&'static str, &'static str)]"),
-		("nested_blocks", "bool"),
-		("shebangs", "&'static [&'static str]"),
-		("keywords", "&'static [&'static str]"),
-	]
+fn deserialize_file_patterns<'de, D>(deserializer: D) -> result::Result<Vec<String>, D::Error>
+where
+	D: Deserializer<'de>,
+{
+	let patterns: Vec<String> = Vec::deserialize(deserializer)?;
+	if patterns.is_empty() {
+		return Err(de::Error::custom("file_patterns cannot be empty"));
+	}
+	for (idx, pattern) in patterns.iter().enumerate() {
+		if pattern.is_empty() {
+			return Err(de::Error::custom(format!("pattern {}: cannot be empty", idx + 1)));
+		}
+		validate_no_whitespace(pattern, "pattern", Some(idx)).map_err(de::Error::custom)?;
+	}
+	Ok(patterns)
 }
 
-fn render_languages(languages: &[ProcessedLanguage]) -> String {
+fn deserialize_line_comments<'de, D>(deserializer: D) -> result::Result<Vec<String>, D::Error>
+where
+	D: Deserializer<'de>,
+{
+	let comments: Vec<String> = Vec::deserialize(deserializer)?;
+	for (idx, comment) in comments.iter().enumerate() {
+		if comment.is_empty() {
+			return Err(de::Error::custom(format!("line comment {}: cannot be empty", idx + 1)));
+		}
+	}
+	Ok(comments)
+}
+
+fn deserialize_block_comments<'de, D>(deserializer: D) -> result::Result<Vec<(String, String)>, D::Error>
+where
+	D: Deserializer<'de>,
+{
+	let pairs: Vec<Vec<String>> = Vec::deserialize(deserializer)?;
+	let mut result = Vec::with_capacity(pairs.len());
+	for (idx, pair) in pairs.into_iter().enumerate() {
+		match pair.as_slice() {
+			[start, end] if !start.is_empty() && !end.is_empty() => {
+				result.push((start.clone(), end.clone()));
+			}
+			[start, _end] if start.is_empty() => {
+				return Err(de::Error::custom(format!("block comment {}: start cannot be empty", idx + 1)));
+			}
+			[_, end] if end.is_empty() => {
+				return Err(de::Error::custom(format!("block comment {}: end cannot be empty", idx + 1)));
+			}
+			[] => return Err(de::Error::custom(format!("block comment {}: start/end cannot be empty", idx + 1))),
+			[_] => return Err(de::Error::custom(format!("block comment {}: missing end delimiter", idx + 1))),
+			[_, _, ..] => {
+				return Err(de::Error::custom(format!(
+					"block comment {}: only start and end delimiters are supported",
+					idx + 1
+				)));
+			}
+		}
+	}
+	Ok(result)
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct LanguageConfig {
+	#[serde(skip)]
+	name: String,
+	#[serde(deserialize_with = "deserialize_file_patterns")]
+	file_patterns: Vec<String>,
+	#[serde(default, deserialize_with = "deserialize_line_comments")]
+	line_comments: Vec<String>,
+	#[serde(default, deserialize_with = "deserialize_block_comments")]
+	block_comments: Vec<(String, String)>,
+	#[serde(default)]
+	nested_blocks: bool,
+	#[serde(default)]
+	shebangs: Vec<String>,
+	#[serde(default)]
+	keywords: Vec<String>,
+}
+
+const LANGUAGE_SCHEMA: &[(&str, &str)] = &[
+	("index", "usize"),
+	("name", "&'static str"),
+	("file_patterns", "&'static [&'static str]"),
+	("line_comments", "&'static [&'static str]"),
+	("block_comments", "&'static [(&'static str, &'static str)]"),
+	("nested_blocks", "bool"),
+	("shebangs", "&'static [&'static str]"),
+	("keywords", "&'static [&'static str]"),
+];
+
+fn render_languages(languages: &[LanguageConfig]) -> String {
 	let mut output = String::new();
 	output.push_str("#[derive(Debug, Clone, PartialEq, Eq)]\n");
 	output.push_str("/// Holds information about a single programming language.\n");
 	output.push_str("pub struct Language {\n");
-	for (field, ty) in get_language_schema() {
+	for (field, ty) in LANGUAGE_SCHEMA {
 		let _ = writeln!(output, "\tpub {field}: {ty},");
 	}
 	output.push_str("}\n\n");
@@ -100,7 +129,7 @@ fn render_languages(languages: &[ProcessedLanguage]) -> String {
 	for (idx, lang) in languages.iter().enumerate() {
 		output.push_str("\tLanguage {\n");
 		let _ = writeln!(output, "\t\tindex: {idx},");
-		let _ = writeln!(output, "\t\tname: {},", render_str(&lang.name));
+		let _ = writeln!(output, "\t\tname: {:?},", lang.name);
 		let _ = writeln!(output, "\t\tfile_patterns: {},", render_str_slice(&lang.file_patterns));
 		let _ = writeln!(output, "\t\tline_comments: {},", render_str_slice(&lang.line_comments));
 		let _ = writeln!(output, "\t\tblock_comments: {},", render_block_comments(&lang.block_comments));
@@ -113,15 +142,11 @@ fn render_languages(languages: &[ProcessedLanguage]) -> String {
 	output
 }
 
-fn render_str(value: &str) -> String {
-	format!("{value:?}")
-}
-
 fn render_str_slice(values: &[String]) -> String {
 	if values.is_empty() {
 		"&[]".to_string()
 	} else {
-		let joined = values.iter().map(|value| render_str(value)).collect::<Vec<String>>().join(", ");
+		let joined = values.iter().map(|v| format!("{v:?}")).collect::<Vec<_>>().join(", ");
 		format!("&[{joined}]")
 	}
 }
@@ -130,22 +155,18 @@ fn render_block_comments(values: &[(String, String)]) -> String {
 	if values.is_empty() {
 		"&[]".to_string()
 	} else {
-		let joined = values
-			.iter()
-			.map(|(start, end)| format!("({}, {})", render_str(start), render_str(end)))
-			.collect::<Vec<String>>()
-			.join(", ");
+		let joined = values.iter().map(|(s, e)| format!("({s:?}, {e:?})")).collect::<Vec<_>>().join(", ");
 		format!("&[{joined}]")
 	}
 }
 
-fn normalize_languages(entries: IndexMap<String, LanguageConfig>) -> Result<Vec<ProcessedLanguage>> {
+fn normalize_languages(entries: IndexMap<String, LanguageConfig>) -> Result<Vec<LanguageConfig>> {
 	let mut errors = Vec::new();
 	let mut prev_name: Option<String> = None;
-	let languages: Vec<ProcessedLanguage> = entries
+	let languages: Vec<LanguageConfig> = entries
 		.into_iter()
 		.enumerate()
-		.filter_map(|(index, (name, config))| {
+		.filter_map(|(index, (name, mut config))| {
 			if name.trim().is_empty() {
 				errors.push(format!("Language at position {}: name cannot be empty", index + 1));
 				return None;
@@ -157,13 +178,8 @@ fn normalize_languages(entries: IndexMap<String, LanguageConfig>) -> Result<Vec<
 				}
 			}
 			prev_name = Some(name.clone());
-			match ProcessedLanguage::from_config(name, config) {
-				Ok(lang) => Some(lang),
-				Err(err) => {
-					errors.push(err);
-					None
-				}
-			}
+			config.name = name;
+			Some(config)
 		})
 		.collect();
 	if errors.is_empty() { Ok(languages) } else { Err(errors.join("\n").into()) }
@@ -199,90 +215,22 @@ impl LanguageValidator {
 		Self { errors: Vec::new(), seen_names: HashSet::new(), seen_patterns: HashMap::new() }
 	}
 
-	fn validate_all(&mut self, languages: &[ProcessedLanguage]) {
-		for (index, lang) in languages.iter().enumerate() {
-			let position = format!("Language at position {}", index + 1);
-			self.validate_language(lang, &position);
+	fn validate_all(&mut self, languages: &[LanguageConfig]) {
+		for lang in languages {
+			if !self.seen_names.insert(lang.name.clone()) {
+				self.errors.push(format!("Duplicate language name '{}'", lang.name));
+			}
+			if lang.name.trim() != lang.name {
+				self.errors.push(format!("Language '{}': name has leading/trailing whitespace", lang.name));
+			}
+			for pattern in &lang.file_patterns {
+				self.seen_patterns.entry(pattern.clone()).or_default().push(lang.name.clone());
+			}
 		}
 		self.validate_pattern_disambiguation(languages);
 	}
 
-	fn validate_language(&mut self, lang: &ProcessedLanguage, position: &str) {
-		self.validate_name(lang, position);
-		self.validate_file_patterns(lang, position);
-		self.validate_comments(lang, position);
-	}
-
-	fn validate_name(&mut self, lang: &ProcessedLanguage, position: &str) {
-		if lang.name.is_empty() {
-			self.errors.push(format!("{position}: 'name' field cannot be empty"));
-		}
-		if !self.seen_names.insert(lang.name.clone()) {
-			self.errors.push(format!("{position}: Duplicate language name '{}'", lang.name));
-		}
-		if lang.name.trim() != lang.name {
-			self.errors.push(format!("{} ('{}'): Language name has leading/trailing whitespace", position, lang.name));
-		}
-		if lang.file_patterns.is_empty() {
-			self.errors.push(format!("{} ('{}'): 'file_patterns' field cannot be empty", position, lang.name));
-		}
-	}
-
-	fn validate_file_patterns(&mut self, lang: &ProcessedLanguage, position: &str) {
-		for (pattern_idx, pattern) in lang.file_patterns.iter().enumerate() {
-			if pattern.is_empty() {
-				self.errors.push(format!(
-					"{} ('{}'), pattern {}: File pattern cannot be empty",
-					position,
-					lang.name,
-					pattern_idx + 1
-				));
-			}
-			if pattern.trim() != pattern {
-				self.errors.push(format!(
-					"{} ('{}'), pattern {}: File pattern '{}' has leading/trailing whitespace",
-					position,
-					lang.name,
-					pattern_idx + 1,
-					pattern
-				));
-			}
-			self.seen_patterns.entry(pattern.clone()).or_default().push(lang.name.clone());
-		}
-	}
-
-	fn validate_comments(&mut self, lang: &ProcessedLanguage, position: &str) {
-		for (comment_idx, comment) in lang.line_comments.iter().enumerate() {
-			if comment.is_empty() {
-				self.errors.push(format!(
-					"{} ('{}'), line comment {}: Line comment cannot be empty",
-					position,
-					lang.name,
-					comment_idx + 1
-				));
-			}
-		}
-		for (comment_idx, block_comment) in lang.block_comments.iter().enumerate() {
-			if block_comment.0.is_empty() {
-				self.errors.push(format!(
-					"{} ('{}'), block comment {}: Block comment start cannot be empty",
-					position,
-					lang.name,
-					comment_idx + 1
-				));
-			}
-			if block_comment.1.is_empty() {
-				self.errors.push(format!(
-					"{} ('{}'), block comment {}: Block comment end cannot be empty",
-					position,
-					lang.name,
-					comment_idx + 1
-				));
-			}
-		}
-	}
-
-	fn validate_pattern_disambiguation(&mut self, languages: &[ProcessedLanguage]) {
+	fn validate_pattern_disambiguation(&mut self, languages: &[LanguageConfig]) {
 		for (pattern, language_names) in &self.seen_patterns {
 			if language_names.len() > 1 {
 				let all_have_keywords = language_names
@@ -310,7 +258,7 @@ impl LanguageValidator {
 	}
 }
 
-fn validate_languages(languages: &[ProcessedLanguage]) -> Result<()> {
+fn validate_languages(languages: &[LanguageConfig]) -> Result<()> {
 	let mut validator = LanguageValidator::new();
 	validator.validate_all(languages);
 	validator.into_result()

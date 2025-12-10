@@ -60,41 +60,11 @@ impl CommentState {
 }
 
 #[inline]
-fn handle_block_comments_non_nested<'a>(
+fn handle_block_comments<'a>(
 	line: &'a str,
 	matchers: &BlockCommentMatchers,
 	comment_state: &mut CommentState,
-) -> (&'a str, bool) {
-	let mut line_remainder = line;
-	let mut has_code = false;
-
-	loop {
-		if !comment_state.in_block_comment {
-			if let Some((pos, start_len)) = matchers.find_block_start(line_remainder) {
-				if pos > 0 && contains_non_whitespace(&line_remainder[..pos]) {
-					has_code = true;
-				}
-				line_remainder = &line_remainder[pos + start_len..];
-				comment_state.in_block_comment = true;
-			} else {
-				break;
-			}
-		} else if let Some((pos, end_len, _)) = matchers.find_block_end_or_nested_start(line_remainder, false) {
-			comment_state.in_block_comment = false;
-			line_remainder = &line_remainder[pos + end_len..];
-		} else {
-			break;
-		}
-	}
-
-	(line_remainder, has_code)
-}
-
-#[inline]
-fn handle_block_comments_nested<'a>(
-	line: &'a str,
-	matchers: &BlockCommentMatchers,
-	comment_state: &mut CommentState,
+	nested: bool,
 ) -> (&'a str, bool) {
 	let mut line_remainder = line;
 	let mut has_code = false;
@@ -105,17 +75,17 @@ fn handle_block_comments_nested<'a>(
 					has_code = true;
 				}
 				line_remainder = &line_remainder[pos + start_len..];
-				comment_state.enter_first_block(true);
+				comment_state.enter_first_block(nested);
 			} else {
 				break;
 			}
 		} else if let Some((pos, len, found_nested_start)) =
-			matchers.find_block_end_or_nested_start(line_remainder, true)
+			matchers.find_block_end_or_nested_start(line_remainder, nested)
 		{
-			if found_nested_start {
+			if nested && found_nested_start {
 				comment_state.enter_nested_block();
 			} else {
-				comment_state.exit_block(true);
+				comment_state.exit_block(nested);
 			}
 			line_remainder = &line_remainder[pos + len..];
 		} else {
@@ -150,11 +120,7 @@ pub fn classify_line(
 	let matchers = language_matchers(lang);
 	#[expect(clippy::option_if_let_else)]
 	let mut has_code = if let Some(block_comments) = matchers.block_comments.as_ref() {
-		let (remainder, found_code) = if lang.nested_blocks {
-			handle_block_comments_nested(trimmed, block_comments, comment_state)
-		} else {
-			handle_block_comments_non_nested(trimmed, block_comments, comment_state)
-		};
+		let (remainder, found_code) = handle_block_comments(trimmed, block_comments, comment_state, lang.nested_blocks);
 		line_remainder = remainder;
 		found_code
 	} else {
