@@ -1,9 +1,9 @@
-use std::{io::Write, path::Path};
+use std::{borrow::Cow, io::Write, path::Path};
 
 use anyhow::Result;
 
 use super::{FormatterContext, OutputFormatter, ReportData, ViewOptions};
-use crate::{analysis::AnalysisResults, display::report::LanguageRecord, utils};
+use crate::{analysis::AnalysisResults, display::report::LanguageRecord};
 
 pub struct CsvFormatter;
 
@@ -183,7 +183,16 @@ impl CsvFormatter {
 	}
 
 	fn write_csv_field(output: &mut dyn Write, field: &str) -> Result<()> {
-		output.write_all(utils::escape_csv_field(field).as_bytes())?;
+		output.write_all(CsvFormatter::escape_csv_field(field).as_bytes())?;
 		Ok(())
+	}
+
+	fn escape_csv_field(field: &str) -> Cow<'_, str> {
+		let needs_quotes = field.contains(',') || field.contains('"') || field.contains('\n') || field.contains('\r');
+		if !needs_quotes {
+			return Cow::Borrowed(field);
+		}
+		let escaped = field.replace('"', "\"\"");
+		Cow::Owned(format!("\"{escaped}\""))
 	}
 }
