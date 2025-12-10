@@ -24,8 +24,8 @@ pub use json_compact::JsonCompactFormatter;
 pub use markdown::MarkdownFormatter;
 pub use options::{LanguageSortKey, NumberStyle, SizeStyle, SortDirection, ViewOptions};
 pub use report::ReportData;
-use serde::{Deserialize, Serialize};
 pub use separated_values::{CsvFormatter, TsvFormatter};
+use serde::{Deserialize, Serialize};
 
 use crate::analysis::AnalysisResults;
 
