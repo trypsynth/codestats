@@ -81,8 +81,9 @@ fn score_symbol_only_language(lang: &Language, content: &str, tokens: &[&str]) -
 	if matched_chars == 0 {
 		return 0;
 	}
-	let ratio = matched_chars as f64 / non_whitespace as f64;
-	if ratio < 0.3 {
+	let matched_chars_u128 = matched_chars as u128;
+	let non_whitespace_u128 = non_whitespace as u128;
+	if matched_chars_u128.saturating_mul(10) < non_whitespace_u128.saturating_mul(3) {
 		return 0;
 	}
 	let clamped = matched_chars.min(usize::try_from(i32::MAX / 10).unwrap_or(usize::MAX));
