@@ -74,37 +74,25 @@ impl Default for DisplayConfig {
 	}
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct AnalyzerConfig {
 	pub verbose: bool,
-	pub traversal: TraversalOptions,
-	pub detail_level: DetailLevel,
-}
-
-#[derive(Clone, Copy, Debug)]
-pub struct TraversalOptions {
 	pub respect_gitignore: bool,
 	pub include_hidden: bool,
 	pub follow_symlinks: bool,
+	pub collect_file_details: bool,
 }
 
-impl Default for TraversalOptions {
+impl Default for AnalyzerConfig {
 	fn default() -> Self {
-		Self { respect_gitignore: true, include_hidden: false, follow_symlinks: false }
-	}
-}
-
-#[derive(Clone, Copy, Debug, Default)]
-pub enum DetailLevel {
-	#[default]
-	Summary,
-	PerFile,
-}
-
-impl DetailLevel {
-	#[must_use]
-	pub(crate) const fn collect_file_details(self) -> bool {
-		matches!(self, Self::PerFile)
+		Self {
+			verbose: false,
+			respect_gitignore: true,
+			include_hidden: false,
+			follow_symlinks: false,
+			collect_file_details: false,
+		}
 	}
 }
 
@@ -183,12 +171,10 @@ impl From<&Config> for AnalyzerConfig {
 	fn from(config: &Config) -> Self {
 		Self {
 			verbose: config.analysis.verbose,
-			traversal: TraversalOptions {
-				respect_gitignore: config.analysis.respect_gitignore,
-				include_hidden: config.analysis.include_hidden,
-				follow_symlinks: config.analysis.follow_symlinks,
-			},
-			detail_level: if config.analysis.verbose { DetailLevel::PerFile } else { DetailLevel::Summary },
+			respect_gitignore: config.analysis.respect_gitignore,
+			include_hidden: config.analysis.include_hidden,
+			follow_symlinks: config.analysis.follow_symlinks,
+			collect_file_details: config.analysis.verbose,
 		}
 	}
 }

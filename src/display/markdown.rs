@@ -1,10 +1,20 @@
 use std::{io::Write, path::Path};
 
 use anyhow::Result;
-use askama::Template;
+use askama::{Result as AskamaResult, Template, Values};
 
 use super::{FormatterContext, OutputFormatter, ReportData, ViewOptions};
-use crate::{analysis::AnalysisResults, display::report::FormattedLanguage, filters};
+use crate::{analysis::AnalysisResults, display::report::FormattedLanguage};
+
+/// Escape Markdown table cells by escaping the pipe separator.
+#[expect(clippy::unnecessary_wraps)]
+pub fn md_escape(value: &str, _values: &dyn Values) -> AskamaResult<String> {
+	Ok(value.replace('|', "\\|"))
+}
+
+mod filters {
+	pub use super::md_escape;
+}
 
 #[derive(Template)]
 #[template(path = "report.md", escape = "none")]

@@ -54,16 +54,16 @@ impl CodeAnalyzer {
 	pub fn analyze(&self) -> Result<AnalysisResults> {
 		let error_counter = Arc::new(AtomicU64::new(0));
 		let verbose = self.config.verbose;
-		let collect_details = self.config.detail_level.collect_file_details();
+		let collect_details = self.config.collect_file_details;
 		let aggregates = Arc::new(Mutex::new(Vec::new()));
 		let aggregates_for_walk = Arc::clone(&aggregates);
 		let error_counter_for_walk = Arc::clone(&error_counter);
 		WalkBuilder::new(&self.root)
-			.follow_links(self.config.traversal.follow_symlinks)
-			.ignore(self.config.traversal.respect_gitignore)
-			.git_ignore(self.config.traversal.respect_gitignore)
+			.follow_links(self.config.follow_symlinks)
+			.ignore(self.config.respect_gitignore)
+			.git_ignore(self.config.respect_gitignore)
 			.require_git(false)
-			.hidden(!self.config.traversal.include_hidden)
+			.hidden(!self.config.include_hidden)
 			.build_parallel()
 			.run(move || {
 				let mut aggregator =

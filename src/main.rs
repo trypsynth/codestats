@@ -4,7 +4,6 @@ mod analysis;
 mod cli;
 mod config;
 mod display;
-mod filters;
 mod langs;
 mod utils;
 
