@@ -1102,6 +1102,10 @@
 		file_patterns: ["*.mak", "*.make", "*.mk", "*.mkfile", "BSDmakefile", "GNUmakefile", "Kbuild", "Makefile", "Makefile.boot", "Makefile.frag", "Makefile.in", "Makefile.inc", "Makefile.wat", "makefile", "makefile.sco", "mkfile"],
 		line_comments: ["#"],
 	},
+	"MAML": {
+		file_patterns: ["*.maml"],
+		line_comments: ["#"],
+	},
 	"Markdown": {
 		file_patterns: ["*.md", "*.markdown", "*.mdx", "*.mdown", "*.mdwn", "*.mkd", "*.mkdn", "*.mkdown", "*.ronn"],
 		block_comments: [["<!--", "-->"]],
@@ -1943,11 +1947,20 @@
 		line_comments: ["#", "//"],
 		block_comments: [["/*", "*/"]],
 	},
+	"Web Services Description Language": {
+		file_patterns: ["*.wsdl"],
+		block_comments: [["<!--", "-->"]],
+	},
 	"WebAssembly": {
 		file_patterns: ["*.wat", "*.wasm"],
 		line_comments: [";;"],
 		block_comments: [["(;", ";)"]],
 		nested_blocks: true,
+	},
+	"WebGPU Shading Language": {
+		file_patterns: ["*.wgsl"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
 	},
 	"WebIDL": {
 		file_patterns: ["*.webidl"],
@@ -1958,11 +1971,6 @@
 		file_patterns: ["*.wy"],
 		line_comments: ["注曰", "//"],
 		block_comments: [["凡", "是謂"]],
-	},
-	"WGSL": {
-		file_patterns: ["*.wgsl"],
-		line_comments: ["//"],
-		block_comments: [["/*", "*/"]],
 	},
 	"Windows Registry Entry": {
 		file_patterns: ["*.reg"],
@@ -1995,6 +2003,9 @@
 	"XML": {
 		file_patterns: ["*.xml", "*.xsl", "*.xslt"],
 		block_comments: [["<!--", "-->"]],
+	},
+	"XML Schema Definition": {
+		file_patterns: ["*.xsd"],
 	},
 	"Xonsh": {
 		file_patterns: ["*.xsh"],
