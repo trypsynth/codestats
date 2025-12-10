@@ -10,7 +10,8 @@ use std::{
 use anyhow::Result;
 use ignore::WalkBuilder;
 
-use super::{config::AnalyzerConfig, file_processor, stats::AnalysisResults};
+use super::{file_processor, stats::AnalysisResults};
+use crate::config::AnalyzerConfig;
 
 struct LocalAggregator {
 	sink: Arc<Mutex<Vec<AnalysisResults>>>,

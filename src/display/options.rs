@@ -1,6 +1,8 @@
 use clap::ValueEnum;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum, Deserialize, Serialize)]
+#[serde(rename_all = "lowercase")]
 pub enum NumberStyle {
 	Plain,
 	Comma,
@@ -8,14 +10,16 @@ pub enum NumberStyle {
 	Space,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum, Deserialize, Serialize)]
+#[serde(rename_all = "lowercase")]
 pub enum SizeStyle {
 	Binary,
 	Decimal,
 }
 
 /// Field used when ordering languages (and optionally files).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum, Deserialize, Serialize)]
+#[serde(rename_all = "lowercase")]
 pub enum LanguageSortKey {
 	Lines,
 	Code,
@@ -27,7 +31,8 @@ pub enum LanguageSortKey {
 }
 
 /// Direction for applying a sort key.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum, Deserialize, Serialize)]
+#[serde(rename_all = "lowercase")]
 pub enum SortDirection {
 	Asc,
 	Desc,

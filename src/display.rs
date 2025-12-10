@@ -25,10 +25,12 @@ pub use json_compact::JsonCompactFormatter;
 pub use markdown::MarkdownFormatter;
 pub use options::{LanguageSortKey, NumberStyle, SizeStyle, SortDirection, ViewOptions};
 pub use report::ReportData;
+use serde::{Deserialize, Serialize};
 
 use crate::analysis::AnalysisResults;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
 pub enum OutputFormat {
 	Human,
 	Json,

@@ -10,6 +10,9 @@ use crate::display::{LanguageSortKey, NumberStyle, OutputFormat, SizeStyle, Sort
 // CLI flags necessarily map to booleans, so clippy::struct_excessive_bools would just add noise here.
 #[allow(clippy::struct_excessive_bools)]
 pub struct Cli {
+	/// Path to configuration file (TOML format)
+	#[arg(short = 'c', long = "config")]
+	pub config: Option<PathBuf>,
 	/// List all supported programming languages and exit without running analysis.
 	#[arg(short = 'l', long = "langs")]
 	pub langs: bool,
