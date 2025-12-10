@@ -5,15 +5,58 @@ use anyhow::Result;
 use super::{FormatterContext, OutputFormatter, ReportData, ViewOptions};
 use crate::{analysis::AnalysisResults, display::report::LanguageRecord};
 
-pub struct SeparatedValuesFormatter<const DELIMITER: u8>;
+/// Trait for field escaping strategies in separated value formats.
+pub trait FieldEscaper {
+	fn escape(field: &str) -> Cow<'_, str>;
+}
 
-impl<const DELIMITER: u8> Default for SeparatedValuesFormatter<DELIMITER> {
-	fn default() -> Self {
-		Self
+/// CSV-style escaping: wrap fields in quotes if they contain delimiter/quotes/newlines, and escape internal quotes by doubling them.
+pub struct CsvEscaper;
+
+impl FieldEscaper for CsvEscaper {
+	fn escape(field: &str) -> Cow<'_, str> {
+		let needs_quotes = field.contains(',') || field.contains('"') || field.contains('\n') || field.contains('\r');
+		if !needs_quotes {
+			return Cow::Borrowed(field);
+		}
+		let escaped = field.replace('"', "\"\"");
+		Cow::Owned(format!("\"{escaped}\""))
 	}
 }
 
-impl<const DELIMITER: u8> OutputFormatter for SeparatedValuesFormatter<DELIMITER> {
+/// TSV-style escaping: use backslash escapes for special characters.
+pub struct TsvEscaper;
+
+impl FieldEscaper for TsvEscaper {
+	fn escape(field: &str) -> Cow<'_, str> {
+		if !field.contains(&['\\', '\t', '\n', '\r'][..]) {
+			return Cow::Borrowed(field);
+		}
+		let mut result = String::with_capacity(field.len());
+		for ch in field.chars() {
+			match ch {
+				'\\' => result.push_str("\\\\"),
+				'\t' => result.push_str("\\t"),
+				'\n' => result.push_str("\\n"),
+				'\r' => result.push_str("\\r"),
+				_ => result.push(ch),
+			}
+		}
+		Cow::Owned(result)
+	}
+}
+
+pub struct SeparatedValuesFormatter<const DELIMITER: u8, E: FieldEscaper> {
+	_escaper: std::marker::PhantomData<E>,
+}
+
+impl<const DELIMITER: u8, E: FieldEscaper> Default for SeparatedValuesFormatter<DELIMITER, E> {
+	fn default() -> Self {
+		Self { _escaper: std::marker::PhantomData }
+	}
+}
+
+impl<const DELIMITER: u8, E: FieldEscaper> OutputFormatter for SeparatedValuesFormatter<DELIMITER, E> {
 	fn write_output(
 		&self,
 		results: &AnalysisResults,
@@ -31,7 +74,7 @@ impl<const DELIMITER: u8> OutputFormatter for SeparatedValuesFormatter<DELIMITER
 	}
 }
 
-impl<const DELIMITER: u8> SeparatedValuesFormatter<DELIMITER> {
+impl<const DELIMITER: u8, E: FieldEscaper> SeparatedValuesFormatter<DELIMITER, E> {
 	fn write_verbose(report: &ReportData, ctx: &FormatterContext, writer: &mut dyn Write) -> Result<()> {
 		Self::write_summary_section(report, ctx, writer)?;
 		writer.write_all(b"\n")?;
@@ -189,20 +232,10 @@ impl<const DELIMITER: u8> SeparatedValuesFormatter<DELIMITER> {
 	}
 
 	fn write_field(output: &mut dyn Write, field: &str) -> Result<()> {
-		output.write_all(Self::escape_field(field).as_bytes())?;
+		output.write_all(E::escape(field).as_bytes())?;
 		Ok(())
-	}
-
-	fn escape_field(field: &str) -> Cow<'_, str> {
-		let delimiter = char::from(DELIMITER);
-		let needs_quotes =
-			field.contains(delimiter) || field.contains('"') || field.contains('\n') || field.contains('\r');
-		if !needs_quotes {
-			return Cow::Borrowed(field);
-		}
-		let escaped = field.replace('"', "\"\"");
-		Cow::Owned(format!("\"{escaped}\""))
 	}
 }
 
-pub type CsvFormatter = SeparatedValuesFormatter<b','>;
+pub type CsvFormatter = SeparatedValuesFormatter<b',', CsvEscaper>;
+pub type TsvFormatter = SeparatedValuesFormatter<b'\t', TsvEscaper>;

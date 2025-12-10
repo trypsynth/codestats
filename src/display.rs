@@ -1,4 +1,3 @@
-mod csv;
 mod formatting;
 mod html;
 mod human;
@@ -7,7 +6,7 @@ mod json_compact;
 mod markdown;
 mod options;
 mod report;
-mod tsv;
+mod separated_values;
 
 use std::{
 	fmt::{self, Display},
@@ -17,7 +16,6 @@ use std::{
 
 use anyhow::Result;
 use clap::ValueEnum;
-pub use csv::CsvFormatter;
 pub use formatting::{FormatterContext, apply_sort};
 pub use html::HtmlFormatter;
 pub use human::HumanFormatter;
@@ -27,7 +25,7 @@ pub use markdown::MarkdownFormatter;
 pub use options::{LanguageSortKey, NumberStyle, SizeStyle, SortDirection, ViewOptions};
 pub use report::ReportData;
 use serde::{Deserialize, Serialize};
-pub use tsv::TsvFormatter;
+pub use separated_values::{CsvFormatter, TsvFormatter};
 
 use crate::analysis::AnalysisResults;
 
