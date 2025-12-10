@@ -24,6 +24,35 @@ cargo install --path .
 - Get a verbose, per-file detail for `src/` in JSON format: `cs -v src -o json`
 - List supported languages (400+): `cs -l`
 
+## Configuration
+
+Codestats can read settings from TOML while keeping full CLI compatibility. Precedence: CLI args > explicit `--config` path > nearest found file > built-in defaults.
+
+Search order:
+1. `--config <path>` (errors if missing)
+2. `./.codestats.toml`
+3. `./codestats.toml`
+4. `~/.config/codestats/config.toml`
+5. `~/.codestats.toml`
+
+Example `.codestats.toml`:
+
+```toml
+[analysis]
+verbose = false
+respect_gitignore = true
+include_hidden = false
+follow_symlinks = false
+
+[display]
+number_style = "plain"        # plain|comma|underscore|space
+size_units = "binary"         # binary|decimal
+precision = 1                 # 0-6
+sort_by = "lines"             # lines|code|comments|blanks|files|size|name
+sort_direction = "desc"       # asc|desc
+output = "human"              # human|json|json-compact|csv|markdown|html
+```
+
 ## CLI reference
 
 Usage: `cs [OPTIONS] [PATH]`
@@ -34,6 +63,7 @@ Usage: `cs [OPTIONS] [PATH]`
 
 ### Options
 
+- `-c, --config <PATH>` Path to a TOML config file.
 - `-l, --langs` List all supported languages and exit.
 - `-v, --verbose` Show per-file detail instead of just the summary.
 - `-i, --no-gitignore` Do not respect `.gitignore` files.
@@ -44,7 +74,7 @@ Usage: `cs [OPTIONS] [PATH]`
 - `-p, --precision <0-6>` Percentage precision. Default: `1`.
 - `-S, --sort-by <lines|code|comments|blanks|files|size|name>` Sort key for languages (and per-file detail when verbose). Default: `lines`.
 - `-d, --sort-dir <asc|desc>` Sort direction. Default: `desc`.
-- `-o, --output <human|json|csv|markdown|html>` Output format. Default: `human`.
+- `-o, --output <human|json|json-compact|csv|markdown|html>` Output format. Default: `human`.
 - `-h, --help` Print help.
 - `-V, --version` Print version.
 

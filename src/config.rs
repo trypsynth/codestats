@@ -34,6 +34,7 @@ impl Default for Config {
 	}
 }
 
+#[allow(clippy::struct_excessive_bools)]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(default)]
 pub struct AnalysisConfig {
@@ -119,10 +120,10 @@ impl Config {
 	}
 
 	pub fn load_default() -> Result<Self> {
-		if let Some(path) = Self::find_config_file()? { Self::from_file(path) } else { Ok(Self::default()) }
+		Self::find_config_file().map_or_else(|| Ok(Self::default()), Self::from_file)
 	}
 
-	pub fn find_config_file() -> Result<Option<PathBuf>> {
+	pub fn find_config_file() -> Option<PathBuf> {
 		let mut candidates = vec![PathBuf::from(".codestats.toml"), PathBuf::from("codestats.toml")];
 		if let Ok(strategy) = choose_base_strategy() {
 			candidates.push(strategy.config_dir().join("codestats").join("config.toml"));
@@ -130,12 +131,12 @@ impl Config {
 		} else if let Some(home) = env::var_os("HOME").map(PathBuf::from) {
 			candidates.push(home.join(".codestats.toml"));
 		}
-		Ok(candidates.into_iter().find(|path| path.is_file()))
+		candidates.into_iter().find(|path| path.is_file())
 	}
 
 	pub fn merge_with_cli(mut self, cli: &Cli, matches: &ArgMatches) -> Self {
 		if Self::cli_overrode(matches, "path") {
-			self.path = cli.path.clone();
+			self.path.clone_from(&cli.path);
 		}
 		if Self::cli_overrode(matches, "verbose") {
 			self.analysis.verbose = cli.verbose;
