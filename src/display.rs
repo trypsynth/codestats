@@ -3,6 +3,7 @@ mod formatting;
 mod html;
 mod human;
 mod json;
+mod json_compact;
 mod markdown;
 mod options;
 mod report;
@@ -20,6 +21,7 @@ pub use formatting::{FormatterContext, apply_sort};
 pub use html::HtmlFormatter;
 pub use human::HumanFormatter;
 pub use json::JsonFormatter;
+pub use json_compact::JsonCompactFormatter;
 pub use markdown::MarkdownFormatter;
 pub use options::{LanguageSortKey, NumberStyle, SizeStyle, SortDirection, ViewOptions};
 pub use report::ReportData;
@@ -30,6 +32,7 @@ use crate::analysis::AnalysisResults;
 pub enum OutputFormat {
 	Human,
 	Json,
+	JsonCompact,
 	Csv,
 	Markdown,
 	Html,
@@ -40,6 +43,7 @@ impl Display for OutputFormat {
 		match self {
 			Self::Human => write!(f, "human"),
 			Self::Json => write!(f, "json"),
+			Self::JsonCompact => write!(f, "json-compact"),
 			Self::Csv => write!(f, "csv"),
 			Self::Markdown => write!(f, "markdown"),
 			Self::Html => write!(f, "html"),
@@ -81,6 +85,7 @@ pub fn get_formatter(format: OutputFormat) -> Box<dyn OutputFormatter> {
 	match format {
 		OutputFormat::Human => Box::new(HumanFormatter),
 		OutputFormat::Json => Box::new(JsonFormatter),
+		OutputFormat::JsonCompact => Box::new(JsonCompactFormatter),
 		OutputFormat::Csv => Box::new(CsvFormatter),
 		OutputFormat::Markdown => Box::new(MarkdownFormatter),
 		OutputFormat::Html => Box::new(HtmlFormatter),
