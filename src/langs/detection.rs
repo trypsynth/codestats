@@ -3,6 +3,9 @@ use super::{
 	globset::get_candidates,
 };
 
+const COMMENT_MATCH_SCORE: i32 = 50;
+const KEYWORD_MATCH_SCORE: i32 = 10;
+
 #[inline]
 fn score_language(lang: &Language, content: &str, tokens: &[&str]) -> i32 {
 	if lang.line_comments.is_empty() && lang.block_comments.is_empty() && lang.keywords.is_empty() {
@@ -14,12 +17,12 @@ fn score_language(lang: &Language, content: &str, tokens: &[&str]) -> i32 {
 	let mut score: i32 = 0;
 	for comment in lang.line_comments {
 		if content.contains(comment) {
-			score = score.saturating_add(50);
+			score = score.saturating_add(COMMENT_MATCH_SCORE);
 		}
 	}
 	for comment_pair in lang.block_comments {
 		if content.contains(comment_pair.0) && content.contains(comment_pair.1) {
-			score = score.saturating_add(50);
+			score = score.saturating_add(COMMENT_MATCH_SCORE);
 		}
 	}
 	for keyword in lang.keywords {
@@ -29,11 +32,11 @@ fn score_language(lang: &Language, content: &str, tokens: &[&str]) -> i32 {
 		} else {
 			tokens.iter().filter(|token| token.eq_ignore_ascii_case(keyword)).count()
 		};
-		let clamped_count = count.min(usize::try_from(i32::MAX / 10).unwrap_or(usize::MAX));
+		let clamped_count = count.min(usize::try_from(i32::MAX / KEYWORD_MATCH_SCORE).unwrap_or(usize::MAX));
 		// We now know that this is safe because we've clamped the value.
 		#[expect(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
 		let count_i32 = clamped_count as i32;
-		score = score.saturating_add(count_i32.saturating_mul(10));
+		score = score.saturating_add(count_i32.saturating_mul(KEYWORD_MATCH_SCORE));
 	}
 	score
 }
@@ -86,9 +89,9 @@ fn score_symbol_only_language(lang: &Language, content: &str, tokens: &[&str]) -
 	if matched_chars_u128.saturating_mul(10) < non_whitespace_u128.saturating_mul(3) {
 		return 0;
 	}
-	let clamped = matched_chars.min(usize::try_from(i32::MAX / 10).unwrap_or(usize::MAX));
-	let count_i32 = i32::try_from(clamped).unwrap_or(i32::MAX / 10);
-	count_i32.saturating_mul(10)
+	let clamped = matched_chars.min(usize::try_from(i32::MAX / KEYWORD_MATCH_SCORE).unwrap_or(usize::MAX));
+	let count_i32 = i32::try_from(clamped).unwrap_or(i32::MAX / KEYWORD_MATCH_SCORE);
+	count_i32.saturating_mul(KEYWORD_MATCH_SCORE)
 }
 
 #[inline]

@@ -3,6 +3,8 @@ use crate::{
 	utils,
 };
 
+const INITIAL_FILE_LIST_CAPACITY: usize = 256;
+
 macro_rules! impl_percentage_methods {
 	($type:ty, $total_field:ident, $stats_field:ident) => {
 		impl $type {
@@ -174,7 +176,7 @@ impl LanguageStats {
 		if let Some(stats) = file_stats {
 			// Reserve capacity on first file to reduce reallocations
 			if self.file_list.is_empty() {
-				self.file_list.reserve(256);
+				self.file_list.reserve(INITIAL_FILE_LIST_CAPACITY);
 			}
 			self.file_list.push(stats);
 		}

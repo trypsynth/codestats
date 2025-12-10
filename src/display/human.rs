@@ -38,25 +38,6 @@ struct LanguageLineTypeInfo {
 }
 
 impl HumanFormatter {
-	/// Formats a list into a human-friendly phrase.
-	/// - 0 items => empty string.
-	/// - 1 item => "A"
-	/// - 2 items => "A and B"
-	/// - 3+ => "A, B, and C"
-	fn format_list(items: &[String]) -> String {
-		match items {
-			[] => String::new(),
-			[first] => first.clone(),
-			[first, second] => format!("{first} and {second}"),
-			_ => {
-				let mut result = items[..items.len() - 1].join(", ");
-				result.push_str(", and ");
-				result.push_str(&items[items.len() - 1]);
-				result
-			}
-		}
-	}
-
 	/// Iterator over language line types for consistent formatting.
 	fn iter_language_line_types(lang: &LanguageRecord<'_>) -> impl Iterator<Item = LanguageLineTypeInfo> {
 		[
@@ -84,12 +65,32 @@ impl HumanFormatter {
 		)?;
 		let line_breakdown_parts = summary.line_breakdown_parts(true, ctx);
 		if !line_breakdown_parts.is_empty() {
-			let breakdown = Self::format_list(&line_breakdown_parts);
+			let breakdown = match line_breakdown_parts.as_slice() {
+				[] => String::new(),
+				[first] => first.clone(),
+				[first, second] => format!("{first} and {second}"),
+				items => {
+					let mut result = items[..items.len() - 1].join(", ");
+					result.push_str(", and ");
+					result.push_str(&items[items.len() - 1]);
+					result
+				}
+			};
 			writeln!(writer, "Line breakdown: {breakdown}.")?;
 		}
 		let percentage_parts = summary.percentage_parts(ctx);
 		if !percentage_parts.is_empty() {
-			let percentages = Self::format_list(&percentage_parts);
+			let percentages = match percentage_parts.as_slice() {
+				[] => String::new(),
+				[first] => first.clone(),
+				[first, second] => format!("{first} and {second}"),
+				items => {
+					let mut result = items[..items.len() - 1].join(", ");
+					result.push_str(", and ");
+					result.push_str(&items[items.len() - 1]);
+					result
+				}
+			};
 			writeln!(writer, "Percentages: {percentages}.")?;
 		}
 		Ok(())
@@ -178,21 +179,5 @@ impl HumanFormatter {
 			)?;
 		}
 		Ok(())
-	}
-}
-
-#[cfg(test)]
-mod tests {
-	use super::HumanFormatter;
-
-	#[test]
-	fn test_format_list() {
-		assert!(HumanFormatter::format_list(&[]).is_empty());
-		let mut input = vec!["one".to_string()];
-		assert_eq!(HumanFormatter::format_list(&input), "one");
-		input = vec!["one".to_string(), "two".to_string()];
-		assert_eq!(HumanFormatter::format_list(&input), "one and two");
-		input = vec!["one".to_string(), "two".to_string(), "three".to_string()];
-		assert_eq!(HumanFormatter::format_list(&input), "one, two, and three");
 	}
 }

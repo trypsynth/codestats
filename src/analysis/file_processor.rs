@@ -24,10 +24,6 @@ struct LineCounts {
 }
 
 impl LineCounts {
-	fn new() -> Self {
-		Self::default()
-	}
-
 	pub(crate) fn classify_and_count(
 		&mut self,
 		line_bytes: &[u8],
@@ -184,7 +180,7 @@ fn process_lines(
 	language: &'static Language,
 	source: &mut dyn LineSource,
 ) -> Result<()> {
-	let mut line_counts = LineCounts::new();
+	let mut line_counts = LineCounts::default();
 	let mut comment_state = CommentState::new();
 	let mut is_first_line = true;
 	source.for_each_line(&mut |line_bytes| {

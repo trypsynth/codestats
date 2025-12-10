@@ -46,15 +46,20 @@ pub enum NumberFormatter {
 impl NumberFormatter {
 	#[must_use]
 	pub fn new(style: NumberStyle) -> Self {
-		fn grouped_with_separator(separator: &'static str) -> NumberFormatter {
-			let format = CustomFormat::builder().grouping(Grouping::Standard).separator(separator).build().unwrap();
-			NumberFormatter::Formatted { format: Box::new(format) }
-		}
 		match style {
 			NumberStyle::Plain => Self::Plain,
-			NumberStyle::Comma => grouped_with_separator(","),
-			NumberStyle::Underscore => grouped_with_separator("_"),
-			NumberStyle::Space => grouped_with_separator(" "),
+			NumberStyle::Comma => {
+				let format = CustomFormat::builder().grouping(Grouping::Standard).separator(",").build().unwrap();
+				Self::Formatted { format: Box::new(format) }
+			}
+			NumberStyle::Underscore => {
+				let format = CustomFormat::builder().grouping(Grouping::Standard).separator("_").build().unwrap();
+				Self::Formatted { format: Box::new(format) }
+			}
+			NumberStyle::Space => {
+				let format = CustomFormat::builder().grouping(Grouping::Standard).separator(" ").build().unwrap();
+				Self::Formatted { format: Box::new(format) }
+			}
 		}
 	}
 
