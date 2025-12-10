@@ -14,16 +14,16 @@ use indexmap::IndexMap;
 use serde::{Deserialize, Deserializer, de};
 
 fn validate_no_whitespace(s: &str, field: &str, idx: Option<usize>) -> result::Result<(), String> {
-	if s.trim() != s {
-		let msg = if let Some(i) = idx {
-			format!("{field} {}: has leading/trailing whitespace", i + 1)
-		} else {
-			format!("{field}: has leading/trailing whitespace")
-		};
-		Err(msg)
-	} else {
-		Ok(())
-	}
+	if s.trim() == s {
+ 		Ok(())
+ 	} else {
+ 		let msg = if let Some(i) = idx {
+ 			format!("{field} {}: has leading/trailing whitespace", i + 1)
+ 		} else {
+ 			format!("{field}: has leading/trailing whitespace")
+ 		};
+ 		Err(msg)
+ 	}
 }
 
 fn deserialize_file_patterns<'de, D>(deserializer: D) -> result::Result<Vec<String>, D::Error>

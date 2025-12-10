@@ -183,7 +183,7 @@ impl CsvFormatter {
 	}
 
 	fn write_csv_field(output: &mut dyn Write, field: &str) -> Result<()> {
-		output.write_all(CsvFormatter::escape_csv_field(field).as_bytes())?;
+		output.write_all(Self::escape_csv_field(field).as_bytes())?;
 		Ok(())
 	}
 
