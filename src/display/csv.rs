@@ -5,9 +5,15 @@ use anyhow::Result;
 use super::{FormatterContext, OutputFormatter, ReportData, ViewOptions};
 use crate::{analysis::AnalysisResults, display::report::LanguageRecord};
 
-pub struct CsvFormatter;
+pub struct SeparatedValuesFormatter<const DELIMITER: u8>;
 
-impl OutputFormatter for CsvFormatter {
+impl<const DELIMITER: u8> Default for SeparatedValuesFormatter<DELIMITER> {
+	fn default() -> Self {
+		Self
+	}
+}
+
+impl<const DELIMITER: u8> OutputFormatter for SeparatedValuesFormatter<DELIMITER> {
 	fn write_output(
 		&self,
 		results: &AnalysisResults,
@@ -25,7 +31,7 @@ impl OutputFormatter for CsvFormatter {
 	}
 }
 
-impl CsvFormatter {
+impl<const DELIMITER: u8> SeparatedValuesFormatter<DELIMITER> {
 	fn write_verbose(report: &ReportData, ctx: &FormatterContext, writer: &mut dyn Write) -> Result<()> {
 		Self::write_summary_section(report, ctx, writer)?;
 		writer.write_all(b"\n")?;
@@ -174,21 +180,23 @@ impl CsvFormatter {
 	fn write_record(output: &mut dyn Write, fields: &[&str]) -> Result<()> {
 		for (idx, field) in fields.iter().enumerate() {
 			if idx > 0 {
-				output.write_all(b",")?;
+				output.write_all(&[DELIMITER])?;
 			}
-			Self::write_csv_field(output, field)?;
+			Self::write_field(output, field)?;
 		}
 		output.write_all(b"\n")?;
 		Ok(())
 	}
 
-	fn write_csv_field(output: &mut dyn Write, field: &str) -> Result<()> {
-		output.write_all(Self::escape_csv_field(field).as_bytes())?;
+	fn write_field(output: &mut dyn Write, field: &str) -> Result<()> {
+		output.write_all(Self::escape_field(field).as_bytes())?;
 		Ok(())
 	}
 
-	fn escape_csv_field(field: &str) -> Cow<'_, str> {
-		let needs_quotes = field.contains(',') || field.contains('"') || field.contains('\n') || field.contains('\r');
+	fn escape_field(field: &str) -> Cow<'_, str> {
+		let delimiter = char::from(DELIMITER);
+		let needs_quotes =
+			field.contains(delimiter) || field.contains('"') || field.contains('\n') || field.contains('\r');
 		if !needs_quotes {
 			return Cow::Borrowed(field);
 		}
@@ -196,3 +204,5 @@ impl CsvFormatter {
 		Cow::Owned(format!("\"{escaped}\""))
 	}
 }
+
+pub type CsvFormatter = SeparatedValuesFormatter<b','>;

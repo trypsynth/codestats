@@ -50,7 +50,7 @@ size_units = "binary"         # binary|decimal
 precision = 1                 # 0-6
 sort_by = "lines"             # lines|code|comments|blanks|files|size|name
 sort_direction = "desc"       # asc|desc
-output = "human"              # human|json|json-compact|csv|markdown|html
+output = "human"              # human|json|json-compact|csv|tsv|markdown|html
 ```
 
 ## CLI reference
@@ -74,7 +74,7 @@ Usage: `cs [OPTIONS] [PATH]`
 - `-p, --precision <0-6>` Percentage precision. Default: `1`.
 - `-S, --sort-by <lines|code|comments|blanks|files|size|name>` Sort key for languages (and per-file detail when verbose). Default: `lines`.
 - `-d, --sort-dir <asc|desc>` Sort direction. Default: `desc`.
-- `-o, --output <human|json|json-compact|csv|markdown|html>` Output format. Default: `human`.
+- `-o, --output <human|json|json-compact|csv|tsv|markdown|html>` Output format. Default: `human`.
 - `-h, --help` Print help.
 - `-V, --version` Print version.
 

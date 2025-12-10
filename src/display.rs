@@ -7,6 +7,7 @@ mod json_compact;
 mod markdown;
 mod options;
 mod report;
+mod tsv;
 
 use std::{
 	fmt::{self, Display},
@@ -26,6 +27,7 @@ pub use markdown::MarkdownFormatter;
 pub use options::{LanguageSortKey, NumberStyle, SizeStyle, SortDirection, ViewOptions};
 pub use report::ReportData;
 use serde::{Deserialize, Serialize};
+pub use tsv::TsvFormatter;
 
 use crate::analysis::AnalysisResults;
 
@@ -36,6 +38,7 @@ pub enum OutputFormat {
 	Json,
 	JsonCompact,
 	Csv,
+	Tsv,
 	Markdown,
 	Html,
 }
@@ -47,6 +50,7 @@ impl Display for OutputFormat {
 			Self::Json => write!(f, "json"),
 			Self::JsonCompact => write!(f, "json-compact"),
 			Self::Csv => write!(f, "csv"),
+			Self::Tsv => write!(f, "tsv"),
 			Self::Markdown => write!(f, "markdown"),
 			Self::Html => write!(f, "html"),
 		}
@@ -88,7 +92,8 @@ pub fn get_formatter(format: OutputFormat) -> Box<dyn OutputFormatter> {
 		OutputFormat::Human => Box::new(HumanFormatter),
 		OutputFormat::Json => Box::new(JsonFormatter),
 		OutputFormat::JsonCompact => Box::new(JsonCompactFormatter),
-		OutputFormat::Csv => Box::new(CsvFormatter),
+		OutputFormat::Csv => Box::new(CsvFormatter::default()),
+		OutputFormat::Tsv => Box::new(TsvFormatter::default()),
 		OutputFormat::Markdown => Box::new(MarkdownFormatter),
 		OutputFormat::Html => Box::new(HtmlFormatter),
 	}
