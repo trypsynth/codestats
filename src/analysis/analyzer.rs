@@ -74,13 +74,13 @@ impl CodeAnalyzer {
 							// Consider all UTF-8 file names; language detection will skip binaries/unknowns.
 							let should_consider = entry.file_name().to_str().is_some();
 							if should_consider
-								&& let Err(e) =
+								&& let Err(_) =
 									file_processor::process_file(entry.path(), &mut aggregator.local, collect_details)
 							{
 								error_counter.fetch_add(1, Ordering::Relaxed);
 							}
 						}
-						Err(e) => {
+						Err(_) => {
 							error_counter.fetch_add(1, Ordering::Relaxed);
 						}
 						_ => {}

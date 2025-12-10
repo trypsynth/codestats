@@ -17,11 +17,10 @@ fn validate_no_whitespace(s: &str, field: &str, idx: Option<usize>) -> result::R
 	if s.trim() == s {
 		Ok(())
 	} else {
-		let msg = if let Some(i) = idx {
-			format!("{field} {}: has leading/trailing whitespace", i + 1)
-		} else {
-			format!("{field}: has leading/trailing whitespace")
-		};
+		let msg = idx.map_or_else(
+			|| format!("{field}: has leading/trailing whitespace"),
+			|i| format!("{field} {}: has leading/trailing whitespace", i + 1),
+		);
 		Err(msg)
 	}
 }
