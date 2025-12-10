@@ -5,10 +5,13 @@ use super::{
 
 #[inline]
 fn score_language(lang: &Language, content: &str, tokens: &[&str]) -> i32 {
-	let mut score: i32 = 0;
 	if lang.line_comments.is_empty() && lang.block_comments.is_empty() && lang.keywords.is_empty() {
 		return 0;
 	}
+	if is_symbol_only_language(lang) {
+		return score_symbol_only_language(lang, content, tokens);
+	}
+	let mut score: i32 = 0;
 	for comment in lang.line_comments {
 		if content.contains(comment) {
 			score = score.saturating_add(50);
@@ -49,6 +52,42 @@ fn disambiguate<'a>(candidates: &[&'a Language], content: &str) -> Option<&'a La
 #[inline]
 fn tokenize(content: &str) -> impl Iterator<Item = &str> {
 	content.split(|c: char| !c.is_ascii_alphanumeric() && c != '_').filter(|token| !token.is_empty())
+}
+
+fn is_symbol_only_language(lang: &Language) -> bool {
+	!lang.keywords.is_empty()
+		&& lang.keywords.iter().all(|kw| kw.chars().all(|c| !c.is_ascii_alphanumeric() && c != '_'))
+		&& lang.line_comments.is_empty()
+		&& lang.block_comments.is_empty()
+}
+
+fn score_symbol_only_language(lang: &Language, content: &str, tokens: &[&str]) -> i32 {
+	let has_alphabetic_tokens = tokens.iter().any(|token| token.chars().any(|c| c.is_ascii_alphabetic()));
+	if has_alphabetic_tokens {
+		return 0;
+	}
+	let non_whitespace = content.chars().filter(|c| !c.is_whitespace()).count();
+	if non_whitespace == 0 {
+		return 0;
+	}
+	let mut matched_chars: usize = 0;
+	for keyword in lang.keywords {
+		if keyword.is_empty() {
+			continue;
+		}
+		let occurrences = content.matches(keyword).count();
+		matched_chars = matched_chars.saturating_add(occurrences.saturating_mul(keyword.len()));
+	}
+	if matched_chars == 0 {
+		return 0;
+	}
+	let ratio = matched_chars as f64 / non_whitespace as f64;
+	if ratio < 0.3 {
+		return 0;
+	}
+	let clamped = matched_chars.min(usize::try_from(i32::MAX / 10).unwrap_or(usize::MAX));
+	let count_i32 = i32::try_from(clamped).unwrap_or(i32::MAX / 10);
+	count_i32.saturating_mul(10)
 }
 
 #[inline]

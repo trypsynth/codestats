@@ -154,6 +154,11 @@
 		file_patterns: ["*.axaml"],
 		block_comments: [["<!--", "-->"]],
 	},
+	"B": {
+		file_patterns: ["*.b"],
+		block_comments: [["/*", "*/"]],
+		keywords: ["auto", "break", "case", "default", "do", "else", "extern", "extrn", "for", "goto", "if", "main", "read", "return", "static", "switch", "while", "write"],
+	},
 	"Ballerina": {
 		file_patterns: ["*.bal"],
 		line_comments: ["//", "#"],
@@ -239,6 +244,7 @@
 	},
 	"Brainfuck": {
 		file_patterns: ["*.bf", "*.b"],
+		keywords: [">", "<", "+", "-", ".", ",", "[", "]"],
 	},
 	"BrightScript": {
 		file_patterns: ["*.brs"],
