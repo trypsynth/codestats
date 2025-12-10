@@ -3,7 +3,6 @@ name = "codestats"
 version = "0.4.0"
 authors = ["Quin Gillespie <trypsynth@gmail.com>"]
 edition = "2024"
-rust-version = "1.85.1"
 description = "A CLI tool for analyzing code statistics across different programming languages"
 readme = "README.md"
 homepage = "https://github.com/trypsynth/codestats"
@@ -11,6 +10,7 @@ repository = "https://github.com/trypsynth/codestats"
 license = "Zlib"
 keywords = ["code", "analysis", "cli", "tool"]
 categories = ["command-line-utilities", "development-tools", "filesystem"]
+rust-version = "1.88.0"
 
 [[bin]]
 name = "cs"
@@ -21,7 +21,7 @@ aho-corasick = "1.1.4"
 anyhow = "1.0.100"
 askama = "0.14.0"
 clap = { version = "4.5.53", default-features = false, features = ["std", "derive", "help", "usage", "wrap_help"] }
-etcetera = "0.10"
+etcetera = "0.11"
 globset = "0.4.18"
 ignore = "0.4.25"
 memchr = "2.7.6"
