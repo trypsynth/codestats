@@ -681,6 +681,11 @@
 		file_patterns: ["*.gd"],
 		line_comments: ["#"],
 	},
+	"GDShader": {
+		file_patterns: ["*.gdshader"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+	},
 	"Gettext": {
 		file_patterns: ["*.po", "*.pot"],
 		line_comments: ["#"],
@@ -966,7 +971,7 @@
 	},
 	"K": {
 		file_patterns: ["*.k"],
-		line_comments: ["/"],
+		line_comments: ["/ "],
 	},
 	"Kaitai Struct": {
 		file_patterns: ["*.ksy"],
@@ -1545,7 +1550,7 @@
 	},
 	"Raku": {
 		file_patterns: ["*.raku", "*.rakumod", "*.rakutest", "*.pm6", "*.pl6", "*.p6"],
-		line_comments: ["#"],
+		line_comments: ["#", "#|"],
 		block_comments: [["#`(", ")"], ["=begin", "=end"]],
 		shebangs: ["#!/usr/bin/raku", "#!/usr/bin/perl6"],
 	},
