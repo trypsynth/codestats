@@ -187,9 +187,7 @@ impl<'a> LanguageRecord<'a> {
 	fn from_results(results: &'a AnalysisResults, verbose: bool, ctx: &FormatterContext) -> Vec<Self> {
 		let mut stats_vec: Vec<_> = results.languages().map(|(lang, stats)| (lang.name, stats)).collect();
 		let sort_key = ctx.options.language_sort_key;
-		stats_vec = apply_sort(stats_vec, sort_key, ctx.options.sort_direction, |record| {
-			sort_key_for_language_record(record, sort_key)
-		});
+		apply_sort(&mut stats_vec, ctx.options.sort_direction, |record| sort_key_for_language_record(record, sort_key));
 		stats_vec.into_iter().map(|(name, stats)| Self::from_stats(name, stats, verbose, ctx)).collect()
 	}
 
@@ -198,9 +196,7 @@ impl<'a> LanguageRecord<'a> {
 		let files_detail = verbose.then(|| {
 			let mut files: Vec<_> = stats.files_list().iter().collect();
 			let sort_key = ctx.options.language_sort_key;
-			files = apply_sort(files, sort_key, ctx.options.sort_direction, |file| {
-				sort_key_for_file_record(file, sort_key)
-			});
+			apply_sort(&mut files, ctx.options.sort_direction, |file| sort_key_for_file_record(file, sort_key));
 			files
 				.into_iter()
 				.map(|file| {

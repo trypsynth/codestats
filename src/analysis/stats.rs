@@ -173,7 +173,7 @@ impl LanguageStats {
 		self.size += contribution.size();
 		if let Some(stats) = file_stats {
 			// Reserve capacity on first file to reduce reallocations
-			if self.file_list.is_empty() && self.files == 1 {
+			if self.file_list.is_empty() {
 				self.file_list.reserve(256);
 			}
 			self.file_list.push(stats);
@@ -272,13 +272,13 @@ impl AnalysisResults {
 		self.language_stats[language.index].add_file(&contribution, file_stats);
 	}
 
-	pub(crate) fn merge(&mut self, mut other: Self) {
+	pub(crate) fn merge(&mut self, other: Self) {
 		self.total_files += other.total_files;
 		self.total_lines += other.total_lines;
 		self.line_stats.merge(&other.line_stats);
 		self.total_size += other.total_size;
-		for (idx, stats) in other.language_stats.drain(..).enumerate() {
-			self.language_stats[idx].merge(stats);
+		for (this, stats) in self.language_stats.iter_mut().zip(other.language_stats) {
+			this.merge(stats);
 		}
 	}
 
@@ -324,10 +324,7 @@ impl AnalysisResults {
 
 	/// Iterate over languages that have at least one file, yielding both metadata and stats.
 	pub fn languages(&self) -> impl Iterator<Item = (&'static Language, &LanguageStats)> {
-		LANGUAGES.iter().filter_map(|lang| {
-			let stats = &self.language_stats[lang.index];
-			(stats.files() > 0).then_some((lang, stats))
-		})
+		LANGUAGES.iter().zip(&self.language_stats).filter(|(_, stats)| stats.files() > 0)
 	}
 }
 

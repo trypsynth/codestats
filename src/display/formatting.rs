@@ -1,8 +1,8 @@
-use std::{cmp::Ordering, fmt::Write};
+use std::cmp::Ordering;
 
 use num_format::{CustomFormat, Grouping, ToFormattedString};
 
-use super::options::{LanguageSortKey, NumberStyle, SizeStyle, SortDirection, ViewOptions};
+use super::options::{NumberStyle, SizeStyle, SortDirection, ViewOptions};
 
 #[derive(Debug, Clone)]
 pub struct FormatterContext {
@@ -46,20 +46,15 @@ pub enum NumberFormatter {
 impl NumberFormatter {
 	#[must_use]
 	pub fn new(style: NumberStyle) -> Self {
+		fn grouped_with_separator(separator: &'static str) -> NumberFormatter {
+			let format = CustomFormat::builder().grouping(Grouping::Standard).separator(separator).build().unwrap();
+			NumberFormatter::Formatted { format: Box::new(format) }
+		}
 		match style {
 			NumberStyle::Plain => Self::Plain,
-			NumberStyle::Comma => {
-				let format = CustomFormat::builder().grouping(Grouping::Standard).separator(",").build().unwrap();
-				Self::Formatted { format: Box::new(format) }
-			}
-			NumberStyle::Underscore => {
-				let format = CustomFormat::builder().grouping(Grouping::Standard).separator("_").build().unwrap();
-				Self::Formatted { format: Box::new(format) }
-			}
-			NumberStyle::Space => {
-				let format = CustomFormat::builder().grouping(Grouping::Standard).separator(" ").build().unwrap();
-				Self::Formatted { format: Box::new(format) }
-			}
+			NumberStyle::Comma => grouped_with_separator(","),
+			NumberStyle::Underscore => grouped_with_separator("_"),
+			NumberStyle::Space => grouped_with_separator(" "),
 		}
 	}
 
@@ -124,19 +119,11 @@ impl PercentFormatter {
 	#[must_use]
 	pub fn format(self, value: f64) -> String {
 		let precision = usize::from(self.precision);
-		let mut buf = String::new();
-		let _ = write!(&mut buf, "{value:.precision$}");
-		buf
+		format!("{value:.precision$}")
 	}
 }
 
-#[must_use]
-pub fn apply_sort<T>(
-	mut items: Vec<T>,
-	_key: LanguageSortKey,
-	direction: SortDirection,
-	mut metric: impl FnMut(&T) -> SortValue<'_>,
-) -> Vec<T> {
+pub fn apply_sort<T>(items: &mut [T], direction: SortDirection, mut metric: impl FnMut(&T) -> SortValue<'_>) {
 	items.sort_by(|a, b| {
 		let lhs = metric(a);
 		let rhs = metric(b);
@@ -147,7 +134,6 @@ pub fn apply_sort<T>(
 		};
 		if direction == SortDirection::Desc { ordering.reverse() } else { ordering }
 	});
-	items
 }
 
 #[derive(Debug)]

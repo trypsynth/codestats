@@ -14,7 +14,8 @@ use super::{
 };
 use crate::langs::{self, Language};
 
-pub struct LineCounts {
+#[derive(Default)]
+struct LineCounts {
 	total: u64,
 	code: u64,
 	comment: u64,
@@ -23,8 +24,8 @@ pub struct LineCounts {
 }
 
 impl LineCounts {
-	pub(crate) const fn new() -> Self {
-		Self { total: 0, code: 0, comment: 0, blank: 0, shebang: 0 }
+	fn new() -> Self {
+		Self::default()
 	}
 
 	pub(crate) fn classify_and_count(
@@ -47,26 +48,6 @@ impl LineCounts {
 			LineType::Shebang => self.shebang += 1,
 		}
 		self.total += 1;
-	}
-
-	pub(crate) const fn total(&self) -> u64 {
-		self.total
-	}
-
-	pub(crate) const fn code(&self) -> u64 {
-		self.code
-	}
-
-	pub(crate) const fn comment(&self) -> u64 {
-		self.comment
-	}
-
-	pub(crate) const fn blank(&self) -> u64 {
-		self.blank
-	}
-
-	pub(crate) const fn shebang(&self) -> u64 {
-		self.shebang
 	}
 }
 
@@ -210,25 +191,10 @@ fn process_lines(
 		line_counts.classify_and_count(line_bytes, Some(language), &mut comment_state, is_first_line);
 		is_first_line = false;
 	})?;
-	let contribution = FileContribution::new(
-		line_counts.total(),
-		line_counts.code(),
-		line_counts.comment(),
-		line_counts.blank(),
-		line_counts.shebang(),
-		file_size,
-	);
-	let file_stats = collect_details.then(|| {
-		FileStats::new(
-			file_path.display().to_string(),
-			line_counts.total(),
-			line_counts.code(),
-			line_counts.comment(),
-			line_counts.blank(),
-			line_counts.shebang(),
-			file_size,
-		)
-	});
+	let LineCounts { total, code, comment, blank, shebang } = line_counts;
+	let contribution = FileContribution::new(total, code, comment, blank, shebang, file_size);
+	let file_stats = collect_details
+		.then(|| FileStats::new(file_path.display().to_string(), total, code, comment, blank, shebang, file_size));
 	results.add_file_stats(language, contribution, file_stats);
 	Ok(())
 }
