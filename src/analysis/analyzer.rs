@@ -51,9 +51,6 @@ impl CodeAnalyzer {
 	/// May panic if the internal Arc or Mutex operations fail unexpectedly,
 	/// which should hopefully never happen.
 	pub fn analyze(&self) -> Result<AnalysisResults> {
-		if self.config.verbose {
-			println!("Analyzing directory {}", self.root.display());
-		}
 		let error_counter = Arc::new(AtomicU64::new(0));
 		let verbose = self.config.verbose;
 		let collect_details = self.config.detail_level.collect_file_details();
@@ -81,16 +78,10 @@ impl CodeAnalyzer {
 									file_processor::process_file(entry.path(), &mut aggregator.local, collect_details)
 							{
 								error_counter.fetch_add(1, Ordering::Relaxed);
-								if verbose {
-									eprintln!("Error processing file {}: {e}", entry.path().display());
-								}
 							}
 						}
 						Err(e) => {
 							error_counter.fetch_add(1, Ordering::Relaxed);
-							if verbose {
-								eprintln!("Error walking directory: {e}");
-							}
 						}
 						_ => {}
 					}
