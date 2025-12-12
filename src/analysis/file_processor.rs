@@ -130,13 +130,15 @@ fn detect_language_from_samples(filename: &str, samples: &[u8]) -> Option<&'stat
 	if is_probably_binary(samples) {
 		return None;
 	}
-	let sample_text_owned;
-	let sample_str = if let Ok(text) = str::from_utf8(samples) {
-		Some(text)
-	} else {
-		sample_text_owned = String::from_utf8_lossy(samples).into_owned();
-		Some(sample_text_owned.as_str())
-	};
+	let mut sample_text_owned = None;
+	let sample_str = str::from_utf8(samples).map_or_else(
+		|_| {
+			let owned = String::from_utf8_lossy(samples).into_owned();
+			sample_text_owned = Some(owned);
+			sample_text_owned.as_deref()
+		},
+		Some,
+	);
 	langs::detect_language_info(filename, sample_str)
 }
 
