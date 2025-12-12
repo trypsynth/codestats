@@ -8,4 +8,4 @@ group_imports = "StdExternalCrate"
 imports_granularity = "Crate"
 merge_derives = true
 use_field_init_shorthand = true
-force_explicit_abi = false
+force_explicit_abi = true
