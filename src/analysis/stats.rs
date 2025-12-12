@@ -255,18 +255,26 @@ impl Default for AnalysisResults {
 			total_lines: 0,
 			line_stats: LineStats::default(),
 			total_size: 0,
-			language_stats: vec![LanguageStats::default(); LANGUAGES.len()],
+			language_stats: Vec::new(),
 		}
 	}
 }
 
 impl AnalysisResults {
+	fn ensure_language_slot(&mut self, language: &Language) {
+		let target_len = language.index + 1;
+		if self.language_stats.len() < target_len {
+			self.language_stats.resize_with(target_len, LanguageStats::default);
+		}
+	}
+
 	pub(crate) fn add_file_stats(
 		&mut self,
 		language: &'static Language,
 		contribution: FileContribution,
 		file_stats: Option<FileStats>,
 	) {
+		self.ensure_language_slot(language);
 		self.total_files += 1;
 		self.total_lines += contribution.total_lines();
 		self.line_stats.merge(&contribution.line_stats);
@@ -279,8 +287,11 @@ impl AnalysisResults {
 		self.total_lines += other.total_lines;
 		self.line_stats.merge(&other.line_stats);
 		self.total_size += other.total_size;
-		for (this, stats) in self.language_stats.iter_mut().zip(other.language_stats) {
-			this.merge(stats);
+		if self.language_stats.len() < other.language_stats.len() {
+			self.language_stats.resize_with(other.language_stats.len(), LanguageStats::default);
+		}
+		for (idx, stats) in other.language_stats.into_iter().enumerate() {
+			self.language_stats[idx].merge(stats);
 		}
 	}
 
@@ -326,7 +337,11 @@ impl AnalysisResults {
 
 	/// Iterate over languages that have at least one file, yielding both metadata and stats.
 	pub fn languages(&self) -> impl Iterator<Item = (&'static Language, &LanguageStats)> {
-		LANGUAGES.iter().zip(&self.language_stats).filter(|(_, stats)| stats.files() > 0)
+		LANGUAGES
+			.iter()
+			.enumerate()
+			.filter_map(|(idx, lang)| self.language_stats.get(idx).map(|stats| (lang, stats)))
+			.filter(|(_, stats)| stats.files() > 0)
 	}
 }
 

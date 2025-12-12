@@ -80,14 +80,14 @@ Usage: `cs [OPTIONS] [PATH]`
 
 ## Benchmarks
 
-`hyperfine --warmup 1 "target/release/cs /home/quin" "tokei /home/quin"`
+`hyperfine --warmup 1 "cs ~" "tokei ~"`
 
 | Command | Mean ± σ | Min … Max |
 | --- | --- | --- |
-| `cs /home/quin` | 2.606 s ± 0.024 s | 2.587 s … 2.643 s |
-| `tokei /home/quin` | 9.396 s ± 0.029 s | 9.364 s … 9.442 s |
+| `cs ~` | 1.952 s ± 0.034 s | 1.915 s …  1.997 s |
+| `tokei ~` | 7.538 s ± 0.045 s | 7.466 s …  7.609 s |
 
-Codestats ran about 3.6 times faster than tokei on this machine (a modest Beelinks mini PC) when scanning my large home directory with caches warmed up.
+Codestats ran about 3.86 ± 0.07 times faster than tokei on this machine (a modest Beelinks mini PC) when scanning a massive home directory with caches warmed up.
 
 ## License
 

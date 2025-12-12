@@ -116,7 +116,7 @@ pub fn detect_language_info(filename: &str, content: Option<&str>) -> Option<&'s
 			let detected = content.and_then(|file_content| {
 				detect_from_shebang(file_content).or_else(|| disambiguate(&candidates, file_content))
 			});
-			detected.or_else(|| candidates.first().copied())
+			detected
 		}
 	}
 }
@@ -174,8 +174,8 @@ mod tests {
 	}
 
 	#[test]
-	fn detect_language_info_falls_back_to_first_candidate_without_content_signal() {
-		let language = detect_language_info("ambiguous.m", Some("plain text without hints")).unwrap();
-		assert_eq!(language.name, "MATLAB");
+	fn detect_language_info_skips_when_no_signal() {
+		let language = detect_language_info("ambiguous.m", Some("plain text without hints"));
+		assert!(language.is_none());
 	}
 }

@@ -1,6 +1,6 @@
 use std::{
 	fs::File,
-	io::{BufRead, BufReader},
+	io::{BufRead, BufReader, Read, Seek, SeekFrom},
 	path::Path,
 	str,
 };
@@ -126,12 +126,35 @@ pub fn process_file(file_path: &Path, results: &mut AnalysisResults, collect_det
 	}
 }
 
-fn detect_language_from_sample(filename: &str, sample: &[u8]) -> Option<&'static Language> {
-	if is_probably_binary(sample) {
+fn detect_language_from_samples(filename: &str, samples: &[u8]) -> Option<&'static Language> {
+	if is_probably_binary(samples) {
 		return None;
 	}
-	let sample_str = str::from_utf8(sample).ok();
+	let sample_text_owned;
+	let sample_str = match str::from_utf8(samples) {
+		Ok(text) => Some(text),
+		Err(_) => {
+			sample_text_owned = String::from_utf8_lossy(samples).into_owned();
+			Some(sample_text_owned.as_str())
+		}
+	};
 	langs::detect_language_info(filename, sample_str)
+}
+
+fn sample_file(file: &mut File, file_size: u64) -> Result<Vec<u8>> {
+	let mut buffer = Vec::with_capacity(SAMPLE_SIZE * 2);
+	let mut chunk = [0u8; SAMPLE_SIZE];
+	let read_start = file.read(&mut chunk)?;
+	buffer.extend_from_slice(&chunk[..read_start]);
+	if file_size > SAMPLE_SIZE as u64 {
+		let mid_offset = file_size.saturating_sub(SAMPLE_SIZE as u64) / 2;
+		file.seek(SeekFrom::Start(mid_offset))?;
+		let read_mid = file.read(&mut chunk)?;
+		buffer.extend_from_slice(&chunk[..read_mid]);
+	}
+	// Reset for actual reading.
+	file.rewind()?;
+	Ok(buffer)
 }
 
 fn process_file_buffered(
@@ -142,13 +165,10 @@ fn process_file_buffered(
 	collect_details: bool,
 ) -> Result<()> {
 	let file = File::open(file_path).with_context(|| format!("Failed to open file {}", file_path.display()))?;
-	let mut reader = BufReader::with_capacity(64 * 1024, file);
-	let sample_bytes = {
-		let buf = reader.fill_buf()?;
-		let len = buf.len().min(SAMPLE_SIZE);
-		buf[..len].to_vec()
-	};
-	let Some(language) = detect_language_from_sample(filename, &sample_bytes) else { return Ok(()) };
+	let mut file = file;
+	let sample_bytes = sample_file(&mut file, file_size)?;
+	let Some(language) = detect_language_from_samples(filename, &sample_bytes) else { return Ok(()) };
+	let reader = BufReader::with_capacity(64 * 1024, file);
 	let mut source = BufLineSource::new(reader);
 	process_lines(file_path, file_size, results, collect_details, language, &mut source)
 }
@@ -165,9 +185,15 @@ fn process_file_mmap(
 	let mmap =
 		unsafe { Mmap::map(&file) }.with_context(|| format!("Failed to memory-map file {}", file_path.display()))?;
 	let file_bytes = &*mmap;
-	let sample_size = file_bytes.len().min(SAMPLE_SIZE);
-	let sample_bytes = &file_bytes[..sample_size];
-	let Some(language) = detect_language_from_sample(filename, sample_bytes) else { return Ok(()) };
+	let mut samples = Vec::with_capacity(SAMPLE_SIZE * 2);
+	let start_len = file_bytes.len().min(SAMPLE_SIZE);
+	samples.extend_from_slice(&file_bytes[..start_len]);
+	if file_bytes.len() > SAMPLE_SIZE {
+		let mid_offset = (file_bytes.len().saturating_sub(SAMPLE_SIZE)) / 2;
+		let mid_end = (mid_offset + SAMPLE_SIZE).min(file_bytes.len());
+		samples.extend_from_slice(&file_bytes[mid_offset..mid_end]);
+	}
+	let Some(language) = detect_language_from_samples(filename, &samples) else { return Ok(()) };
 	let mut source = MmapLineSource::new(file_bytes);
 	process_lines(file_path, file_size, results, collect_details, language, &mut source)
 }
