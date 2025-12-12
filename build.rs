@@ -170,11 +170,10 @@ fn normalize_languages(entries: IndexMap<String, LanguageConfig>) -> Result<Vec<
 				errors.push(format!("Language at position {}: name cannot be empty", index + 1));
 				return None;
 			}
-			if let Some(prev) = &prev_name {
-				if name.to_lowercase() < prev.to_lowercase() {
-					errors
-						.push(format!("Language '{name}' is not in alphabetical order (should come before '{prev}')"));
-				}
+			if let Some(prev) = &prev_name
+				&& name.to_lowercase() < prev.to_lowercase()
+			{
+				errors.push(format!("Language '{name}' is not in alphabetical order (should come before '{prev}')"));
 			}
 			prev_name = Some(name.clone());
 			config.name = name;

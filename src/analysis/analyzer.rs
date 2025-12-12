@@ -74,15 +74,14 @@ impl CodeAnalyzer {
 						Ok(entry) if entry.file_type().is_some_and(|ft| ft.is_file()) => {
 							// Consider all UTF-8 file names; language detection will skip binaries/unknowns.
 							let should_consider = entry.file_name().to_str().is_some();
-							if should_consider {
-								if let Err(err) =
+							if should_consider
+								&& let Err(err) =
 									file_processor::process_file(entry.path(), &mut aggregator.local, collect_details)
-								{
-									if verbose {
-										eprintln!("Failed to process {}: {err}", entry.path().display());
-									}
-									error_counter.fetch_add(1, Ordering::Relaxed);
+							{
+								if verbose {
+									eprintln!("Failed to process {}: {err}", entry.path().display());
 								}
+								error_counter.fetch_add(1, Ordering::Relaxed);
 							}
 						}
 						Err(err) => {

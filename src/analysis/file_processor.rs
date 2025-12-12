@@ -131,12 +131,11 @@ fn detect_language_from_samples(filename: &str, samples: &[u8]) -> Option<&'stat
 		return None;
 	}
 	let sample_text_owned;
-	let sample_str = match str::from_utf8(samples) {
-		Ok(text) => Some(text),
-		Err(_) => {
-			sample_text_owned = String::from_utf8_lossy(samples).into_owned();
-			Some(sample_text_owned.as_str())
-		}
+	let sample_str = if let Ok(text) = str::from_utf8(samples) {
+		Some(text)
+	} else {
+		sample_text_owned = String::from_utf8_lossy(samples).into_owned();
+		Some(sample_text_owned.as_str())
 	};
 	langs::detect_language_info(filename, sample_str)
 }

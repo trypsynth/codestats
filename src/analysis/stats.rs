@@ -239,25 +239,13 @@ impl LanguageStats {
 impl_percentage_methods!(LanguageStats, lines, line_stats);
 
 /// Results of a code analysis operation
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct AnalysisResults {
 	total_files: u64,
 	total_lines: u64,
 	line_stats: LineStats,
 	total_size: u64,
 	language_stats: Vec<LanguageStats>,
-}
-
-impl Default for AnalysisResults {
-	fn default() -> Self {
-		Self {
-			total_files: 0,
-			total_lines: 0,
-			line_stats: LineStats::default(),
-			total_size: 0,
-			language_stats: Vec::new(),
-		}
-	}
 }
 
 impl AnalysisResults {

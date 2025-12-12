@@ -106,12 +106,13 @@ pub fn classify_line(
 	if trimmed.is_empty() {
 		return LineType::Blank;
 	}
-	if is_first_line && trimmed.starts_with("#!") {
-		if let Some(lang) = lang_info {
-			if !lang.shebangs.is_empty() && lang.shebangs.iter().any(|shebang| trimmed.starts_with(shebang)) {
-				return LineType::Shebang;
-			}
-		}
+	if is_first_line
+		&& trimmed.starts_with("#!")
+		&& let Some(lang) = lang_info
+		&& !lang.shebangs.is_empty()
+		&& lang.shebangs.iter().any(|shebang| trimmed.starts_with(shebang))
+	{
+		return LineType::Shebang;
 	}
 	let Some(lang) = lang_info else {
 		return LineType::Code;
@@ -129,14 +130,14 @@ pub fn classify_line(
 	if comment_state.is_in_comment() {
 		return if has_code { LineType::Code } else { LineType::Comment };
 	}
-	if let Some(line_comments) = matchers.line_comments.as_ref() {
-		if let Some(matched) = line_comments.find(line_remainder) {
-			let pos = matched.start();
-			if pos > 0 && contains_non_whitespace(&line_remainder[..pos]) {
-				has_code = true;
-			}
-			return if has_code { LineType::Code } else { LineType::Comment };
+	if let Some(line_comments) = matchers.line_comments.as_ref()
+		&& let Some(matched) = line_comments.find(line_remainder)
+	{
+		let pos = matched.start();
+		if pos > 0 && contains_non_whitespace(&line_remainder[..pos]) {
+			has_code = true;
 		}
+		return if has_code { LineType::Code } else { LineType::Comment };
 	}
 	if contains_non_whitespace(line_remainder) {
 		has_code = true;
@@ -149,12 +150,12 @@ fn trim_ascii(line: &str) -> &str {
 	let bytes = line.as_bytes();
 	let mut start = 0;
 	let mut end = bytes.len();
-	if let Some(pos) = memrchr(b'\n', &bytes[..end]) {
-		if pos + 1 == end {
-			end = pos;
-			if end > 0 && bytes[end - 1] == b'\r' {
-				end -= 1;
-			}
+	if let Some(pos) = memrchr(b'\n', &bytes[..end])
+		&& pos + 1 == end
+	{
+		end = pos;
+		if end > 0 && bytes[end - 1] == b'\r' {
+			end -= 1;
 		}
 	}
 	while start < end && is_ascii_ws(bytes[start]) {
