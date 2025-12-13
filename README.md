@@ -91,4 +91,4 @@ Codestats ran about 3.86 ± 0.07 times faster than tokei on this machine (a mode
 
 ## License
 
-Codestats is licensed under the [Zlib License](LICENSE).
+Codestats is licensed under the [MIT License](LICENSE).
