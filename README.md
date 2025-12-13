@@ -35,7 +35,7 @@ Search order:
 4. `~/.config/codestats/config.toml`
 5. `~/.codestats.toml`
 
-Example `.codestats.toml`:
+### Example `.codestats.toml`:
 
 ```toml
 [analysis]
@@ -45,12 +45,12 @@ include_hidden = false
 follow_symlinks = false
 
 [display]
-number_style = "plain"        # plain|comma|underscore|space
-size_units = "binary"         # binary|decimal
-precision = 1                 # 0-6
-sort_by = "lines"             # lines|code|comments|blanks|files|size|name
-sort_direction = "desc"       # asc|desc
-output = "human"              # human|json|json-compact|csv|tsv|markdown|html
+number_style = "plain"
+size_units = "binary"
+precision = 1
+sort_by = "lines"
+sort_direction = "desc"
+output = "human"
 ```
 
 ## CLI reference
