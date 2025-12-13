@@ -199,7 +199,9 @@ impl<'a> LanguageRecord<'a> {
 					files.reverse();
 				}
 			} else {
-				apply_sort(&mut files, ctx.options.sort_direction, |file| sort_key_for_file_record(file, sort_key, file_count));
+				apply_sort(&mut files, ctx.options.sort_direction, |file| {
+					sort_key_for_file_record(file, sort_key, file_count)
+				});
 			}
 			files
 				.into_iter()
