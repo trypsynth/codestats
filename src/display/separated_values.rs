@@ -3,7 +3,7 @@ use std::{borrow::Cow, io::Write, path::Path};
 use anyhow::Result;
 
 use super::{FormatterContext, OutputFormatter, ReportData, ViewOptions};
-use crate::{analysis::AnalysisResults, display::report::LanguageRecord, utils};
+use crate::{analysis::AnalysisResults, display::report::LanguageRecord};
 
 /// Trait for field escaping strategies in separated value formats.
 pub trait FieldEscaper {
@@ -75,10 +75,6 @@ impl<const DELIMITER: u8, E: FieldEscaper> OutputFormatter for SeparatedValuesFo
 }
 
 impl<const DELIMITER: u8, E: FieldEscaper> SeparatedValuesFormatter<DELIMITER, E> {
-	fn percent_or_blank(value: u64, total: u64, ctx: &FormatterContext) -> String {
-		if total > 0 { ctx.percent(utils::percentage(value, total)) } else { String::default() }
-	}
-
 	fn write_verbose(report: &ReportData, ctx: &FormatterContext, writer: &mut dyn Write) -> Result<()> {
 		Self::write_summary_section(report, ctx, writer)?;
 		writer.write_all(b"\n")?;
@@ -103,9 +99,9 @@ impl<const DELIMITER: u8, E: FieldEscaper> SeparatedValuesFormatter<DELIMITER, E
 		let shebang_lines = ctx.number(summary.total_shebang_lines);
 		let shebang_pct = ctx.percent(summary.shebang_percentage);
 		let total_size = ctx.number(summary.total_size);
-		let total_files_pct = Self::percent_or_blank(summary.total_files, summary.total_files, ctx);
-		let total_lines_pct = Self::percent_or_blank(summary.total_lines, summary.total_lines, ctx);
-		let total_size_pct = Self::percent_or_blank(summary.total_size, summary.total_size, ctx);
+		let total_files_pct = String::new();
+		let total_lines_pct = String::new();
+		let total_size_pct = String::new();
 		let total_size_human = &summary.total_size_human;
 		Self::write_record(output, &["Analysis Path", report.analysis_path.as_str(), "", ""])?;
 		Self::write_record(output, &["Total Files", total_files.as_str(), total_files_pct.as_str(), ""])?;

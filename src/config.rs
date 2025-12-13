@@ -123,6 +123,10 @@ impl Config {
 	}
 
 	pub fn merge_with_cli(mut self, cli: &Cli, matches: &ArgMatches) -> Self {
+		let path_overridden = Self::cli_overrode(matches, "path");
+		if path_overridden {
+			self.path.clone_from(&cli.path);
+		}
 		macro_rules! apply {
 			($id:literal, $body:expr) => {
 				if Self::cli_overrode(matches, $id) {
@@ -130,7 +134,6 @@ impl Config {
 				}
 			};
 		}
-		apply!("path", self.path.clone_from(&cli.path));
 		apply!("verbose", self.analysis.verbose = cli.verbose);
 		apply!("no_gitignore", self.analysis.respect_gitignore = !cli.no_gitignore);
 		apply!("hidden", self.analysis.include_hidden = cli.hidden);
@@ -141,6 +144,15 @@ impl Config {
 		apply!("language_sort", self.display.sort_by = cli.language_sort);
 		apply!("sort_direction", self.display.sort_direction = cli.sort_direction);
 		apply!("output", self.display.output = cli.output);
+		if !path_overridden {
+			if let Some(source) = &self.source {
+				if self.path.is_relative() {
+					if let Some(parent) = source.parent() {
+						self.path = parent.join(&self.path);
+					}
+				}
+			}
+		}
 		self.display.precision = self.display.precision.min(6);
 		self
 	}
