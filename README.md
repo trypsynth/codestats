@@ -1,6 +1,6 @@
 # Codestats
 
-A Rust CLI that summarizes codebases at blazing speed. It counts files, lines, and bytes by language; respects .gitignore and .ignore files; can follow symlinks; optionally displays per-file details; and outputs in either human-readable or machine-friendly formats.
+A small CLI tool that summarizes codebases at blazing speed. It counts files, lines, and bytes by language; respects .gitignore and .ignore files; can follow symlinks; optionally displays per-file details; and outputs in customizable human-readable or machine-friendly formats.
 
 ## Installation
 
@@ -22,7 +22,7 @@ cargo install --path .
 
 - Analyze the current directory and provide a human-readable report: `cs`
 - Get a verbose, per-file detail for `src/` in JSON format: `cs -v src -o json`
-- List supported languages (400+): `cs -l`
+- List supported languages (440+): `cs -l`
 
 ## Configuration
 
@@ -68,11 +68,11 @@ Usage: `cs [OPTIONS] [PATH]`
 - `-v, --verbose` Show per-file detail instead of just the summary.
 - `-i, --no-gitignore` Do not respect `.gitignore` files.
 - `-H, --hidden` Search hidden files and directories.
-- `-s, --symlinks` Follow symlinks (use carefully to avoid cycles).
+- `-S, --symlinks` Follow symlinks (use carefully to avoid cycles).
 - `-n, --number-style <plain|comma|underscore|space>` Number formatting style. Default: `plain`.
 - `-u, --size-units <binary|decimal>` Human-readable size units. Default: `binary`.
 - `-p, --precision <0-6>` Percentage precision. Default: `1`.
-- `-S, --sort-by <lines|code|comments|blanks|files|size|name>` Sort key for languages (and per-file detail when verbose). Default: `lines`.
+- `-s, --sort-by <lines|code|comments|blanks|files|size|name>` Sort key for languages (and per-file detail when verbose). Default: `lines`.
 - `-d, --sort-dir <asc|desc>` Sort direction. Default: `desc`.
 - `-o, --output <human|json|json-compact|csv|tsv|markdown|html>` Output format. Default: `human`.
 - `-h, --help` Print help.
