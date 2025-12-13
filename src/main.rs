@@ -10,7 +10,6 @@ mod utils;
 use std::io::{self, Write as _};
 
 use anyhow::{Result, ensure};
-use clap::{CommandFactory, FromArgMatches};
 use cli::Cli;
 use terminal_size::terminal_size;
 
@@ -21,8 +20,7 @@ use crate::{
 };
 
 fn main() -> Result<()> {
-	let matches = Cli::command().get_matches();
-	let cli = Cli::from_arg_matches(&matches).unwrap_or_else(|e| e.exit());
+	let (cli, matches) = Cli::parse_with_matches();
 	if cli.langs {
 		let mut stdout = io::stdout();
 		let terminal_width = terminal_size().map_or(80, |(w, _)| usize::from(w.0));

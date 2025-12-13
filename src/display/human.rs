@@ -11,6 +11,20 @@ use crate::{
 
 pub struct HumanFormatter;
 
+fn join_with_commas_and(parts: &[String]) -> Option<String> {
+	match parts {
+		[] => None,
+		[first] => Some(first.clone()),
+		[first, second] => Some(format!("{first} and {second}")),
+		items => {
+			let mut result = items[..items.len() - 1].join(", ");
+			result.push_str(", and ");
+			result.push_str(&items[items.len() - 1]);
+			Some(result)
+		}
+	}
+}
+
 impl OutputFormatter for HumanFormatter {
 	fn write_output(
 		&self,
@@ -64,33 +78,11 @@ impl HumanFormatter {
 			total_size_human
 		)?;
 		let line_breakdown_parts = summary.line_breakdown_parts(true, ctx);
-		if !line_breakdown_parts.is_empty() {
-			let breakdown = match line_breakdown_parts.as_slice() {
-				[] => String::new(),
-				[first] => first.clone(),
-				[first, second] => format!("{first} and {second}"),
-				items => {
-					let mut result = items[..items.len() - 1].join(", ");
-					result.push_str(", and ");
-					result.push_str(&items[items.len() - 1]);
-					result
-				}
-			};
+		if let Some(breakdown) = join_with_commas_and(&line_breakdown_parts) {
 			writeln!(writer, "Line breakdown: {breakdown}.")?;
 		}
 		let percentage_parts = summary.percentage_parts(ctx);
-		if !percentage_parts.is_empty() {
-			let percentages = match percentage_parts.as_slice() {
-				[] => String::new(),
-				[first] => first.clone(),
-				[first, second] => format!("{first} and {second}"),
-				items => {
-					let mut result = items[..items.len() - 1].join(", ");
-					result.push_str(", and ");
-					result.push_str(&items[items.len() - 1]);
-					result
-				}
-			};
+		if let Some(percentages) = join_with_commas_and(&percentage_parts) {
 			writeln!(writer, "Percentages: {percentages}.")?;
 		}
 		Ok(())

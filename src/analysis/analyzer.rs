@@ -72,11 +72,8 @@ impl CodeAnalyzer {
 				Box::new(move |entry_result| {
 					match entry_result {
 						Ok(entry) if entry.file_type().is_some_and(|ft| ft.is_file()) => {
-							// Consider all UTF-8 file names; language detection will skip binaries/unknowns.
-							let should_consider = entry.file_name().to_str().is_some();
-							if should_consider
-								&& let Err(err) =
-									file_processor::process_file(entry.path(), &mut aggregator.local, collect_details)
+							if let Err(err) =
+								file_processor::process_file(entry.path(), &mut aggregator.local, collect_details)
 							{
 								if verbose {
 									eprintln!("Failed to process {}: {err}", entry.path().display());
@@ -99,7 +96,7 @@ impl CodeAnalyzer {
 			.map_err(|_| anyhow::anyhow!("Failed to unwrap aggregates Arc - walker still holds references"))?
 			.into_inner()
 			.unwrap_or_else(PoisonError::into_inner);
-		let results = partials.into_iter().fold(AnalysisResults::default(), |mut acc, mut local| {
+		let results = partials.into_iter().fold(AnalysisResults::with_language_capacity(), |mut acc, mut local| {
 			acc.merge(mem::take(&mut local));
 			acc
 		});

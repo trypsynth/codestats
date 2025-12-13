@@ -249,6 +249,11 @@ pub struct AnalysisResults {
 }
 
 impl AnalysisResults {
+	#[must_use]
+	pub fn with_language_capacity() -> Self {
+		Self { language_stats: Vec::with_capacity(LANGUAGES.len()), ..Self::default() }
+	}
+
 	fn ensure_language_slot(&mut self, language: &Language) {
 		let target_len = language.index + 1;
 		if self.language_stats.len() < target_len {

@@ -123,42 +123,25 @@ impl Config {
 	}
 
 	pub fn merge_with_cli(mut self, cli: &Cli, matches: &ArgMatches) -> Self {
-		if Self::cli_overrode(matches, "path") {
-			self.path.clone_from(&cli.path);
+		macro_rules! apply {
+			($id:literal, $body:expr) => {
+				if Self::cli_overrode(matches, $id) {
+					$body
+				}
+			};
 		}
-		if Self::cli_overrode(matches, "verbose") {
-			self.analysis.verbose = cli.verbose;
-		}
-		if Self::cli_overrode(matches, "no_gitignore") {
-			self.analysis.respect_gitignore = !cli.no_gitignore;
-		}
-		if Self::cli_overrode(matches, "hidden") {
-			self.analysis.include_hidden = cli.hidden;
-		}
-		if Self::cli_overrode(matches, "symlinks") {
-			self.analysis.follow_symlinks = cli.symlinks;
-		}
-		if Self::cli_overrode(matches, "number_style") {
-			self.display.number_style = cli.number_style;
-		}
-		if Self::cli_overrode(matches, "size_style") {
-			self.display.size_units = cli.size_style;
-		}
-		if Self::cli_overrode(matches, "percent_precision") {
-			self.display.precision = cli.percent_precision.min(6);
-		}
-		if Self::cli_overrode(matches, "language_sort") {
-			self.display.sort_by = cli.language_sort;
-		}
-		if Self::cli_overrode(matches, "sort_direction") {
-			self.display.sort_direction = cli.sort_direction;
-		}
-		if Self::cli_overrode(matches, "output") {
-			self.display.output = cli.output;
-		}
-		if self.display.precision > 6 {
-			self.display.precision = 6;
-		}
+		apply!("path", self.path.clone_from(&cli.path));
+		apply!("verbose", self.analysis.verbose = cli.verbose);
+		apply!("no_gitignore", self.analysis.respect_gitignore = !cli.no_gitignore);
+		apply!("hidden", self.analysis.include_hidden = cli.hidden);
+		apply!("symlinks", self.analysis.follow_symlinks = cli.symlinks);
+		apply!("number_style", self.display.number_style = cli.number_style);
+		apply!("size_style", self.display.size_units = cli.size_style);
+		apply!("percent_precision", self.display.precision = cli.percent_precision);
+		apply!("language_sort", self.display.sort_by = cli.language_sort);
+		apply!("sort_direction", self.display.sort_direction = cli.sort_direction);
+		apply!("output", self.display.output = cli.output);
+		self.display.precision = self.display.precision.min(6);
 		self
 	}
 

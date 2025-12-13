@@ -138,7 +138,8 @@ struct LineTypeInfo {
 
 fn sort_key_for_file_record(file: &FileStats, key: LanguageSortKey) -> SortValue<'_> {
 	match key {
-		LanguageSortKey::Lines | LanguageSortKey::Files => SortValue::Num(file.total_lines()),
+		LanguageSortKey::Lines => SortValue::Num(file.total_lines()),
+		LanguageSortKey::Files => SortValue::Text(file.path()),
 		LanguageSortKey::Code => SortValue::Num(file.code_lines()),
 		LanguageSortKey::Comments => SortValue::Num(file.comment_lines()),
 		LanguageSortKey::Blanks => SortValue::Num(file.blank_lines()),

@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use clap::Parser;
+use clap::{ArgMatches, CommandFactory, FromArgMatches, Parser};
 
 use crate::display::{LanguageSortKey, NumberStyle, OutputFormat, SizeStyle, SortDirection};
 
@@ -54,4 +54,13 @@ pub struct Cli {
 	/// Output format.
 	#[arg(short, long, default_value = "human")]
 	pub output: OutputFormat,
+}
+
+impl Cli {
+	pub fn parse_with_matches() -> (Self, ArgMatches) {
+		let command = Self::command();
+		let matches = command.get_matches();
+		let cli = Self::from_arg_matches(&matches).expect("clap already validated arguments");
+		(cli, matches)
+	}
 }

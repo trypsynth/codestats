@@ -105,11 +105,12 @@ const SAMPLE_SIZE: usize = 4 * 1024; // 4KB sample for binary/language detection
 const BINARY_THRESHOLD_PERCENT: usize = 20; // 20% non-text bytes threshold
 
 pub fn process_file(file_path: &Path, results: &mut AnalysisResults, collect_details: bool) -> Result<()> {
-	let filename = file_path.file_name().and_then(|name| name.to_str()).context("Invalid UTF-8 in file name")?;
+	let filename_os = file_path.file_name().context("Missing file name")?;
+	let filename = filename_os.to_string_lossy();
 	let metadata =
 		file_path.metadata().with_context(|| format!("Failed to read metadata for {}", file_path.display()))?;
 	let file_size = metadata.len();
-	let language_from_name = langs::detect_language_info(filename, None);
+	let language_from_name = langs::detect_language_info(&filename, None);
 	if file_size == 0 {
 		if let Some(language) = language_from_name {
 			let contribution = FileContribution::new(0, 0, 0, 0, 0, file_size);
@@ -120,9 +121,9 @@ pub fn process_file(file_path: &Path, results: &mut AnalysisResults, collect_det
 		return Ok(());
 	}
 	if file_size >= MMAP_THRESHOLD {
-		process_file_mmap(file_path, filename, file_size, results, collect_details)
+		process_file_mmap(file_path, &filename, file_size, results, collect_details)
 	} else {
-		process_file_buffered(file_path, filename, file_size, results, collect_details)
+		process_file_buffered(file_path, &filename, file_size, results, collect_details)
 	}
 }
 
