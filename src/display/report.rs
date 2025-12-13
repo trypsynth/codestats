@@ -7,7 +7,7 @@ use crate::{
 	display::{
 		apply_sort,
 		formatting::{FormatterContext, SortValue},
-		options::LanguageSortKey,
+		options::{LanguageSortKey, SortDirection},
 	},
 	utils,
 };
@@ -136,10 +136,10 @@ struct LineTypeInfo {
 	plural_label: &'static str,
 }
 
-fn sort_key_for_file_record(file: &FileStats, key: LanguageSortKey) -> SortValue<'_> {
+fn sort_key_for_file_record(file: &FileStats, key: LanguageSortKey, file_count: u64) -> SortValue<'_> {
 	match key {
 		LanguageSortKey::Lines => SortValue::Num(file.total_lines()),
-		LanguageSortKey::Files => SortValue::Text(file.path()),
+		LanguageSortKey::Files => SortValue::Num(file_count),
 		LanguageSortKey::Code => SortValue::Num(file.code_lines()),
 		LanguageSortKey::Comments => SortValue::Num(file.comment_lines()),
 		LanguageSortKey::Blanks => SortValue::Num(file.blank_lines()),
@@ -192,7 +192,15 @@ impl<'a> LanguageRecord<'a> {
 		let files_detail = verbose.then(|| {
 			let mut files: Vec<_> = stats.files_list().iter().collect();
 			let sort_key = ctx.options.language_sort_key;
-			apply_sort(&mut files, ctx.options.sort_direction, |file| sort_key_for_file_record(file, sort_key));
+			let file_count = stats.files();
+			if sort_key == LanguageSortKey::Files {
+				files.sort_by(|a, b| a.path().cmp(b.path()));
+				if ctx.options.sort_direction == SortDirection::Desc {
+					files.reverse();
+				}
+			} else {
+				apply_sort(&mut files, ctx.options.sort_direction, |file| sort_key_for_file_record(file, sort_key, file_count));
+			}
 			files
 				.into_iter()
 				.map(|file| {

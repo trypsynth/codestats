@@ -40,7 +40,8 @@ impl FormatterContext {
 #[derive(Debug, Clone)]
 pub enum NumberFormatter {
 	Plain,
-	Formatted(CustomFormat),
+	// Box to keep enum variant sizes balanced (clippy::large_enum_variant).
+	Formatted(Box<CustomFormat>),
 }
 
 impl NumberFormatter {
@@ -50,15 +51,15 @@ impl NumberFormatter {
 			NumberStyle::Plain => Self::Plain,
 			NumberStyle::Comma => {
 				let format = CustomFormat::builder().grouping(Grouping::Standard).separator(",").build().unwrap();
-				Self::Formatted(format)
+				Self::Formatted(Box::new(format))
 			}
 			NumberStyle::Underscore => {
 				let format = CustomFormat::builder().grouping(Grouping::Standard).separator("_").build().unwrap();
-				Self::Formatted(format)
+				Self::Formatted(Box::new(format))
 			}
 			NumberStyle::Space => {
 				let format = CustomFormat::builder().grouping(Grouping::Standard).separator(" ").build().unwrap();
-				Self::Formatted(format)
+				Self::Formatted(Box::new(format))
 			}
 		}
 	}
@@ -67,7 +68,7 @@ impl NumberFormatter {
 	pub fn format(&self, value: u64) -> String {
 		match self {
 			Self::Plain => value.to_string(),
-			Self::Formatted(format) => value.to_formatted_string(format),
+			Self::Formatted(format) => value.to_formatted_string(format.as_ref()),
 		}
 	}
 }

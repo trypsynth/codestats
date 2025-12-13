@@ -76,7 +76,7 @@ impl<const DELIMITER: u8, E: FieldEscaper> OutputFormatter for SeparatedValuesFo
 
 impl<const DELIMITER: u8, E: FieldEscaper> SeparatedValuesFormatter<DELIMITER, E> {
 	fn percent_or_blank(value: u64, total: u64, ctx: &FormatterContext) -> String {
-		(total > 0).then(|| ctx.percent(utils::percentage(value, total))).unwrap_or_default()
+		if total > 0 { ctx.percent(utils::percentage(value, total)) } else { String::default() }
 	}
 
 	fn write_verbose(report: &ReportData, ctx: &FormatterContext, writer: &mut dyn Write) -> Result<()> {
