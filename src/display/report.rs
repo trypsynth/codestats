@@ -187,7 +187,7 @@ impl<'a> LanguageRecord<'a> {
 					LanguageSortKey::Name => SortValue::Text(name),
 				}
 			},
-			|a, b| a.0.cmp(&b.0),
+			|a, b| a.0.cmp(b.0),
 		);
 		stats_vec.into_iter().map(|(name, stats)| Self::from_stats(name, stats, verbose, ctx)).collect()
 	}

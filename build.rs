@@ -240,14 +240,12 @@ impl LanguageValidator {
 
 	fn validate_pattern_disambiguation(&mut self) {
 		for (pattern, info) in &self.seen_patterns {
-			if info.names.len() > 1 {
-				if !info.all_have_keywords {
-					self.errors.push(format!(
-						"Duplicate pattern '{}' in [{}] - all must have 'keywords' for disambiguation",
-						pattern,
-						info.names.join(", ")
-					));
-				}
+			if info.names.len() > 1 && !info.all_have_keywords {
+				self.errors.push(format!(
+					"Duplicate pattern '{}' in [{}] - all must have 'keywords' for disambiguation",
+					pattern,
+					info.names.join(", ")
+				));
 			}
 		}
 	}
