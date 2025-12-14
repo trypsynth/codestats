@@ -176,6 +176,10 @@
 		file_patterns: ["*.bzl", "*.bazel", "*.bzlmod", "BUILD", "BUILD.bazel", "build", "build.bazel", "WORKSPACE", "WORKSPACE.bazel", "workspace", "MODULE", "MODULE.bazel", "module"],
 		line_comments: ["#"],
 	},
+	"BCPL": {
+		file_patterns: ["*.bcpl"],
+		block_comments: [["/*", "*/"]],
+	},
 	"BCX/FreeBASIC": {
 		file_patterns: ["*.bas", "*.bi"],
 		line_comments: ["'", "rem"],
@@ -271,6 +275,11 @@
 	},
 	"C++": {
 		file_patterns: ["*.cpp", "*.hpp", "*.c++", "*.h++", "*.cc", "*.cxx", "*.hxx", "*.ino", "*.ipp", "*.cppm", "*.ixx", "*.c++m", "*.pcc", "*.tpp"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+	},
+	"C2": {
+		file_patterns: ["*.c2"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
@@ -509,6 +518,10 @@
 		line_comments: ["--"],
 		block_comments: [["{-", "-}"]],
 		nested_blocks: true,
+	},
+	"Diff": {
+		file_patterns: ["*.diff", "*.patch"],
+		line_comments: ["#"],
 	},
 	"Djot": {
 		file_patterns: ["*.dj", "*.djot"],
@@ -1112,6 +1125,11 @@
 		file_patterns: ["*.ll", "*.bc"],
 		line_comments: [";"],
 	},
+	"LLVM TableGen": {
+		file_patterns: ["*.td"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+	},
 	"Lobster": {
 		file_patterns: ["*.lobster"],
 		line_comments: ["//"],
@@ -1593,6 +1611,10 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
+	"QBE IR": {
+		file_patterns: ["*.qbe"],
+		line_comments: ["#"],
+	},
 	"QCL": {
 		file_patterns: ["*.qcl"],
 		line_comments: ["//"],
@@ -1950,6 +1972,10 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
+	"Uiua": {
+		file_patterns: ["*.uiua"],
+		line_comments: ["#"],
+	},
 	"Umka": {
 		file_patterns: ["*.um"],
 		line_comments: ["//"],
@@ -2138,6 +2164,10 @@
 	"Zig": {
 		file_patterns: ["*.zig"],
 		line_comments: ["//", "///", "//!"],
+	},
+	"Ziggy": {
+		file_patterns: ["*.ziggy"],
+		line_comments: ["#"],
 	},
 	"ZoKrates": {
 		file_patterns: ["*.zok"],
