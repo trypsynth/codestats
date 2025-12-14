@@ -4,7 +4,10 @@ use anyhow::Result;
 use askama::{Result as AskamaResult, Template, Values};
 
 use super::{FormatterContext, OutputFormatter, ReportData, ViewOptions};
-use crate::{analysis::AnalysisResults, display::report::FormattedLanguage};
+use crate::{
+	analysis::AnalysisResults,
+	display::report::{LanguageRecord, Summary},
+};
 
 /// Escape Markdown table cells by escaping the pipe separator.
 #[expect(clippy::unnecessary_wraps)]
@@ -12,20 +15,29 @@ pub fn md_escape(value: &str, _values: &dyn Values) -> AskamaResult<String> {
 	Ok(value.replace('|', "\\|"))
 }
 
+#[expect(clippy::unnecessary_wraps)]
+pub fn fmt_number(value: &u64, _values: &dyn Values, ctx: &FormatterContext) -> AskamaResult<String> {
+	Ok(ctx.number(*value))
+}
+
+#[expect(clippy::unnecessary_wraps)]
+pub fn fmt_percent(value: &f64, _values: &dyn Values, ctx: &FormatterContext) -> AskamaResult<String> {
+	Ok(ctx.percent(*value))
+}
+
 mod filters {
-	pub use super::md_escape;
+	pub use super::{fmt_number, fmt_percent, md_escape};
 }
 
 #[derive(Template)]
 #[template(path = "report.md", escape = "none")]
 struct MarkdownTemplate<'a> {
 	title: &'a str,
-	total_files: String,
-	total_lines: String,
-	total_size_human: &'a str,
+	summary: &'a Summary,
+	ctx: &'a FormatterContext,
 	line_breakdown: Vec<String>,
 	totals: Vec<String>,
-	languages: &'a [FormattedLanguage<'a>],
+	languages: &'a [LanguageRecord<'a>],
 	show_files: bool,
 }
 
@@ -41,15 +53,13 @@ impl OutputFormatter for MarkdownFormatter {
 		writer: &mut dyn Write,
 	) -> Result<()> {
 		let (ctx, report) = self.prepare_report(results, path, verbose, view_options);
-		let languages = report.formatted_languages(&ctx);
-		Self::write_markdown(&report, &languages, verbose, &ctx, writer)
+		Self::write_markdown(&report, verbose, &ctx, writer)
 	}
 }
 
 impl MarkdownFormatter {
 	fn write_markdown(
 		report: &ReportData,
-		languages: &[FormattedLanguage],
 		verbose: bool,
 		ctx: &FormatterContext,
 		writer: &mut dyn Write,
@@ -59,12 +69,11 @@ impl MarkdownFormatter {
 		let totals = summary.percentage_parts(ctx);
 		let template = MarkdownTemplate {
 			title: &report.analysis_path,
-			total_files: ctx.number(summary.total_files),
-			total_lines: ctx.number(summary.total_lines),
-			total_size_human: &summary.total_size_human,
+			summary,
+			ctx,
 			line_breakdown,
 			totals,
-			languages,
+			languages: &report.languages,
 			show_files: verbose,
 		};
 		let rendered = template.render()?;

@@ -172,18 +172,23 @@ impl<'a> LanguageRecord<'a> {
 	fn from_results(results: &'a AnalysisResults, verbose: bool, ctx: &FormatterContext) -> Vec<Self> {
 		let mut stats_vec: Vec<_> = results.languages().map(|(lang, stats)| (lang.name, stats)).collect();
 		let sort_key = ctx.options.language_sort_key;
-		apply_sort(&mut stats_vec, ctx.options.sort_direction, |record| {
-			let (name, stats) = record;
-			match sort_key {
-				LanguageSortKey::Lines => SortValue::Num(stats.lines()),
-				LanguageSortKey::Code => SortValue::Num(stats.code_lines()),
-				LanguageSortKey::Comments => SortValue::Num(stats.comment_lines()),
-				LanguageSortKey::Blanks => SortValue::Num(stats.blank_lines()),
-				LanguageSortKey::Files => SortValue::Num(stats.files()),
-				LanguageSortKey::Size => SortValue::Num(stats.size()),
-				LanguageSortKey::Name => SortValue::Text(name),
-			}
-		});
+		apply_sort(
+			&mut stats_vec,
+			ctx.options.sort_direction,
+			|record| {
+				let (name, stats) = record;
+				match sort_key {
+					LanguageSortKey::Lines => SortValue::Num(stats.lines()),
+					LanguageSortKey::Code => SortValue::Num(stats.code_lines()),
+					LanguageSortKey::Comments => SortValue::Num(stats.comment_lines()),
+					LanguageSortKey::Blanks => SortValue::Num(stats.blank_lines()),
+					LanguageSortKey::Files => SortValue::Num(stats.files()),
+					LanguageSortKey::Size => SortValue::Num(stats.size()),
+					LanguageSortKey::Name => SortValue::Text(name),
+				}
+			},
+			|a, b| a.0.cmp(&b.0),
+		);
 		stats_vec.into_iter().map(|(name, stats)| Self::from_stats(name, stats, verbose, ctx)).collect()
 	}
 
@@ -199,9 +204,12 @@ impl<'a> LanguageRecord<'a> {
 					files.reverse();
 				}
 			} else {
-				apply_sort(&mut files, ctx.options.sort_direction, |file| {
-					sort_key_for_file_record(file, sort_key, file_count)
-				});
+				apply_sort(
+					&mut files,
+					ctx.options.sort_direction,
+					|file| sort_key_for_file_record(file, sort_key, file_count),
+					|a, b| a.path().cmp(b.path()),
+				);
 			}
 			files
 				.into_iter()
@@ -273,72 +281,3 @@ impl_formatters!(FileRecord<'_> {
 	format_shebang_lines => shebang_lines : number,
 	format_size => size : number,
 });
-
-#[derive(Debug, Serialize)]
-pub struct FormattedLanguage<'a> {
-	pub name: &'a str,
-	pub files: String,
-	pub lines: String,
-	pub code_lines: String,
-	pub comment_lines: String,
-	pub blank_lines: String,
-	pub shebang_lines: String,
-	pub size: String,
-	pub size_human: &'a str,
-	pub code_percentage: String,
-	pub comment_percentage: String,
-	pub blank_percentage: String,
-	pub shebang_percentage: String,
-	pub files_detail: Option<Vec<FormattedFile<'a>>>,
-}
-
-#[derive(Debug, Serialize)]
-pub struct FormattedFile<'a> {
-	pub path: &'a str,
-	pub total_lines: String,
-	pub code_lines: String,
-	pub comment_lines: String,
-	pub blank_lines: String,
-	pub shebang_lines: String,
-	pub size: String,
-	pub size_human: &'a str,
-}
-
-impl<'a> ReportData<'a> {
-	#[must_use]
-	pub fn formatted_languages(&'a self, ctx: &FormatterContext) -> Vec<FormattedLanguage<'a>> {
-		self.languages
-			.iter()
-			.map(|lang| FormattedLanguage {
-				name: lang.name,
-				files: ctx.number(lang.files),
-				lines: ctx.number(lang.lines),
-				code_lines: ctx.number(lang.code_lines),
-				comment_lines: ctx.number(lang.comment_lines),
-				blank_lines: ctx.number(lang.blank_lines),
-				shebang_lines: ctx.number(lang.shebang_lines),
-				size: ctx.number(lang.size),
-				size_human: &lang.size_human,
-				code_percentage: ctx.percent(lang.code_percentage),
-				comment_percentage: ctx.percent(lang.comment_percentage),
-				blank_percentage: ctx.percent(lang.blank_percentage),
-				shebang_percentage: ctx.percent(lang.shebang_percentage),
-				files_detail: lang.files_detail.as_ref().map(|files| {
-					files
-						.iter()
-						.map(|file| FormattedFile {
-							path: file.path,
-							total_lines: ctx.number(file.total_lines),
-							code_lines: ctx.number(file.code_lines),
-							comment_lines: ctx.number(file.comment_lines),
-							blank_lines: ctx.number(file.blank_lines),
-							shebang_lines: ctx.number(file.shebang_lines),
-							size: ctx.number(file.size),
-							size_human: &file.size_human,
-						})
-						.collect()
-				}),
-			})
-			.collect()
-	}
-}

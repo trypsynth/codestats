@@ -129,15 +129,23 @@ impl PercentFormatter {
 	}
 }
 
-pub fn apply_sort<T>(items: &mut [T], direction: SortDirection, mut metric: impl FnMut(&T) -> SortValue<'_>) {
+pub fn apply_sort<T>(
+	items: &mut [T],
+	direction: SortDirection,
+	mut metric: impl FnMut(&T) -> SortValue<'_>,
+	mut tiebreaker: impl FnMut(&T, &T) -> Ordering,
+) {
 	items.sort_by(|a, b| {
 		let lhs = metric(a);
 		let rhs = metric(b);
-		let ordering = match (lhs, rhs) {
+		let mut ordering = match (lhs, rhs) {
 			(SortValue::Num(l), SortValue::Num(r)) => l.cmp(&r),
 			(SortValue::Text(l), SortValue::Text(r)) => l.cmp(r),
 			(SortValue::Num(_), SortValue::Text(_)) | (SortValue::Text(_), SortValue::Num(_)) => Ordering::Equal,
 		};
+		if ordering == Ordering::Equal {
+			ordering = tiebreaker(a, b);
+		}
 		if direction == SortDirection::Desc { ordering.reverse() } else { ordering }
 	});
 }

@@ -202,10 +202,15 @@ fn main() -> Result<()> {
 	Ok(())
 }
 
+struct PatternInfo {
+	names: Vec<String>,
+	all_have_keywords: bool,
+}
+
 struct LanguageValidator {
 	errors: Vec<String>,
 	seen_names: HashSet<String>,
-	seen_patterns: HashMap<String, Vec<String>>,
+	seen_patterns: HashMap<String, PatternInfo>,
 }
 
 impl LanguageValidator {
@@ -222,23 +227,25 @@ impl LanguageValidator {
 				self.errors.push(format!("Language '{}': name has leading/trailing whitespace", lang.name));
 			}
 			for pattern in &lang.file_patterns {
-				self.seen_patterns.entry(pattern.clone()).or_default().push(lang.name.clone());
+				let entry = self
+					.seen_patterns
+					.entry(pattern.clone())
+					.or_insert_with(|| PatternInfo { names: Vec::new(), all_have_keywords: true });
+				entry.names.push(lang.name.clone());
+				entry.all_have_keywords &= !lang.keywords.is_empty();
 			}
 		}
-		self.validate_pattern_disambiguation(languages);
+		self.validate_pattern_disambiguation();
 	}
 
-	fn validate_pattern_disambiguation(&mut self, languages: &[LanguageConfig]) {
-		for (pattern, language_names) in &self.seen_patterns {
-			if language_names.len() > 1 {
-				let all_have_keywords = language_names
-					.iter()
-					.all(|name| languages.iter().find(|l| &l.name == name).is_some_and(|l| !l.keywords.is_empty()));
-				if !all_have_keywords {
+	fn validate_pattern_disambiguation(&mut self) {
+		for (pattern, info) in &self.seen_patterns {
+			if info.names.len() > 1 {
+				if !info.all_have_keywords {
 					self.errors.push(format!(
 						"Duplicate pattern '{}' in [{}] - all must have 'keywords' for disambiguation",
 						pattern,
-						language_names.join(", ")
+						info.names.join(", ")
 					));
 				}
 			}

@@ -2,9 +2,9 @@
 
 ## Summary
 
-- Files: {{ total_files }}
-- Lines: {{ total_lines }}
-- Size: {{ total_size_human }}
+- Files: {{ summary.total_files | fmt_number(ctx) }}
+- Lines: {{ summary.total_lines | fmt_number(ctx) }}
+- Size: {{ summary.total_size_human }}
 {% if !line_breakdown.is_empty() -%}
 - Line types: {{ line_breakdown | join(", ") }}
 {% endif -%}
@@ -22,7 +22,7 @@ _No recognized programming languages found._
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 
 {% for lang in languages -%}
-| {{ lang.name | md_escape }} | {{ lang.files }} | {{ lang.lines }} | {{ lang.code_percentage }}% | {{ lang.comment_percentage }}% | {{ lang.blank_percentage }}% | {{ lang.shebang_percentage }}% | {{ lang.size_human | md_escape }} |
+| {{ lang.name | md_escape }} | {{ lang.files | fmt_number(ctx) }} | {{ lang.lines | fmt_number(ctx) }} | {{ lang.code_percentage | fmt_percent(ctx) }}% | {{ lang.comment_percentage | fmt_percent(ctx) }}% | {{ lang.blank_percentage | fmt_percent(ctx) }}% | {{ lang.shebang_percentage | fmt_percent(ctx) }}% | {{ lang.size_human | md_escape }} |
 {% endfor -%}
 
 {% if show_files -%}
@@ -39,7 +39,7 @@ _No recognized programming languages found._
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 
 {% for file in files -%}
-| {{ file.path | md_escape }} | {{ file.total_lines }} | {{ file.code_lines }} | {{ file.comment_lines }} | {{ file.blank_lines }} | {{ file.shebang_lines }} | {{ file.size_human | md_escape }} |
+| {{ file.path | md_escape }} | {{ file.total_lines | fmt_number(ctx) }} | {{ file.code_lines | fmt_number(ctx) }} | {{ file.comment_lines | fmt_number(ctx) }} | {{ file.blank_lines | fmt_number(ctx) }} | {{ file.shebang_lines | fmt_number(ctx) }} | {{ file.size_human | md_escape }} |
 {% endfor -%}
 
 {% when None -%}{% endmatch -%}

@@ -1,10 +1,13 @@
 use std::{io::Write, path::Path};
 
 use anyhow::Result;
-use askama::Template;
+use askama::{Result as AskamaResult, Template, Values};
 
-use super::{FormatterContext, OutputFormatter, ReportData, ViewOptions, report::Summary};
-use crate::{analysis::AnalysisResults, display::report::FormattedLanguage};
+use super::{FormatterContext, OutputFormatter, ReportData, ViewOptions};
+use crate::{
+	analysis::AnalysisResults,
+	display::report::{LanguageRecord, Summary},
+};
 
 #[derive(Template)]
 #[template(path = "report.html", escape = "html")]
@@ -12,11 +15,26 @@ struct ReportTemplate<'a> {
 	title: &'a str,
 	summary: &'a Summary,
 	totals: String,
-	languages: &'a [FormattedLanguage<'a>],
+	languages: &'a [LanguageRecord<'a>],
+	ctx: &'a FormatterContext,
 	show_files: bool,
 }
 
 pub struct HtmlFormatter;
+
+#[expect(clippy::unnecessary_wraps)]
+pub fn fmt_number(value: &u64, _values: &dyn Values, ctx: &FormatterContext) -> AskamaResult<String> {
+	Ok(ctx.number(*value))
+}
+
+#[expect(clippy::unnecessary_wraps)]
+pub fn fmt_percent(value: &f64, _values: &dyn Values, ctx: &FormatterContext) -> AskamaResult<String> {
+	Ok(ctx.percent(*value))
+}
+
+mod filters {
+	pub use super::{fmt_number, fmt_percent};
+}
 
 impl OutputFormatter for HtmlFormatter {
 	fn write_output(
@@ -28,15 +46,13 @@ impl OutputFormatter for HtmlFormatter {
 		writer: &mut dyn Write,
 	) -> Result<()> {
 		let (ctx, report) = self.prepare_report(results, path, verbose, view_options);
-		let languages = report.formatted_languages(&ctx);
-		Self::write_document(&report, &languages, verbose, &ctx, writer)
+		Self::write_document(&report, verbose, &ctx, writer)
 	}
 }
 
 impl HtmlFormatter {
 	fn write_document(
 		report: &ReportData,
-		languages: &[FormattedLanguage],
 		verbose: bool,
 		ctx: &FormatterContext,
 		writer: &mut dyn Write,
@@ -47,7 +63,8 @@ impl HtmlFormatter {
 			title: &report.analysis_path,
 			summary: &report.summary,
 			totals,
-			languages,
+			languages: &report.languages,
+			ctx,
 			show_files: verbose,
 		};
 		let rendered = template.render()?;
