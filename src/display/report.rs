@@ -59,6 +59,14 @@ pub struct Summary {
 	pub shebang_percentage: f64,
 }
 
+#[derive(Debug)]
+pub struct SummaryMetric<'a> {
+	pub label: &'static str,
+	pub value: u64,
+	pub percentage: Option<f64>,
+	pub human_readable: Option<&'a str>,
+}
+
 impl Summary {
 	#[must_use]
 	fn from_results(results: &AnalysisResults, ctx: &FormatterContext) -> Self {
@@ -126,6 +134,46 @@ impl Summary {
 				}
 			})
 			.collect()
+	}
+
+	#[must_use]
+	pub fn metrics(&self) -> impl Iterator<Item = SummaryMetric<'_>> {
+		let size_human = self.total_size_human.as_str();
+		[
+			SummaryMetric { label: "Total Files", value: self.total_files, percentage: None, human_readable: None },
+			SummaryMetric { label: "Total Lines", value: self.total_lines, percentage: None, human_readable: None },
+			SummaryMetric {
+				label: "Code Lines",
+				value: self.total_code_lines,
+				percentage: Some(self.code_percentage),
+				human_readable: None,
+			},
+			SummaryMetric {
+				label: "Comment Lines",
+				value: self.total_comment_lines,
+				percentage: Some(self.comment_percentage),
+				human_readable: None,
+			},
+			SummaryMetric {
+				label: "Blank Lines",
+				value: self.total_blank_lines,
+				percentage: Some(self.blank_percentage),
+				human_readable: None,
+			},
+			SummaryMetric {
+				label: "Shebang Lines",
+				value: self.total_shebang_lines,
+				percentage: Some(self.shebang_percentage),
+				human_readable: None,
+			},
+			SummaryMetric {
+				label: "Total Size",
+				value: self.total_size,
+				percentage: None,
+				human_readable: Some(size_human),
+			},
+		]
+		.into_iter()
 	}
 }
 

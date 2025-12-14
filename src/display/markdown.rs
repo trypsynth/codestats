@@ -15,18 +15,9 @@ pub fn md_escape(value: &str, _values: &dyn Values) -> AskamaResult<String> {
 	Ok(value.replace('|', "\\|"))
 }
 
-#[expect(clippy::unnecessary_wraps, clippy::trivially_copy_pass_by_ref)]
-pub fn fmt_number(value: &u64, _values: &dyn Values, ctx: &FormatterContext) -> AskamaResult<String> {
-	Ok(ctx.number(*value))
-}
-
-#[expect(clippy::unnecessary_wraps, clippy::trivially_copy_pass_by_ref)]
-pub fn fmt_percent(value: &f64, _values: &dyn Values, ctx: &FormatterContext) -> AskamaResult<String> {
-	Ok(ctx.percent(*value))
-}
-
 mod filters {
-	pub use super::{fmt_number, fmt_percent, md_escape};
+	pub use super::md_escape;
+	pub use crate::display::template_filters::{fmt_number, fmt_percent};
 }
 
 #[derive(Template)]

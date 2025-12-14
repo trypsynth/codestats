@@ -6,6 +6,7 @@ mod markdown;
 mod options;
 mod report;
 mod separated_values;
+pub mod template_filters;
 
 use std::{
 	fmt::{self, Display},

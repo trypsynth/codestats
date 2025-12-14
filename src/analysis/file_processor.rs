@@ -143,20 +143,41 @@ fn detect_language_from_samples(filename: &str, samples: &[u8]) -> Option<&'stat
 	langs::detect_language_info(filename, sample_str)
 }
 
+fn sample_ranges(file_len: u64) -> (usize, Option<(u64, usize)>) {
+	let start_len = file_len.min(SAMPLE_SIZE as u64) as usize;
+	if file_len <= SAMPLE_SIZE as u64 {
+		return (start_len, None);
+	}
+	let mid_offset = (file_len.saturating_sub(SAMPLE_SIZE as u64)) / 2;
+	let mid_len = ((mid_offset + SAMPLE_SIZE as u64).min(file_len) - mid_offset) as usize;
+	(start_len, Some((mid_offset, mid_len)))
+}
+
 fn sample_file(file: &mut File, file_size: u64) -> Result<Vec<u8>> {
 	let mut buffer = Vec::with_capacity(SAMPLE_SIZE * 2);
 	let mut chunk = [0u8; SAMPLE_SIZE];
-	let read_start = file.read(&mut chunk)?;
+	let (start_len, mid_range) = sample_ranges(file_size);
+	let read_start = file.read(&mut chunk[..start_len])?;
 	buffer.extend_from_slice(&chunk[..read_start]);
-	if file_size > SAMPLE_SIZE as u64 {
-		let mid_offset = file_size.saturating_sub(SAMPLE_SIZE as u64) / 2;
+	if let Some((mid_offset, mid_len)) = mid_range {
 		file.seek(SeekFrom::Start(mid_offset))?;
-		let read_mid = file.read(&mut chunk)?;
+		let read_mid = file.read(&mut chunk[..mid_len])?;
 		buffer.extend_from_slice(&chunk[..read_mid]);
 	}
 	// Reset for actual reading.
 	file.rewind()?;
 	Ok(buffer)
+}
+
+fn sample_from_slice(file_bytes: &[u8]) -> Vec<u8> {
+	let mut samples = Vec::with_capacity(SAMPLE_SIZE * 2);
+	let (start_len, mid_range) = sample_ranges(file_bytes.len() as u64);
+	samples.extend_from_slice(&file_bytes[..start_len]);
+	if let Some((mid_offset, mid_len)) = mid_range {
+		let offset = mid_offset as usize;
+		samples.extend_from_slice(&file_bytes[offset..offset + mid_len]);
+	}
+	samples
 }
 
 fn process_file_buffered(
@@ -187,14 +208,7 @@ fn process_file_mmap(
 	let mmap =
 		unsafe { Mmap::map(&file) }.with_context(|| format!("Failed to memory-map file {}", file_path.display()))?;
 	let file_bytes = &*mmap;
-	let mut samples = Vec::with_capacity(SAMPLE_SIZE * 2);
-	let start_len = file_bytes.len().min(SAMPLE_SIZE);
-	samples.extend_from_slice(&file_bytes[..start_len]);
-	if file_bytes.len() > SAMPLE_SIZE {
-		let mid_offset = (file_bytes.len().saturating_sub(SAMPLE_SIZE)) / 2;
-		let mid_end = (mid_offset + SAMPLE_SIZE).min(file_bytes.len());
-		samples.extend_from_slice(&file_bytes[mid_offset..mid_end]);
-	}
+	let samples = sample_from_slice(file_bytes);
 	let Some(language) = detect_language_from_samples(filename, &samples) else { return Ok(()) };
 	let mut source = MmapLineSource::new(file_bytes);
 	process_lines(file_path, file_size, results, collect_details, language, &mut source)

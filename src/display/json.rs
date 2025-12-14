@@ -6,6 +6,25 @@ use serde_json::{to_writer, to_writer_pretty};
 use super::{OutputFormatter, ViewOptions};
 use crate::analysis::AnalysisResults;
 
+fn write_json(
+	formatter: &impl OutputFormatter,
+	results: &AnalysisResults,
+	path: &Path,
+	verbose: bool,
+	view_options: ViewOptions,
+	writer: &mut dyn Write,
+	pretty: bool,
+) -> Result<()> {
+	let (_ctx, report) = formatter.prepare_report(results, path, verbose, view_options);
+	if pretty {
+		to_writer_pretty(&mut *writer, &report)?;
+	} else {
+		to_writer(&mut *writer, &report)?;
+	}
+	writeln!(writer)?;
+	Ok(())
+}
+
 pub struct JsonFormatter;
 
 impl OutputFormatter for JsonFormatter {
@@ -17,10 +36,7 @@ impl OutputFormatter for JsonFormatter {
 		view_options: ViewOptions,
 		writer: &mut dyn Write,
 	) -> Result<()> {
-		let (_ctx, report) = self.prepare_report(results, path, verbose, view_options);
-		to_writer_pretty(&mut *writer, &report)?;
-		writeln!(writer)?;
-		Ok(())
+		write_json(self, results, path, verbose, view_options, writer, true)
 	}
 }
 
@@ -35,9 +51,6 @@ impl OutputFormatter for JsonCompactFormatter {
 		view_options: ViewOptions,
 		writer: &mut dyn Write,
 	) -> Result<()> {
-		let (_ctx, report) = self.prepare_report(results, path, verbose, view_options);
-		to_writer(&mut *writer, &report)?;
-		writeln!(writer)?;
-		Ok(())
+		write_json(self, results, path, verbose, view_options, writer, false)
 	}
 }
