@@ -28,14 +28,15 @@ mod tests {
 
 	#[test]
 	fn test_percentage() {
-		assert_eq!(percentage(0, 100), 0.0);
-		assert_eq!(percentage(50, 100), 50.0);
-		assert_eq!(percentage(25, 100), 25.0);
-		assert_eq!(percentage(100, 100), 100.0);
-		assert_eq!(percentage(10, 0), 0.0);
+		const EPSILON: f64 = f64::EPSILON;
+		assert!((percentage(0, 100) - 0.0).abs() <= EPSILON);
+		assert!((percentage(50, 100) - 50.0).abs() <= EPSILON);
+		assert!((percentage(25, 100) - 25.0).abs() <= EPSILON);
+		assert!((percentage(100, 100) - 100.0).abs() <= EPSILON);
+		assert!((percentage(10, 0) - 0.0).abs() <= EPSILON);
 		let part = u64::MAX / 2;
 		let total = u64::MAX;
 		let pct = percentage(part, total);
-		assert!((pct - 50.0).abs() < 0.000000_1);
+		assert!((pct - 50.0).abs() < 0.000_000_1);
 	}
 }

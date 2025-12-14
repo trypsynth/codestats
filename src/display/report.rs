@@ -136,7 +136,6 @@ impl Summary {
 			.collect()
 	}
 
-	#[must_use]
 	pub fn metrics(&self) -> impl Iterator<Item = SummaryMetric<'_>> {
 		let size_human = self.total_size_human.as_str();
 		[

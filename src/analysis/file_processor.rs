@@ -144,12 +144,14 @@ fn detect_language_from_samples(filename: &str, samples: &[u8]) -> Option<&'stat
 }
 
 fn sample_ranges(file_len: u64) -> (usize, Option<(u64, usize)>) {
-	let start_len = file_len.min(SAMPLE_SIZE as u64) as usize;
+	let start_len =
+		usize::try_from(file_len.min(SAMPLE_SIZE as u64)).expect("sample size is bounded by SAMPLE_SIZE");
 	if file_len <= SAMPLE_SIZE as u64 {
 		return (start_len, None);
 	}
 	let mid_offset = (file_len.saturating_sub(SAMPLE_SIZE as u64)) / 2;
-	let mid_len = ((mid_offset + SAMPLE_SIZE as u64).min(file_len) - mid_offset) as usize;
+	let mid_len = usize::try_from((mid_offset + SAMPLE_SIZE as u64).min(file_len) - mid_offset)
+		.expect("sample size is bounded by SAMPLE_SIZE");
 	(start_len, Some((mid_offset, mid_len)))
 }
 
@@ -174,7 +176,7 @@ fn sample_from_slice(file_bytes: &[u8]) -> Vec<u8> {
 	let (start_len, mid_range) = sample_ranges(file_bytes.len() as u64);
 	samples.extend_from_slice(&file_bytes[..start_len]);
 	if let Some((mid_offset, mid_len)) = mid_range {
-		let offset = mid_offset as usize;
+		let offset = usize::try_from(mid_offset).expect("mid offset is derived from slice length");
 		samples.extend_from_slice(&file_bytes[offset..offset + mid_len]);
 	}
 	samples
