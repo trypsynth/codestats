@@ -144,14 +144,12 @@ impl Config {
 		apply!("language_sort", self.display.sort_by = cli.language_sort);
 		apply!("sort_direction", self.display.sort_direction = cli.sort_direction);
 		apply!("output", self.display.output = cli.output);
-		if !path_overridden {
-			if let Some(source) = &self.source {
-				if self.path.is_relative() {
-					if let Some(parent) = source.parent() {
-						self.path = parent.join(&self.path);
-					}
-				}
-			}
+		if !path_overridden
+			&& let Some(source) = &self.source
+			&& self.path.is_relative()
+			&& let Some(parent) = source.parent()
+		{
+			self.path = parent.join(&self.path);
 		}
 		self.display.precision = self.display.precision.min(6);
 		self
