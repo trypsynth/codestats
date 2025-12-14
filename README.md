@@ -1,6 +1,13 @@
 # Codestats
 
-A small CLI tool that summarizes codebases at blazing speed. It counts files, lines, and bytes by language; respects .gitignore and .ignore files; can follow symlinks; optionally displays per-file details; and outputs in customizable human-readable or machine-friendly formats.
+A small CLI tool that summarizes codebases at blazing speed. Highlights include:
+
+- Counts files, lines, and bytes by language
+- Can respect .gitignore and .ignore files
+- Can follow symlinks
+- Can analyze hidden files
+- Optionally displays per-file details
+- Outputs in customizable human-readable or machine-friendly formats.
 
 ## Installation
 
@@ -26,29 +33,30 @@ cargo install --path .
 
 ## Configuration
 
-Codestats can read settings from TOML while keeping full CLI compatibility. Precedence: CLI args > explicit `--config` path > nearest found file > built-in defaults.
+Codestats can read settings from TOML while keeping full CLI compatibility.
 
 Search order:
+
 1. `--config <path>` (errors if missing)
 2. `./.codestats.toml`
 3. `./codestats.toml`
 4. `~/.config/codestats/config.toml`
 5. `~/.codestats.toml`
 
-### Example `.codestats.toml`:
+### Example TOML config
 
 ```toml
 [analysis]
-verbose = false
+verbose = true
 respect_gitignore = true
-include_hidden = false
+include_hidden = true
 follow_symlinks = false
 
 [display]
-number_style = "plain"
-size_units = "binary"
-precision = 1
-sort_by = "lines"
+number_style = "comma"
+size_units = "decimal"
+precision = 4
+sort_by = "files"
 sort_direction = "desc"
 output = "human"
 ```
@@ -59,7 +67,7 @@ Usage: `cs [OPTIONS] [PATH]`
 
 ### Arguments
 
-- `PATH` The path to analyze (directory is recursive). Defaults to the current directory.
+- `PATH` The path to analyze. Defaults to the current directory.
 
 ### Options
 
@@ -87,7 +95,7 @@ Usage: `cs [OPTIONS] [PATH]`
 | `cs ~` | 1.952 s ± 0.034 s | 1.915 s …  1.997 s |
 | `tokei ~` | 7.538 s ± 0.045 s | 7.466 s …  7.609 s |
 
-Codestats ran about 3.86 ± 0.07 times faster than tokei on this machine (a modest Beelinks mini PC) when scanning a massive home directory with caches warmed up.
+Codestats ran 3.86 ± 0.07 times faster than tokei on a small Beelinks mini PC.
 
 ## License
 
