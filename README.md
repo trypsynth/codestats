@@ -1,5 +1,10 @@
 # Codestats
 
+[![Crates.io](https://img.shields.io/crates/v/codestats.svg)](https://crates.io/crates/codestats)
+[![License](https://img.shields.io/crates/l/codestats.svg)](LICENSE)
+[![MSRV](https://img.shields.io/badge/MSRV-1.88+-blue)](#)
+
+
 A small CLI tool that summarizes codebases at blazing speed. Built for quick audits, comparisons, and scripts.
 
 ## Highlights
