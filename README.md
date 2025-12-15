@@ -1,15 +1,23 @@
 # Codestats
 
-A small CLI tool that summarizes codebases at blazing speed. Highlights include:
+A small CLI tool that summarizes codebases at blazing speed. Built for quick audits, comparisons, and scripts.
+
+## Highlights
 
 - Counts files, lines, and bytes by language
-- Can respect .gitignore and .ignore files
-- Can follow symlinks
-- Can analyze hidden files
-- Optionally displays per-file details
-- Outputs in customizable human-readable or machine-friendly formats.
+- Respects `.gitignore` and `.ignore` when you want it to
+- Can follow symlinks and scan hidden files
+- Optional per-file detail for drilling into hot spots
+- Outputs in human-readable or machine-friendly formats
+- Supports 440+ languages out of the box
 
-## Installation
+## Why Codestats
+
+- Fast on laptops and tiny boxes alike
+- Works as a drop-in for dashboards or quick CLI reports
+- Friendly defaults with easy overrides through CLI or config
+
+## Install
 
 ### With cargo
 
@@ -27,15 +35,41 @@ cargo install --path .
 
 ## Quick start
 
-- Analyze the current directory and provide a human-readable report: `cs`
-- Get a verbose, per-file detail for `src/` in JSON format: `cs -v src -o json`
-- List supported languages (440+): `cs -l`
+- Human-readable report of the current directory: `cs`
+- Verbose per-file detail for `src/` in JSON: `cs -v src -o json`
+- List supported languages: `cs -l`
+- Ignore `.gitignore` rules: `cs -i`
+- Follow symlinks and include hidden files: `cs -SH`
+
+## Output formats
+
+- `human` (default) for terminals
+- `json` or `json-compact` for scripts
+- `csv` or `tsv` for spreadsheets
+- `markdown` or `html` for docs and dashboards
+
+## Common flags
+
+Usage: `cs [OPTIONS] [PATH]` (defaults to the current directory)
+
+- `-v, --verbose` Show per-file detail instead of just the summary
+- `-i, --no-gitignore` Do not respect `.gitignore`
+- `-H, --hidden` Search hidden files and directories
+- `-S, --symlinks` Follow symlinks (avoid cycles)
+- `-n, --number-style <plain|comma|underscore|space>` Number formatting style. Default: `plain`
+- `-u, --size-units <binary|decimal>` Human-readable size units. Default: `binary`
+- `-p, --precision <0-6>` Percentage precision. Default: `1`
+- `-s, --sort-by <lines|code|comments|blanks|files|size|name>` Sort key for languages and per-file detail. Default: `lines`
+- `-d, --sort-dir <asc|desc>` Sort direction. Default: `desc`
+- `-o, --output <human|json|json-compact|csv|tsv|markdown|html>` Output format. Default: `human`
+- `-c, --config <PATH>` Use a TOML config file
+- `-l, --langs` List all supported languages and exit
+- `-h, --help` Print help
+- `-V, --version` Print version
 
 ## Configuration
 
-Codestats can read settings from TOML while keeping full CLI compatibility.
-
-Search order:
+Codestats can read settings from TOML while keeping full CLI compatibility. Search order:
 
 1. `--config <path>` (errors if missing)
 2. `./.codestats.toml`
@@ -61,34 +95,9 @@ sort_direction = "desc"
 output = "human"
 ```
 
-## CLI reference
-
-Usage: `cs [OPTIONS] [PATH]`
-
-### Arguments
-
-- `PATH` The path to analyze. Defaults to the current directory.
-
-### Options
-
-- `-c, --config <PATH>` Path to a TOML config file.
-- `-l, --langs` List all supported languages and exit.
-- `-v, --verbose` Show per-file detail instead of just the summary.
-- `-i, --no-gitignore` Do not respect `.gitignore` files.
-- `-H, --hidden` Search hidden files and directories.
-- `-S, --symlinks` Follow symlinks (use carefully to avoid cycles).
-- `-n, --number-style <plain|comma|underscore|space>` Number formatting style. Default: `plain`.
-- `-u, --size-units <binary|decimal>` Human-readable size units. Default: `binary`.
-- `-p, --precision <0-6>` Percentage precision. Default: `1`.
-- `-s, --sort-by <lines|code|comments|blanks|files|size|name>` Sort key for languages (and per-file detail when verbose). Default: `lines`.
-- `-d, --sort-dir <asc|desc>` Sort direction. Default: `desc`.
-- `-o, --output <human|json|json-compact|csv|tsv|markdown|html>` Output format. Default: `human`.
-- `-h, --help` Print help.
-- `-V, --version` Print version.
-
 ## Benchmarks
 
-`hyperfine --warmup 1 "cs ~" "tokei ~"`
+Run: `hyperfine --warmup 1 "cs ~" "tokei ~"`
 
 | Command | Mean ± σ | Min … Max |
 | --- | --- | --- |
