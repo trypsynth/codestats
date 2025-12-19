@@ -1,11 +1,12 @@
 use std::{
+	borrow::Cow,
 	fs::File,
 	io::{BufRead, BufReader, Read, Seek, SeekFrom},
 	path::Path,
-	str,
 };
 
 use anyhow::{Context as _, Result};
+use encoding_rs::{Encoding, UTF_16BE, UTF_16LE, UTF_8};
 use memmap2::Mmap;
 
 use super::{
@@ -26,17 +27,12 @@ struct LineCounts {
 impl LineCounts {
 	pub(crate) fn classify_and_count(
 		&mut self,
-		line_bytes: &[u8],
+		line: &str,
 		lang_info: Option<&Language>,
 		comment_state: &mut CommentState,
 		is_first_line: bool,
 	) {
-		let line_type = if let Ok(line) = str::from_utf8(line_bytes) {
-			line_classifier::classify_line(line, lang_info, comment_state, is_first_line)
-		} else {
-			let line = String::from_utf8_lossy(line_bytes);
-			line_classifier::classify_line(line.as_ref(), lang_info, comment_state, is_first_line)
-		};
+		let line_type = line_classifier::classify_line(line, lang_info, comment_state, is_first_line);
 		match line_type {
 			LineType::Code => self.code += 1,
 			LineType::Comment => self.comment += 1,
@@ -104,6 +100,12 @@ const MMAP_THRESHOLD: u64 = 256 * 1024; // 256KB threshold
 const SAMPLE_SIZE: usize = 4 * 1024; // 4KB sample for binary/language detection
 const BINARY_THRESHOLD_PERCENT: usize = 20; // 20% non-text bytes threshold
 
+#[derive(Clone, Copy)]
+struct FileEncoding {
+	encoding: &'static Encoding,
+	bom_len: usize,
+}
+
 pub fn process_file(file_path: &Path, results: &mut AnalysisResults, collect_details: bool) -> Result<()> {
 	let filename_os = file_path.file_name().context("Missing file name")?;
 	let filename = filename_os.to_string_lossy();
@@ -127,20 +129,12 @@ pub fn process_file(file_path: &Path, results: &mut AnalysisResults, collect_det
 	}
 }
 
-fn detect_language_from_samples(filename: &str, samples: &[u8]) -> Option<&'static Language> {
-	if is_probably_binary(samples) {
+fn detect_language_from_samples(filename: &str, samples: &[u8], encoding: FileEncoding) -> Option<&'static Language> {
+	if is_probably_binary(samples, encoding) {
 		return None;
 	}
-	let mut sample_text_owned = None;
-	let sample_str = str::from_utf8(samples).map_or_else(
-		|_| {
-			let owned = String::from_utf8_lossy(samples).into_owned();
-			sample_text_owned = Some(owned);
-			sample_text_owned.as_deref()
-		},
-		Some,
-	);
-	langs::detect_language_info(filename, sample_str)
+	let decoded = decode_bytes(samples, encoding, true);
+	langs::detect_language_info(filename, Some(decoded.as_ref()))
 }
 
 fn sample_ranges(file_len: u64) -> (usize, Option<(u64, usize)>) {
@@ -192,10 +186,16 @@ fn process_file_buffered(
 	let file = File::open(file_path).with_context(|| format!("Failed to open file {}", file_path.display()))?;
 	let mut file = file;
 	let sample_bytes = sample_file(&mut file, file_size)?;
-	let Some(language) = detect_language_from_samples(filename, &sample_bytes) else { return Ok(()) };
+	let encoding = detect_encoding(&sample_bytes);
+	let Some(language) = detect_language_from_samples(filename, &sample_bytes, encoding) else { return Ok(()) };
+	if is_utf16(encoding.encoding) {
+		let mut buffer = Vec::with_capacity(file_size as usize);
+		file.read_to_end(&mut buffer)?;
+		return process_utf16_bytes(file_path, file_size, results, collect_details, language, encoding, &buffer);
+	}
 	let reader = BufReader::with_capacity(64 * 1024, file);
 	let mut source = BufLineSource::new(reader);
-	process_lines(file_path, file_size, results, collect_details, language, &mut source)
+	process_lines(file_path, file_size, results, collect_details, language, encoding, &mut source)
 }
 
 fn process_file_mmap(
@@ -211,9 +211,13 @@ fn process_file_mmap(
 		unsafe { Mmap::map(&file) }.with_context(|| format!("Failed to memory-map file {}", file_path.display()))?;
 	let file_bytes = &*mmap;
 	let samples = sample_from_slice(file_bytes);
-	let Some(language) = detect_language_from_samples(filename, &samples) else { return Ok(()) };
+	let encoding = detect_encoding(&samples);
+	let Some(language) = detect_language_from_samples(filename, &samples, encoding) else { return Ok(()) };
+	if is_utf16(encoding.encoding) {
+		return process_utf16_bytes(file_path, file_size, results, collect_details, language, encoding, file_bytes);
+	}
 	let mut source = MmapLineSource::new(file_bytes);
-	process_lines(file_path, file_size, results, collect_details, language, &mut source)
+	process_lines(file_path, file_size, results, collect_details, language, encoding, &mut source)
 }
 
 fn process_lines(
@@ -222,13 +226,15 @@ fn process_lines(
 	results: &mut AnalysisResults,
 	collect_details: bool,
 	language: &'static Language,
+	encoding: FileEncoding,
 	source: &mut dyn LineSource,
 ) -> Result<()> {
 	let mut line_counts = LineCounts::default();
 	let mut comment_state = CommentState::new();
 	let mut is_first_line = true;
 	source.for_each_line(&mut |line_bytes| {
-		line_counts.classify_and_count(line_bytes, Some(language), &mut comment_state, is_first_line);
+		let decoded = decode_bytes(line_bytes, encoding, is_first_line);
+		line_counts.classify_and_count(decoded.as_ref(), Some(language), &mut comment_state, is_first_line);
 		is_first_line = false;
 	})?;
 	let LineCounts { total, code, comment, blank, shebang } = line_counts;
@@ -239,8 +245,53 @@ fn process_lines(
 	Ok(())
 }
 
-fn is_probably_binary(sample: &[u8]) -> bool {
+fn process_utf16_bytes(
+	file_path: &Path,
+	file_size: u64,
+	results: &mut AnalysisResults,
+	collect_details: bool,
+	language: &'static Language,
+	encoding: FileEncoding,
+	bytes: &[u8],
+) -> Result<()> {
+	let decoded = decode_bytes(bytes, encoding, true);
+	let mut line_counts = LineCounts::default();
+	let mut comment_state = CommentState::new();
+	let mut is_first_line = true;
+	for line in decoded.lines() {
+		line_counts.classify_and_count(line, Some(language), &mut comment_state, is_first_line);
+		is_first_line = false;
+	}
+	let LineCounts { total, code, comment, blank, shebang } = line_counts;
+	let contribution = FileContribution::new(total, code, comment, blank, shebang, file_size);
+	let file_stats = collect_details
+		.then(|| FileStats::new(file_path.display().to_string(), total, code, comment, blank, shebang, file_size));
+	results.add_file_stats(language, contribution, file_stats);
+	Ok(())
+}
+
+fn detect_encoding(samples: &[u8]) -> FileEncoding {
+	if let Some((encoding, bom_len)) = Encoding::for_bom(samples) {
+		FileEncoding { encoding, bom_len }
+	} else {
+		FileEncoding { encoding: UTF_8, bom_len: 0 }
+	}
+}
+
+fn decode_bytes<'a>(bytes: &'a [u8], encoding: FileEncoding, strip_bom: bool) -> Cow<'a, str> {
+	let mut slice = bytes;
+	if strip_bom && encoding.bom_len > 0 && slice.len() >= encoding.bom_len {
+		slice = &slice[encoding.bom_len..];
+	}
+	let (decoded, _, _) = encoding.encoding.decode(slice);
+	decoded
+}
+
+fn is_probably_binary(sample: &[u8], encoding: FileEncoding) -> bool {
 	if sample.is_empty() {
+		return false;
+	}
+	if is_utf16(encoding.encoding) {
 		return false;
 	}
 	let non_text = sample.iter().filter(|b| matches!(**b, 0x00..=0x08 | 0x0B | 0x0C | 0x0E..=0x1F | 0x7F)).count();
@@ -248,5 +299,10 @@ fn is_probably_binary(sample: &[u8]) -> bool {
 	if non_text_pct > BINARY_THRESHOLD_PERCENT || sample.contains(&0) {
 		return true;
 	}
-	str::from_utf8(sample).is_err()
+	let (_, _, had_errors) = encoding.encoding.decode(sample);
+	had_errors
+}
+
+fn is_utf16(encoding: &'static Encoding) -> bool {
+	encoding == UTF_16LE || encoding == UTF_16BE
 }
