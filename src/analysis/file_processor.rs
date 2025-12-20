@@ -6,7 +6,7 @@ use std::{
 };
 
 use anyhow::{Context as _, Result};
-use encoding_rs::{Encoding, UTF_16BE, UTF_16LE, UTF_8};
+use encoding_rs::{Encoding, UTF_8, UTF_16BE, UTF_16LE};
 use memmap2::Mmap;
 
 use super::{
@@ -138,8 +138,7 @@ fn detect_language_from_samples(filename: &str, samples: &[u8], encoding: FileEn
 }
 
 fn sample_ranges(file_len: u64) -> (usize, Option<(u64, usize)>) {
-	let start_len =
-		usize::try_from(file_len.min(SAMPLE_SIZE as u64)).expect("sample size is bounded by SAMPLE_SIZE");
+	let start_len = usize::try_from(file_len.min(SAMPLE_SIZE as u64)).expect("sample size is bounded by SAMPLE_SIZE");
 	if file_len <= SAMPLE_SIZE as u64 {
 		return (start_len, None);
 	}
@@ -183,15 +182,16 @@ fn process_file_buffered(
 	results: &mut AnalysisResults,
 	collect_details: bool,
 ) -> Result<()> {
-	let file = File::open(file_path).with_context(|| format!("Failed to open file {}", file_path.display()))?;
-	let mut file = file;
+	let mut file = File::open(file_path).with_context(|| format!("Failed to open file {}", file_path.display()))?;
 	let sample_bytes = sample_file(&mut file, file_size)?;
-	let encoding = detect_encoding(&sample_bytes);
-	let Some(language) = detect_language_from_samples(filename, &sample_bytes, encoding) else { return Ok(()) };
+	let Some((language, encoding)) = detect_language_and_encoding(filename, &sample_bytes) else { return Ok(()) };
 	if is_utf16(encoding.encoding) {
-		let mut buffer = Vec::with_capacity(file_size as usize);
+		let capacity =
+			usize::try_from(file_size).with_context(|| format!("File too large to read: {}", file_path.display()))?;
+		let mut buffer = Vec::with_capacity(capacity);
 		file.read_to_end(&mut buffer)?;
-		return process_utf16_bytes(file_path, file_size, results, collect_details, language, encoding, &buffer);
+		process_utf16_bytes(file_path, file_size, results, collect_details, language, encoding, &buffer);
+		return Ok(());
 	}
 	let reader = BufReader::with_capacity(64 * 1024, file);
 	let mut source = BufLineSource::new(reader);
@@ -211,13 +211,18 @@ fn process_file_mmap(
 		unsafe { Mmap::map(&file) }.with_context(|| format!("Failed to memory-map file {}", file_path.display()))?;
 	let file_bytes = &*mmap;
 	let samples = sample_from_slice(file_bytes);
-	let encoding = detect_encoding(&samples);
-	let Some(language) = detect_language_from_samples(filename, &samples, encoding) else { return Ok(()) };
+	let Some((language, encoding)) = detect_language_and_encoding(filename, &samples) else { return Ok(()) };
 	if is_utf16(encoding.encoding) {
-		return process_utf16_bytes(file_path, file_size, results, collect_details, language, encoding, file_bytes);
+		process_utf16_bytes(file_path, file_size, results, collect_details, language, encoding, file_bytes);
+		return Ok(());
 	}
 	let mut source = MmapLineSource::new(file_bytes);
 	process_lines(file_path, file_size, results, collect_details, language, encoding, &mut source)
+}
+
+fn detect_language_and_encoding(filename: &str, samples: &[u8]) -> Option<(&'static Language, FileEncoding)> {
+	let encoding = detect_encoding(samples);
+	detect_language_from_samples(filename, samples, encoding).map(|language| (language, encoding))
 }
 
 fn process_lines(
@@ -237,11 +242,7 @@ fn process_lines(
 		line_counts.classify_and_count(decoded.as_ref(), Some(language), &mut comment_state, is_first_line);
 		is_first_line = false;
 	})?;
-	let LineCounts { total, code, comment, blank, shebang } = line_counts;
-	let contribution = FileContribution::new(total, code, comment, blank, shebang, file_size);
-	let file_stats = collect_details
-		.then(|| FileStats::new(file_path.display().to_string(), total, code, comment, blank, shebang, file_size));
-	results.add_file_stats(language, contribution, file_stats);
+	finish_file_stats(file_path, file_size, results, collect_details, language, &line_counts);
 	Ok(())
 }
 
@@ -253,7 +254,7 @@ fn process_utf16_bytes(
 	language: &'static Language,
 	encoding: FileEncoding,
 	bytes: &[u8],
-) -> Result<()> {
+) {
 	let decoded = decode_bytes(bytes, encoding, true);
 	let mut line_counts = LineCounts::default();
 	let mut comment_state = CommentState::new();
@@ -262,12 +263,26 @@ fn process_utf16_bytes(
 		line_counts.classify_and_count(line, Some(language), &mut comment_state, is_first_line);
 		is_first_line = false;
 	}
-	let LineCounts { total, code, comment, blank, shebang } = line_counts;
+	finish_file_stats(file_path, file_size, results, collect_details, language, &line_counts);
+}
+
+fn finish_file_stats(
+	file_path: &Path,
+	file_size: u64,
+	results: &mut AnalysisResults,
+	collect_details: bool,
+	language: &'static Language,
+	line_counts: &LineCounts,
+) {
+	let total = line_counts.total;
+	let code = line_counts.code;
+	let comment = line_counts.comment;
+	let blank = line_counts.blank;
+	let shebang = line_counts.shebang;
 	let contribution = FileContribution::new(total, code, comment, blank, shebang, file_size);
 	let file_stats = collect_details
 		.then(|| FileStats::new(file_path.display().to_string(), total, code, comment, blank, shebang, file_size));
 	results.add_file_stats(language, contribution, file_stats);
-	Ok(())
 }
 
 fn detect_encoding(samples: &[u8]) -> FileEncoding {
@@ -278,7 +293,7 @@ fn detect_encoding(samples: &[u8]) -> FileEncoding {
 	}
 }
 
-fn decode_bytes<'a>(bytes: &'a [u8], encoding: FileEncoding, strip_bom: bool) -> Cow<'a, str> {
+fn decode_bytes(bytes: &[u8], encoding: FileEncoding, strip_bom: bool) -> Cow<'_, str> {
 	let mut slice = bytes;
 	if strip_bom && encoding.bom_len > 0 && slice.len() >= encoding.bom_len {
 		slice = &slice[encoding.bom_len..];

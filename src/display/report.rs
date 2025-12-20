@@ -195,6 +195,22 @@ fn sort_key_for_file_record(file: &FileStats, key: LanguageSortKey, file_count: 
 	}
 }
 
+const fn sort_key_for_language_record<'a>(
+	name: &'a str,
+	stats: &'a LanguageStats,
+	key: LanguageSortKey,
+) -> SortValue<'a> {
+	match key {
+		LanguageSortKey::Lines => SortValue::Num(stats.lines()),
+		LanguageSortKey::Code => SortValue::Num(stats.code_lines()),
+		LanguageSortKey::Comments => SortValue::Num(stats.comment_lines()),
+		LanguageSortKey::Blanks => SortValue::Num(stats.blank_lines()),
+		LanguageSortKey::Files => SortValue::Num(stats.files()),
+		LanguageSortKey::Size => SortValue::Num(stats.size()),
+		LanguageSortKey::Name => SortValue::Text(name),
+	}
+}
+
 #[derive(Debug, Serialize)]
 pub struct LanguageRecord<'a> {
 	pub name: &'a str,
@@ -222,18 +238,7 @@ impl<'a> LanguageRecord<'a> {
 		apply_sort(
 			&mut stats_vec,
 			ctx.options.sort_direction,
-			|record| {
-				let (name, stats) = record;
-				match sort_key {
-					LanguageSortKey::Lines => SortValue::Num(stats.lines()),
-					LanguageSortKey::Code => SortValue::Num(stats.code_lines()),
-					LanguageSortKey::Comments => SortValue::Num(stats.comment_lines()),
-					LanguageSortKey::Blanks => SortValue::Num(stats.blank_lines()),
-					LanguageSortKey::Files => SortValue::Num(stats.files()),
-					LanguageSortKey::Size => SortValue::Num(stats.size()),
-					LanguageSortKey::Name => SortValue::Text(name),
-				}
-			},
+			|(name, stats)| sort_key_for_language_record(name, stats, sort_key),
 			|a, b| a.0.cmp(b.0),
 		);
 		stats_vec.into_iter().map(|(name, stats)| Self::from_stats(name, stats, verbose, ctx)).collect()
