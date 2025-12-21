@@ -77,22 +77,13 @@ impl Default for DisplayConfig {
 #[derive(Clone, Debug)]
 #[allow(clippy::struct_excessive_bools)]
 pub struct AnalyzerConfig {
-	pub verbose: bool,
-	pub respect_gitignore: bool,
-	pub include_hidden: bool,
-	pub follow_symlinks: bool,
+	pub analysis: AnalysisConfig,
 	pub collect_file_details: bool,
 }
 
 impl Default for AnalyzerConfig {
 	fn default() -> Self {
-		Self {
-			verbose: false,
-			respect_gitignore: true,
-			include_hidden: false,
-			follow_symlinks: false,
-			collect_file_details: false,
-		}
+		Self { analysis: AnalysisConfig::default(), collect_file_details: false }
 	}
 }
 
@@ -162,13 +153,7 @@ impl Config {
 
 impl From<&Config> for AnalyzerConfig {
 	fn from(config: &Config) -> Self {
-		Self {
-			verbose: config.analysis.verbose,
-			respect_gitignore: config.analysis.respect_gitignore,
-			include_hidden: config.analysis.include_hidden,
-			follow_symlinks: config.analysis.follow_symlinks,
-			collect_file_details: config.analysis.verbose,
-		}
+		Self { analysis: config.analysis.clone(), collect_file_details: config.analysis.verbose }
 	}
 }
 

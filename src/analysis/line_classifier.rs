@@ -13,6 +13,38 @@ pub enum LineType {
 	Shebang,
 }
 
+impl LineType {
+	#[must_use]
+	pub const fn singular_label(self) -> &'static str {
+		match self {
+			Self::Code => "code",
+			Self::Comment => "comment",
+			Self::Blank => "blank",
+			Self::Shebang => "shebang",
+		}
+	}
+
+	#[must_use]
+	pub const fn plural_label(self) -> &'static str {
+		match self {
+			Self::Code => "code",
+			Self::Comment => "comments",
+			Self::Blank => "blanks",
+			Self::Shebang => "shebangs",
+		}
+	}
+
+	#[must_use]
+	pub const fn title_label(self) -> &'static str {
+		match self {
+			Self::Code => "Code",
+			Self::Comment => "Comments",
+			Self::Blank => "Blanks",
+			Self::Shebang => "Shebangs",
+		}
+	}
+}
+
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct CommentState {
 	in_block_comment: bool,

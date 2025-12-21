@@ -234,7 +234,7 @@ fn process_file_buffered(
 			usize::try_from(file_size).with_context(|| format!("File too large to read: {}", file_path.display()))?;
 		let mut buffer = Vec::with_capacity(capacity);
 		file.read_to_end(&mut buffer)?;
-		process_utf16_bytes(file_path, file_size, results, collect_details, language, encoding, &buffer);
+		process_utf16_bytes(file_path, file_size, results, collect_details, language, encoding, &buffer)?;
 		return Ok(());
 	}
 	let reader = BufReader::with_capacity(64 * 1024, file);
@@ -253,7 +253,7 @@ fn process_file_mmap(
 ) -> Result<()> {
 	let file_bytes = mmap.as_ref();
 	if is_utf16(encoding.encoding) {
-		process_utf16_bytes(file_path, file_size, results, collect_details, language, encoding, file_bytes);
+		process_utf16_bytes(file_path, file_size, results, collect_details, language, encoding, file_bytes)?;
 		return Ok(());
 	}
 	let mut source = MmapLineSource::new(file_bytes);
@@ -274,14 +274,17 @@ fn process_lines(
 	encoding: FileEncoding,
 	source: &mut dyn LineSource,
 ) -> Result<()> {
-	let mut line_counts = LineCounts::default();
-	let mut comment_state = CommentState::new();
 	let mut is_first_line = true;
-	source.for_each_line(&mut |line_bytes| {
-		let decoded = decode_bytes(line_bytes, encoding, is_first_line);
-		line_counts.classify_and_count(decoded.as_ref(), Some(language), &mut comment_state, is_first_line);
-		is_first_line = false;
-	})?;
+	let line_counts = count_lines_with(
+		|handle| {
+			source.for_each_line(&mut |line_bytes| {
+				let decoded = decode_bytes(line_bytes, encoding, is_first_line);
+				handle(decoded.as_ref(), is_first_line);
+				is_first_line = false;
+			})
+		},
+		language,
+	)?;
 	finish_file_stats(file_path, file_size, results, collect_details, language, &line_counts);
 	Ok(())
 }
@@ -294,16 +297,21 @@ fn process_utf16_bytes(
 	language: &'static Language,
 	encoding: FileEncoding,
 	bytes: &[u8],
-) {
+) -> Result<()> {
 	let decoded = decode_bytes(bytes, encoding, true);
-	let mut line_counts = LineCounts::default();
-	let mut comment_state = CommentState::new();
 	let mut is_first_line = true;
-	for line in decoded.lines() {
-		line_counts.classify_and_count(line, Some(language), &mut comment_state, is_first_line);
-		is_first_line = false;
-	}
+	let line_counts = count_lines_with(
+		|handle| {
+			for line in decoded.lines() {
+				handle(line, is_first_line);
+				is_first_line = false;
+			}
+			Ok(())
+		},
+		language,
+	)?;
 	finish_file_stats(file_path, file_size, results, collect_details, language, &line_counts);
+	Ok(())
 }
 
 fn finish_file_stats(
@@ -323,6 +331,18 @@ fn finish_file_stats(
 	let file_stats = collect_details
 		.then(|| FileStats::new(file_path.display().to_string(), total, code, comment, blank, shebang, file_size));
 	results.add_file_stats(language, contribution, file_stats);
+}
+
+fn count_lines_with(
+	mut for_each: impl FnMut(&mut dyn FnMut(&str, bool)) -> Result<()>,
+	language: &'static Language,
+) -> Result<LineCounts> {
+	let mut line_counts = LineCounts::default();
+	let mut comment_state = CommentState::new();
+	for_each(&mut |line, is_first_line| {
+		line_counts.classify_and_count(line, Some(language), &mut comment_state, is_first_line);
+	})?;
+	Ok(line_counts)
 }
 
 fn detect_encoding(samples: &[u8]) -> FileEncoding {

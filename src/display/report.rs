@@ -67,33 +67,6 @@ pub struct SummaryMetric<'a> {
 	pub human_readable: Option<&'a str>,
 }
 
-const fn singular_label(kind: LineType) -> &'static str {
-	match kind {
-		LineType::Code => "code",
-		LineType::Comment => "comment",
-		LineType::Blank => "blank",
-		LineType::Shebang => "shebang",
-	}
-}
-
-const fn plural_label(kind: LineType) -> &'static str {
-	match kind {
-		LineType::Code => "code",
-		LineType::Comment => "comments",
-		LineType::Blank => "blanks",
-		LineType::Shebang => "shebangs",
-	}
-}
-
-const fn title_label(kind: LineType) -> &'static str {
-	match kind {
-		LineType::Code => "Code",
-		LineType::Comment => "Comments",
-		LineType::Blank => "Blanks",
-		LineType::Shebang => "Shebangs",
-	}
-}
-
 #[derive(Debug, Clone, Copy)]
 pub struct LineTypeStats {
 	pub kind: LineType,
@@ -103,15 +76,15 @@ pub struct LineTypeStats {
 
 impl LineTypeStats {
 	pub const fn singular_label(self) -> &'static str {
-		singular_label(self.kind)
+		self.kind.singular_label()
 	}
 
 	pub const fn plural_label(self) -> &'static str {
-		plural_label(self.kind)
+		self.kind.plural_label()
 	}
 
 	pub const fn title_label(self) -> &'static str {
-		title_label(self.kind)
+		self.kind.title_label()
 	}
 }
 
