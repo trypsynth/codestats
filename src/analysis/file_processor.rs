@@ -106,6 +106,52 @@ struct FileEncoding {
 	bom_len: usize,
 }
 
+enum FileSource {
+	Buffered(File),
+	Mapped(Mmap),
+}
+
+impl FileSource {
+	fn open(file_path: &Path, file_size: u64) -> Result<Self> {
+		if file_size >= MMAP_THRESHOLD {
+			let file = File::open(file_path).with_context(|| format!("Failed to open file {}", file_path.display()))?;
+			// SAFETY: We only read from the mmap and don't modify the underlying read-only file during analysis.
+			let mmap = unsafe { Mmap::map(&file) }
+				.with_context(|| format!("Failed to memory-map file {}", file_path.display()))?;
+			Ok(Self::Mapped(mmap))
+		} else {
+			let file = File::open(file_path).with_context(|| format!("Failed to open file {}", file_path.display()))?;
+			Ok(Self::Buffered(file))
+		}
+	}
+
+	fn sample(&mut self, file_size: u64) -> Result<Vec<u8>> {
+		match self {
+			Self::Buffered(file) => sample_file(file, file_size),
+			Self::Mapped(mmap) => Ok(sample_from_slice(mmap)),
+		}
+	}
+
+	fn process(
+		self,
+		file_path: &Path,
+		file_size: u64,
+		results: &mut AnalysisResults,
+		collect_details: bool,
+		language: &'static Language,
+		encoding: FileEncoding,
+	) -> Result<()> {
+		match self {
+			Self::Buffered(file) => {
+				process_file_buffered(file_path, file, file_size, results, collect_details, language, encoding)
+			}
+			Self::Mapped(mmap) => {
+				process_file_mmap(file_path, file_size, results, collect_details, language, encoding, &mmap)
+			}
+		}
+	}
+}
+
 pub fn process_file(file_path: &Path, results: &mut AnalysisResults, collect_details: bool) -> Result<()> {
 	let filename_os = file_path.file_name().context("Missing file name")?;
 	let filename = filename_os.to_string_lossy();
@@ -122,11 +168,10 @@ pub fn process_file(file_path: &Path, results: &mut AnalysisResults, collect_det
 		}
 		return Ok(());
 	}
-	if file_size >= MMAP_THRESHOLD {
-		process_file_mmap(file_path, &filename, file_size, results, collect_details)
-	} else {
-		process_file_buffered(file_path, &filename, file_size, results, collect_details)
-	}
+	let mut source = FileSource::open(file_path, file_size)?;
+	let sample_bytes = source.sample(file_size)?;
+	let Some((language, encoding)) = detect_language_and_encoding(&filename, &sample_bytes) else { return Ok(()) };
+	source.process(file_path, file_size, results, collect_details, language, encoding)
 }
 
 fn detect_language_from_samples(filename: &str, samples: &[u8], encoding: FileEncoding) -> Option<&'static Language> {
@@ -177,14 +222,13 @@ fn sample_from_slice(file_bytes: &[u8]) -> Vec<u8> {
 
 fn process_file_buffered(
 	file_path: &Path,
-	filename: &str,
+	mut file: File,
 	file_size: u64,
 	results: &mut AnalysisResults,
 	collect_details: bool,
+	language: &'static Language,
+	encoding: FileEncoding,
 ) -> Result<()> {
-	let mut file = File::open(file_path).with_context(|| format!("Failed to open file {}", file_path.display()))?;
-	let sample_bytes = sample_file(&mut file, file_size)?;
-	let Some((language, encoding)) = detect_language_and_encoding(filename, &sample_bytes) else { return Ok(()) };
 	if is_utf16(encoding.encoding) {
 		let capacity =
 			usize::try_from(file_size).with_context(|| format!("File too large to read: {}", file_path.display()))?;
@@ -200,18 +244,14 @@ fn process_file_buffered(
 
 fn process_file_mmap(
 	file_path: &Path,
-	filename: &str,
 	file_size: u64,
 	results: &mut AnalysisResults,
 	collect_details: bool,
+	language: &'static Language,
+	encoding: FileEncoding,
+	mmap: &Mmap,
 ) -> Result<()> {
-	let file = File::open(file_path).with_context(|| format!("Failed to open file {}", file_path.display()))?;
-	// SAFETY: We only read from the mmap and don't modify the underlying read-only file during analysis.
-	let mmap =
-		unsafe { Mmap::map(&file) }.with_context(|| format!("Failed to memory-map file {}", file_path.display()))?;
-	let file_bytes = &*mmap;
-	let samples = sample_from_slice(file_bytes);
-	let Some((language, encoding)) = detect_language_and_encoding(filename, &samples) else { return Ok(()) };
+	let file_bytes = mmap.as_ref();
 	if is_utf16(encoding.encoding) {
 		process_utf16_bytes(file_path, file_size, results, collect_details, language, encoding, file_bytes);
 		return Ok(());

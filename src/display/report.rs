@@ -3,7 +3,7 @@ use std::path::Path;
 use serde::Serialize;
 
 use crate::{
-	analysis::{AnalysisResults, FileStats, LanguageStats},
+	analysis::{AnalysisResults, FileStats, LanguageStats, LineType},
 	display::{
 		apply_sort,
 		formatting::{FormatterContext, SortValue},
@@ -67,6 +67,77 @@ pub struct SummaryMetric<'a> {
 	pub human_readable: Option<&'a str>,
 }
 
+const fn singular_label(kind: LineType) -> &'static str {
+	match kind {
+		LineType::Code => "code",
+		LineType::Comment => "comment",
+		LineType::Blank => "blank",
+		LineType::Shebang => "shebang",
+	}
+}
+
+const fn plural_label(kind: LineType) -> &'static str {
+	match kind {
+		LineType::Code => "code",
+		LineType::Comment => "comments",
+		LineType::Blank => "blanks",
+		LineType::Shebang => "shebangs",
+	}
+}
+
+const fn title_label(kind: LineType) -> &'static str {
+	match kind {
+		LineType::Code => "Code",
+		LineType::Comment => "Comments",
+		LineType::Blank => "Blanks",
+		LineType::Shebang => "Shebangs",
+	}
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct LineTypeStats {
+	pub kind: LineType,
+	pub count: u64,
+	pub percentage: f64,
+}
+
+impl LineTypeStats {
+	pub const fn singular_label(self) -> &'static str {
+		singular_label(self.kind)
+	}
+
+	pub const fn plural_label(self) -> &'static str {
+		plural_label(self.kind)
+	}
+
+	pub const fn title_label(self) -> &'static str {
+		title_label(self.kind)
+	}
+}
+
+#[derive(Clone, Copy)]
+struct LineTypeSeries {
+	code: u64,
+	comment: u64,
+	blank: u64,
+	shebang: u64,
+	code_pct: f64,
+	comment_pct: f64,
+	blank_pct: f64,
+	shebang_pct: f64,
+}
+
+fn iter_line_types(series: LineTypeSeries) -> impl Iterator<Item = LineTypeStats> {
+	[
+		LineTypeStats { kind: LineType::Code, count: series.code, percentage: series.code_pct },
+		LineTypeStats { kind: LineType::Comment, count: series.comment, percentage: series.comment_pct },
+		LineTypeStats { kind: LineType::Blank, count: series.blank, percentage: series.blank_pct },
+		LineTypeStats { kind: LineType::Shebang, count: series.shebang, percentage: series.shebang_pct },
+	]
+	.into_iter()
+	.filter(|info| info.count > 0)
+}
+
 impl Summary {
 	#[must_use]
 	fn from_results(results: &AnalysisResults, ctx: &FormatterContext) -> Self {
@@ -86,40 +157,24 @@ impl Summary {
 		}
 	}
 
-	fn iter_line_types(&self) -> impl Iterator<Item = LineTypeInfo> + '_ {
-		[
-			LineTypeInfo {
-				count: self.total_code_lines,
-				pct: self.code_percentage,
-				singular_label: "code",
-				plural_label: "code",
-			},
-			LineTypeInfo {
-				count: self.total_comment_lines,
-				pct: self.comment_percentage,
-				singular_label: "comment",
-				plural_label: "comments",
-			},
-			LineTypeInfo {
-				count: self.total_blank_lines,
-				pct: self.blank_percentage,
-				singular_label: "blank",
-				plural_label: "blanks",
-			},
-			LineTypeInfo {
-				count: self.total_shebang_lines,
-				pct: self.shebang_percentage,
-				singular_label: "shebang",
-				plural_label: "shebangs",
-			},
-		]
-		.into_iter()
-		.filter(|info| info.count > 0)
+	fn iter_line_types(&self) -> impl Iterator<Item = LineTypeStats> + '_ {
+		iter_line_types(LineTypeSeries {
+			code: self.total_code_lines,
+			comment: self.total_comment_lines,
+			blank: self.total_blank_lines,
+			shebang: self.total_shebang_lines,
+			code_pct: self.code_percentage,
+			comment_pct: self.comment_percentage,
+			blank_pct: self.blank_percentage,
+			shebang_pct: self.shebang_percentage,
+		})
 	}
 
 	#[must_use]
 	pub fn percentage_parts(&self, ctx: &FormatterContext) -> Vec<String> {
-		self.iter_line_types().map(|info| format!("{}% {}", ctx.percent(info.pct), info.plural_label)).collect()
+		self.iter_line_types()
+			.map(|info| format!("{}% {}", ctx.percent(info.percentage), info.plural_label()))
+			.collect()
 	}
 
 	#[must_use]
@@ -128,9 +183,9 @@ impl Summary {
 			.map(|info| {
 				let formatted = ctx.number(info.count);
 				if pluralize {
-					format!("{formatted} {} {}", info.singular_label, utils::pluralize(info.count, "line", "lines"))
+					format!("{formatted} {} {}", info.singular_label(), utils::pluralize(info.count, "line", "lines"))
 				} else {
-					format!("{formatted} {}", info.plural_label)
+					format!("{formatted} {}", info.plural_label())
 				}
 			})
 			.collect()
@@ -174,13 +229,6 @@ impl Summary {
 		]
 		.into_iter()
 	}
-}
-
-struct LineTypeInfo {
-	count: u64,
-	pct: f64,
-	singular_label: &'static str,
-	plural_label: &'static str,
 }
 
 fn sort_key_for_file_record(file: &FileStats, key: LanguageSortKey, file_count: u64) -> SortValue<'_> {
@@ -296,6 +344,19 @@ impl<'a> LanguageRecord<'a> {
 			shebang_percentage: stats.shebang_percentage(),
 			files_detail,
 		}
+	}
+
+	pub fn line_types(&self) -> impl Iterator<Item = LineTypeStats> + '_ {
+		iter_line_types(LineTypeSeries {
+			code: self.code_lines,
+			comment: self.comment_lines,
+			blank: self.blank_lines,
+			shebang: self.shebang_lines,
+			code_pct: self.code_percentage,
+			comment_pct: self.comment_percentage,
+			blank_pct: self.blank_percentage,
+			shebang_pct: self.shebang_percentage,
+		})
 	}
 }
 

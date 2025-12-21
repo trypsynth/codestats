@@ -45,25 +45,7 @@ impl OutputFormatter for HumanFormatter {
 	}
 }
 
-struct LanguageLineTypeInfo {
-	label: &'static str,
-	count: u64,
-	percentage: f64,
-}
-
 impl HumanFormatter {
-	/// Iterator over language line types for consistent formatting.
-	fn iter_language_line_types(lang: &LanguageRecord<'_>) -> impl Iterator<Item = LanguageLineTypeInfo> {
-		[
-			LanguageLineTypeInfo { label: "Code", count: lang.code_lines, percentage: lang.code_percentage },
-			LanguageLineTypeInfo { label: "Comments", count: lang.comment_lines, percentage: lang.comment_percentage },
-			LanguageLineTypeInfo { label: "Blanks", count: lang.blank_lines, percentage: lang.blank_percentage },
-			LanguageLineTypeInfo { label: "Shebangs", count: lang.shebang_lines, percentage: lang.shebang_percentage },
-		]
-		.into_iter()
-		.filter(|info| info.count > 0)
-	}
-
 	fn write_overview(report: &ReportData, ctx: &FormatterContext, writer: &mut dyn Write) -> Result<()> {
 		let summary = &report.summary;
 		let total_size_human = &summary.total_size_human;
@@ -132,11 +114,11 @@ impl HumanFormatter {
 		)?;
 		writeln!(writer, "\tSize: {size_human} ({size_pct_str}% of total).")?;
 		writeln!(writer, "\tLine breakdown:")?;
-		for line_type in Self::iter_language_line_types(language) {
+		for line_type in language.line_types() {
 			writeln!(
 				writer,
 				"\t\t{}: {} lines ({}%).",
-				line_type.label,
+				line_type.title_label(),
 				ctx.number(line_type.count),
 				ctx.percent(line_type.percentage)
 			)?;
