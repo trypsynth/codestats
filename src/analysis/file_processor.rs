@@ -15,6 +15,30 @@ use super::{
 };
 use crate::langs::{self, Language};
 
+/// Helper to create error context for file opening operations.
+#[inline]
+fn open_file_context(path: &Path) -> String {
+	format!("Failed to open file {}", path.display())
+}
+
+/// Helper to create error context for memory-mapping operations.
+#[inline]
+fn mmap_file_context(path: &Path) -> String {
+	format!("Failed to memory-map file {}", path.display())
+}
+
+/// Helper to create error context for metadata reading operations.
+#[inline]
+fn read_metadata_context(path: &Path) -> String {
+	format!("Failed to read metadata for {}", path.display())
+}
+
+/// Helper to create error context for file size validation.
+#[inline]
+fn file_too_large_context(path: &Path) -> String {
+	format!("File too large to read: {}", path.display())
+}
+
 #[derive(Default)]
 struct LineCounts {
 	total: u64,
@@ -116,17 +140,15 @@ enum FileSource {
 
 impl FileSource {
 	fn open(file_path: &Path, file_size: u64) -> Result<Self> {
+		let file = File::open(file_path).with_context(|| open_file_context(file_path))?;
 		if file_size >= MMAP_THRESHOLD {
-			let file = File::open(file_path).with_context(|| format!("Failed to open file {}", file_path.display()))?;
 			// SAFETY: Memory-mapping is safe here because:
 			// 1. We only read from the mmap, never write.
 			// 2. The file is not modified during analysis.
 			// 3. The mapping is dropped before returning, so no references escape.
-			let mmap = unsafe { Mmap::map(&file) }
-				.with_context(|| format!("Failed to memory-map file {}", file_path.display()))?;
+			let mmap = unsafe { Mmap::map(&file) }.with_context(|| mmap_file_context(file_path))?;
 			Ok(Self::Mapped(mmap))
 		} else {
-			let file = File::open(file_path).with_context(|| format!("Failed to open file {}", file_path.display()))?;
 			Ok(Self::Buffered(file))
 		}
 	}
@@ -161,8 +183,7 @@ impl FileSource {
 pub fn process_file(file_path: &Path, results: &mut AnalysisResults, collect_details: bool) -> Result<()> {
 	let filename_os = file_path.file_name().context("Missing file name")?;
 	let filename = filename_os.to_string_lossy();
-	let metadata =
-		file_path.metadata().with_context(|| format!("Failed to read metadata for {}", file_path.display()))?;
+	let metadata = file_path.metadata().with_context(|| read_metadata_context(file_path))?;
 	let file_size = metadata.len();
 	let language_from_name = langs::detect_language_info(&filename, None);
 	if file_size == 0 {
@@ -189,13 +210,14 @@ fn detect_language_from_samples(filename: &str, samples: &[u8], encoding: FileEn
 }
 
 fn sample_ranges(file_len: u64) -> (usize, Option<(u64, usize)>) {
-	let start_len = usize::try_from(file_len.min(SAMPLE_SIZE as u64)).expect("sample size is bounded by SAMPLE_SIZE");
+	// SAFETY: SAMPLE_SIZE is a small constant (4096), so this conversion will always succeed.
+	let start_len = usize::try_from(file_len.min(SAMPLE_SIZE as u64)).unwrap();
 	if file_len <= SAMPLE_SIZE as u64 {
 		return (start_len, None);
 	}
 	let mid_offset = (file_len.saturating_sub(SAMPLE_SIZE as u64)) / 2;
-	let mid_len = usize::try_from((mid_offset + SAMPLE_SIZE as u64).min(file_len) - mid_offset)
-		.expect("sample size is bounded by SAMPLE_SIZE");
+	// SAFETY: SAMPLE_SIZE is a small constant (4096), so this conversion will always succeed.
+	let mid_len = usize::try_from((mid_offset + SAMPLE_SIZE as u64).min(file_len) - mid_offset).unwrap();
 	(start_len, Some((mid_offset, mid_len)))
 }
 
@@ -220,7 +242,8 @@ fn sample_from_slice(file_bytes: &[u8]) -> Vec<u8> {
 	let (start_len, mid_range) = sample_ranges(file_bytes.len() as u64);
 	samples.extend_from_slice(&file_bytes[..start_len]);
 	if let Some((mid_offset, mid_len)) = mid_range {
-		let offset = usize::try_from(mid_offset).expect("mid offset is derived from slice length");
+		// SAFETY: mid_offset is derived from file_bytes.len() which is a usize, so it must fit in usize.
+		let offset = usize::try_from(mid_offset).unwrap();
 		samples.extend_from_slice(&file_bytes[offset..offset + mid_len]);
 	}
 	samples
@@ -236,12 +259,10 @@ fn process_file_buffered(
 	encoding: FileEncoding,
 ) -> Result<()> {
 	if is_utf16(encoding.encoding) {
-		let capacity =
-			usize::try_from(file_size).with_context(|| format!("File too large to read: {}", file_path.display()))?;
+		let capacity = usize::try_from(file_size).with_context(|| file_too_large_context(file_path))?;
 		let mut buffer = Vec::with_capacity(capacity);
 		file.read_to_end(&mut buffer)?;
-		process_utf16_bytes(file_path, file_size, results, collect_details, language, encoding, &buffer)?;
-		return Ok(());
+		return process_utf16_bytes(file_path, file_size, results, collect_details, language, encoding, &buffer);
 	}
 	let reader = BufReader::with_capacity(64 * 1024, file);
 	let mut source = BufLineSource::new(reader);
@@ -259,8 +280,7 @@ fn process_file_mmap(
 ) -> Result<()> {
 	let file_bytes = mmap.as_ref();
 	if is_utf16(encoding.encoding) {
-		process_utf16_bytes(file_path, file_size, results, collect_details, language, encoding, file_bytes)?;
-		return Ok(());
+		return process_utf16_bytes(file_path, file_size, results, collect_details, language, encoding, file_bytes);
 	}
 	let mut source = MmapLineSource::new(file_bytes);
 	process_lines(file_path, file_size, results, collect_details, language, encoding, &mut source)

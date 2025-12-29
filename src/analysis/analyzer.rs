@@ -1,5 +1,4 @@
 use std::{
-	mem,
 	path::{Path, PathBuf},
 	sync::{
 		Arc, Mutex, PoisonError,
@@ -28,8 +27,9 @@ struct LocalAggregator {
 
 impl Drop for LocalAggregator {
 	fn drop(&mut self) {
+		let local = std::mem::take(&mut self.local);
 		let mut sink = self.sink.lock().unwrap_or_else(PoisonError::into_inner);
-		sink.push(mem::take(&mut self.local));
+		sink.push(local);
 	}
 }
 
@@ -104,8 +104,8 @@ impl CodeAnalyzer {
 			.map_err(|_| anyhow::anyhow!("Failed to unwrap aggregates Arc - walker still holds references"))?
 			.into_inner()
 			.unwrap_or_else(PoisonError::into_inner);
-		let results = partials.into_iter().fold(AnalysisResults::with_language_capacity(), |mut acc, mut local| {
-			acc.merge(mem::take(&mut local));
+		let results = partials.into_iter().fold(AnalysisResults::with_language_capacity(), |mut acc, local| {
+			acc.merge(local);
 			acc
 		});
 		let skipped = error_counter.load(Ordering::Relaxed);

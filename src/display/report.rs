@@ -7,7 +7,7 @@ use crate::{
 	display::{
 		apply_sort,
 		formatting::{FormatterContext, SortValue},
-		options::{LanguageSortKey, SortDirection},
+		options::LanguageSortKey,
 	},
 	utils,
 };
@@ -271,19 +271,12 @@ impl<'a> LanguageRecord<'a> {
 			let mut files: Vec<_> = stats.files_list().iter().collect();
 			let sort_key = ctx.options.language_sort_key;
 			let file_count = stats.files();
-			if sort_key == LanguageSortKey::Files {
-				files.sort_by(|a, b| a.path().cmp(b.path()));
-				if ctx.options.sort_direction == SortDirection::Desc {
-					files.reverse();
-				}
-			} else {
-				apply_sort(
-					&mut files,
-					ctx.options.sort_direction,
-					|file| sort_key_for_file_record(file, sort_key, file_count),
-					|a, b| a.path().cmp(b.path()),
-				);
-			}
+			apply_sort(
+				&mut files,
+				ctx.options.sort_direction,
+				|file| sort_key_for_file_record(file, sort_key, file_count),
+				|a, b| a.path().cmp(b.path()),
+			);
 			files
 				.into_iter()
 				.map(|file| {

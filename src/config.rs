@@ -13,6 +13,18 @@ use crate::{
 	display::{LanguageSortKey, NumberStyle, OutputFormat, SizeStyle, SortDirection, ViewOptions},
 };
 
+/// Helper to create error context for config file reading operations.
+#[inline]
+fn read_config_context(path: &Path) -> String {
+	format!("Failed to read config file `{}`", path.display())
+}
+
+/// Helper to create error context for config file parsing operations.
+#[inline]
+fn parse_config_context(path: &Path) -> String {
+	format!("Failed to parse config file `{}`", path.display())
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(default)]
 pub struct Config {
@@ -90,10 +102,8 @@ impl Default for AnalyzerConfig {
 impl Config {
 	pub fn from_file(path: impl AsRef<Path>) -> Result<Self> {
 		let path = path.as_ref();
-		let contents =
-			fs::read_to_string(path).with_context(|| format!("Failed to read config file `{}`", path.display()))?;
-		let mut config: Self =
-			toml::from_str(&contents).with_context(|| format!("Failed to parse config file `{}`", path.display()))?;
+		let contents = fs::read_to_string(path).with_context(|| read_config_context(path))?;
+		let mut config: Self = toml::from_str(&contents).with_context(|| parse_config_context(path))?;
 		config.source = Some(path.to_path_buf());
 		Ok(config)
 	}
