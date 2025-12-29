@@ -13,7 +13,7 @@ const KEYWORD_MATCH_SCORE: i32 = 10;
 /// The scoring algorithm works as follows:
 /// - Each matching line/block comment pattern adds 50 points
 /// - Each keyword occurrence adds 10 points
-/// - Symbol-only languages (e.g., Brainfuck) use special detection logic
+/// - Symbol-only languages (e.g., Brainfuck) require high symbol density when alphabetic content is present
 ///
 /// This weighted scoring ensures comment patterns (strong indicators) outweigh
 /// keywords (weaker indicators that may appear as identifiers in other languages).
@@ -21,9 +21,6 @@ const KEYWORD_MATCH_SCORE: i32 = 10;
 fn score_language(lang: &Language, content: &str, tokens: &[&str]) -> i32 {
 	if lang.line_comments.is_empty() && lang.block_comments.is_empty() && lang.keywords.is_empty() {
 		return 0;
-	}
-	if is_symbol_only_language(lang) {
-		return score_symbol_only_language(lang, content, tokens);
 	}
 	let mut score: i32 = 0;
 	for comment in lang.line_comments {
@@ -36,10 +33,13 @@ fn score_language(lang: &Language, content: &str, tokens: &[&str]) -> i32 {
 			score = score.saturating_add(COMMENT_MATCH_SCORE);
 		}
 	}
+	let mut matched_chars: usize = 0;
 	for keyword in lang.keywords {
 		// If keyword contains special characters, use substring matching to handle cases like "@interface" in Objective-C, which wouldn't match via tokenization since @ is a delimiter.
 		let count = if keyword.chars().any(|c| !c.is_ascii_alphanumeric() && c != '_') {
-			content.matches(keyword).count()
+			let occurrences = content.matches(keyword).count();
+			matched_chars = matched_chars.saturating_add(occurrences.saturating_mul(keyword.len()));
+			occurrences
 		} else {
 			tokens.iter().filter(|token| token.eq_ignore_ascii_case(keyword)).count()
 		};
@@ -49,7 +49,26 @@ fn score_language(lang: &Language, content: &str, tokens: &[&str]) -> i32 {
 		let count_i32 = clamped_count as i32;
 		score = score.saturating_add(count_i32.saturating_mul(KEYWORD_MATCH_SCORE));
 	}
+	// For symbol-only languages (all keywords are symbols), require high density if alphabetic content exists
+	if is_symbol_only_language(lang) && !tokens.is_empty() {
+		let non_whitespace = content.chars().filter(|c| !c.is_whitespace()).count();
+		if non_whitespace > 0 {
+			let matched_chars_u128 = matched_chars as u128;
+			let non_whitespace_u128 = non_whitespace as u128;
+			// Require at least 50% of non-whitespace chars to be language symbols
+			if matched_chars_u128.saturating_mul(2) < non_whitespace_u128 {
+				return 0;
+			}
+		}
+	}
 	score
+}
+
+fn is_symbol_only_language(lang: &Language) -> bool {
+	!lang.keywords.is_empty()
+		&& lang.keywords.iter().all(|kw| kw.chars().all(|c| !c.is_ascii_alphanumeric() && c != '_'))
+		&& lang.line_comments.is_empty()
+		&& lang.block_comments.is_empty()
 }
 
 #[inline]
@@ -66,51 +85,6 @@ fn disambiguate<'a>(candidates: &[&'a Language], content: &str) -> Option<&'a La
 #[inline]
 fn tokenize(content: &str) -> impl Iterator<Item = &str> {
 	content.split(|c: char| !c.is_ascii_alphanumeric() && c != '_').filter(|token| !token.is_empty())
-}
-
-fn is_symbol_only_language(lang: &Language) -> bool {
-	!lang.keywords.is_empty()
-		&& lang.keywords.iter().all(|kw| kw.chars().all(|c| !c.is_ascii_alphanumeric() && c != '_'))
-		&& lang.line_comments.is_empty()
-		&& lang.block_comments.is_empty()
-}
-
-/// Score symbol-only languages (e.g., Brainfuck) using specialized detection.
-///
-/// Symbol-only languages have keywords composed entirely of non-alphanumeric characters.
-/// To avoid false positives, we verify:
-/// 1. The file contains no alphabetic tokens (ruling out normal programming languages)
-/// 2. At least 30% of non-whitespace characters are language symbols
-///
-/// This prevents detecting random punctuation or binary files as Brainfuck.
-fn score_symbol_only_language(lang: &Language, content: &str, tokens: &[&str]) -> i32 {
-	let has_alphabetic_tokens = tokens.iter().any(|token| token.chars().any(|c| c.is_ascii_alphabetic()));
-	if has_alphabetic_tokens {
-		return 0;
-	}
-	let non_whitespace = content.chars().filter(|c| !c.is_whitespace()).count();
-	if non_whitespace == 0 {
-		return 0;
-	}
-	let mut matched_chars: usize = 0;
-	for keyword in lang.keywords {
-		if keyword.is_empty() {
-			continue;
-		}
-		let occurrences = content.matches(keyword).count();
-		matched_chars = matched_chars.saturating_add(occurrences.saturating_mul(keyword.len()));
-	}
-	if matched_chars == 0 {
-		return 0;
-	}
-	let matched_chars_u128 = matched_chars as u128;
-	let non_whitespace_u128 = non_whitespace as u128;
-	if matched_chars_u128.saturating_mul(10) < non_whitespace_u128.saturating_mul(3) {
-		return 0;
-	}
-	let clamped = matched_chars.min(usize::try_from(i32::MAX / KEYWORD_MATCH_SCORE).unwrap_or(usize::MAX));
-	let count_i32 = i32::try_from(clamped).unwrap_or(i32::MAX / KEYWORD_MATCH_SCORE);
-	count_i32.saturating_mul(KEYWORD_MATCH_SCORE)
 }
 
 #[inline]
@@ -193,5 +167,26 @@ mod tests {
 	fn detect_language_info_skips_when_no_signal() {
 		let language = detect_language_info("ambiguous.m", Some("plain text without hints"));
 		assert!(language.is_none());
+	}
+
+	#[test]
+	fn detect_brainfuck_with_ascii_comments() {
+		let content = "This is a comment\n++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.\nMore comments here\n>+++.\n";
+		let language = detect_language_info("example.bf", Some(content)).unwrap();
+		assert_eq!(language.name, "Brainfuck");
+	}
+
+	#[test]
+	fn detect_b_over_brainfuck() {
+		let content = "/* B language */\nmain $(\nauto i;\ni = 0;\nwhile (i < 10) i++;$)";
+		let language = detect_language_info("example.b", Some(content)).unwrap();
+		assert_eq!(language.name, "B");
+	}
+
+	#[test]
+	fn detect_b_with_many_comparison_operators() {
+		let content = "main $(\n   auto ch;\n   if (ch > 0100 & ch < 0133) ch = ch + 040;\n   if (ch > 500 & ch < 600) goto loop;\n$)";
+		let language = detect_language_info("example.b", Some(content)).unwrap();
+		assert_eq!(language.name, "B");
 	}
 }
