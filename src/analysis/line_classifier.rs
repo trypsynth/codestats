@@ -91,6 +91,8 @@ impl CommentState {
 	}
 }
 
+/// Process block comments on a line, updating state and detecting code.
+/// Returns: (remaining_line_portion, has_code_outside_comments)
 #[inline]
 fn handle_block_comments<'a>(
 	line: &'a str,
@@ -177,6 +179,12 @@ pub fn classify_line(
 	if has_code { LineType::Code } else { LineType::Comment }
 }
 
+/// Fast ASCII-only whitespace trimming with newline handling. This is a performance-critical hot path called for every line of code analyzed.
+///
+/// We use a manual byte-based implementation instead of str::trim() because:
+/// 1. We need to handle trailing \r\n properly (from both Unix and Windows line endings).
+/// 2. Byte operations avoid UTF-8 boundary checks since we only trim ASCII whitespace.
+/// 3. This is measurably faster in benchmarks for typical source code.
 #[inline]
 fn trim_ascii(line: &str) -> &str {
 	let bytes = line.as_bytes();
@@ -220,4 +228,45 @@ fn contains_non_whitespace(s: &str) -> bool {
 #[inline]
 const fn is_ascii_ws(b: u8) -> bool {
 	matches!(b, b' ' | b'\t' | b'\n' | b'\r' | 0x0B | 0x0C)
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn test_trim_ascii() {
+		assert_eq!(trim_ascii("  hello  "), "hello");
+		assert_eq!(trim_ascii("\t\tworld\t\t"), "world");
+		assert_eq!(trim_ascii("   "), "");
+		assert_eq!(trim_ascii(""), "");
+		assert_eq!(trim_ascii("hello\n"), "hello");
+		assert_eq!(trim_ascii("hello\r\n"), "hello");
+		assert_eq!(trim_ascii("  hello  \n"), "hello");
+		assert_eq!(trim_ascii("  hello  \r\n"), "hello");
+	}
+
+	#[test]
+	fn test_contains_non_whitespace() {
+		assert!(contains_non_whitespace("hello"));
+		assert!(contains_non_whitespace("  x  "));
+		assert!(!contains_non_whitespace(""));
+		assert!(!contains_non_whitespace("   "));
+		assert!(!contains_non_whitespace("\t\t"));
+	}
+
+	#[test]
+	fn test_classify_blank_lines() {
+		let mut state = CommentState::new();
+		assert_eq!(classify_line("", None, &mut state, false), LineType::Blank);
+		assert_eq!(classify_line("   ", None, &mut state, false), LineType::Blank);
+		assert_eq!(classify_line("\t\t", None, &mut state, false), LineType::Blank);
+	}
+
+	#[test]
+	fn test_classify_code_without_language() {
+		let mut state = CommentState::new();
+		assert_eq!(classify_line("some code", None, &mut state, false), LineType::Code);
+		assert_eq!(classify_line("  more code  ", None, &mut state, false), LineType::Code);
+	}
 }

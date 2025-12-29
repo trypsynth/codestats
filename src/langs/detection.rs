@@ -8,6 +8,15 @@ const COMMENT_MATCH_SCORE: i32 = 50;
 /// Score awarded for each keyword match when disambiguating languages.
 const KEYWORD_MATCH_SCORE: i32 = 10;
 
+/// Calculate a language match score based on comment styles and keywords found in content.
+///
+/// The scoring algorithm works as follows:
+/// - Each matching line/block comment pattern adds 50 points
+/// - Each keyword occurrence adds 10 points
+/// - Symbol-only languages (e.g., Brainfuck) use special detection logic
+///
+/// This weighted scoring ensures comment patterns (strong indicators) outweigh
+/// keywords (weaker indicators that may appear as identifiers in other languages).
 #[inline]
 fn score_language(lang: &Language, content: &str, tokens: &[&str]) -> i32 {
 	if lang.line_comments.is_empty() && lang.block_comments.is_empty() && lang.keywords.is_empty() {
@@ -66,6 +75,14 @@ fn is_symbol_only_language(lang: &Language) -> bool {
 		&& lang.block_comments.is_empty()
 }
 
+/// Score symbol-only languages (e.g., Brainfuck) using specialized detection.
+///
+/// Symbol-only languages have keywords composed entirely of non-alphanumeric characters.
+/// To avoid false positives, we verify:
+/// 1. The file contains no alphabetic tokens (ruling out normal programming languages)
+/// 2. At least 30% of non-whitespace characters are language symbols
+///
+/// This prevents detecting random punctuation or binary files as Brainfuck.
 fn score_symbol_only_language(lang: &Language, content: &str, tokens: &[&str]) -> i32 {
 	let has_alphabetic_tokens = tokens.iter().any(|token| token.chars().any(|c| c.is_ascii_alphabetic()));
 	if has_alphabetic_tokens {
