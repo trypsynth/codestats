@@ -3,7 +3,9 @@ use super::{
 	globset::get_candidates,
 };
 
+/// Score awarded for each comment style match when disambiguating languages.
 const COMMENT_MATCH_SCORE: i32 = 50;
+/// Score awarded for each keyword match when disambiguating languages.
 const KEYWORD_MATCH_SCORE: i32 = 10;
 
 #[inline]

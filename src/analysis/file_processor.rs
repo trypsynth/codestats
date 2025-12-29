@@ -96,9 +96,12 @@ impl LineSource for MmapLineSource<'_> {
 	}
 }
 
-const MMAP_THRESHOLD: u64 = 256 * 1024; // 256KB threshold
-const SAMPLE_SIZE: usize = 4 * 1024; // 4KB sample for binary/language detection
-const BINARY_THRESHOLD_PERCENT: usize = 20; // 20% non-text bytes threshold
+/// Files larger than this threshold are memory-mapped instead of buffered.
+const MMAP_THRESHOLD: u64 = 256 * 1024;
+/// Size of sample chunks extracted from files for binary/language detection. For large files, we sample from both the start and middle of the file.
+const SAMPLE_SIZE: usize = 4 * 1024;
+/// Percentage of non-text bytes in a sample that indicates a binary file.
+const BINARY_THRESHOLD_PERCENT: usize = 20;
 
 #[derive(Clone, Copy)]
 struct FileEncoding {

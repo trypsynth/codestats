@@ -115,6 +115,11 @@ const LANGUAGE_SCHEMA: &[(&str, &str)] = &[
 	("keywords", "&'static [&'static str]"),
 ];
 
+/// Helper to write a language struct field with proper indentation. We ignore write errors since String writes never fail.
+fn write_field(output: &mut String, name: &str, value: impl std::fmt::Display) {
+	let _ = writeln!(output, "\t\t{name}: {value},");
+}
+
 fn render_languages(languages: &[LanguageConfig]) -> String {
 	let mut output = String::new();
 	output.push_str("#[derive(Debug, Clone, PartialEq, Eq)]\n");
@@ -127,14 +132,14 @@ fn render_languages(languages: &[LanguageConfig]) -> String {
 	output.push_str("pub static LANGUAGES: &[Language] = &[\n");
 	for (idx, lang) in languages.iter().enumerate() {
 		output.push_str("\tLanguage {\n");
-		let _ = writeln!(output, "\t\tindex: {idx},");
-		let _ = writeln!(output, "\t\tname: {:?},", lang.name);
-		let _ = writeln!(output, "\t\tfile_patterns: {},", render_str_slice(&lang.file_patterns));
-		let _ = writeln!(output, "\t\tline_comments: {},", render_str_slice(&lang.line_comments));
-		let _ = writeln!(output, "\t\tblock_comments: {},", render_block_comments(&lang.block_comments));
-		let _ = writeln!(output, "\t\tnested_blocks: {},", lang.nested_blocks);
-		let _ = writeln!(output, "\t\tshebangs: {},", render_str_slice(&lang.shebangs));
-		let _ = writeln!(output, "\t\tkeywords: {},", render_str_slice(&lang.keywords));
+		write_field(&mut output, "index", idx);
+		write_field(&mut output, "name", format_args!("{:?}", lang.name));
+		write_field(&mut output, "file_patterns", render_str_slice(&lang.file_patterns));
+		write_field(&mut output, "line_comments", render_str_slice(&lang.line_comments));
+		write_field(&mut output, "block_comments", render_block_comments(&lang.block_comments));
+		write_field(&mut output, "nested_blocks", lang.nested_blocks);
+		write_field(&mut output, "shebangs", render_str_slice(&lang.shebangs));
+		write_field(&mut output, "keywords", render_str_slice(&lang.keywords));
 		output.push_str("\t},\n");
 	}
 	output.push_str("];\n\n");

@@ -1,3 +1,17 @@
+//! Language detection and definition management.
+//!
+//! ## Language Detection Strategy
+//!
+//! The detection process follows a multi-stage approach:
+//!
+//! 1. File pattern matching: Match filename against patterns (e.g., `*.rs` = Rust and `CMakeLists.txt` = CMake).
+//! 2. Disambiguation: When multiple languages match, use file content analysis. Check for shebang lines and score based on comment style matches and keyword occurrences.
+//! 3. Specialized handling: Symbol-only languages such as Brainfuck use custom detection to avoid being detected as B overly permissivly.
+//!
+//! ## Language Definitions
+//!
+//! Language metadata is loaded from `languages.json5` at build time and compiled into static data structures. See [`LANGUAGES`] for the complete list.
+
 use std::io::Write;
 
 use anyhow::Result;

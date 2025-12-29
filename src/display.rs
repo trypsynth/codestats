@@ -1,3 +1,24 @@
+//! Output formatting and display options for analysis results.
+//!
+//! ## Available Formatters
+//!
+//! - CSV ([`CsvFormatter`]): Comma-separated values for spreadsheet import.
+//! - Human ([`HumanFormatter`]): Friendly, readable text output for terminal display.
+//! - HTML ([`HtmlFormatter`]): Standalone HTML report.
+//! - JSON ([`JsonFormatter`]): Pretty-printed JSON for easy processing and reading.
+//! - JSON Compact ([`JsonCompactFormatter`]): Minified JSON for minimal bandwidth.
+//! - Markdown ([`MarkdownFormatter`]): GitHub-flavored markdown for documentation.
+//! - TSV ([`TsvFormatter`]): Tab-separated values for data pipelines.
+//!
+//! ## Customization Options
+//!
+//! All formatters support common display options via [`ViewOptions`]:
+//! - Number formatting: plain, comma-separated, underscore-separated, or space-separated.
+//! - Size units: binary (KiB/MiB) or decimal (KB/MB).
+//! - Percentage precision: 0-6 decimal places.
+//! - Sort order: by lines, code, comments, blanks, files, size, or filename.
+//! - Sort direction: ascending or descending.
+
 mod formatting;
 mod html;
 mod human;

@@ -23,7 +23,7 @@ pub(super) static LANGUAGE_GLOBSET: LazyLock<LanguageGlobs> = LazyLock::new(|| {
 			builder.add(glob);
 		}
 	}
-	let set = builder.build().unwrap();
+	let set = builder.build().expect("GlobSetBuilder should never fail with valid patterns from languages.json5");
 	LanguageGlobs { set, pattern_lang_indexes }
 });
 

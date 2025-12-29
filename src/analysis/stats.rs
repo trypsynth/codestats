@@ -3,6 +3,7 @@ use crate::{
 	utils,
 };
 
+/// Initial capacity for per-language file detail lists in verbose mode. Pre-allocating 256 slots reduces reallocations for most projects while avoiding excessive memory waste for languages with few files.
 const INITIAL_FILE_LIST_CAPACITY: usize = 256;
 
 macro_rules! impl_percentage_methods {
