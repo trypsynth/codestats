@@ -27,6 +27,8 @@ pub(super) static LANGUAGE_GLOBSET: LazyLock<LanguageGlobs> = LazyLock::new(|| {
 	LanguageGlobs { set, pattern_lang_indexes }
 });
 
+// Thread-local buffer for tracking which languages have been seen during candidate gathering.
+// Using thread-local storage avoids allocating a new Vec for every file processed, while remaining safe for parallel execution since each thread gets its own buffer.
 thread_local! {
 	static SEEN_BUFFER: RefCell<Vec<bool>> = RefCell::new(vec![false; LANGUAGES.len()]);
 }

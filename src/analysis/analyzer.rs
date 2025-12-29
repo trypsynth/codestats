@@ -13,6 +13,14 @@ use ignore::WalkBuilder;
 use super::{file_processor, stats::AnalysisResults};
 use crate::config::AnalyzerConfig;
 
+/// Thread-local accumulator for parallel file analysis.
+///
+/// This struct implements a clever pattern to reduce lock contention during parallel processing:
+/// - Each worker thread maintains its own local `AnalysisResults` instance.
+/// - Workers accumulate statistics without any synchronization overhead.
+/// - On `Drop`, the local results are merged into the shared sink in one batch.
+///
+/// This dramatically reduces mutex contention compared to locking on every file processed, while ensuring all results are properly collected even if a worker panics.
 struct LocalAggregator {
 	sink: Arc<Mutex<Vec<AnalysisResults>>>,
 	local: AnalysisResults,

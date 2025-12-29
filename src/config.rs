@@ -113,6 +113,7 @@ impl Config {
 		candidates.into_iter().find(|path| path.is_file())
 	}
 
+	/// Merge CLI arguments into this configuration, with CLI taking precedence.
 	pub fn merge_with_cli(mut self, cli: &Cli, matches: &ArgMatches) -> Self {
 		let path_overridden = Self::cli_overrode(matches, "path");
 		if path_overridden {

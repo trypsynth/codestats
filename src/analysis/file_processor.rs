@@ -118,7 +118,10 @@ impl FileSource {
 	fn open(file_path: &Path, file_size: u64) -> Result<Self> {
 		if file_size >= MMAP_THRESHOLD {
 			let file = File::open(file_path).with_context(|| format!("Failed to open file {}", file_path.display()))?;
-			// SAFETY: We only read from the mmap and don't modify the underlying read-only file during analysis.
+			// SAFETY: Memory-mapping is safe here because:
+			// 1. We only read from the mmap, never write.
+			// 2. The file is not modified during analysis.
+			// 3. The mapping is dropped before returning, so no references escape.
 			let mmap = unsafe { Mmap::map(&file) }
 				.with_context(|| format!("Failed to memory-map file {}", file_path.display()))?;
 			Ok(Self::Mapped(mmap))
