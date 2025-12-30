@@ -20,13 +20,16 @@
 //! - Sort direction: ascending or descending.
 
 mod formatting;
+#[cfg(feature = "html")]
 mod html;
 mod human;
 mod json;
+#[cfg(feature = "markdown")]
 mod markdown;
 mod options;
 mod report;
 mod separated_values;
+#[cfg(any(feature = "html", feature = "markdown"))]
 pub mod template_filters;
 
 use std::{
@@ -38,9 +41,11 @@ use std::{
 use anyhow::Result;
 use clap::ValueEnum;
 pub use formatting::{FormatterContext, apply_sort};
+#[cfg(feature = "html")]
 pub use html::HtmlFormatter;
 pub use human::HumanFormatter;
 pub use json::{JsonCompactFormatter, JsonFormatter};
+#[cfg(feature = "markdown")]
 pub use markdown::MarkdownFormatter;
 pub use options::{LanguageSortKey, NumberStyle, SizeStyle, SortDirection, ViewOptions};
 pub use report::ReportData;
@@ -57,7 +62,9 @@ pub enum OutputFormat {
 	JsonCompact,
 	Csv,
 	Tsv,
+	#[cfg(feature = "markdown")]
 	Markdown,
+	#[cfg(feature = "html")]
 	Html,
 }
 
@@ -69,7 +76,9 @@ impl Display for OutputFormat {
 			Self::JsonCompact => write!(f, "json-compact"),
 			Self::Csv => write!(f, "csv"),
 			Self::Tsv => write!(f, "tsv"),
+			#[cfg(feature = "markdown")]
 			Self::Markdown => write!(f, "markdown"),
+			#[cfg(feature = "html")]
 			Self::Html => write!(f, "html"),
 		}
 	}
@@ -110,7 +119,9 @@ pub enum Formatter {
 	JsonCompact(JsonCompactFormatter),
 	Csv(CsvFormatter),
 	Tsv(TsvFormatter),
+	#[cfg(feature = "markdown")]
 	Markdown(MarkdownFormatter),
+	#[cfg(feature = "html")]
 	Html(HtmlFormatter),
 }
 
@@ -134,7 +145,9 @@ impl Formatter {
 			Self::JsonCompact(f) => f.write_output(results, path, verbose, view_options, writer),
 			Self::Csv(f) => f.write_output(results, path, verbose, view_options, writer),
 			Self::Tsv(f) => f.write_output(results, path, verbose, view_options, writer),
+			#[cfg(feature = "markdown")]
 			Self::Markdown(f) => f.write_output(results, path, verbose, view_options, writer),
+			#[cfg(feature = "html")]
 			Self::Html(f) => f.write_output(results, path, verbose, view_options, writer),
 		}
 	}
@@ -148,7 +161,9 @@ pub fn get_formatter(format: OutputFormat) -> Formatter {
 		OutputFormat::JsonCompact => Formatter::JsonCompact(JsonCompactFormatter),
 		OutputFormat::Csv => Formatter::Csv(CsvFormatter::default()),
 		OutputFormat::Tsv => Formatter::Tsv(TsvFormatter::default()),
+		#[cfg(feature = "markdown")]
 		OutputFormat::Markdown => Formatter::Markdown(MarkdownFormatter),
+		#[cfg(feature = "html")]
 		OutputFormat::Html => Formatter::Html(HtmlFormatter),
 	}
 }

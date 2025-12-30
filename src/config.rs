@@ -5,7 +5,6 @@ use std::{
 
 use anyhow::{Context, Result};
 use clap::{ArgMatches, parser::ValueSource};
-use etcetera::{BaseStrategy, choose_base_strategy};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -23,6 +22,31 @@ fn read_config_context(path: &Path) -> String {
 #[inline]
 fn parse_config_context(path: &Path) -> String {
 	format!("Failed to parse config file `{}`", path.display())
+}
+
+/// Get the user's home directory.
+fn home_dir() -> Option<PathBuf> {
+	env::var_os("HOME").map(PathBuf::from)
+}
+
+/// Get the platform-specific config directory.
+fn config_dir() -> Option<PathBuf> {
+	#[cfg(target_os = "linux")]
+	{
+		env::var_os("XDG_CONFIG_HOME").map(PathBuf::from).or_else(|| home_dir().map(|h| h.join(".config")))
+	}
+	#[cfg(target_os = "macos")]
+	{
+		home_dir().map(|h| h.join("Library/Application Support"))
+	}
+	#[cfg(target_os = "windows")]
+	{
+		env::var_os("APPDATA").map(PathBuf::from)
+	}
+	#[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
+	{
+		home_dir().map(|h| h.join(".config"))
+	}
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -108,10 +132,10 @@ impl Config {
 
 	pub fn find_config_file() -> Option<PathBuf> {
 		let mut candidates = vec![PathBuf::from(".codestats.toml"), PathBuf::from("codestats.toml")];
-		if let Ok(strategy) = choose_base_strategy() {
-			candidates.push(strategy.config_dir().join("codestats").join("config.toml"));
-			candidates.push(strategy.home_dir().join(".codestats.toml"));
-		} else if let Some(home) = env::var_os("HOME").map(PathBuf::from) {
+		if let Some(cfg_dir) = config_dir() {
+			candidates.push(cfg_dir.join("codestats").join("config.toml"));
+		}
+		if let Some(home) = home_dir() {
 			candidates.push(home.join(".codestats.toml"));
 		}
 		candidates.into_iter().find(|path| path.is_file())

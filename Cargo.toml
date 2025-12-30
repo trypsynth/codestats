@@ -15,13 +15,18 @@ rust-version = "1.88.0"
 name = "cs"
 path = "src/main.rs"
 
+[features]
+default = ["html", "markdown"]
+html = ["dep:askama"]
+markdown = ["dep:askama"]
+all-formats = ["html", "markdown"]
+
 [dependencies]
 aho-corasick = "1.1.4"
 anyhow = "1.0.100"
-askama = "0.15.1"
+askama = { version = "0.15.1", optional = true }
 clap = { version = "4.5.53", default-features = false, features = ["std", "derive", "help", "usage", "wrap_help"] }
 encoding_rs = "0.8.35"
-etcetera = "0.11"
 globset = "0.4.18"
 ignore = "0.4.25"
 memchr = "2.7.6"
