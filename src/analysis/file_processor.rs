@@ -16,25 +16,21 @@ use super::{
 use crate::langs::{self, Language};
 
 /// Helper to create error context for file opening operations.
-#[inline]
 fn open_file_context(path: &Path) -> String {
 	format!("Failed to open file {}", path.display())
 }
 
 /// Helper to create error context for memory-mapping operations.
-#[inline]
 fn mmap_file_context(path: &Path) -> String {
 	format!("Failed to memory-map file {}", path.display())
 }
 
 /// Helper to create error context for metadata reading operations.
-#[inline]
 fn read_metadata_context(path: &Path) -> String {
 	format!("Failed to read metadata for {}", path.display())
 }
 
 /// Helper to create error context for file size validation.
-#[inline]
 fn file_too_large_context(path: &Path) -> String {
 	format!("File too large to read: {}", path.display())
 }
@@ -68,7 +64,9 @@ impl LineCounts {
 }
 
 trait LineSource {
-	fn for_each_line(&mut self, f: &mut dyn FnMut(&[u8])) -> Result<()>;
+	fn for_each_line<F>(&mut self, f: &mut F) -> Result<()>
+	where
+		F: FnMut(&[u8]);
 }
 
 struct BufLineSource<R: BufRead> {
@@ -83,7 +81,10 @@ impl<R: BufRead> BufLineSource<R> {
 }
 
 impl<R: BufRead> LineSource for BufLineSource<R> {
-	fn for_each_line(&mut self, f: &mut dyn FnMut(&[u8])) -> Result<()> {
+	fn for_each_line<F>(&mut self, f: &mut F) -> Result<()>
+	where
+		F: FnMut(&[u8]),
+	{
 		loop {
 			self.buffer.clear();
 			let bytes_read = self.reader.read_until(b'\n', &mut self.buffer)?;
@@ -108,7 +109,10 @@ impl<'a> MmapLineSource<'a> {
 }
 
 impl LineSource for MmapLineSource<'_> {
-	fn for_each_line(&mut self, f: &mut dyn FnMut(&[u8])) -> Result<()> {
+	fn for_each_line<F>(&mut self, f: &mut F) -> Result<()>
+	where
+		F: FnMut(&[u8]),
+	{
 		while self.pos < self.bytes.len() {
 			let line_end =
 				memchr::memchr(b'\n', &self.bytes[self.pos..]).map_or(self.bytes.len(), |offset| self.pos + offset + 1);
@@ -291,15 +295,18 @@ fn detect_language_and_encoding(filename: &str, samples: &[u8]) -> Option<(&'sta
 	detect_language_from_samples(filename, samples, encoding).map(|language| (language, encoding))
 }
 
-fn process_lines(
+fn process_lines<S>(
 	file_path: &Path,
 	file_size: u64,
 	results: &mut AnalysisResults,
 	collect_details: bool,
 	language: &'static Language,
 	encoding: FileEncoding,
-	source: &mut dyn LineSource,
-) -> Result<()> {
+	source: &mut S,
+) -> Result<()>
+where
+	S: LineSource,
+{
 	let mut is_first_line = true;
 	let line_counts = count_lines_with(
 		|handle| {

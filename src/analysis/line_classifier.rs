@@ -92,7 +92,7 @@ impl CommentState {
 }
 
 /// Process block comments on a line, updating state and detecting code.
-/// Returns: (remaining_line_portion, has_code_outside_comments)
+/// Returns: (`remaining_line_portion`, `has_code_outside_comments`)
 #[inline]
 fn handle_block_comments<'a>(
 	line: &'a str,
@@ -181,7 +181,7 @@ pub fn classify_line(
 
 /// Fast ASCII-only whitespace trimming with newline handling. This is a performance-critical hot path called for every line of code analyzed.
 ///
-/// We use a manual byte-based implementation instead of str::trim() because:
+/// We use a manual byte-based implementation instead of `str::trim()` because:
 /// 1. We need to handle trailing \r\n properly (from both Unix and Windows line endings).
 /// 2. Byte operations avoid UTF-8 boundary checks since we only trim ASCII whitespace.
 /// 3. This is measurably faster in benchmarks for typical source code.

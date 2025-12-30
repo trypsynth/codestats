@@ -171,7 +171,8 @@ mod tests {
 
 	#[test]
 	fn detect_brainfuck_with_ascii_comments() {
-		let content = "This is a comment\n++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.\nMore comments here\n>+++.\n";
+		let content =
+			"This is a comment\n++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.\nMore comments here\n>+++.\n";
 		let language = detect_language_info("example.bf", Some(content)).unwrap();
 		assert_eq!(language.name, "Brainfuck");
 	}

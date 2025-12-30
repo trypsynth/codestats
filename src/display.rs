@@ -104,15 +104,51 @@ pub trait OutputFormatter {
 	}
 }
 
+pub enum Formatter {
+	Human(HumanFormatter),
+	Json(JsonFormatter),
+	JsonCompact(JsonCompactFormatter),
+	Csv(CsvFormatter),
+	Tsv(TsvFormatter),
+	Markdown(MarkdownFormatter),
+	Html(HtmlFormatter),
+}
+
+impl Formatter {
+	/// Format and stream the analysis results to the provided writer.
+	///
+	/// # Errors
+	///
+	/// Returns an error if formatting fails, (e.g. JSON serialization encounters an issue).
+	pub fn write_output(
+		&self,
+		results: &AnalysisResults,
+		path: &Path,
+		verbose: bool,
+		view_options: ViewOptions,
+		writer: &mut dyn Write,
+	) -> Result<()> {
+		match self {
+			Self::Human(f) => f.write_output(results, path, verbose, view_options, writer),
+			Self::Json(f) => f.write_output(results, path, verbose, view_options, writer),
+			Self::JsonCompact(f) => f.write_output(results, path, verbose, view_options, writer),
+			Self::Csv(f) => f.write_output(results, path, verbose, view_options, writer),
+			Self::Tsv(f) => f.write_output(results, path, verbose, view_options, writer),
+			Self::Markdown(f) => f.write_output(results, path, verbose, view_options, writer),
+			Self::Html(f) => f.write_output(results, path, verbose, view_options, writer),
+		}
+	}
+}
+
 #[must_use]
-pub fn get_formatter(format: OutputFormat) -> Box<dyn OutputFormatter> {
+pub fn get_formatter(format: OutputFormat) -> Formatter {
 	match format {
-		OutputFormat::Human => Box::new(HumanFormatter),
-		OutputFormat::Json => Box::new(JsonFormatter),
-		OutputFormat::JsonCompact => Box::new(JsonCompactFormatter),
-		OutputFormat::Csv => Box::new(CsvFormatter::default()),
-		OutputFormat::Tsv => Box::new(TsvFormatter::default()),
-		OutputFormat::Markdown => Box::new(MarkdownFormatter),
-		OutputFormat::Html => Box::new(HtmlFormatter),
+		OutputFormat::Human => Formatter::Human(HumanFormatter),
+		OutputFormat::Json => Formatter::Json(JsonFormatter),
+		OutputFormat::JsonCompact => Formatter::JsonCompact(JsonCompactFormatter),
+		OutputFormat::Csv => Formatter::Csv(CsvFormatter::default()),
+		OutputFormat::Tsv => Formatter::Tsv(TsvFormatter::default()),
+		OutputFormat::Markdown => Formatter::Markdown(MarkdownFormatter),
+		OutputFormat::Html => Formatter::Html(HtmlFormatter),
 	}
 }

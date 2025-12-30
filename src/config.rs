@@ -86,17 +86,11 @@ impl Default for DisplayConfig {
 	}
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 #[allow(clippy::struct_excessive_bools)]
 pub struct AnalyzerConfig {
 	pub analysis: AnalysisConfig,
 	pub collect_file_details: bool,
-}
-
-impl Default for AnalyzerConfig {
-	fn default() -> Self {
-		Self { analysis: AnalysisConfig::default(), collect_file_details: false }
-	}
 }
 
 impl Config {

@@ -1,4 +1,4 @@
-use std::{io::Write, path::Path};
+use std::{borrow::Cow, io::Write, path::Path};
 
 use anyhow::Result;
 
@@ -11,16 +11,16 @@ use crate::{
 
 pub struct HumanFormatter;
 
-fn join_with_commas_and(parts: &[String]) -> Option<String> {
+fn join_with_commas_and(parts: &[String]) -> Option<Cow<'_, str>> {
 	match parts {
 		[] => None,
-		[first] => Some(first.clone()),
-		[first, second] => Some(format!("{first} and {second}")),
+		[first] => Some(Cow::Borrowed(first.as_str())),
+		[first, second] => Some(Cow::Owned(format!("{first} and {second}"))),
 		items => {
 			let mut result = items[..items.len() - 1].join(", ");
 			result.push_str(", and ");
 			result.push_str(&items[items.len() - 1]);
-			Some(result)
+			Some(Cow::Owned(result))
 		}
 	}
 }
