@@ -1,0 +1,23 @@
+[licenses]
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unlicense",
+    "Unicode-3.0",
+]
+
+# Allow licenses with "OR" expressions (e.g., "MIT OR Apache-2.0")
+# This is very common in Rust crates
+confidence-threshold = 0.8
+
+[advisories]
+# No specific configuration needed, defaults are fine
+
+[bans]
+# No specific configuration needed, defaults are fine
+
+[sources]
+# No specific configuration needed, defaults are fine
