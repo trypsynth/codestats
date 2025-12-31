@@ -536,6 +536,10 @@
 		file_patterns: ["*.dockerfile", "Dockerfile"],
 		line_comments: ["#"],
 	},
+	"Dotenv": {
+		file_patterns: [".env", ".env.*"],
+		line_comments: ["#"],
+	},
 	"DotNet Resource": {
 		file_patterns: ["*.resx"],
 		block_comments: [["<!--", "-->"]],
@@ -571,6 +575,11 @@
 	"EdgeQL": {
 		file_patterns: ["*.edgeql"],
 		line_comments: ["#"],
+	},
+	"EditorConfig": {
+		file_patterns: [".editorconfig"],
+		line_comments: ["#", ";"],
+		keywords: ["root", "indent_style", "indent_size", "charset", "end_of_line"],
 	},
 	"EEx": {
 		file_patterns: ["*.eex", "*.leex", "*.heex"],
@@ -742,6 +751,11 @@
 		file_patterns: ["*.feature"],
 		line_comments: ["#"],
 	},
+	"Git Config": {
+		file_patterns: [".gitconfig", ".gitmodules"],
+		line_comments: ["#", ";"],
+		keywords: ["core", "user", "name", "email", "remote", "url"],
+	},
 	"Gleam": {
 		file_patterns: ["*.gleam"],
 		line_comments: ["//", "///", "////"],
@@ -844,6 +858,7 @@
 		file_patterns: ["*.hcl", "*.tf", "*.tf.json", "*.tfvars"],
 		line_comments: ["#", "//"],
 		block_comments: [["/*", "*/"]],
+		keywords: ["job", "group", "task", "source", "build", "provisioner", "template"],
 	},
 	"Hjson": {
 		file_patterns: ["*.hjson"],
@@ -911,6 +926,7 @@
 	"INI": {
 		file_patterns: ["*.ini", "*.cfg", "*.prefs", ".editorconfig", ".gitconfig", "buildozer.spec"],
 		line_comments: [";", "#"],
+		keywords: ["[", "]", "="],
 	},
 	"Ink": {
 		file_patterns: ["*.ink"],
@@ -1046,6 +1062,10 @@
 	},
 	"KCL": {
 		file_patterns: ["*.kcl"],
+		line_comments: ["#"],
+	},
+	"Kconfig": {
+		file_patterns: ["Kconfig", "Kconfig.*", "*.kconfig"],
 		line_comments: ["#"],
 	},
 	"KDL": {
@@ -1728,6 +1748,11 @@
 	"Rockstar": {
 		file_patterns: ["*.rock", "*.rockstar", "*.rock.star"],
 	},
+	"Roff": {
+		file_patterns: ["*.roff", "*.troff", "*.man", "*.1", "*.2", "*.3", "*.4", "*.5", "*.6", "*.7", "*.8"],
+		line_comments: [".\\\"", "\\\""],
+		keywords: [".TH", ".SH", ".TP", ".PP", ".SS"],
+	},
 	"RON": {
 		file_patterns: ["*.ron"],
 		line_comments: ["//"],
@@ -1942,6 +1967,12 @@
 	"Tera": {
 		file_patterns: ["*.tera"],
 		block_comments: [["<!--", "-->"], ["{#", "#}"]],
+	},
+	"Terraform": {
+		file_patterns: ["*.tf", "*.tfvars", "*.tf.json", "*.tfvars.json"],
+		line_comments: ["#", "//"],
+		block_comments: [["/*", "*/"]],
+		keywords: ["terraform", "provider", "resource", "variable", "module", "locals", "data"],
 	},
 	"TeX/LaTeX": {
 		file_patterns: ["*.tex", "*.sty", "*.bbx", "*.cbx", "*.lbx", ".latexmkrc"],
