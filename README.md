@@ -11,6 +11,8 @@ A small CLI tool that summarizes codebases at blazing speed. Built for quick aud
 - Counts files, lines, and bytes by language
 - Respects `.gitignore` and `.ignore` when you want it to
 - Can follow symlinks and scan hidden files
+- Filter by language: include only specific languages or exclude unwanted ones
+- Exclude files and directories with glob patterns
 - Optional per-file detail for drilling into hot spots
 - Outputs in human-readable or machine-friendly formats
 - Supports 440+ languages out of the box
@@ -44,6 +46,9 @@ cargo install --path .
 - List supported languages: `cs -l`
 - Ignore `.gitignore` rules: `cs -i`
 - Follow symlinks and include hidden files: `cs -SH`
+- Analyze only Rust files: `cs -L rust`
+- Analyze everything except tests and documentation: `cs -e 'test_*' -e '*.md'`
+- Exclude specific languages: `cs --exclude-lang markdown --exclude-lang toml`
 
 ## Output formats
 
@@ -60,6 +65,9 @@ Usage: `cs [OPTIONS] [PATH]` (defaults to the current directory)
 - `-i, --no-gitignore` Do not respect `.gitignore`
 - `-H, --hidden` Search hidden files and directories
 - `-S, --symlinks` Follow symlinks (avoid cycles)
+- `-e, --exclude <PATTERN>` Exclude files or directories matching glob patterns (can be specified multiple times)
+- `-L, --lang <LANGUAGE>` Only analyze files of the specified language(s) (can be specified multiple times, cannot be used with `--exclude-lang`)
+- `--exclude-lang <LANGUAGE>` Exclude files of the specified language(s) (can be specified multiple times, cannot be used with `--lang`)
 - `-n, --number-style <plain|comma|underscore|space>` Number formatting style. Default: `plain`
 - `-u, --size-units <binary|decimal>` Human-readable size units. Default: `binary`
 - `-p, --precision <0-6>` Percentage precision. Default: `1`
@@ -89,6 +97,9 @@ verbose = true
 respect_gitignore = true
 include_hidden = true
 follow_symlinks = false
+exclude_patterns = ["*.tmp", "test_*", "node_modules/*"]
+include_languages = ["rust", "python"]  # Only analyze these languages
+# exclude_languages = ["markdown", "toml"]  # Or exclude these (cannot use both)
 
 [display]
 number_style = "comma"
