@@ -53,6 +53,12 @@ pub struct Cli {
 	/// Exclude files or directories matching the given glob patterns. Can be specified more than once.
 	#[arg(short, long)]
 	pub exclude: Vec<String>,
+	/// Only analyze files of the specified language(s). Can be specified multiple times, and cannot be used together with --exclude-lang.
+	#[arg(short = 'L', long = "lang", conflicts_with = "exclude_lang")]
+	pub include_lang: Vec<String>,
+	/// Exclude files of the specified language(s). Can be specified multiple times, and cannot be used together with --lang.
+	#[arg(long = "exclude-lang", conflicts_with = "include_lang")]
+	pub exclude_lang: Vec<String>,
 }
 
 impl Cli {

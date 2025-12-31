@@ -63,6 +63,8 @@ impl CodeAnalyzer {
 		let error_counter = Arc::new(AtomicU64::new(0));
 		let verbose = self.config.analysis.verbose;
 		let collect_details = self.config.collect_file_details;
+		let include_languages = self.config.analysis.include_languages.clone();
+		let exclude_languages = self.config.analysis.exclude_languages.clone();
 		let aggregates = Arc::new(Mutex::new(Vec::new()));
 		let aggregates_for_walk = Arc::clone(&aggregates);
 		let error_counter_for_walk = Arc::clone(&error_counter);
@@ -86,12 +88,18 @@ impl CodeAnalyzer {
 			let mut aggregator =
 				LocalAggregator { sink: Arc::clone(&aggregates_for_walk), local: AnalysisResults::default() };
 			let error_counter = Arc::clone(&error_counter_for_walk);
+			let include_languages = include_languages.clone();
+			let exclude_languages = exclude_languages.clone();
 			Box::new(move |entry_result| {
 				match entry_result {
 					Ok(entry) if entry.file_type().is_some_and(|ft| ft.is_file()) => {
-						if let Err(err) =
-							file_processor::process_file(entry.path(), &mut aggregator.local, collect_details)
-						{
+						if let Err(err) = file_processor::process_file(
+							entry.path(),
+							&mut aggregator.local,
+							collect_details,
+							&include_languages,
+							&exclude_languages,
+						) {
 							if verbose {
 								eprintln!("Failed to process {}: {err}", entry.path().display());
 							}

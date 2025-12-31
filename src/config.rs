@@ -79,6 +79,8 @@ pub struct AnalysisConfig {
 	pub include_hidden: bool,
 	pub follow_symlinks: bool,
 	pub exclude_patterns: Vec<String>,
+	pub include_languages: Vec<String>,
+	pub exclude_languages: Vec<String>,
 }
 
 impl Default for AnalysisConfig {
@@ -89,6 +91,8 @@ impl Default for AnalysisConfig {
 			include_hidden: false,
 			follow_symlinks: false,
 			exclude_patterns: Vec::new(),
+			include_languages: Vec::new(),
+			exclude_languages: Vec::new(),
 		}
 	}
 }
@@ -173,6 +177,12 @@ impl Config {
 		apply!("output", self.display.output = cli.output);
 		if Self::cli_overrode(matches, "exclude") {
 			self.analysis.exclude_patterns.extend(cli.exclude.clone());
+		}
+		if Self::cli_overrode(matches, "include_lang") {
+			self.analysis.include_languages.extend(cli.include_lang.clone());
+		}
+		if Self::cli_overrode(matches, "exclude_lang") {
+			self.analysis.exclude_languages.extend(cli.exclude_lang.clone());
 		}
 		if !path_overridden
 			&& let Some(source) = &self.source

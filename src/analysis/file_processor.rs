@@ -16,6 +16,19 @@ use super::{
 };
 use crate::langs::{self, Language};
 
+/// Check if a language should be processed based on include/exclude filters.
+fn should_process_language(language: &Language, include_languages: &[String], exclude_languages: &[String]) -> bool {
+	if !include_languages.is_empty() {
+		let lang_name_lower = language.name.to_lowercase();
+		return include_languages.iter().any(|filter| filter.to_lowercase() == lang_name_lower);
+	}
+	if !exclude_languages.is_empty() {
+		let lang_name_lower = language.name.to_lowercase();
+		return !exclude_languages.iter().any(|filter| filter.to_lowercase() == lang_name_lower);
+	}
+	true
+}
+
 /// Helper to create error context for file opening operations.
 fn open_file_context(path: &Path) -> String {
 	format!("Failed to open file {}", path.display())
@@ -187,7 +200,13 @@ impl FileSource {
 	}
 }
 
-pub fn process_file(file_path: &Path, results: &mut AnalysisResults, collect_details: bool) -> Result<()> {
+pub fn process_file(
+	file_path: &Path,
+	results: &mut AnalysisResults,
+	collect_details: bool,
+	include_languages: &[String],
+	exclude_languages: &[String],
+) -> Result<()> {
 	let filename_os = file_path.file_name().context("Missing file name")?;
 	let filename = filename_os.to_string_lossy();
 	let metadata = file_path.metadata().with_context(|| read_metadata_context(file_path))?;
@@ -195,6 +214,9 @@ pub fn process_file(file_path: &Path, results: &mut AnalysisResults, collect_det
 	let language_from_name = langs::detect_language_info(&filename, None);
 	if file_size == 0 {
 		if let Some(language) = language_from_name {
+			if !should_process_language(language, include_languages, exclude_languages) {
+				return Ok(());
+			}
 			let contribution = FileContribution::new(0, 0, 0, 0, 0, file_size);
 			let file_stats =
 				collect_details.then(|| FileStats::new(file_path.display().to_string(), 0, 0, 0, 0, 0, file_size));
@@ -205,6 +227,9 @@ pub fn process_file(file_path: &Path, results: &mut AnalysisResults, collect_det
 	let mut source = FileSource::open(file_path, file_size)?;
 	let sample_bytes = source.sample(file_size)?;
 	let Some((language, encoding)) = detect_language_and_encoding(&filename, &sample_bytes) else { return Ok(()) };
+	if !should_process_language(language, include_languages, exclude_languages) {
+		return Ok(());
+	}
 	source.process(file_path, file_size, results, collect_details, language, encoding)
 }
 
