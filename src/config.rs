@@ -78,11 +78,18 @@ pub struct AnalysisConfig {
 	pub respect_gitignore: bool,
 	pub include_hidden: bool,
 	pub follow_symlinks: bool,
+	pub exclude_patterns: Vec<String>,
 }
 
 impl Default for AnalysisConfig {
 	fn default() -> Self {
-		Self { verbose: false, respect_gitignore: true, include_hidden: false, follow_symlinks: false }
+		Self {
+			verbose: false,
+			respect_gitignore: true,
+			include_hidden: false,
+			follow_symlinks: false,
+			exclude_patterns: Vec::new(),
+		}
 	}
 }
 
@@ -164,6 +171,9 @@ impl Config {
 		apply!("language_sort", self.display.sort_by = cli.language_sort);
 		apply!("sort_direction", self.display.sort_direction = cli.sort_direction);
 		apply!("output", self.display.output = cli.output);
+		if Self::cli_overrode(matches, "exclude") {
+			self.analysis.exclude_patterns.extend(cli.exclude.clone());
+		}
 		if !path_overridden
 			&& let Some(source) = &self.source
 			&& self.path.is_relative()

@@ -50,6 +50,9 @@ pub struct Cli {
 	/// Output format
 	#[arg(short, long, default_value = "human")]
 	pub output: OutputFormat,
+	/// Exclude files or directories matching the given glob patterns. Can be specified more than once.
+	#[arg(short, long)]
+	pub exclude: Vec<String>,
 }
 
 impl Cli {

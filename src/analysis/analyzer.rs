@@ -7,7 +7,7 @@ use std::{
 };
 
 use anyhow::Result;
-use ignore::WalkBuilder;
+use ignore::{WalkBuilder, overrides::OverrideBuilder};
 
 use super::{file_processor, stats::AnalysisResults};
 use crate::config::AnalyzerConfig;
@@ -66,42 +66,49 @@ impl CodeAnalyzer {
 		let aggregates = Arc::new(Mutex::new(Vec::new()));
 		let aggregates_for_walk = Arc::clone(&aggregates);
 		let error_counter_for_walk = Arc::clone(&error_counter);
-		WalkBuilder::new(&self.root)
+		let mut builder = WalkBuilder::new(&self.root);
+		builder
 			.follow_links(self.config.analysis.follow_symlinks)
 			.ignore(self.config.analysis.respect_gitignore)
 			.git_ignore(self.config.analysis.respect_gitignore)
 			.git_global(self.config.analysis.respect_gitignore)
 			.git_exclude(self.config.analysis.respect_gitignore)
 			.require_git(false)
-			.hidden(!self.config.analysis.include_hidden)
-			.build_parallel()
-			.run(move || {
-				let mut aggregator =
-					LocalAggregator { sink: Arc::clone(&aggregates_for_walk), local: AnalysisResults::default() };
-				let error_counter = Arc::clone(&error_counter_for_walk);
-				Box::new(move |entry_result| {
-					match entry_result {
-						Ok(entry) if entry.file_type().is_some_and(|ft| ft.is_file()) => {
-							if let Err(err) =
-								file_processor::process_file(entry.path(), &mut aggregator.local, collect_details)
-							{
-								if verbose {
-									eprintln!("Failed to process {}: {err}", entry.path().display());
-								}
-								error_counter.fetch_add(1, Ordering::Relaxed);
-							}
-						}
-						Err(err) => {
+			.hidden(!self.config.analysis.include_hidden);
+		if !self.config.analysis.exclude_patterns.is_empty() {
+			let mut override_builder = OverrideBuilder::new(&self.root);
+			for pattern in &self.config.analysis.exclude_patterns {
+				override_builder.add(&format!("!{pattern}"))?;
+			}
+			builder.overrides(override_builder.build()?);
+		}
+		builder.build_parallel().run(move || {
+			let mut aggregator =
+				LocalAggregator { sink: Arc::clone(&aggregates_for_walk), local: AnalysisResults::default() };
+			let error_counter = Arc::clone(&error_counter_for_walk);
+			Box::new(move |entry_result| {
+				match entry_result {
+					Ok(entry) if entry.file_type().is_some_and(|ft| ft.is_file()) => {
+						if let Err(err) =
+							file_processor::process_file(entry.path(), &mut aggregator.local, collect_details)
+						{
 							if verbose {
-								eprintln!("Walker error: {err}");
+								eprintln!("Failed to process {}: {err}", entry.path().display());
 							}
 							error_counter.fetch_add(1, Ordering::Relaxed);
 						}
-						_ => {}
 					}
-					ignore::WalkState::Continue
-				})
-			});
+					Err(err) => {
+						if verbose {
+							eprintln!("Walker error: {err}");
+						}
+						error_counter.fetch_add(1, Ordering::Relaxed);
+					}
+					_ => {}
+				}
+				ignore::WalkState::Continue
+			})
+		});
 		let partials = Arc::try_unwrap(aggregates)
 			.map_err(|_| anyhow::anyhow!("Failed to unwrap aggregates Arc - walker still holds references"))?
 			.into_inner()
