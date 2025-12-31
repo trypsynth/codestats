@@ -1,4 +1,5 @@
-#![warn(clippy::all, clippy::cargo, clippy::nursery, clippy::pedantic)]
+#![warn(clippy::all, clippy::cargo, clippy::nursery, clippy::pedantic, clippy::perf, unused_crate_dependencies)]
+#![deny(warnings)]
 
 mod analysis;
 mod cli;
