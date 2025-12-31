@@ -1,3 +1,5 @@
+#![allow(clippy::unnecessary_wraps)]
+
 use std::{io::Write, path::Path};
 
 use anyhow::Result;
@@ -11,7 +13,6 @@ use crate::{
 
 /// Escape Markdown table cells by escaping the pipe separator.
 #[askama::filter_fn]
-#[expect(clippy::unnecessary_wraps)]
 pub fn md_escape(value: &str, _values: &dyn Values) -> AskamaResult<String> {
 	Ok(value.replace('|', "\\|"))
 }

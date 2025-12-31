@@ -207,13 +207,12 @@ impl Summary {
 fn sort_key_for_file_record(file: &FileStats, key: LanguageSortKey) -> SortValue<'_> {
 	match key {
 		LanguageSortKey::Lines => SortValue::Num(file.total_lines()),
-		// "Files" is a language-level metric, so fall back to a stable per-file key.
-		LanguageSortKey::Files => SortValue::Text(file.path()),
 		LanguageSortKey::Code => SortValue::Num(file.code_lines()),
 		LanguageSortKey::Comments => SortValue::Num(file.comment_lines()),
 		LanguageSortKey::Blanks => SortValue::Num(file.blank_lines()),
 		LanguageSortKey::Size => SortValue::Num(file.size()),
-		LanguageSortKey::Name => SortValue::Text(file.path()),
+		// "Files" is a language-level metric, so fall back to a stable per-file key.
+		LanguageSortKey::Files | LanguageSortKey::Name => SortValue::Text(file.path()),
 	}
 }
 

@@ -269,7 +269,8 @@ fn process_file_buffered(
 		let capacity = usize::try_from(file_size).with_context(|| file_too_large_context(file_path))?;
 		let mut buffer = Vec::with_capacity(capacity);
 		file.read_to_end(&mut buffer)?;
-		return process_utf16_bytes(file_path, file_size, results, collect_details, language, encoding, &buffer);
+		process_utf16_bytes(file_path, file_size, results, collect_details, language, encoding, &buffer);
+		return Ok(());
 	}
 	let reader = BufReader::with_capacity(64 * 1024, file);
 	let mut source = BufLineSource::new(reader);
@@ -287,7 +288,8 @@ fn process_file_mmap(
 ) -> Result<()> {
 	let file_bytes = mmap.as_ref();
 	if is_utf16(encoding.encoding) {
-		return process_utf16_bytes(file_path, file_size, results, collect_details, language, encoding, file_bytes);
+		process_utf16_bytes(file_path, file_size, results, collect_details, language, encoding, file_bytes);
+		return Ok(());
 	}
 	let mut source = MmapLineSource::new(file_bytes);
 	process_lines(file_path, file_size, results, collect_details, language, encoding, &mut source)
@@ -333,29 +335,28 @@ fn process_utf16_bytes(
 	language: &'static Language,
 	encoding: FileEncoding,
 	bytes: &[u8],
-) -> Result<()> {
+) {
 	let mut line_counts = LineCounts::default();
 	let mut comment_state = CommentState::new();
 	let mut is_first_line = true;
 	let mut decoder = encoding.encoding.new_decoder_without_bom_handling();
 	let mut pending = String::new();
-	let mut decoded = String::new();
+	let mut output = String::new();
 	let mut slice = bytes;
 	if encoding.bom_len > 0 && slice.len() >= encoding.bom_len {
 		slice = &slice[encoding.bom_len..];
 	}
 	for chunk in slice.chunks(UTF16_DECODE_CHUNK_SIZE) {
-		decode_to_string(&mut decoder, chunk, false, &mut decoded);
-		pending.push_str(&decoded);
-		decoded.clear();
+		decode_to_string(&mut decoder, chunk, false, &mut output);
+		pending.push_str(&output);
+		output.clear();
 		drain_lines(&mut pending, language, &mut line_counts, &mut comment_state, &mut is_first_line, false);
 	}
-	decode_to_string(&mut decoder, &[], true, &mut decoded);
-	pending.push_str(&decoded);
-	decoded.clear();
+	decode_to_string(&mut decoder, &[], true, &mut output);
+	pending.push_str(&output);
+	output.clear();
 	drain_lines(&mut pending, language, &mut line_counts, &mut comment_state, &mut is_first_line, true);
 	finish_file_stats(file_path, file_size, results, collect_details, language, &line_counts);
-	Ok(())
 }
 
 fn decode_to_string(decoder: &mut Decoder, chunk: &[u8], last: bool, output: &mut String) {
@@ -366,7 +367,7 @@ fn decode_to_string(decoder: &mut Decoder, chunk: &[u8], last: bool, output: &mu
 		offset += read;
 		match result {
 			CoderResult::InputEmpty => break,
-			CoderResult::OutputFull => continue,
+			CoderResult::OutputFull => {}
 		}
 	}
 }
