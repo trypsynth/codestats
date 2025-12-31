@@ -29,6 +29,11 @@
 		block_comments: [["{-", "-}"]],
 		nested_blocks: true,
 	},
+	"Aiken": {
+		file_patterns: ["*.ak"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+	},
 	"Alchemist": {
 		file_patterns: ["*.crn"],
 		line_comments: ["#"],
@@ -1657,6 +1662,11 @@
 		file_patterns: ["*.raml", "*.rml"],
 		line_comments: ["#"],
 	},
+	"Rascal": {
+		file_patterns: ["*.rsc"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+	},
 	"Razor": {
 		file_patterns: ["*.cshtml", "*.razor"],
 		block_comments: [["<!--", "-->"], ["@*", "*@"]],
@@ -1695,6 +1705,11 @@
 	"REXX": {
 		file_patterns: ["*.rexx", "*.rex"],
 		line_comments: [],
+		block_comments: [["/*", "*/"]],
+	},
+	"Rhai": {
+		file_patterns: ["*.rhai"],
+		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
 	"Ring": {
@@ -1778,6 +1793,10 @@
 		file_patterns: ["*.shen"],
 		line_comments: ["\\\\"],
 		block_comments: [["\\\\*", "*\\\\"]],
+	},
+	"Sieve": {
+		file_patterns: ["*.sieve"],
+		line_comments: ["#"],
 	},
 	"Slim": {
 		file_patterns: ["*.slim"],
