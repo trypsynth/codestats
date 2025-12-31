@@ -6,7 +6,8 @@ use std::{
 };
 
 use anyhow::{Context as _, Result};
-use encoding_rs::{Encoding, UTF_8, UTF_16BE, UTF_16LE};
+use encoding_rs::{CoderResult, Decoder, Encoding, UTF_8, UTF_16BE, UTF_16LE};
+use memchr::memchr;
 use memmap2::Mmap;
 
 use super::{
@@ -130,6 +131,8 @@ const MMAP_THRESHOLD: u64 = 256 * 1024;
 const SAMPLE_SIZE: usize = 4 * 1024;
 /// Percentage of non-text bytes in a sample that indicates a binary file.
 const BINARY_THRESHOLD_PERCENT: usize = 20;
+/// Chunk size for incremental UTF-16 decoding.
+const UTF16_DECODE_CHUNK_SIZE: usize = 8 * 1024;
 
 #[derive(Clone, Copy)]
 struct FileEncoding {
@@ -331,20 +334,65 @@ fn process_utf16_bytes(
 	encoding: FileEncoding,
 	bytes: &[u8],
 ) -> Result<()> {
-	let decoded = decode_bytes(bytes, encoding, true);
+	let mut line_counts = LineCounts::default();
+	let mut comment_state = CommentState::new();
 	let mut is_first_line = true;
-	let line_counts = count_lines_with(
-		|handle| {
-			for line in decoded.lines() {
-				handle(line, is_first_line);
-				is_first_line = false;
-			}
-			Ok(())
-		},
-		language,
-	)?;
+	let mut decoder = encoding.encoding.new_decoder_without_bom_handling();
+	let mut pending = String::new();
+	let mut decoded = String::new();
+	let mut slice = bytes;
+	if encoding.bom_len > 0 && slice.len() >= encoding.bom_len {
+		slice = &slice[encoding.bom_len..];
+	}
+	for chunk in slice.chunks(UTF16_DECODE_CHUNK_SIZE) {
+		decode_to_string(&mut decoder, chunk, false, &mut decoded);
+		pending.push_str(&decoded);
+		decoded.clear();
+		drain_lines(&mut pending, language, &mut line_counts, &mut comment_state, &mut is_first_line, false);
+	}
+	decode_to_string(&mut decoder, &[], true, &mut decoded);
+	pending.push_str(&decoded);
+	decoded.clear();
+	drain_lines(&mut pending, language, &mut line_counts, &mut comment_state, &mut is_first_line, true);
 	finish_file_stats(file_path, file_size, results, collect_details, language, &line_counts);
 	Ok(())
+}
+
+fn decode_to_string(decoder: &mut Decoder, chunk: &[u8], last: bool, output: &mut String) {
+	let mut offset = 0;
+	while offset < chunk.len() || (last && offset == 0 && chunk.is_empty()) {
+		output.reserve(chunk.len().saturating_sub(offset).max(1));
+		let (result, read, _) = decoder.decode_to_string(&chunk[offset..], output, last);
+		offset += read;
+		match result {
+			CoderResult::InputEmpty => break,
+			CoderResult::OutputFull => continue,
+		}
+	}
+}
+
+fn drain_lines(
+	pending: &mut String,
+	language: &'static Language,
+	line_counts: &mut LineCounts,
+	comment_state: &mut CommentState,
+	is_first_line: &mut bool,
+	flush_final: bool,
+) {
+	while let Some(pos) = memchr(b'\n', pending.as_bytes()) {
+		let line_end = pos + 1;
+		{
+			let line = &pending[..line_end];
+			line_counts.classify_and_count(line, Some(language), comment_state, *is_first_line);
+			*is_first_line = false;
+		}
+		pending.drain(..line_end);
+	}
+	if flush_final && !pending.is_empty() {
+		line_counts.classify_and_count(pending.as_str(), Some(language), comment_state, *is_first_line);
+		*is_first_line = false;
+		pending.clear();
+	}
 }
 
 fn finish_file_stats(

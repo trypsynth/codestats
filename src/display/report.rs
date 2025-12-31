@@ -204,10 +204,11 @@ impl Summary {
 	}
 }
 
-fn sort_key_for_file_record(file: &FileStats, key: LanguageSortKey, file_count: u64) -> SortValue<'_> {
+fn sort_key_for_file_record(file: &FileStats, key: LanguageSortKey) -> SortValue<'_> {
 	match key {
 		LanguageSortKey::Lines => SortValue::Num(file.total_lines()),
-		LanguageSortKey::Files => SortValue::Num(file_count),
+		// "Files" is a language-level metric, so fall back to a stable per-file key.
+		LanguageSortKey::Files => SortValue::Text(file.path()),
 		LanguageSortKey::Code => SortValue::Num(file.code_lines()),
 		LanguageSortKey::Comments => SortValue::Num(file.comment_lines()),
 		LanguageSortKey::Blanks => SortValue::Num(file.blank_lines()),
@@ -270,11 +271,10 @@ impl<'a> LanguageRecord<'a> {
 		let files_detail = verbose.then(|| {
 			let mut files: Vec<_> = stats.files_list().iter().collect();
 			let sort_key = ctx.options.language_sort_key;
-			let file_count = stats.files();
 			apply_sort(
 				&mut files,
 				ctx.options.sort_direction,
-				|file| sort_key_for_file_record(file, sort_key, file_count),
+				|file| sort_key_for_file_record(file, sort_key),
 				|a, b| a.path().cmp(b.path()),
 			);
 			files

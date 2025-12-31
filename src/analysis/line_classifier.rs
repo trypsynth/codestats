@@ -47,7 +47,6 @@ impl LineType {
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct CommentState {
-	in_block_comment: bool,
 	block_comment_depth: usize,
 }
 
@@ -59,22 +58,15 @@ impl CommentState {
 	}
 
 	#[inline]
-	const fn enter_first_block(&mut self, nested: bool) {
-		self.in_block_comment = true;
-		if nested {
-			self.block_comment_depth = 1;
-		}
+	const fn enter_first_block(&mut self) {
+		self.block_comment_depth = 1;
 	}
 
 	#[inline]
 	const fn exit_block(&mut self, nested: bool) {
 		if nested {
 			self.block_comment_depth = self.block_comment_depth.saturating_sub(1);
-			if self.block_comment_depth == 0 {
-				self.in_block_comment = false;
-			}
 		} else {
-			self.in_block_comment = false;
 			self.block_comment_depth = 0;
 		}
 	}
@@ -87,7 +79,7 @@ impl CommentState {
 	#[must_use]
 	#[inline]
 	const fn is_in_comment(&self) -> bool {
-		self.in_block_comment
+		self.block_comment_depth > 0
 	}
 }
 
@@ -109,7 +101,7 @@ fn handle_block_comments<'a>(
 					has_code = true;
 				}
 				line_remainder = &line_remainder[pos + start_len..];
-				comment_state.enter_first_block(nested);
+				comment_state.enter_first_block();
 			} else {
 				break;
 			}

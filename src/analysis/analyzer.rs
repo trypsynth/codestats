@@ -70,6 +70,8 @@ impl CodeAnalyzer {
 			.follow_links(self.config.analysis.follow_symlinks)
 			.ignore(self.config.analysis.respect_gitignore)
 			.git_ignore(self.config.analysis.respect_gitignore)
+			.git_global(self.config.analysis.respect_gitignore)
+			.git_exclude(self.config.analysis.respect_gitignore)
 			.require_git(false)
 			.hidden(!self.config.analysis.include_hidden)
 			.build_parallel()
