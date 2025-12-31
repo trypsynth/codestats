@@ -103,7 +103,7 @@ fn decode_to_string(decoder: &mut Decoder, chunk: &[u8], last: bool, output: &mu
 fn drain_lines(
 	pending: &mut String,
 	language: &'static Language,
-	line_counts: &mut super::line_counter::LineCounts,
+	line_counts: &mut LineCounts,
 	comment_state: &mut CommentState,
 	is_first_line: &mut bool,
 	flush_final: bool,
