@@ -46,8 +46,7 @@ pub(super) fn is_probably_binary(sample: &[u8], encoding: FileEncoding) -> bool 
 	if non_text_pct > BINARY_THRESHOLD_PERCENT || sample.contains(&0) {
 		return true;
 	}
-	let (_, _, had_errors) = encoding.encoding.decode(sample);
-	had_errors
+	false
 }
 
 pub(super) fn is_utf16(encoding: &'static Encoding) -> bool {
@@ -121,5 +120,24 @@ fn drain_lines(
 		line_counts.classify_and_count(pending.as_str(), Some(language), comment_state, *is_first_line);
 		*is_first_line = false;
 		pending.clear();
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn non_utf8_text_is_not_flagged_as_binary() {
+		let encoding = FileEncoding { encoding: UTF_8, bom_len: 0 };
+		let sample = [0xC3, 0x28, b'a', b'b'];
+		assert!(!is_probably_binary(&sample, encoding));
+	}
+
+	#[test]
+	fn null_bytes_are_flagged_as_binary() {
+		let encoding = FileEncoding { encoding: UTF_8, bom_len: 0 };
+		let sample = [0x00, b'a', b'b', b'c'];
+		assert!(is_probably_binary(&sample, encoding));
 	}
 }
