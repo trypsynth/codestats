@@ -49,10 +49,10 @@ impl LineStats {
 	}
 
 	const fn merge(&mut self, other: &Self) {
-		self.code += other.code;
-		self.comment += other.comment;
-		self.blank += other.blank;
-		self.shebang += other.shebang;
+		self.code = self.code.saturating_add(other.code);
+		self.comment = self.comment.saturating_add(other.comment);
+		self.blank = self.blank.saturating_add(other.blank);
+		self.shebang = self.shebang.saturating_add(other.shebang);
 	}
 }
 
@@ -176,10 +176,10 @@ pub struct LanguageStats {
 
 impl LanguageStats {
 	pub(crate) fn add_file(&mut self, contribution: &FileContribution, file_stats: Option<FileStats>) {
-		self.files += 1;
-		self.lines += contribution.total_lines();
+		self.files = self.files.saturating_add(1);
+		self.lines = self.lines.saturating_add(contribution.total_lines());
 		self.line_stats.merge(&contribution.line_stats);
-		self.size += contribution.size();
+		self.size = self.size.saturating_add(contribution.size());
 		if let Some(stats) = file_stats {
 			// Reserve capacity on first file to reduce reallocations
 			if self.file_list.is_empty() {
@@ -190,10 +190,10 @@ impl LanguageStats {
 	}
 
 	pub(crate) fn merge(&mut self, mut other: Self) {
-		self.files += other.files;
-		self.lines += other.lines;
+		self.files = self.files.saturating_add(other.files);
+		self.lines = self.lines.saturating_add(other.lines);
 		self.line_stats.merge(&other.line_stats);
-		self.size += other.size;
+		self.size = self.size.saturating_add(other.size);
 		self.file_list.append(&mut other.file_list);
 	}
 
@@ -275,18 +275,18 @@ impl AnalysisResults {
 		file_stats: Option<FileStats>,
 	) {
 		self.ensure_language_slot(language);
-		self.total_files += 1;
-		self.total_lines += contribution.total_lines();
+		self.total_files = self.total_files.saturating_add(1);
+		self.total_lines = self.total_lines.saturating_add(contribution.total_lines());
 		self.line_stats.merge(&contribution.line_stats);
-		self.total_size += contribution.size();
+		self.total_size = self.total_size.saturating_add(contribution.size());
 		self.language_stats[language.index].add_file(&contribution, file_stats);
 	}
 
 	pub(crate) fn merge(&mut self, other: Self) {
-		self.total_files += other.total_files;
-		self.total_lines += other.total_lines;
+		self.total_files = self.total_files.saturating_add(other.total_files);
+		self.total_lines = self.total_lines.saturating_add(other.total_lines);
 		self.line_stats.merge(&other.line_stats);
-		self.total_size += other.total_size;
+		self.total_size = self.total_size.saturating_add(other.total_size);
 		if self.language_stats.len() < other.language_stats.len() {
 			self.language_stats.resize_with(other.language_stats.len(), LanguageStats::default);
 		}

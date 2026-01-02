@@ -73,7 +73,7 @@ impl CommentState {
 
 	#[inline]
 	const fn enter_nested_block(&mut self) {
-		self.block_comment_depth += 1;
+		self.block_comment_depth = self.block_comment_depth.saturating_add(1);
 	}
 
 	#[must_use]
