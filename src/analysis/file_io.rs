@@ -31,7 +31,10 @@ fn mmap_file_context(path: &Path) -> String {
 
 /// Helper to create error context for file size validation.
 fn file_too_large_context(path: &Path) -> String {
-	format!("File too large to read: {}", path.display())
+	format!(
+		"File too large to process: {} (exceeds platform address space limits - consider using a 64-bit system for files >4GB)",
+		path.display()
+	)
 }
 
 pub(super) trait LineSource {
@@ -104,10 +107,10 @@ impl FileSource {
 	pub(super) fn open(file_path: &Path, file_size: u64) -> Result<Self> {
 		let file = File::open(file_path).with_context(|| open_file_context(file_path))?;
 		if file_size >= MMAP_THRESHOLD {
-			// SAFETY: Memory-mapping is safe here because:
+			// SAFETY: Memory-mapping is safe under these conditions:
 			// 1. We only read from the mmap, never write.
-			// 2. The file is not modified during analysis.
-			// 3. The mapping is dropped before returning, so no references escape.
+			// 2. The mapping is dropped before returning, so no references escape.
+			// 3. ASSUMPTION: The file will not be modified by external processes during analysis. This is a reasonable assumption for typical code analysis workflows where files are stable during the scan. However, concurrent modifications by other processes could cause undefined behavior.
 			let mmap = unsafe { Mmap::map(&file) }.with_context(|| mmap_file_context(file_path))?;
 			Ok(Self::Mapped(mmap))
 		} else {

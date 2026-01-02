@@ -110,6 +110,22 @@ sort_direction = "desc"
 output = "human"
 ```
 
+## Technical Notes
+
+### Memory-Mapped I/O
+
+For performance, Codestats uses memory-mapped I/O for files >=256KB. This provides significant speedups but requires that files remain stable during analysis.
+
+IMPORTANT: Files should not be modified by external processes while being analyzed. Concurrent modifications during a scan can cause undefined behavior.
+
+### 32-bit Platform Limitations
+
+On 32-bit platforms, individual files larger than ~4GB cannot be processed due to address space limitations. The tool will skip such files with an error message. This limitation does not affect 64-bit platforms.
+
+### Thread Safety
+
+Codestats uses parallel processing to maximize performance. Each worker thread maintains its own statistics which are merged at the end, minimizing lock contention. The tool is safe for concurrent execution on different directories, but should not analyze the same directory simultaneously from multiple processes.
+
 ## Benchmarks
 
 Run: `hyperfine --warmup 1 "cs ~" "tokei ~"`
