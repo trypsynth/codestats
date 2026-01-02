@@ -1,7 +1,8 @@
-use super::{
-	data::{LANGUAGES, Language},
-	globset::get_candidates,
-};
+pub(super) mod patterns;
+pub mod scoring;
+
+use self::patterns::get_candidates;
+use super::data::{LANGUAGES, Language};
 
 /// Score awarded for each comment style match when disambiguating languages.
 const COMMENT_MATCH_SCORE: i32 = 50;

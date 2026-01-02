@@ -3,7 +3,7 @@ use std::path::Path;
 use anyhow::Result;
 
 use super::{
-	encoding::{decode_bytes, FileEncoding},
+	encoding::{FileEncoding, decode_bytes},
 	file_io::LineSource,
 	line_classifier::{self, CommentState, LineType},
 	stats::{AnalysisResults, FileContribution, FileStats},

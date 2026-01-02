@@ -6,7 +6,6 @@ mod cli;
 mod config;
 mod display;
 mod langs;
-mod utils;
 
 use std::io::{self, Write as _};
 

@@ -18,13 +18,11 @@ use anyhow::Result;
 
 mod data;
 mod detection;
-mod globset;
-pub mod matchers;
 
 pub use data::{LANGUAGES, Language};
-pub use detection::detect_language_info;
+pub use detection::{detect_language_info, scoring};
 
-use crate::utils::pluralize;
+use crate::display::formatting::pluralize;
 
 /// Write a list of all supported programming languages to a writer.
 /// # Errors
@@ -63,7 +61,7 @@ pub fn print_all_languages(writer: &mut dyn Write, terminal_width: usize) -> Res
 
 #[cfg(test)]
 mod tests {
-	use super::globset::get_candidates;
+	use super::detection::patterns::get_candidates;
 
 	#[test]
 	fn get_candidates_uses_literal_map() {

@@ -2,7 +2,7 @@ use memchr::{memchr2, memrchr};
 
 use crate::langs::{
 	Language,
-	matchers::{BlockCommentMatchers, language_matchers},
+	scoring::{BlockCommentMatchers, language_matchers},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

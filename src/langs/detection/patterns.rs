@@ -2,7 +2,7 @@ use std::{cell::RefCell, sync::LazyLock};
 
 use globset::{GlobBuilder, GlobSet, GlobSetBuilder};
 
-use super::data::{LANGUAGES, Language};
+use super::super::data::{LANGUAGES, Language};
 
 pub(super) struct LanguageGlobs {
 	pub(super) set: GlobSet,

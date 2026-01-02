@@ -129,6 +129,12 @@ impl PercentFormatter {
 	}
 }
 
+/// Return `singular` when `count` equals 1, otherwise return `plural`.
+#[inline]
+pub const fn pluralize<'a>(count: u64, singular: &'a str, plural: &'a str) -> &'a str {
+	if count == 1 { singular } else { plural }
+}
+
 pub fn apply_sort<T>(
 	items: &mut [T],
 	direction: SortDirection,
@@ -154,4 +160,18 @@ pub fn apply_sort<T>(
 pub enum SortValue<'a> {
 	Num(u64),
 	Text(&'a str),
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn test_pluralize() {
+		assert_eq!(pluralize(1, "file", "files"), "file");
+		assert_eq!(pluralize(0, "file", "files"), "files");
+		assert_eq!(pluralize(2, "file", "files"), "files");
+		assert_eq!(pluralize(1, "child", "children"), "child");
+		assert_eq!(pluralize(5, "child", "children"), "children");
+	}
 }

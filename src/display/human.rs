@@ -4,9 +4,11 @@ use anyhow::Result;
 
 use super::{FormatterContext, OutputFormatter, ReportData, ViewOptions};
 use crate::{
-	analysis::AnalysisResults,
-	display::report::{LanguageRecord, Summary},
-	utils,
+	analysis::{AnalysisResults, stats::percentage},
+	display::{
+		formatting::pluralize,
+		report::{LanguageRecord, Summary},
+	},
 };
 
 pub struct HumanFormatter;
@@ -54,9 +56,9 @@ impl HumanFormatter {
 			"Codestats for {}: {} {}, {} total {}, {} total size.",
 			report.analysis_path,
 			ctx.number(summary.total_files),
-			utils::pluralize(summary.total_files, "file", "files"),
+			pluralize(summary.total_files, "file", "files"),
 			ctx.number(summary.total_lines),
-			utils::pluralize(summary.total_lines, "line", "lines"),
+			pluralize(summary.total_lines, "line", "lines"),
 			total_size_human
 		)?;
 		let line_breakdown_parts = summary.line_breakdown_parts(true, ctx);
@@ -90,9 +92,9 @@ impl HumanFormatter {
 		verbose: bool,
 		writer: &mut dyn Write,
 	) -> Result<()> {
-		let file_pct = utils::percentage(language.files, summary.total_files);
-		let line_pct = utils::percentage(language.lines, summary.total_lines);
-		let size_pct = utils::percentage(language.size, summary.total_size);
+		let file_pct = percentage(language.files, summary.total_files);
+		let line_pct = percentage(language.lines, summary.total_lines);
+		let size_pct = percentage(language.size, summary.total_size);
 		let size_human = &language.size_human;
 		let file_pct_str = ctx.percent(file_pct);
 		let line_pct_str = ctx.percent(line_pct);
@@ -102,14 +104,14 @@ impl HumanFormatter {
 			writer,
 			"\tFiles: {} {} ({}% of total).",
 			ctx.number(language.files),
-			utils::pluralize(language.files, "file", "files"),
+			pluralize(language.files, "file", "files"),
 			file_pct_str
 		)?;
 		writeln!(
 			writer,
 			"\tLines: {} {} ({}% of total).",
 			ctx.number(language.lines),
-			utils::pluralize(language.lines, "line", "lines"),
+			pluralize(language.lines, "line", "lines"),
 			line_pct_str
 		)?;
 		writeln!(writer, "\tSize: {size_human} ({size_pct_str}% of total).")?;
@@ -140,7 +142,7 @@ impl HumanFormatter {
 			return Ok(());
 		};
 		for file_stat in files {
-			let file_pct = utils::percentage(file_stat.total_lines, summary.total_lines);
+			let file_pct = percentage(file_stat.total_lines, summary.total_lines);
 			let file_pct_str = ctx.percent(file_pct);
 			let size_human = &file_stat.size_human;
 			writeln!(

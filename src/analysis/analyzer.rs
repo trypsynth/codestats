@@ -9,7 +9,7 @@ use std::{
 use anyhow::Result;
 use ignore::{WalkBuilder, overrides::OverrideBuilder};
 
-use super::{file_processor, stats::AnalysisResults};
+use super::{pipeline, stats::AnalysisResults};
 use crate::config::AnalyzerConfig;
 
 /// Thread-local accumulator for parallel file analysis.
@@ -93,7 +93,7 @@ impl CodeAnalyzer {
 			Box::new(move |entry_result| {
 				match entry_result {
 					Ok(entry) if entry.file_type().is_some_and(|ft| ft.is_file()) => {
-						if let Err(err) = file_processor::process_file(
+						if let Err(err) = pipeline::process_file(
 							entry.path(),
 							&mut aggregator.local,
 							collect_details,

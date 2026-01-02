@@ -19,7 +19,7 @@
 //! - Sort order: by lines, code, comments, blanks, files, size, or filename.
 //! - Sort direction: ascending or descending.
 
-mod formatting;
+pub mod formatting;
 #[cfg(feature = "html")]
 mod html;
 mod human;

@@ -1,29 +1,35 @@
-use crate::{
-	langs::{LANGUAGES, Language},
-	utils,
-};
+use crate::langs::{LANGUAGES, Language};
 
 /// Initial capacity for per-language file detail lists in verbose mode. Pre-allocating 256 slots reduces reallocations for most projects while avoiding excessive memory waste for languages with few files.
 const INITIAL_FILE_LIST_CAPACITY: usize = 256;
+
+/// Calculate the percentage that `part` represents of `total`.
+///
+/// Returns `0.0` when `total` is `0` to avoid division-by-zero panics.
+#[inline]
+#[expect(clippy::cast_precision_loss)]
+pub fn percentage(part: u64, total: u64) -> f64 {
+	if total == 0 { 0.0 } else { (part as f64 / total as f64) * 100.0 }
+}
 
 macro_rules! impl_percentage_methods {
 	($type:ty, $total_field:ident, $stats_field:ident) => {
 		impl $type {
 			#[must_use]
 			pub fn code_percentage(&self) -> f64 {
-				utils::percentage(self.$stats_field.code, self.$total_field)
+				percentage(self.$stats_field.code, self.$total_field)
 			}
 			#[must_use]
 			pub fn comment_percentage(&self) -> f64 {
-				utils::percentage(self.$stats_field.comment, self.$total_field)
+				percentage(self.$stats_field.comment, self.$total_field)
 			}
 			#[must_use]
 			pub fn blank_percentage(&self) -> f64 {
-				utils::percentage(self.$stats_field.blank, self.$total_field)
+				percentage(self.$stats_field.blank, self.$total_field)
 			}
 			#[must_use]
 			pub fn shebang_percentage(&self) -> f64 {
-				utils::percentage(self.$stats_field.shebang, self.$total_field)
+				percentage(self.$stats_field.shebang, self.$total_field)
 			}
 		}
 	};
@@ -340,3 +346,22 @@ impl AnalysisResults {
 }
 
 impl_percentage_methods!(AnalysisResults, total_lines, line_stats);
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn test_percentage() {
+		const EPSILON: f64 = f64::EPSILON;
+		assert!((percentage(0, 100) - 0.0).abs() <= EPSILON);
+		assert!((percentage(50, 100) - 50.0).abs() <= EPSILON);
+		assert!((percentage(25, 100) - 25.0).abs() <= EPSILON);
+		assert!((percentage(100, 100) - 100.0).abs() <= EPSILON);
+		assert!((percentage(10, 0) - 0.0).abs() <= EPSILON);
+		let part = u64::MAX / 2;
+		let total = u64::MAX;
+		let pct = percentage(part, total);
+		assert!((pct - 50.0).abs() < 0.000_000_1);
+	}
+}

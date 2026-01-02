@@ -3,7 +3,7 @@ use std::path::Path;
 use anyhow::{Context as _, Result};
 
 use super::{
-	encoding::{decode_bytes, detect_encoding, is_probably_binary, FileEncoding},
+	encoding::{FileEncoding, decode_bytes, detect_encoding, is_probably_binary},
 	file_io::FileSource,
 	stats::{AnalysisResults, FileContribution, FileStats},
 };

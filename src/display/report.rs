@@ -6,10 +6,9 @@ use crate::{
 	analysis::{AnalysisResults, FileStats, LanguageStats, LineType},
 	display::{
 		apply_sort,
-		formatting::{FormatterContext, SortValue},
+		formatting::{FormatterContext, SortValue, pluralize as pluralize_fn},
 		options::LanguageSortKey,
 	},
-	utils,
 };
 
 macro_rules! impl_formatters {
@@ -156,7 +155,7 @@ impl Summary {
 			.map(|info| {
 				let formatted = ctx.number(info.count);
 				if pluralize {
-					format!("{formatted} {} {}", info.singular_label(), utils::pluralize(info.count, "line", "lines"))
+					format!("{formatted} {} {}", info.singular_label(), pluralize_fn(info.count, "line", "lines"))
 				} else {
 					format!("{formatted} {}", info.plural_label())
 				}

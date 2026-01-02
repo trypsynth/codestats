@@ -2,7 +2,7 @@ use std::sync::LazyLock;
 
 use aho_corasick::{AhoCorasick, AhoCorasickBuilder, MatchKind};
 
-use crate::langs::{LANGUAGES, Language};
+use super::super::data::{LANGUAGES, Language};
 
 #[derive(Debug)]
 pub struct LanguageMatchers {

@@ -7,7 +7,11 @@ use std::{
 use anyhow::{Context as _, Result};
 use memmap2::Mmap;
 
-use super::{encoding::{self, FileEncoding}, stats::AnalysisResults, line_counter};
+use super::{
+	encoding::{self, FileEncoding},
+	line_counter,
+	stats::AnalysisResults,
+};
 use crate::langs::Language;
 
 /// Files larger than this threshold are memory-mapped instead of buffered.
@@ -128,8 +132,12 @@ impl FileSource {
 		encoding: FileEncoding,
 	) -> Result<()> {
 		match self {
-			Self::Buffered(file) => process_file_buffered(file_path, file, file_size, results, collect_details, language, encoding),
-			Self::Mapped(mmap) => process_file_mmap(file_path, file_size, results, collect_details, language, encoding, &mmap),
+			Self::Buffered(file) => {
+				process_file_buffered(file_path, file, file_size, results, collect_details, language, encoding)
+			}
+			Self::Mapped(mmap) => {
+				process_file_mmap(file_path, file_size, results, collect_details, language, encoding, &mmap)
+			}
 		}
 	}
 }

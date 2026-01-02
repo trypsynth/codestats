@@ -1,9 +1,9 @@
 use std::{borrow::Cow, path::Path};
 
-use encoding_rs::{CoderResult, Decoder, Encoding, UTF_16BE, UTF_16LE, UTF_8};
+use encoding_rs::{CoderResult, Decoder, Encoding, UTF_8, UTF_16BE, UTF_16LE};
 use memchr::memchr;
 
-use super::{line_counter::LineCounts, line_classifier::CommentState, stats::AnalysisResults};
+use super::{line_classifier::CommentState, line_counter::LineCounts, stats::AnalysisResults};
 use crate::langs::Language;
 
 /// Percentage of non-text bytes in a sample that indicates a binary file.
