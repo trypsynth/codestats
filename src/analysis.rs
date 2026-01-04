@@ -1,16 +1,11 @@
-//! Code analysis engine for processing source files and gathering statistics.
-//!
-//! ## Architecture
-//!
 //! The analysis pipeline consists of several stages:
 //!
-//! 1. Directory Walking ([`analyzer`]): Parallel traversal of the file tree using the `ignore` crate.
-//! 2. Processing Pipeline ([`pipeline`]): For each discovered file, orchestrates language detection and analysis.
-//! 3. I/O Strategy ([`file_io`]): Chooses optimal reading strategy (buffered vs memory-mapped) based on file size.
-//! 4. Encoding Detection ([`encoding`]): Detects file encoding, handles UTF-16, and filters binary files.
-//! 5. Line Classification ([`line_classifier`]): Categorizes each line as code, comment, blank, or shebang.
-//! 6. Line Counting ([`line_counter`]): Accumulates line statistics for each file.
-//! 7. Statistics Aggregation ([`stats`]): Thread-safe accumulation of per-language and per-file metrics, with optional detailed file tracking in verbose mode.
+//! 1. Directory Walking ([`analyzer`]): Parallel walking of the file tree using the `ignore` crate.
+//! 2. I/O Strategy ([`file_io`]): Chooses between buffered and memory-mapped reading based on file size.
+//! 3. Encoding Detection ([`encoding`]): Detects file encoding and filters out binary files.
+//! 4. Line Classification ([`line_classifier`]): Categorizes each line as code, comment, blank, or shebang.
+//! 5. Line Counting ([`line_counter`]): Accumulates line statistics for each file.
+//! 6. Statistics Aggregation ([`stats`]): accumulation of code stats themselves, respecting the verbose setting.
 
 mod analyzer;
 mod encoding;
