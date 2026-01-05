@@ -1,15 +1,38 @@
 use std::path::PathBuf;
 
-use clap::{ArgMatches, CommandFactory, FromArgMatches, Parser};
+use clap::{ArgMatches, CommandFactory, FromArgMatches, Parser, Subcommand};
 
-use crate::display::{LanguageSortKey, NumberStyle, OutputFormat, SizeStyle, SortDirection};
+use crate::{
+	completions::Shell,
+	display::{LanguageSortKey, NumberStyle, OutputFormat, SizeStyle, SortDirection},
+};
 
 /// A tool for analyzing code statistics across different programming languages
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
+pub struct Cli {
+	#[command(subcommand)]
+	pub command: Option<Commands>,
+	#[command(flatten)]
+	pub analyze: AnalyzeArgs,
+}
+
+/// Available subcommands
+#[derive(Subcommand)]
+pub enum Commands {
+	/// Generate shell completion scripts
+	Completions {
+		/// The shell to generate completions for
+		#[arg(value_enum)]
+		shell: Shell,
+	},
+}
+
+/// Arguments for the main code analysis functionality
+#[derive(Parser)]
 // CLI flags necessarily map to booleans, so clippy::struct_excessive_bools would just add noise here.
 #[allow(clippy::struct_excessive_bools)]
-pub struct Cli {
+pub struct AnalyzeArgs {
 	/// Path to configuration file (TOML format)
 	#[arg(short = 'c', long = "config")]
 	pub config: Option<PathBuf>,

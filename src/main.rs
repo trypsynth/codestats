@@ -3,6 +3,7 @@
 
 mod analysis;
 mod cli;
+mod completions;
 mod config;
 mod display;
 mod langs;
@@ -10,7 +11,7 @@ mod langs;
 use std::io::{self, Write as _};
 
 use anyhow::{Result, ensure};
-use cli::Cli;
+use cli::{Cli, Commands};
 use terminal_size::terminal_size;
 
 use crate::{
@@ -21,16 +22,28 @@ use crate::{
 
 fn main() -> Result<()> {
 	let (cli, matches) = Cli::parse_with_matches();
-	if cli.langs {
+	if let Some(command) = cli.command {
+		match command {
+			Commands::Completions { shell } => {
+				shell.generate_completions()?;
+				return Ok(());
+			}
+		}
+	}
+	let analyze = &cli.analyze;
+	if analyze.langs {
 		let mut stdout = io::stdout();
 		let terminal_width = terminal_size().map_or(80, |(w, _)| usize::from(w.0));
 		langs::print_all_languages(&mut stdout, terminal_width)?;
 		stdout.flush()?;
 		return Ok(());
 	}
-	let config =
-		if let Some(ref config_path) = cli.config { Config::from_file(config_path)? } else { Config::load_default()? };
-	let config = config.merge_with_cli(&cli, &matches);
+	let config = if let Some(ref config_path) = analyze.config {
+		Config::from_file(config_path)?
+	} else {
+		Config::load_default()?
+	};
+	let config = config.merge_with_cli(analyze, &matches);
 	ensure!(config.path.exists(), "Path `{}` not found", config.path.display());
 	if config.path.is_file() {
 		ensure!(config.path.metadata().is_ok(), "Cannot read file metadata for `{}`", config.path.display());

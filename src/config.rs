@@ -8,7 +8,7 @@ use clap::{ArgMatches, parser::ValueSource};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-	cli::Cli,
+	cli::AnalyzeArgs,
 	display::{LanguageSortKey, NumberStyle, OutputFormat, SizeStyle, SortDirection, ViewOptions},
 };
 
@@ -153,10 +153,10 @@ impl Config {
 	}
 
 	/// Merge CLI arguments into this configuration, with CLI taking precedence.
-	pub fn merge_with_cli(mut self, cli: &Cli, matches: &ArgMatches) -> Self {
+	pub fn merge_with_cli(mut self, analyze_args: &AnalyzeArgs, matches: &ArgMatches) -> Self {
 		let path_overridden = Self::cli_overrode(matches, "path");
 		if path_overridden {
-			self.path.clone_from(&cli.path);
+			self.path.clone_from(&analyze_args.path);
 		}
 		macro_rules! apply {
 			($id:literal, $body:expr) => {
@@ -165,24 +165,24 @@ impl Config {
 				}
 			};
 		}
-		apply!("verbose", self.analysis.verbose = cli.verbose);
-		apply!("no_gitignore", self.analysis.respect_gitignore = !cli.no_gitignore);
-		apply!("hidden", self.analysis.include_hidden = cli.hidden);
-		apply!("symlinks", self.analysis.follow_symlinks = cli.symlinks);
-		apply!("number_style", self.display.number_style = cli.number_style);
-		apply!("size_style", self.display.size_units = cli.size_style);
-		apply!("percent_precision", self.display.precision = cli.percent_precision);
-		apply!("language_sort", self.display.sort_by = cli.language_sort);
-		apply!("sort_direction", self.display.sort_direction = cli.sort_direction);
-		apply!("output", self.display.output = cli.output);
+		apply!("verbose", self.analysis.verbose = analyze_args.verbose);
+		apply!("no_gitignore", self.analysis.respect_gitignore = !analyze_args.no_gitignore);
+		apply!("hidden", self.analysis.include_hidden = analyze_args.hidden);
+		apply!("symlinks", self.analysis.follow_symlinks = analyze_args.symlinks);
+		apply!("number_style", self.display.number_style = analyze_args.number_style);
+		apply!("size_style", self.display.size_units = analyze_args.size_style);
+		apply!("percent_precision", self.display.precision = analyze_args.percent_precision);
+		apply!("language_sort", self.display.sort_by = analyze_args.language_sort);
+		apply!("sort_direction", self.display.sort_direction = analyze_args.sort_direction);
+		apply!("output", self.display.output = analyze_args.output);
 		if Self::cli_overrode(matches, "exclude") {
-			self.analysis.exclude_patterns.extend(cli.exclude.clone());
+			self.analysis.exclude_patterns.extend(analyze_args.exclude.clone());
 		}
 		if Self::cli_overrode(matches, "include_lang") {
-			self.analysis.include_languages.extend(cli.include_lang.clone());
+			self.analysis.include_languages.extend(analyze_args.include_lang.clone());
 		}
 		if Self::cli_overrode(matches, "exclude_lang") {
-			self.analysis.exclude_languages.extend(cli.exclude_lang.clone());
+			self.analysis.exclude_languages.extend(analyze_args.exclude_lang.clone());
 		}
 		if !path_overridden
 			&& let Some(source) = &self.source
