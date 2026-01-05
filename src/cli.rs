@@ -26,6 +26,8 @@ pub enum Commands {
 		#[arg(value_enum)]
 		shell: Shell,
 	},
+	/// List all supported programming languages
+	Langs,
 }
 
 /// Arguments for the main code analysis functionality
@@ -36,9 +38,6 @@ pub struct AnalyzeArgs {
 	/// Path to configuration file (TOML format)
 	#[arg(short = 'c', long = "config")]
 	pub config: Option<PathBuf>,
-	/// List all supported programming languages and exit without running analysis
-	#[arg(short = 'l', long = "langs")]
-	pub langs: bool,
 	/// The path to analyze
 	#[arg(value_name = "PATH", default_value = ".")]
 	pub path: PathBuf,

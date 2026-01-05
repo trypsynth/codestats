@@ -28,16 +28,16 @@ fn main() -> Result<()> {
 				shell.generate_completions()?;
 				return Ok(());
 			}
+			Commands::Langs => {
+				let mut stdout = io::stdout();
+				let terminal_width = terminal_size().map_or(80, |(w, _)| usize::from(w.0));
+				langs::print_all_languages(&mut stdout, terminal_width)?;
+				stdout.flush()?;
+				return Ok(());
+			}
 		}
 	}
 	let analyze = &cli.analyze;
-	if analyze.langs {
-		let mut stdout = io::stdout();
-		let terminal_width = terminal_size().map_or(80, |(w, _)| usize::from(w.0));
-		langs::print_all_languages(&mut stdout, terminal_width)?;
-		stdout.flush()?;
-		return Ok(());
-	}
 	let config = if let Some(ref config_path) = analyze.config {
 		Config::from_file(config_path)?
 	} else {
