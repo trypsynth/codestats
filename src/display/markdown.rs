@@ -19,7 +19,7 @@ pub fn md_escape(value: &str, _values: &dyn Values) -> AskamaResult<String> {
 
 mod filters {
 	pub use super::md_escape;
-	pub use crate::display::template_filters::{fmt_number, fmt_percent};
+	pub use crate::display::template_filters::{fmt_float, fmt_number, fmt_percent};
 }
 
 #[derive(Template)]

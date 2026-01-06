@@ -241,6 +241,17 @@ impl LanguageStats {
 	pub fn files_list(&self) -> &[FileStats] {
 		&self.file_list
 	}
+
+	/// Calculate the average lines per file for this language
+	#[must_use]
+	#[expect(clippy::cast_precision_loss)]
+	pub fn average_lines_per_file(&self) -> f64 {
+		if self.files == 0 {
+			0.0
+		} else {
+			self.lines as f64 / self.files as f64
+		}
+	}
 }
 
 impl_percentage_methods!(LanguageStats, lines, line_stats);

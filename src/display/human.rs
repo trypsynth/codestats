@@ -114,6 +114,7 @@ impl HumanFormatter {
 			pluralize(language.lines, "line", "lines"),
 			line_pct_str
 		)?;
+		writeln!(writer, "\tAverage lines per file: {:.1}.", language.avg_lines_per_file)?;
 		writeln!(writer, "\tSize: {size_human} ({size_pct_str}% of total).")?;
 		writeln!(writer, "\tLine breakdown:")?;
 		for line_type in language.line_types() {

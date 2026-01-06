@@ -30,6 +30,7 @@
 					<th>Language</th>
 					<th>Files</th>
 					<th>Lines</th>
+					<th>Average Lines per File</th>
 					<th>Code %</th>
 					<th>Comment %</th>
 					<th>Blank %</th>
@@ -41,6 +42,7 @@
 						<td>{{ lang.name }}</td>
 						<td>{{ lang.files | fmt_number(ctx) }}</td>
 						<td>{{ lang.lines | fmt_number(ctx) }}</td>
+						<td>{{ lang.avg_lines_per_file | fmt_float(1) }}</td>
 						<td>{{ lang.code_percentage | fmt_percent(ctx) }}%</td>
 						<td>{{ lang.comment_percentage | fmt_percent(ctx) }}%</td>
 						<td>{{ lang.blank_percentage | fmt_percent(ctx) }}%</td>

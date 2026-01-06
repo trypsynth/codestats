@@ -18,11 +18,11 @@ _No recognized programming languages found._
 
 ## Languages
 
-| Language | Files | Lines | Code % | Comment % | Blank % | Shebang % | Size |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Language | Files | Lines | Average Lines per File | Code % | Comment % | Blank % | Shebang % | Size |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 
 {% for lang in languages -%}
-| {{ lang.name | md_escape }} | {{ lang.files | fmt_number(ctx) }} | {{ lang.lines | fmt_number(ctx) }} | {{ lang.code_percentage | fmt_percent(ctx) }}% | {{ lang.comment_percentage | fmt_percent(ctx) }}% | {{ lang.blank_percentage | fmt_percent(ctx) }}% | {{ lang.shebang_percentage | fmt_percent(ctx) }}% | {{ lang.size_human | md_escape }} |
+| {{ lang.name | md_escape }} | {{ lang.files | fmt_number(ctx) }} | {{ lang.lines | fmt_number(ctx) }} | {{ lang.avg_lines_per_file | fmt_float(1) }} | {{ lang.code_percentage | fmt_percent(ctx) }}% | {{ lang.comment_percentage | fmt_percent(ctx) }}% | {{ lang.blank_percentage | fmt_percent(ctx) }}% | {{ lang.shebang_percentage | fmt_percent(ctx) }}% | {{ lang.size_human | md_escape }} |
 {% endfor -%}
 
 {% if show_files -%}

@@ -23,7 +23,7 @@ struct ReportTemplate<'a> {
 pub struct HtmlFormatter;
 
 mod filters {
-	pub use crate::display::template_filters::{fmt_number, fmt_percent};
+	pub use crate::display::template_filters::{fmt_float, fmt_number, fmt_percent};
 }
 
 impl OutputFormatter for HtmlFormatter {
