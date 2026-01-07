@@ -246,11 +246,7 @@ impl LanguageStats {
 	#[must_use]
 	#[expect(clippy::cast_precision_loss)]
 	pub fn average_lines_per_file(&self) -> f64 {
-		if self.files == 0 {
-			0.0
-		} else {
-			self.lines as f64 / self.files as f64
-		}
+		if self.files == 0 { 0.0 } else { self.lines as f64 / self.files as f64 }
 	}
 }
 
