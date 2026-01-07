@@ -43,7 +43,7 @@ fn main() -> Result<()> {
 	} else {
 		Config::load_default()?
 	};
-	let config = config.merge_with_cli(analyze, &matches);
+	let config = config.merge_with_cli(analyze, &matches)?;
 	ensure!(config.path.exists(), "Path `{}` not found", config.path.display());
 	if config.path.is_file() {
 		ensure!(config.path.metadata().is_ok(), "Cannot read file metadata for `{}`", config.path.display());

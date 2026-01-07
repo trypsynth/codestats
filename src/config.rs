@@ -3,7 +3,7 @@ use std::{
 	path::{Path, PathBuf},
 };
 
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, ensure};
 use clap::{ArgMatches, parser::ValueSource};
 use serde::{Deserialize, Serialize};
 
@@ -144,12 +144,13 @@ impl Config {
 		let path = path.as_ref();
 		let contents = fs::read_to_string(path).with_context(|| read_config_context(path))?;
 		let raw: RawConfig = toml::from_str(&contents).with_context(|| parse_config_context(path))?;
+		let path_from_config = raw.path.is_some();
 		let config = Self {
 			path: raw.path.unwrap_or_else(|| PathBuf::from(".")),
 			analysis: raw.analysis,
 			display: raw.display,
 			source: Some(path.to_path_buf()),
-			path_from_config: raw.path.is_some(),
+			path_from_config,
 		};
 		Ok(config)
 	}
@@ -170,7 +171,7 @@ impl Config {
 	}
 
 	/// Merge CLI arguments into this configuration, with CLI taking precedence.
-	pub fn merge_with_cli(mut self, analyze_args: &AnalyzeArgs, matches: &ArgMatches) -> Self {
+	pub fn merge_with_cli(mut self, analyze_args: &AnalyzeArgs, matches: &ArgMatches) -> Result<Self> {
 		let path_overridden = Self::cli_overrode(matches, "path");
 		if path_overridden {
 			self.path.clone_from(&analyze_args.path);
@@ -210,7 +211,11 @@ impl Config {
 			self.path = parent.join(&self.path);
 		}
 		self.display.precision = self.display.precision.min(6);
-		self
+		ensure!(
+			self.analysis.include_languages.is_empty() || self.analysis.exclude_languages.is_empty(),
+			"Config cannot set both include_languages and exclude_languages"
+		);
+		Ok(self)
 	}
 
 	fn cli_overrode(matches: &ArgMatches, id: &str) -> bool {

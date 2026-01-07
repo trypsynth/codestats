@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{borrow::Cow, path::Path};
 
 use anyhow::{Context as _, Result};
 
@@ -33,10 +33,20 @@ pub fn process_file(
 	exclude_languages: &[String],
 ) -> Result<()> {
 	let filename_os = file_path.file_name().context("Missing file name")?;
-	let filename = filename_os.to_string_lossy();
+	let filename_lossy = filename_os.to_string_lossy();
+	let filename: Cow<'_, str> = if filename_lossy.contains('\u{FFFD}') {
+		if let Some(ext) = file_path.extension() {
+			let ext_lossy = ext.to_string_lossy();
+			Cow::Owned(format!("file.{ext_lossy}"))
+		} else {
+			Cow::Borrowed(filename_lossy.as_ref())
+		}
+	} else {
+		Cow::Borrowed(filename_lossy.as_ref())
+	};
 	let metadata = file_path.metadata().with_context(|| read_metadata_context(file_path))?;
 	let file_size = metadata.len();
-	let language_from_name = langs::detect_language_info(&filename, None);
+	let language_from_name = langs::detect_language_info(filename.as_ref(), None);
 	if file_size == 0 {
 		if let Some(language) = language_from_name {
 			if !should_process_language(language, include_languages, exclude_languages) {
@@ -51,7 +61,7 @@ pub fn process_file(
 	}
 	let mut source = FileSource::open(file_path, file_size)?;
 	let sample_bytes = source.sample(file_size)?;
-	let Some((language, encoding)) = detect_language_and_encoding(&filename, &sample_bytes) else { return Ok(()) };
+	let Some((language, encoding)) = detect_language_and_encoding(filename.as_ref(), &sample_bytes) else { return Ok(()) };
 	if !should_process_language(language, include_languages, exclude_languages) {
 		return Ok(());
 	}

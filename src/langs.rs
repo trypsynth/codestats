@@ -38,16 +38,20 @@ pub fn print_all_languages(writer: &mut dyn Write, terminal_width: usize) -> Res
 	)?;
 	let mut lines: Vec<String> = Vec::new();
 	let mut current_line = String::new();
+	let mut current_width = 0usize;
 	for (i, lang) in LANGUAGES.iter().enumerate() {
 		let is_last = i == LANGUAGES.len() - 1;
 		let separator = if is_last { "." } else { ", " };
 		let item = format!("{}{}", lang.name, separator);
-		let would_exceed = !current_line.is_empty() && current_line.len() + item.len() > terminal_width;
+		let item_width = item.chars().count();
+		let would_exceed = !current_line.is_empty() && current_width + item_width > terminal_width;
 		if would_exceed {
 			lines.push(current_line);
 			current_line = item;
+			current_width = item_width;
 		} else {
 			current_line.push_str(&item);
+			current_width += item_width;
 		}
 	}
 	if !current_line.is_empty() {
