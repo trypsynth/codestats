@@ -49,6 +49,7 @@ fn config_dir() -> Option<PathBuf> {
 	}
 }
 
+/// Resolved configuration after loading defaults, config files, and CLI overrides.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(default)]
 pub struct Config {
@@ -56,8 +57,10 @@ pub struct Config {
 	pub analysis: AnalysisConfig,
 	pub display: DisplayConfig,
 	#[serde(skip)]
+	/// Path to the config file that provided these settings, if any.
 	pub source: Option<PathBuf>,
 	#[serde(skip)]
+	/// True when the config file explicitly sets `path`.
 	pub path_from_config: bool,
 }
 
@@ -73,6 +76,7 @@ impl Default for Config {
 	}
 }
 
+/// Analysis settings loaded from TOML and the CLI.
 #[allow(clippy::struct_excessive_bools)]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(default)]
@@ -100,6 +104,7 @@ impl Default for AnalysisConfig {
 	}
 }
 
+/// Output formatting settings loaded from TOML and the CLI.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(default)]
 pub struct DisplayConfig {
@@ -124,6 +129,7 @@ impl Default for DisplayConfig {
 	}
 }
 
+/// Internal analyzer settings derived from the merged config.
 #[derive(Clone, Debug, Default)]
 #[allow(clippy::struct_excessive_bools)]
 pub struct AnalyzerConfig {
@@ -171,6 +177,8 @@ impl Config {
 	}
 
 	/// Merge CLI arguments into this configuration, with CLI taking precedence.
+	///
+	/// Returns an error when the merged config sets both include and exclude languages.
 	pub fn merge_with_cli(mut self, analyze_args: &AnalyzeArgs, matches: &ArgMatches) -> Result<Self> {
 		let path_overridden = Self::cli_overrode(matches, "path");
 		if path_overridden {

@@ -1,3 +1,4 @@
+//! Askama template filters used by Markdown and HTML reports.
 #![allow(clippy::unnecessary_wraps)]
 
 use askama::{Result, Values};

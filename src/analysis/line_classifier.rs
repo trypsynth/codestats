@@ -45,6 +45,7 @@ impl LineType {
 	}
 }
 
+/// Tracks nested block comment state across lines.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct CommentState {
 	block_comment_depth: usize,
@@ -121,6 +122,7 @@ fn handle_block_comments<'a>(
 	(line_remainder, has_code)
 }
 
+/// Classify a line as code, comment, blank, or shebang.
 #[inline]
 pub fn classify_line(
 	line: &str,

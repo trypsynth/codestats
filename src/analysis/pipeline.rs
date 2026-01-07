@@ -25,6 +25,9 @@ fn read_metadata_context(path: &Path) -> String {
 	format!("Failed to read metadata for {}", path.display())
 }
 
+/// Analyze a single file and merge its statistics into `results`.
+///
+/// Returns an error for I/O or decoding failures.
 pub fn process_file(
 	file_path: &Path,
 	results: &mut AnalysisResults,
