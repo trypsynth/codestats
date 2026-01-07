@@ -34,7 +34,7 @@ memchr = "2.7.6"
 memmap2 = "0.9.9"
 num-format = { version = "0.4", default-features = false, features = ["std"] }
 serde = { version = "1.0.228", default-features = false, features = ["std", "derive"] }
-serde_json = { version = "1.0.148", default-features = false, features = ["std"] }
+serde_json = { version = "1.0.149", default-features = false, features = ["std"] }
 terminal_size = "0.4.3"
 toml = "0.9"
 
