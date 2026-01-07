@@ -12,12 +12,10 @@ use crate::langs::{self, Language};
 /// Check if a language should be processed based on include/exclude filters.
 fn should_process_language(language: &Language, include_languages: &[String], exclude_languages: &[String]) -> bool {
 	if !include_languages.is_empty() {
-		let lang_name_lower = language.name.to_lowercase();
-		return include_languages.iter().any(|filter| filter.to_lowercase() == lang_name_lower);
+		return include_languages.iter().any(|filter| filter.eq_ignore_ascii_case(language.name));
 	}
 	if !exclude_languages.is_empty() {
-		let lang_name_lower = language.name.to_lowercase();
-		return !exclude_languages.iter().any(|filter| filter.to_lowercase() == lang_name_lower);
+		return !exclude_languages.iter().any(|filter| filter.eq_ignore_ascii_case(language.name));
 	}
 	true
 }

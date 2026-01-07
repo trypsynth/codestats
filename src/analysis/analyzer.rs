@@ -80,7 +80,7 @@ impl CodeAnalyzer {
 		if !self.config.analysis.exclude_patterns.is_empty() {
 			let mut override_builder = OverrideBuilder::new(&self.root);
 			for pattern in &self.config.analysis.exclude_patterns {
-				override_builder.add(&format!("!{pattern}"))?;
+				override_builder.add(pattern)?;
 			}
 			builder.overrides(override_builder.build()?);
 		}

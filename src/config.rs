@@ -57,6 +57,8 @@ pub struct Config {
 	pub display: DisplayConfig,
 	#[serde(skip)]
 	pub source: Option<PathBuf>,
+	#[serde(skip)]
+	pub path_from_config: bool,
 }
 
 impl Default for Config {
@@ -66,6 +68,7 @@ impl Default for Config {
 			analysis: AnalysisConfig::default(),
 			display: DisplayConfig::default(),
 			source: None,
+			path_from_config: false,
 		}
 	}
 }
@@ -128,12 +131,26 @@ pub struct AnalyzerConfig {
 	pub collect_file_details: bool,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize, Default)]
+#[serde(default)]
+struct RawConfig {
+	path: Option<PathBuf>,
+	analysis: AnalysisConfig,
+	display: DisplayConfig,
+}
+
 impl Config {
 	pub fn from_file(path: impl AsRef<Path>) -> Result<Self> {
 		let path = path.as_ref();
 		let contents = fs::read_to_string(path).with_context(|| read_config_context(path))?;
-		let mut config: Self = toml::from_str(&contents).with_context(|| parse_config_context(path))?;
-		config.source = Some(path.to_path_buf());
+		let raw: RawConfig = toml::from_str(&contents).with_context(|| parse_config_context(path))?;
+		let config = Self {
+			path: raw.path.unwrap_or_else(|| PathBuf::from(".")),
+			analysis: raw.analysis,
+			display: raw.display,
+			source: Some(path.to_path_buf()),
+			path_from_config: raw.path.is_some(),
+		};
 		Ok(config)
 	}
 
@@ -185,6 +202,7 @@ impl Config {
 			self.analysis.exclude_languages.extend(analyze_args.exclude_lang.clone());
 		}
 		if !path_overridden
+			&& self.path_from_config
 			&& let Some(source) = &self.source
 			&& self.path.is_relative()
 			&& let Some(parent) = source.parent()
