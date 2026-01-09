@@ -6,7 +6,7 @@ use std::{
 	},
 };
 
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use ignore::{WalkBuilder, overrides::OverrideBuilder};
 
 use super::{pipeline, stats::AnalysisResults};
@@ -62,6 +62,7 @@ impl CodeAnalyzer {
 	pub fn analyze(&self) -> Result<AnalysisResults> {
 		let error_counter = Arc::new(AtomicU64::new(0));
 		let verbose = self.config.analysis.verbose;
+		let fail_on_error = self.config.analysis.fail_on_error;
 		let collect_details = self.config.collect_file_details;
 		let include_languages = self.config.analysis.include_languages.clone();
 		let exclude_languages = self.config.analysis.exclude_languages.clone();
@@ -131,6 +132,9 @@ impl CodeAnalyzer {
 				eprintln!("Skipped {skipped} entries due to errors.");
 			} else {
 				eprintln!("Skipped {skipped} entries due to errors (re-run with --verbose for details).");
+			}
+			if fail_on_error {
+				return Err(anyhow!("Skipped {skipped} entries due to errors"));
 			}
 		}
 		Ok(results)

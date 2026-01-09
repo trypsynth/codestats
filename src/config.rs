@@ -88,6 +88,7 @@ pub struct AnalysisConfig {
 	pub exclude_patterns: Vec<String>,
 	pub include_languages: Vec<String>,
 	pub exclude_languages: Vec<String>,
+	pub fail_on_error: bool,
 }
 
 impl Default for AnalysisConfig {
@@ -100,6 +101,7 @@ impl Default for AnalysisConfig {
 			exclude_patterns: Vec::new(),
 			include_languages: Vec::new(),
 			exclude_languages: Vec::new(),
+			fail_on_error: false,
 		}
 	}
 }
@@ -195,6 +197,7 @@ impl Config {
 		apply!("no_gitignore", self.analysis.respect_gitignore = !analyze_args.no_gitignore);
 		apply!("hidden", self.analysis.include_hidden = analyze_args.hidden);
 		apply!("symlinks", self.analysis.follow_symlinks = analyze_args.symlinks);
+		apply!("fail_on_error", self.analysis.fail_on_error = analyze_args.fail_on_error);
 		apply!("number_style", self.display.number_style = analyze_args.number_style);
 		apply!("size_style", self.display.size_units = analyze_args.size_style);
 		apply!("percent_precision", self.display.precision = analyze_args.percent_precision);

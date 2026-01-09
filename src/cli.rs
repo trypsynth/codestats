@@ -81,6 +81,9 @@ pub struct AnalyzeArgs {
 	/// Exclude files of the specified language(s). Can be specified multiple times, and cannot be used together with --lang.
 	#[arg(long = "exclude-lang", conflicts_with = "include_lang")]
 	pub exclude_lang: Vec<String>,
+	/// Exit with a non-zero status code if any files are skipped due to errors.
+	#[arg(long = "fail-on-error")]
+	pub fail_on_error: bool,
 }
 
 impl Cli {

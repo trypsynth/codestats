@@ -74,6 +74,7 @@ Usage: `cs [OPTIONS] [PATH]` (defaults to the current directory)
 - `-s, --sort-by <lines|code|comments|blanks|files|size|name>` Sort key for languages and per-file detail. Default: `lines`
 - `-d, --sort-dir <asc|desc>` Sort direction. Default: `desc`
 - `-o, --output <human|json|json-compact|csv|tsv|markdown|html>` Output format. Default: `human`
+- `--fail-on-error` Exit with a non-zero status code if any files are skipped due to errors
 - `-c, --config <PATH>` Use a TOML config file
 - `-l, --langs` List all supported languages and exit
 - `-h, --help` Print help
@@ -100,6 +101,7 @@ follow_symlinks = false
 exclude_patterns = ["*.tmp", "test_*", "node_modules/*"]
 include_languages = ["rust", "python"]  # Only analyze these languages
 # exclude_languages = ["markdown", "toml"]  # Or exclude these (cannot use both)
+fail_on_error = false
 
 [display]
 number_style = "comma"
