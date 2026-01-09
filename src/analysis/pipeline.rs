@@ -38,12 +38,10 @@ pub fn process_file(
 	let filename_os = file_path.file_name().context("Missing file name")?;
 	let filename_lossy = filename_os.to_string_lossy();
 	let filename: Cow<'_, str> = if filename_lossy.contains('\u{FFFD}') {
-		if let Some(ext) = file_path.extension() {
+		file_path.extension().map_or_else(|| Cow::Borrowed(filename_lossy.as_ref()), |ext| {
 			let ext_lossy = ext.to_string_lossy();
 			Cow::Owned(format!("file.{ext_lossy}"))
-		} else {
-			Cow::Borrowed(filename_lossy.as_ref())
-		}
+		})
 	} else {
 		Cow::Borrowed(filename_lossy.as_ref())
 	};

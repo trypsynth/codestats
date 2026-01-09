@@ -61,7 +61,7 @@ pub struct Config {
 	pub source: Option<PathBuf>,
 	#[serde(skip)]
 	/// True when the config file explicitly sets `path`.
-	pub path_from_config: bool,
+	pub path_overridden: bool,
 }
 
 impl Default for Config {
@@ -71,7 +71,7 @@ impl Default for Config {
 			analysis: AnalysisConfig::default(),
 			display: DisplayConfig::default(),
 			source: None,
-			path_from_config: false,
+			path_overridden: false,
 		}
 	}
 }
@@ -152,13 +152,13 @@ impl Config {
 		let path = path.as_ref();
 		let contents = fs::read_to_string(path).with_context(|| read_config_context(path))?;
 		let raw: RawConfig = toml::from_str(&contents).with_context(|| parse_config_context(path))?;
-		let path_from_config = raw.path.is_some();
+		let path_overridden = raw.path.is_some();
 		let config = Self {
 			path: raw.path.unwrap_or_else(|| PathBuf::from(".")),
 			analysis: raw.analysis,
 			display: raw.display,
 			source: Some(path.to_path_buf()),
-			path_from_config,
+			path_overridden,
 		};
 		Ok(config)
 	}
@@ -214,7 +214,7 @@ impl Config {
 			self.analysis.exclude_languages.extend(analyze_args.exclude_lang.clone());
 		}
 		if !path_overridden
-			&& self.path_from_config
+			&& self.path_overridden
 			&& let Some(source) = &self.source
 			&& self.path.is_relative()
 			&& let Some(parent) = source.parent()
