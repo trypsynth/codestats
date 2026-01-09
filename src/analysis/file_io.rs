@@ -151,7 +151,10 @@ fn sample_ranges(file_len: u64) -> (usize, Option<(u64, usize)>) {
 	if file_len <= SAMPLE_SIZE as u64 {
 		return (start_len, None);
 	}
-	let mid_offset = (file_len.saturating_sub(SAMPLE_SIZE as u64)) / 2;
+	let mut mid_offset = (file_len.saturating_sub(SAMPLE_SIZE as u64)) / 2;
+	if mid_offset % 2 == 1 {
+		mid_offset = mid_offset.saturating_sub(1);
+	}
 	// SAFETY: SAMPLE_SIZE is a small constant (4096), so this conversion will always succeed.
 	let mid_len = usize::try_from((mid_offset + SAMPLE_SIZE as u64).min(file_len) - mid_offset).unwrap();
 	(start_len, Some((mid_offset, mid_len)))

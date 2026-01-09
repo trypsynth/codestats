@@ -21,7 +21,7 @@ pub(super) fn detect_encoding(samples: &[u8]) -> FileEncoding {
 	if let Some((encoding, bom_len)) = Encoding::for_bom(samples) {
 		FileEncoding { encoding, bom_len }
 	} else {
-		FileEncoding { encoding: UTF_8, bom_len: 0 }
+		detect_utf16_without_bom(samples).unwrap_or(FileEncoding { encoding: UTF_8, bom_len: 0 })
 	}
 }
 
@@ -51,6 +51,34 @@ pub(super) fn is_probably_binary(sample: &[u8], encoding: FileEncoding) -> bool 
 
 pub(super) fn is_utf16(encoding: &'static Encoding) -> bool {
 	encoding == UTF_16LE || encoding == UTF_16BE
+}
+
+fn detect_utf16_without_bom(samples: &[u8]) -> Option<FileEncoding> {
+	if samples.len() < 4 {
+		return None;
+	}
+	let mut zero_even = 0usize;
+	let mut zero_odd = 0usize;
+	for (idx, byte) in samples.iter().enumerate() {
+		if *byte == 0 {
+			if idx % 2 == 0 {
+				zero_even += 1;
+			} else {
+				zero_odd += 1;
+			}
+		}
+	}
+	let total_zeros = zero_even + zero_odd;
+	if total_zeros < samples.len() / 4 {
+		return None;
+	}
+	if zero_odd >= zero_even.saturating_mul(2) {
+		return Some(FileEncoding { encoding: UTF_16LE, bom_len: 0 });
+	}
+	if zero_even >= zero_odd.saturating_mul(2) {
+		return Some(FileEncoding { encoding: UTF_16BE, bom_len: 0 });
+	}
+	None
 }
 
 pub(super) fn process_utf16_bytes(
@@ -107,18 +135,24 @@ fn drain_lines(
 	is_first_line: &mut bool,
 	flush_final: bool,
 ) {
-	while let Some(pos) = memchr(b'\n', pending.as_bytes()) {
-		let line_end = pos + 1;
-		{
-			let line = &pending[..line_end];
-			line_counts.classify_and_count(line, Some(language), comment_state, *is_first_line);
-			*is_first_line = false;
-		}
-		pending.drain(..line_end);
-	}
-	if flush_final && !pending.is_empty() {
-		line_counts.classify_and_count(pending.as_str(), Some(language), comment_state, *is_first_line);
+	let mut start = 0usize;
+	let bytes = pending.as_bytes();
+	while let Some(pos) = memchr(b'\n', &bytes[start..]) {
+		let line_end = start + pos + 1;
+		let line = &pending[start..line_end];
+		line_counts.classify_and_count(line, Some(language), comment_state, *is_first_line);
 		*is_first_line = false;
+		start = line_end;
+	}
+	if flush_final && start < pending.len() {
+		let line = &pending[start..];
+		line_counts.classify_and_count(line, Some(language), comment_state, *is_first_line);
+		*is_first_line = false;
+		start = pending.len();
+	}
+	if start > 0 {
+		pending.drain(..start);
+	} else if flush_final {
 		pending.clear();
 	}
 }
@@ -139,5 +173,21 @@ mod tests {
 		let encoding = FileEncoding { encoding: UTF_8, bom_len: 0 };
 		let sample = [0x00, b'a', b'b', b'c'];
 		assert!(is_probably_binary(&sample, encoding));
+	}
+
+	#[test]
+	fn detect_utf16_le_without_bom() {
+		let sample = [b'a', 0x00, b'b', 0x00, b'c', 0x00, b'd', 0x00];
+		let encoding = detect_encoding(&sample);
+		assert_eq!(encoding.encoding, UTF_16LE);
+		assert_eq!(encoding.bom_len, 0);
+	}
+
+	#[test]
+	fn detect_utf16_be_without_bom() {
+		let sample = [0x00, b'a', 0x00, b'b', 0x00, b'c', 0x00, b'd'];
+		let encoding = detect_encoding(&sample);
+		assert_eq!(encoding.encoding, UTF_16BE);
+		assert_eq!(encoding.bom_len, 0);
 	}
 }

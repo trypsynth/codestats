@@ -4,9 +4,12 @@
 
 - Add language include and exclude filters and glob based path exclusions
 - Add shell completions and bring back `langs` as a subcommand
+- Add `--fail-on-error` to opt into non-zero exit codes when files are skipped
 - Add average lines per file to the summary metrics
 - Improve safety notes for memory mapping and tighten overflow handling
 - Refactor file processing and language detection for clearer structure
+- Improve UTF-16 detection without BOMs and align sampling for large files
+- Fix edge-case whitespace classification and speed up UTF-16 line draining
 - Expand language coverage and refresh dependencies and docs
 
 ## 0.5.0

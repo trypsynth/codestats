@@ -206,14 +206,19 @@ fn contains_non_whitespace(s: &str) -> bool {
 	let bytes = s.as_bytes();
 	let mut idx = 0;
 	while idx < bytes.len() {
-		if !is_ascii_ws(bytes[idx]) {
+		let byte = bytes[idx];
+		if !is_ascii_ws(byte) {
 			return true;
 		}
-		// Skip runs of common whitespace quickly.
-		if let Some(pos) = memchr2(b' ', b'\t', &bytes[idx..]) {
-			idx += pos + 1;
+		if byte == b' ' || byte == b'\t' {
+			// Skip runs of common whitespace quickly.
+			if let Some(pos) = memchr2(b' ', b'\t', &bytes[idx..]) {
+				idx += pos + 1;
+			} else {
+				idx = bytes.len();
+			}
 		} else {
-			idx = bytes.len();
+			idx += 1;
 		}
 	}
 	false
@@ -247,6 +252,7 @@ mod tests {
 		assert!(!contains_non_whitespace(""));
 		assert!(!contains_non_whitespace("   "));
 		assert!(!contains_non_whitespace("\t\t"));
+		assert!(contains_non_whitespace("\u{000B}x"));
 	}
 
 	#[test]
