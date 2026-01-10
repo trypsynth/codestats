@@ -13,6 +13,9 @@
 		</summary>
 		<ul>
 			<li>Files: {{ summary.total_files | fmt_number(ctx) }}</li>
+			{% if let Some(unrecognized) = summary.unrecognized_files %}
+				<li>Unrecognized files: {{ unrecognized | fmt_number(ctx) }}</li>
+			{% endif %}
 			<li>Lines: {{ summary.total_lines | fmt_number(ctx) }}</li>
 			<li>Size: {{ summary.total_size_human }}</li>
 			{% if !totals.is_empty() %}<li>Totals: {{ totals }}</li>{% endif %}

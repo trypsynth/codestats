@@ -61,6 +61,9 @@ impl HumanFormatter {
 			pluralize(summary.total_lines, "line", "lines"),
 			total_size_human
 		)?;
+		if let Some(unrecognized) = summary.unrecognized_files {
+			writeln!(writer, "Unrecognized files: {}.", ctx.number(unrecognized))?;
+		}
 		let line_breakdown_parts = summary.line_breakdown_parts(true, ctx);
 		if let Some(breakdown) = join_with_commas_and(&line_breakdown_parts) {
 			writeln!(writer, "Line breakdown: {breakdown}.")?;

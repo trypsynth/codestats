@@ -38,10 +38,13 @@ pub fn process_file(
 	let filename_os = file_path.file_name().context("Missing file name")?;
 	let filename_lossy = filename_os.to_string_lossy();
 	let filename: Cow<'_, str> = if filename_lossy.contains('\u{FFFD}') {
-		file_path.extension().map_or_else(|| Cow::Borrowed(filename_lossy.as_ref()), |ext| {
-			let ext_lossy = ext.to_string_lossy();
-			Cow::Owned(format!("file.{ext_lossy}"))
-		})
+		file_path.extension().map_or_else(
+			|| Cow::Borrowed(filename_lossy.as_ref()),
+			|ext| {
+				let ext_lossy = ext.to_string_lossy();
+				Cow::Owned(format!("file.{ext_lossy}"))
+			},
+		)
 	} else {
 		Cow::Borrowed(filename_lossy.as_ref())
 	};
@@ -57,12 +60,17 @@ pub fn process_file(
 			let file_stats =
 				collect_details.then(|| FileStats::new(file_path.display().to_string(), 0, 0, 0, 0, 0, file_size));
 			results.add_file_stats(language, contribution, file_stats);
+		} else {
+			results.add_unrecognized_file();
 		}
 		return Ok(());
 	}
 	let mut source = FileSource::open(file_path, file_size)?;
 	let sample_bytes = source.sample(file_size)?;
-	let Some((language, encoding)) = detect_language_and_encoding(filename.as_ref(), &sample_bytes) else { return Ok(()) };
+	let Some((language, encoding)) = detect_language_and_encoding(filename.as_ref(), &sample_bytes) else {
+		results.add_unrecognized_file();
+		return Ok(());
+	};
 	if !should_process_language(language, include_languages, exclude_languages) {
 		return Ok(());
 	}

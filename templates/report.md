@@ -3,6 +3,9 @@
 ## Summary
 
 - Files: {{ summary.total_files | fmt_number(ctx) }}
+{% if let Some(unrecognized) = summary.unrecognized_files -%}
+- Unrecognized files: {{ unrecognized | fmt_number(ctx) }}
+{% endif -%}
 - Lines: {{ summary.total_lines | fmt_number(ctx) }}
 - Size: {{ summary.total_size_human }}
 {% if !line_breakdown.is_empty() -%}

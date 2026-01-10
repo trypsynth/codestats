@@ -259,6 +259,7 @@ pub struct AnalysisResults {
 	total_lines: u64,
 	line_stats: LineStats,
 	total_size: u64,
+	unrecognized_files: u64,
 	language_stats: Vec<LanguageStats>,
 }
 
@@ -289,11 +290,16 @@ impl AnalysisResults {
 		self.language_stats[language.index].add_file(&contribution, file_stats);
 	}
 
+	pub(crate) fn add_unrecognized_file(&mut self) {
+		self.unrecognized_files = self.unrecognized_files.saturating_add(1);
+	}
+
 	pub(crate) fn merge(&mut self, other: Self) {
 		self.total_files = self.total_files.saturating_add(other.total_files);
 		self.total_lines = self.total_lines.saturating_add(other.total_lines);
 		self.line_stats.merge(&other.line_stats);
 		self.total_size = self.total_size.saturating_add(other.total_size);
+		self.unrecognized_files = self.unrecognized_files.saturating_add(other.unrecognized_files);
 		if self.language_stats.len() < other.language_stats.len() {
 			self.language_stats.resize_with(other.language_stats.len(), LanguageStats::default);
 		}
@@ -316,6 +322,11 @@ impl AnalysisResults {
 	#[must_use]
 	pub const fn total_size(&self) -> u64 {
 		self.total_size
+	}
+
+	#[must_use]
+	pub const fn unrecognized_files(&self) -> u64 {
+		self.unrecognized_files
 	}
 
 	/// Get the total number of code lines across all files
