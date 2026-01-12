@@ -45,8 +45,6 @@ impl<'a> ReportData<'a> {
 #[derive(Debug, Serialize)]
 pub struct Summary {
 	pub total_files: u64,
-	#[serde(skip_serializing_if = "Option::is_none")]
-	pub unrecognized_files: Option<u64>,
 	pub total_lines: u64,
 	pub total_code_lines: u64,
 	pub total_comment_lines: u64,
@@ -115,11 +113,8 @@ fn iter_line_types(series: LineTypeSeries) -> impl Iterator<Item = LineTypeStats
 impl Summary {
 	#[must_use]
 	fn from_results(results: &AnalysisResults, ctx: &FormatterContext) -> Self {
-		let unrecognized_files = results.unrecognized_files();
-		let unrecognized_files = (unrecognized_files > 0).then_some(unrecognized_files);
 		Self {
 			total_files: results.total_files(),
-			unrecognized_files,
 			total_lines: results.total_lines(),
 			total_code_lines: results.total_code_lines(),
 			total_comment_lines: results.total_comment_lines(),
@@ -170,7 +165,7 @@ impl Summary {
 
 	pub fn metrics(&self) -> impl Iterator<Item = SummaryMetric<'_>> {
 		let size_human = self.total_size_human.as_str();
-		let base = [
+		[
 			SummaryMetric { label: "Total Files", value: self.total_files, percentage: None, human_readable: None },
 			SummaryMetric { label: "Total Lines", value: self.total_lines, percentage: None, human_readable: None },
 			SummaryMetric {
@@ -203,13 +198,8 @@ impl Summary {
 				percentage: None,
 				human_readable: Some(size_human),
 			},
-		];
-		base.into_iter().chain(self.unrecognized_files.map(|value| SummaryMetric {
-			label: "Unrecognized Files",
-			value,
-			percentage: None,
-			human_readable: None,
-		}))
+		]
+		.into_iter()
 	}
 }
 
