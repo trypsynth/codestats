@@ -1,15 +1,14 @@
 # Changelog
 
-## Since 0.5.0
+## 0.6.0
 
-- Add language include and exclude filters and glob based path exclusions
-- Add shell completions and bring back `langs` as a subcommand
+- Added the ability to filter in or out certain languages from the analysis
+- Added support for glob-based path exclusions
+- Add support for shell completions with the `completions` subcommand
+- Bring back `langs` as a subcommand, rather than a top-level flag
 - Add `--fail-on-error` to opt into non-zero exit codes when files are skipped
-- Add average lines per file to the summary metrics
-- Improve safety notes for memory mapping and tighten overflow handling
-- Refactor file processing and language detection for clearer structure
-- Improve UTF-16 detection without BOMs and align sampling for large files
-- Fix edge-case whitespace classification and speed up UTF-16 line draining
+- Improve UTF-16 detection without BOMs
+- Fix a couple edgecases with whitespace classification
 - Expand language coverage and refresh dependencies and docs
 
 ## 0.5.0
@@ -52,4 +51,4 @@
 
 ## 0.1.0
 
-- Initial release with core analyzer, CLI, and basic language detection
+- Initial release

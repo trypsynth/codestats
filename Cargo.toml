@@ -1,6 +1,6 @@
 [package]
 name = "codestats"
-version = "0.5.0"
+version = "0.6.0"
 authors = ["Quin Gillespie <trypsynth@gmail.com>"]
 edition = "2024"
 description = "A CLI tool for analyzing code statistics across different programming languages"
