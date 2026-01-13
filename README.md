@@ -15,13 +15,10 @@ A small CLI tool that summarizes codebases at blazing speed. Built for quick aud
 - Exclude files and directories with glob patterns
 - Optional per-file detail for drilling into hot spots
 - Outputs in human-readable or machine-friendly formats
-- Supports 440+ languages out of the box
-
-## Why Codestats
-
-- Fast on laptops and tiny boxes alike
-- Works as a drop-in for dashboards or quick CLI reports
-- Friendly defaults with easy overrides through CLI or config
+- Supports 460+ languages out of the box
+- Allows you to include or exclude both glob wildcards and particular programming languages
+- Fully encoding-aware
+- Runs insanely quickly on anything from a tiny laptop to a large desktop
 
 ## Install
 
@@ -118,26 +115,20 @@ output = "human"
 
 For performance, Codestats uses memory-mapped I/O for files >=256KB. This provides significant speedups but requires that files remain stable during analysis.
 
-IMPORTANT: Files should not be modified by external processes while being analyzed. Concurrent modifications during a scan can cause undefined behavior.
-
-### 32-bit Platform Limitations
-
-On 32-bit platforms, individual files larger than ~4GB cannot be processed due to address space limitations. The tool will skip such files with an error message. This limitation does not affect 64-bit platforms.
-
 ### Thread Safety
 
 Codestats uses parallel processing to maximize performance. Each worker thread maintains its own statistics which are merged at the end, minimizing lock contention. The tool is safe for concurrent execution on different directories, but should not analyze the same directory simultaneously from multiple processes.
 
 ## Benchmarks
 
-Run: `hyperfine --warmup 1 "cs ~" "tokei ~"`
+`hyperfine --warmup 1 "cs ~" "tokei ~"`
 
 | Command | Mean ± σ | Min … Max |
 | --- | --- | --- |
 | `cs ~` | 1.952 s ± 0.034 s | 1.915 s …  1.997 s |
 | `tokei ~` | 7.538 s ± 0.045 s | 7.466 s …  7.609 s |
 
-Codestats ran 3.86 ± 0.07 times faster than tokei on a small Beelinks mini PC.
+Codestats ran 3.86 ± 0.07 times faster than tokei on a small Beelinks mini PC over a massive home directory.
 
 ## License
 
