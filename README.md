@@ -16,7 +16,6 @@ A small CLI tool that summarizes codebases at blazing speed. Built for quick aud
 - Optional per-file detail for drilling into hot spots
 - Outputs in human-readable or machine-friendly formats
 - Supports 460+ languages out of the box
-- Allows you to include or exclude both glob wildcards and particular programming languages
 - Fully encoding-aware
 - Runs insanely quickly on anything from a tiny laptop to a large desktop
 
