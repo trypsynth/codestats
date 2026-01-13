@@ -29,14 +29,6 @@ fn mmap_file_context(path: &Path) -> String {
 	format!("Failed to memory-map file {}", path.display())
 }
 
-/// Helper to create error context for file size validation.
-fn file_too_large_context(path: &Path) -> String {
-	format!(
-		"File too large to process: {} (exceeds platform address space limits - consider using a 64-bit system for files >4GB)",
-		path.display()
-	)
-}
-
 pub(super) trait LineSource {
 	fn for_each_line<F>(&mut self, f: &mut F) -> Result<()>
 	where
@@ -190,7 +182,7 @@ fn sample_from_slice(file_bytes: &[u8]) -> Vec<u8> {
 
 fn process_file_buffered(
 	file_path: &Path,
-	mut file: File,
+	file: File,
 	file_size: u64,
 	results: &mut AnalysisResults,
 	collect_details: bool,
@@ -198,11 +190,16 @@ fn process_file_buffered(
 	encoding: FileEncoding,
 ) -> Result<()> {
 	if encoding::is_utf16(encoding.encoding) {
-		let capacity = usize::try_from(file_size).with_context(|| file_too_large_context(file_path))?;
-		let mut buffer = Vec::with_capacity(capacity);
-		file.read_to_end(&mut buffer)?;
-		encoding::process_utf16_bytes(file_path, file_size, results, collect_details, language, encoding, &buffer);
-		return Ok(());
+		let mut reader = BufReader::with_capacity(64 * 1024, file);
+		return encoding::process_utf16_stream(
+			file_path,
+			file_size,
+			results,
+			collect_details,
+			language,
+			encoding,
+			&mut reader,
+		);
 	}
 	let reader = BufReader::with_capacity(64 * 1024, file);
 	let mut source = BufLineSource::new(reader);

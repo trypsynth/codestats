@@ -6,7 +6,7 @@ use std::{
 	},
 };
 
-use anyhow::{Result, anyhow};
+use anyhow::Result;
 use ignore::{WalkBuilder, overrides::OverrideBuilder};
 
 use super::{pipeline, stats::AnalysisResults};
@@ -80,7 +80,7 @@ impl CodeAnalyzer {
 		if !self.config.analysis.exclude_patterns.is_empty() {
 			let mut override_builder = OverrideBuilder::new(&self.root);
 			for pattern in &self.config.analysis.exclude_patterns {
-				let mut owned;
+				let owned;
 				let glob = if pattern.starts_with('!') {
 					pattern.as_str()
 				} else {

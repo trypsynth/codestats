@@ -1,5 +1,6 @@
-use std::{borrow::Cow, path::Path};
+use std::{borrow::Cow, io::Read, path::Path};
 
+use anyhow::Result;
 use encoding_rs::{CoderResult, Decoder, Encoding, UTF_8, UTF_16BE, UTF_16LE};
 use memchr::memchr;
 
@@ -112,6 +113,51 @@ pub(super) fn process_utf16_bytes(
 	output.clear();
 	drain_lines(&mut pending, language, &mut line_counts, &mut comment_state, &mut is_first_line, true);
 	finish_file_stats(file_path, file_size, results, collect_details, language, &line_counts);
+}
+
+pub(super) fn process_utf16_stream<R: Read>(
+	file_path: &Path,
+	file_size: u64,
+	results: &mut AnalysisResults,
+	collect_details: bool,
+	language: &'static Language,
+	encoding: FileEncoding,
+	reader: &mut R,
+) -> Result<()> {
+	use super::line_counter::finish_file_stats;
+	let mut line_counts = LineCounts::default();
+	let mut comment_state = CommentState::new();
+	let mut is_first_line = true;
+	let mut decoder = encoding.encoding.new_decoder_without_bom_handling();
+	let mut pending = String::new();
+	let mut output = String::new();
+	let mut buffer = vec![0u8; UTF16_DECODE_CHUNK_SIZE];
+	let mut skip_bom = encoding.bom_len;
+	loop {
+		let read = reader.read(&mut buffer)?;
+		if read == 0 {
+			break;
+		}
+		let mut slice = &buffer[..read];
+		if skip_bom > 0 {
+			if read <= skip_bom {
+				skip_bom -= read;
+				continue;
+			}
+			slice = &slice[skip_bom..];
+			skip_bom = 0;
+		}
+		decode_to_string(&mut decoder, slice, false, &mut output);
+		pending.push_str(&output);
+		output.clear();
+		drain_lines(&mut pending, language, &mut line_counts, &mut comment_state, &mut is_first_line, false);
+	}
+	decode_to_string(&mut decoder, &[], true, &mut output);
+	pending.push_str(&output);
+	output.clear();
+	drain_lines(&mut pending, language, &mut line_counts, &mut comment_state, &mut is_first_line, true);
+	finish_file_stats(file_path, file_size, results, collect_details, language, &line_counts);
+	Ok(())
 }
 
 fn decode_to_string(decoder: &mut Decoder, chunk: &[u8], last: bool, output: &mut String) {
