@@ -62,7 +62,6 @@ impl CodeAnalyzer {
 	pub fn analyze(&self) -> Result<AnalysisResults> {
 		let error_counter = Arc::new(AtomicU64::new(0));
 		let verbose = self.config.analysis.verbose;
-		let fail_on_error = self.config.analysis.fail_on_error;
 		let collect_details = self.config.collect_file_details;
 		let include_languages = self.config.analysis.include_languages.clone();
 		let exclude_languages = self.config.analysis.exclude_languages.clone();
@@ -81,7 +80,14 @@ impl CodeAnalyzer {
 		if !self.config.analysis.exclude_patterns.is_empty() {
 			let mut override_builder = OverrideBuilder::new(&self.root);
 			for pattern in &self.config.analysis.exclude_patterns {
-				override_builder.add(pattern)?;
+				let mut owned;
+				let glob = if pattern.starts_with('!') {
+					pattern.as_str()
+				} else {
+					owned = format!("!{pattern}");
+					owned.as_str()
+				};
+				override_builder.add(glob)?;
 			}
 			builder.overrides(override_builder.build()?);
 		}
@@ -122,7 +128,7 @@ impl CodeAnalyzer {
 			.map_err(|_| anyhow::anyhow!("Failed to unwrap aggregates Arc - walker still holds references"))?
 			.into_inner()
 			.unwrap_or_else(PoisonError::into_inner);
-		let results = partials.into_iter().fold(AnalysisResults::with_language_capacity(), |mut acc, local| {
+		let mut results = partials.into_iter().fold(AnalysisResults::with_language_capacity(), |mut acc, local| {
 			acc.merge(local);
 			acc
 		});
@@ -133,10 +139,8 @@ impl CodeAnalyzer {
 			} else {
 				eprintln!("Skipped {skipped} entries due to errors (re-run with --verbose for details).");
 			}
-			if fail_on_error {
-				return Err(anyhow!("Skipped {skipped} entries due to errors"));
-			}
 		}
+		results.set_skipped_entries(skipped);
 		Ok(results)
 	}
 }

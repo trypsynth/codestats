@@ -10,7 +10,7 @@ mod langs;
 
 use std::io::{self, Write as _};
 
-use anyhow::{Result, ensure};
+use anyhow::{Result, anyhow, ensure};
 use cli::{Cli, Commands};
 use terminal_size::terminal_size;
 
@@ -57,5 +57,8 @@ fn main() -> Result<()> {
 	let mut stdout = io::stdout();
 	formatter.write_output(&results, &config.path, verbose, view_options, &mut stdout)?;
 	stdout.flush()?;
+	if config.analysis.fail_on_error && results.skipped_entries() > 0 {
+		return Err(anyhow!("Skipped {} entries due to errors", results.skipped_entries()));
+	}
 	Ok(())
 }

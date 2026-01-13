@@ -259,6 +259,7 @@ pub struct AnalysisResults {
 	total_lines: u64,
 	line_stats: LineStats,
 	total_size: u64,
+	skipped_entries: u64,
 	language_stats: Vec<LanguageStats>,
 }
 
@@ -294,6 +295,7 @@ impl AnalysisResults {
 		self.total_lines = self.total_lines.saturating_add(other.total_lines);
 		self.line_stats.merge(&other.line_stats);
 		self.total_size = self.total_size.saturating_add(other.total_size);
+		self.skipped_entries = self.skipped_entries.saturating_add(other.skipped_entries);
 		if self.language_stats.len() < other.language_stats.len() {
 			self.language_stats.resize_with(other.language_stats.len(), LanguageStats::default);
 		}
@@ -316,6 +318,16 @@ impl AnalysisResults {
 	#[must_use]
 	pub const fn total_size(&self) -> u64 {
 		self.total_size
+	}
+
+	/// Get the number of entries skipped due to errors.
+	#[must_use]
+	pub const fn skipped_entries(&self) -> u64 {
+		self.skipped_entries
+	}
+
+	pub(crate) fn set_skipped_entries(&mut self, skipped: u64) {
+		self.skipped_entries = skipped;
 	}
 
 	/// Get the total number of code lines across all files
