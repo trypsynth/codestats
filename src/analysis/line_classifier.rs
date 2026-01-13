@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use memchr::{memchr2, memrchr};
 
 use crate::langs::{
@@ -138,9 +140,13 @@ pub fn classify_line(
 		&& trimmed.starts_with("#!")
 		&& let Some(lang) = lang_info
 		&& !lang.shebangs.is_empty()
-		&& lang.shebangs.iter().any(|shebang| trimmed.starts_with(shebang))
 	{
-		return LineType::Shebang;
+		// Normalize shebang by removing optional space after `#!`
+		let normalized: Cow<'_, str> =
+			trimmed.strip_prefix("#! ").map_or(Cow::Borrowed(trimmed), |rest| Cow::Owned(format!("#!{rest}")));
+		if lang.shebangs.iter().any(|shebang| normalized.starts_with(shebang)) {
+			return LineType::Shebang;
+		}
 	}
 	let Some(lang) = lang_info else {
 		return LineType::Code;

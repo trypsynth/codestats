@@ -1,6 +1,8 @@
 pub(super) mod patterns;
 pub mod scoring;
 
+use std::borrow::Cow;
+
 use self::patterns::get_candidates;
 use super::data::{LANGUAGES, Language};
 
@@ -88,6 +90,12 @@ fn tokenize(content: &str) -> impl Iterator<Item = &str> {
 	content.split(|c: char| !c.is_ascii_alphanumeric() && c != '_').filter(|token| !token.is_empty())
 }
 
+/// Normalize a shebang line by removing optional space after `#!`.
+#[inline]
+fn normalize_shebang(line: &str) -> std::borrow::Cow<'_, str> {
+	line.strip_prefix("#! ").map_or(Cow::Borrowed(line), |rest| Cow::Owned(format!("#!{rest}")))
+}
+
 #[inline]
 fn detect_from_shebang(content: &str) -> Option<&'static Language> {
 	let first_line = content.lines().next()?;
@@ -95,9 +103,10 @@ fn detect_from_shebang(content: &str) -> Option<&'static Language> {
 	if !trimmed.starts_with("#!") {
 		return None;
 	}
+	let normalized = normalize_shebang(trimmed);
 	LANGUAGES
 		.iter()
-		.find(|lang| !lang.shebangs.is_empty() && lang.shebangs.iter().any(|shebang| trimmed.starts_with(shebang)))
+		.find(|lang| !lang.shebangs.is_empty() && lang.shebangs.iter().any(|shebang| normalized.starts_with(shebang)))
 }
 
 #[must_use]
