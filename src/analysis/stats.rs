@@ -326,7 +326,7 @@ impl AnalysisResults {
 		self.skipped_entries
 	}
 
-	pub(crate) fn set_skipped_entries(&mut self, skipped: u64) {
+	pub(crate) const fn set_skipped_entries(&mut self, skipped: u64) {
 		self.skipped_entries = skipped;
 	}
 
