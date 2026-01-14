@@ -39,12 +39,14 @@ cargo install --path .
 
 - Human-readable report of the current directory: `cs`
 - Verbose per-file detail for `src/` in JSON: `cs -v src -o json`
-- List supported languages: `cs -l`
+- List supported languages: `cs langs`
+- Generate shell completions: `cs completions <shell>`
 - Ignore `.gitignore` rules: `cs -i`
 - Follow symlinks and include hidden files: `cs -SH`
 - Analyze only Rust files: `cs -L rust`
 - Analyze everything except tests and documentation: `cs -e 'test_*' -e '*.md'`
 - Exclude specific languages: `cs --exclude-lang markdown --exclude-lang toml`
+- Fail when any files are skipped: `cs --fail-on-error`
 
 ## Output formats
 
@@ -72,9 +74,13 @@ Usage: `cs [OPTIONS] [PATH]` (defaults to the current directory)
 - `-o, --output <human|json|json-compact|csv|tsv|markdown|html>` Output format. Default: `human`
 - `--fail-on-error` Exit with a non-zero status code if any files are skipped due to errors
 - `-c, --config <PATH>` Use a TOML config file
-- `-l, --langs` List all supported languages and exit
 - `-h, --help` Print help
 - `-V, --version` Print version
+
+## Subcommands
+
+- `langs` List all supported languages
+- `completions <shell>` Generate shell completions (e.g. `bash`, `zsh`, `fish`)
 
 ## Configuration
 
