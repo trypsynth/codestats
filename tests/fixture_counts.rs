@@ -1,4 +1,5 @@
 use std::{
+	collections::HashMap,
 	fs,
 	path::{Path, PathBuf},
 	process::Command,
@@ -17,16 +18,22 @@ struct ExpectedCounts {
 
 #[derive(Debug, Deserialize)]
 struct AnalysisOutput {
-	summary: AnalysisSummary,
+	languages: Vec<LanguageOutput>,
 }
 
 #[derive(Debug, Deserialize)]
-struct AnalysisSummary {
+struct LanguageOutput {
+	files_detail: Option<Vec<FileOutput>>,
+}
+
+#[derive(Debug, Deserialize)]
+struct FileOutput {
+	path: String,
 	total_lines: u64,
-	total_code_lines: u64,
-	total_comment_lines: u64,
-	total_blank_lines: u64,
-	total_shebang_lines: u64,
+	code_lines: u64,
+	comment_lines: u64,
+	blank_lines: u64,
+	shebang_lines: u64,
 }
 
 #[test]
@@ -36,33 +43,36 @@ fn fixtures_match_expected_counts() {
 	let fixtures = collect_fixtures(&fixtures_root);
 	assert!(!fixtures.is_empty(), "Add at least one fixture under {}", fixtures_root.display());
 	let binary = env!("CARGO_BIN_EXE_cs");
+	let output = Command::new(binary)
+		.args([fixtures_root.to_str().expect("Non-UTF-8 fixtures root"), "-o", "json", "-v"])
+		.output()
+		.unwrap_or_else(|err| panic!("Failed to run codestats for {}: {err}", fixtures_root.display()));
+	assert!(
+		output.status.success(),
+		"codestats run failed for {}\nstatus: {:?}\nstderr: {}",
+		fixtures_root.display(),
+		output.status.code(),
+		String::from_utf8_lossy(&output.stderr),
+	);
+	let analysis: AnalysisOutput = serde_json::from_slice(&output.stdout).unwrap_or_else(|err| {
+		panic!(
+			"Failed to parse JSON output for {}: {err}\nstdout: {}\nstderr: {}",
+			fixtures_root.display(),
+			String::from_utf8_lossy(&output.stdout),
+			String::from_utf8_lossy(&output.stderr)
+		)
+	});
+	let file_map = build_file_map(&analysis);
 	for fixture in fixtures {
 		let expected = parse_expectations(&fixture);
-		let output = Command::new(binary)
-			.args([fixture.to_str().expect("Non-UTF-8 fixture path"), "-o", "json"])
-			.output()
-			.unwrap_or_else(|err| panic!("Failed to run codestats for {}: {err}", fixture.display()));
-		assert!(
-			output.status.success(),
-			"codestats run failed for {}\nstatus: {:?}\nstderr: {}",
-			fixture.display(),
-			output.status.code(),
-			String::from_utf8_lossy(&output.stderr),
-		);
-		let analysis: AnalysisOutput = serde_json::from_slice(&output.stdout).unwrap_or_else(|err| {
-			panic!(
-				"Failed to parse JSON output for {}: {err}\nstdout: {}\nstderr: {}",
-				fixture.display(),
-				String::from_utf8_lossy(&output.stdout),
-				String::from_utf8_lossy(&output.stderr)
-			)
-		});
-		let summary = analysis.summary;
-		assert_eq!(expected.total, summary.total_lines, "total lines mismatch for {}", fixture.display());
-		assert_eq!(expected.code, summary.total_code_lines, "code lines mismatch for {}", fixture.display());
-		assert_eq!(expected.comment, summary.total_comment_lines, "comment lines mismatch for {}", fixture.display());
-		assert_eq!(expected.blank, summary.total_blank_lines, "blank lines mismatch for {}", fixture.display());
-		assert_eq!(expected.shebang, summary.total_shebang_lines, "shebang lines mismatch for {}", fixture.display());
+		let normalized = normalize_path(&fixture);
+		let actual =
+			file_map.get(&normalized).unwrap_or_else(|| panic!("Missing file detail for {}", fixture.display()));
+		assert_eq!(expected.total, actual.total, "total lines mismatch for {}", fixture.display());
+		assert_eq!(expected.code, actual.code, "code lines mismatch for {}", fixture.display());
+		assert_eq!(expected.comment, actual.comment, "comment lines mismatch for {}", fixture.display());
+		assert_eq!(expected.blank, actual.blank, "blank lines mismatch for {}", fixture.display());
+		assert_eq!(expected.shebang, actual.shebang, "shebang lines mismatch for {}", fixture.display());
 	}
 }
 
@@ -82,6 +92,32 @@ fn collect_fixtures(root: &Path) -> Vec<PathBuf> {
 		}
 	}
 	files
+}
+
+fn build_file_map(analysis: &AnalysisOutput) -> HashMap<PathBuf, ExpectedCounts> {
+	let mut map = HashMap::new();
+	for language in &analysis.languages {
+		let Some(files) = &language.files_detail else { continue };
+		for file in files {
+			let path = normalize_path(&file.path);
+			map.insert(
+				path,
+				ExpectedCounts {
+					total: file.total_lines,
+					code: file.code_lines,
+					comment: file.comment_lines,
+					blank: file.blank_lines,
+					shebang: file.shebang_lines,
+				},
+			);
+		}
+	}
+	map
+}
+
+fn normalize_path(path: impl AsRef<Path>) -> PathBuf {
+	let path = path.as_ref();
+	fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
 }
 
 fn parse_expectations(path: &Path) -> ExpectedCounts {
