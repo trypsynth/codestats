@@ -1,0 +1,10 @@
+; expect: total=10 code=4 comment=3 blank=3 shebang=0
+; simple abnf fixture
+
+digit = %x30-39
+alpha = %x41-5A / %x61-7A
+
+alnum = alpha / digit
+
+; trailing comment
+	name = 1*alnum
