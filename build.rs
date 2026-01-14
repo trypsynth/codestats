@@ -13,46 +13,58 @@ use std::{
 use indexmap::IndexMap;
 use serde::{Deserialize, Deserializer, de};
 
+type Result<T> = result::Result<T, Box<dyn Error>>;
+
 fn validate_no_whitespace(s: &str, field: &str, idx: Option<usize>) -> result::Result<(), String> {
 	if s.trim() == s {
 		Ok(())
 	} else {
-		let msg = idx.map_or_else(
+		Err(idx.map_or_else(
 			|| format!("{field}: has leading/trailing whitespace"),
 			|i| format!("{field} {}: has leading/trailing whitespace", i + 1),
-		);
-		Err(msg)
+		))
 	}
+}
+
+fn deserialize_vec_strings<'de, D>(
+	deserializer: D,
+	field: &'static str,
+	allow_empty_vec: bool,
+	validate: impl Fn(&str, usize) -> result::Result<(), String>,
+) -> result::Result<Vec<String>, D::Error>
+where
+	D: Deserializer<'de>,
+{
+	let values: Vec<String> = Vec::deserialize(deserializer)?;
+	if !allow_empty_vec && values.is_empty() {
+		return Err(de::Error::custom(format!("{field} cannot be empty")));
+	}
+	for (idx, value) in values.iter().enumerate() {
+		validate(value, idx).map_err(de::Error::custom)?;
+	}
+	Ok(values)
 }
 
 fn deserialize_file_patterns<'de, D>(deserializer: D) -> result::Result<Vec<String>, D::Error>
 where
 	D: Deserializer<'de>,
 {
-	let patterns: Vec<String> = Vec::deserialize(deserializer)?;
-	if patterns.is_empty() {
-		return Err(de::Error::custom("file_patterns cannot be empty"));
-	}
-	for (idx, pattern) in patterns.iter().enumerate() {
-		if pattern.is_empty() {
-			return Err(de::Error::custom(format!("pattern {}: cannot be empty", idx + 1)));
+	deserialize_vec_strings(deserializer, "file_patterns", false, |s, idx| {
+		if s.is_empty() {
+			Err(format!("pattern {}: cannot be empty", idx + 1))
+		} else {
+			validate_no_whitespace(s, "pattern", Some(idx))
 		}
-		validate_no_whitespace(pattern, "pattern", Some(idx)).map_err(de::Error::custom)?;
-	}
-	Ok(patterns)
+	})
 }
 
 fn deserialize_line_comments<'de, D>(deserializer: D) -> result::Result<Vec<String>, D::Error>
 where
 	D: Deserializer<'de>,
 {
-	let comments: Vec<String> = Vec::deserialize(deserializer)?;
-	for (idx, comment) in comments.iter().enumerate() {
-		if comment.is_empty() {
-			return Err(de::Error::custom(format!("line comment {}: cannot be empty", idx + 1)));
-		}
-	}
-	Ok(comments)
+	deserialize_vec_strings(deserializer, "line_comments", true, |s, idx| {
+		if s.is_empty() { Err(format!("line comment {}: cannot be empty", idx + 1)) } else { Ok(()) }
+	})
 }
 
 fn deserialize_block_comments<'de, D>(deserializer: D) -> result::Result<Vec<(String, String)>, D::Error>
@@ -60,29 +72,23 @@ where
 	D: Deserializer<'de>,
 {
 	let pairs: Vec<Vec<String>> = Vec::deserialize(deserializer)?;
-	let mut result = Vec::with_capacity(pairs.len());
+	let mut out: Vec<(String, String)> = Vec::with_capacity(pairs.len());
 	for (idx, pair) in pairs.into_iter().enumerate() {
-		match pair.as_slice() {
-			[start, end] if !start.is_empty() && !end.is_empty() => {
-				result.push((start.clone(), end.clone()));
-			}
-			[start, _end] if start.is_empty() => {
-				return Err(de::Error::custom(format!("block comment {}: start cannot be empty", idx + 1)));
-			}
-			[_, end] if end.is_empty() => {
-				return Err(de::Error::custom(format!("block comment {}: end cannot be empty", idx + 1)));
-			}
-			[] => return Err(de::Error::custom(format!("block comment {}: start/end cannot be empty", idx + 1))),
-			[_] => return Err(de::Error::custom(format!("block comment {}: missing end delimiter", idx + 1))),
-			[_, _, ..] => {
-				return Err(de::Error::custom(format!(
-					"block comment {}: only start and end delimiters are supported",
-					idx + 1
-				)));
-			}
+		let err = |msg| de::Error::custom(format!("block comment {}: {msg}", idx + 1));
+		if pair.len() != 2 {
+			return Err(err("must contain exactly start and end delimiters"));
 		}
+		let [start, end]: [String; 2] = pair.try_into().unwrap();
+		if start.is_empty() {
+			return Err(err("start cannot be empty"));
+		}
+		if end.is_empty() {
+			return Err(err("end cannot be empty"));
+		}
+		#[allow(clippy::tuple_array_conversions)]
+		out.push((start, end));
 	}
-	Ok(result)
+	Ok(out)
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -115,9 +121,17 @@ const LANGUAGE_SCHEMA: &[(&str, &str)] = &[
 	("keywords", "&'static [&'static str]"),
 ];
 
-/// Helper to write a language struct field with proper indentation. We ignore write errors since String writes never fail.
 fn write_field(output: &mut String, name: &str, value: impl std::fmt::Display) {
 	let _ = writeln!(output, "\t\t{name}: {value},");
+}
+
+fn render_slice<T>(values: &[T], render: impl Fn(&T) -> String) -> String {
+	if values.is_empty() {
+		"&[]".to_string()
+	} else {
+		let joined = values.iter().map(render).collect::<Vec<_>>().join(", ");
+		format!("&[{joined}]")
+	}
 }
 
 fn render_languages(languages: &[LanguageConfig]) -> String {
@@ -134,77 +148,41 @@ fn render_languages(languages: &[LanguageConfig]) -> String {
 		output.push_str("\tLanguage {\n");
 		write_field(&mut output, "index", idx);
 		write_field(&mut output, "name", format_args!("{:?}", lang.name));
-		write_field(&mut output, "file_patterns", render_str_slice(&lang.file_patterns));
-		write_field(&mut output, "line_comments", render_str_slice(&lang.line_comments));
-		write_field(&mut output, "block_comments", render_block_comments(&lang.block_comments));
+		write_field(&mut output, "file_patterns", render_slice(&lang.file_patterns, |v| format!("{v:?}")));
+		write_field(&mut output, "line_comments", render_slice(&lang.line_comments, |v| format!("{v:?}")));
+		write_field(
+			&mut output,
+			"block_comments",
+			render_slice(&lang.block_comments, |(s, e)| format!("({s:?}, {e:?})")),
+		);
 		write_field(&mut output, "nested_blocks", lang.nested_blocks);
-		write_field(&mut output, "shebangs", render_str_slice(&lang.shebangs));
-		write_field(&mut output, "keywords", render_str_slice(&lang.keywords));
+		write_field(&mut output, "shebangs", render_slice(&lang.shebangs, |v| format!("{v:?}")));
+		write_field(&mut output, "keywords", render_slice(&lang.keywords, |v| format!("{v:?}")));
 		output.push_str("\t},\n");
 	}
 	output.push_str("];\n\n");
 	output
 }
 
-fn render_str_slice(values: &[String]) -> String {
-	if values.is_empty() {
-		"&[]".to_string()
-	} else {
-		let joined = values.iter().map(|v| format!("{v:?}")).collect::<Vec<_>>().join(", ");
-		format!("&[{joined}]")
-	}
-}
-
-fn render_block_comments(values: &[(String, String)]) -> String {
-	if values.is_empty() {
-		"&[]".to_string()
-	} else {
-		let joined = values.iter().map(|(s, e)| format!("({s:?}, {e:?})")).collect::<Vec<_>>().join(", ");
-		format!("&[{joined}]")
-	}
-}
-
 fn normalize_languages(entries: IndexMap<String, LanguageConfig>) -> Result<Vec<LanguageConfig>> {
 	let mut errors = Vec::new();
 	let mut prev_name: Option<String> = None;
-	let languages: Vec<LanguageConfig> = entries
-		.into_iter()
-		.enumerate()
-		.filter_map(|(index, (name, mut config))| {
-			if name.trim().is_empty() {
-				errors.push(format!("Language at position {}: name cannot be empty", index + 1));
-				return None;
-			}
-			if let Some(prev) = &prev_name
-				&& name.to_lowercase() < prev.to_lowercase()
-			{
-				errors.push(format!("Language '{name}' is not in alphabetical order (should come before '{prev}')"));
-			}
-			prev_name = Some(name.clone());
-			config.name = name;
-			Some(config)
-		})
-		.collect();
+	let mut languages = Vec::with_capacity(entries.len());
+	for (index, (name, mut config)) in entries.into_iter().enumerate() {
+		if name.trim().is_empty() {
+			errors.push(format!("Language at position {}: name cannot be empty", index + 1));
+			continue;
+		}
+		if let Some(prev) = &prev_name
+			&& name.to_lowercase() < prev.to_lowercase()
+		{
+			errors.push(format!("Language '{name}' is not in alphabetical order (should come before '{prev}')"));
+		}
+		prev_name = Some(name.clone());
+		config.name = name;
+		languages.push(config);
+	}
 	if errors.is_empty() { Ok(languages) } else { Err(errors.join("\n").into()) }
-}
-
-type Result<T> = result::Result<T, Box<dyn Error>>;
-
-fn main() -> Result<()> {
-	let manifest_dir = env::var("CARGO_MANIFEST_DIR")?;
-	let json_path = Path::new(&manifest_dir).join("languages.json5");
-	println!("cargo:rerun-if-changed={}", json_path.display());
-	let json_content = fs::read_to_string(&json_path)?;
-	let language_map: IndexMap<String, LanguageConfig> =
-		json5::from_str(&json_content).map_err(|e| format!("Failed to parse languages.json5: {e}"))?;
-	let languages = normalize_languages(language_map)?;
-	validate_languages(&languages)?;
-	let rendered = render_languages(&languages);
-	let out_dir = env::var("OUT_DIR")?;
-	let dest_path = Path::new(&out_dir).join("languages.rs");
-	fs::write(dest_path, rendered)?;
-	println!("Generated language data for {} languages", languages.len());
-	Ok(())
 }
 
 struct PatternInfo {
@@ -232,18 +210,14 @@ impl LanguageValidator {
 				self.errors.push(format!("Language '{}': name has leading/trailing whitespace", lang.name));
 			}
 			for pattern in &lang.file_patterns {
-				let entry = self
+				let info = self
 					.seen_patterns
 					.entry(pattern.clone())
-					.or_insert_with(|| PatternInfo { names: Vec::new(), all_have_keywords: true });
-				entry.names.push(lang.name.clone());
-				entry.all_have_keywords &= !lang.keywords.is_empty();
+					.or_insert(PatternInfo { names: Vec::new(), all_have_keywords: true });
+				info.names.push(lang.name.clone());
+				info.all_have_keywords &= !lang.keywords.is_empty();
 			}
 		}
-		self.validate_pattern_disambiguation();
-	}
-
-	fn validate_pattern_disambiguation(&mut self) {
 		for (pattern, info) in &self.seen_patterns {
 			if info.names.len() > 1 && !info.all_have_keywords {
 				self.errors.push(format!(
@@ -259,9 +233,8 @@ impl LanguageValidator {
 		if self.errors.is_empty() {
 			Ok(())
 		} else {
-			let error_message =
-				format!("Language validation failed with {} error(s):\n{}", self.errors.len(), self.errors.join("\n"));
-			Err(error_message.into())
+			Err(format!("Language validation failed with {} error(s):\n{}", self.errors.len(), self.errors.join("\n"))
+				.into())
 		}
 	}
 }
@@ -270,4 +243,21 @@ fn validate_languages(languages: &[LanguageConfig]) -> Result<()> {
 	let mut validator = LanguageValidator::new();
 	validator.validate_all(languages);
 	validator.into_result()
+}
+
+fn main() -> Result<()> {
+	let manifest_dir = env::var("CARGO_MANIFEST_DIR")?;
+	let json_path = Path::new(&manifest_dir).join("languages.json5");
+	println!("cargo:rerun-if-changed={}", json_path.display());
+	let json_content = fs::read_to_string(&json_path)?;
+	let language_map: IndexMap<String, LanguageConfig> =
+		json5::from_str(&json_content).map_err(|e| format!("Failed to parse languages.json5: {e}"))?;
+	let languages = normalize_languages(language_map)?;
+	validate_languages(&languages)?;
+	let rendered = render_languages(&languages);
+	let out_dir = env::var("OUT_DIR")?;
+	let dest_path = Path::new(&out_dir).join("languages.rs");
+	fs::write(dest_path, rendered)?;
+	println!("Generated language data for {} languages", languages.len());
+	Ok(())
 }
