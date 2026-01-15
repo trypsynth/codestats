@@ -143,6 +143,7 @@ fn parse_expectation_line(line: &str) -> Option<ExpectedCounts> {
 	let trimmed = line.trim_start();
 	let meaningful = trimmed.trim_start_matches(|c: char| !c.is_ascii_alphanumeric() && c != '_');
 	let rest = meaningful.strip_prefix("expect:")?.trim();
+	let rest = rest.trim_end_matches(|c: char| !c.is_ascii_alphanumeric() && c != '_');
 	let mut counts = ExpectedCounts { total: 0, code: 0, comment: 0, blank: 0, shebang: 0 };
 	let mut seen_mask = 0u8;
 	for token in rest.split_whitespace() {
