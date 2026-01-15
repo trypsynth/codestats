@@ -176,6 +176,7 @@ fn normalize_languages(entries: IndexMap<String, LanguageConfig>) -> Result<Vec<
 		if let Some(prev) = &prev_name
 			&& name.to_lowercase() < prev.to_lowercase()
 		{
+			// Enforce a stable ordering so generated indices remain consistent across edits.
 			errors.push(format!("Language '{name}' is not in alphabetical order (should come before '{prev}')"));
 		}
 		prev_name = Some(name.clone());
@@ -220,6 +221,7 @@ impl LanguageValidator {
 		}
 		for (pattern, info) in &self.seen_patterns {
 			if info.names.len() > 1 && !info.all_have_keywords {
+				// Shared patterns need keyword disambiguation to avoid random selection.
 				self.errors.push(format!(
 					"Duplicate pattern '{}' in [{}] - all must have 'keywords' for disambiguation",
 					pattern,

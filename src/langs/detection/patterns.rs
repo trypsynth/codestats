@@ -19,6 +19,7 @@ pub(super) static LANGUAGE_GLOBSET: LazyLock<LanguageGlobs> = LazyLock::new(|| {
 			let glob = glob_builder
 				.build()
 				.unwrap_or_else(|e| panic!("Invalid glob pattern '{pattern}' for language {}: {e}", lang.name));
+			// Record the language index so glob match indices can map back to LANGUAGES.
 			pattern_lang_indexes.push(lang.index);
 			builder.add(glob);
 		}

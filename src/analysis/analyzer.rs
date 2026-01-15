@@ -80,6 +80,7 @@ impl CodeAnalyzer {
 		if !self.config.analysis.exclude_patterns.is_empty() {
 			let mut override_builder = OverrideBuilder::new(&self.root);
 			for pattern in &self.config.analysis.exclude_patterns {
+				// OverrideBuilder treats patterns without '!' as include rules, so we invert to enforce exclusion.
 				let owned;
 				let glob = if pattern.starts_with('!') {
 					pattern.as_str()

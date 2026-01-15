@@ -69,6 +69,7 @@ fn detect_utf16_without_bom(samples: &[u8]) -> Option<FileEncoding> {
 			}
 		}
 	}
+	// Heuristic: UTF-16 text typically has a strong zero-byte bias on one parity.
 	let total_zeros = zero_even + zero_odd;
 	if total_zeros < samples.len() / 4 {
 		return None;

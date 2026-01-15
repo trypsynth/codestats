@@ -145,6 +145,7 @@ fn sample_ranges(file_len: u64) -> (usize, Option<(u64, usize)>) {
 	}
 	let mut mid_offset = (file_len.saturating_sub(SAMPLE_SIZE as u64)) / 2;
 	if mid_offset % 2 == 1 {
+		// Keep UTF-16 code units aligned when sampling from the middle.
 		mid_offset = mid_offset.saturating_sub(1);
 	}
 	// SAFETY: SAMPLE_SIZE is a small constant (4096), so this conversion will always succeed.

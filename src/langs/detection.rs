@@ -54,6 +54,7 @@ fn score_language(lang: &Language, content: &str, tokens: &[&str]) -> i32 {
 	}
 	// For symbol-only languages (all keywords are symbols), require high density if alphabetic content exists
 	if is_symbol_only_language(lang) && !tokens.is_empty() {
+		// Guard against false positives when a file has a few symbols but mostly alphabetic text.
 		let non_whitespace = content.chars().filter(|c| !c.is_whitespace()).count();
 		if non_whitespace > 0 {
 			let matched_chars_u128 = matched_chars as u128;

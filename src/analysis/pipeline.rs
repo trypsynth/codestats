@@ -38,6 +38,7 @@ pub fn process_file(
 	let filename_os = file_path.file_name().context("Missing file name")?;
 	let filename_lossy = filename_os.to_string_lossy();
 	let filename: Cow<'_, str> = if filename_lossy.contains('\u{FFFD}') {
+		// Fall back to a synthetic name so extension-based detection still works on non-UTF-8 filenames.
 		file_path.extension().map_or_else(
 			|| Cow::Borrowed(filename_lossy.as_ref()),
 			|ext| {

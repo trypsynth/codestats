@@ -117,6 +117,7 @@ fn build_file_map(analysis: &AnalysisOutput) -> HashMap<PathBuf, ExpectedCounts>
 
 fn normalize_path(path: impl AsRef<Path>) -> PathBuf {
 	let path = path.as_ref();
+	// Canonicalize for stable fixture matching across platforms and output formats.
 	fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
 }
 
@@ -128,6 +129,7 @@ fn parse_expectations(path: &Path) -> ExpectedCounts {
 		if trimmed.starts_with("#!") || trimmed.is_empty() {
 			continue;
 		}
+		// Expect the first meaningful line to contain "expect: total=... code=... comment=... blank=... shebang=...".
 		if let Some(expectation) = parse_expectation_line(line) {
 			return expectation;
 		}

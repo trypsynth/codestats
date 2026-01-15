@@ -219,6 +219,7 @@ impl Config {
 			&& self.path.is_relative()
 			&& let Some(parent) = source.parent()
 		{
+			// Resolve config-relative paths against the config file location unless CLI overrides it.
 			self.path = parent.join(&self.path);
 		}
 		self.display.precision = self.display.precision.min(6);
