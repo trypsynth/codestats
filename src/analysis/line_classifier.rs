@@ -164,14 +164,18 @@ pub fn classify_line(
 	if comment_state.is_in_comment() {
 		return if has_code { LineType::Code } else { LineType::Comment };
 	}
-	if let Some(line_comments) = matchers.line_comments.as_ref()
-		&& let Some(matched) = line_comments.find(line_remainder)
-	{
-		let pos = matched.start();
-		if pos > 0 && contains_non_whitespace(&line_remainder[..pos]) {
-			has_code = true;
+	if let Some(line_comments) = matchers.line_comments.as_ref() {
+		for matched in line_comments.find_iter(line_remainder) {
+			let token = lang.line_comments[matched.pattern().as_usize()];
+			if !is_valid_line_comment_match(line_remainder, matched.end(), token) {
+				continue;
+			}
+			let pos = matched.start();
+			if pos > 0 && contains_non_whitespace(&line_remainder[..pos]) {
+				has_code = true;
+			}
+			return if has_code { LineType::Code } else { LineType::Comment };
 		}
-		return if has_code { LineType::Code } else { LineType::Comment };
 	}
 	if contains_non_whitespace(line_remainder) {
 		has_code = true;
@@ -233,6 +237,25 @@ fn contains_non_whitespace(s: &str) -> bool {
 #[inline]
 const fn is_ascii_ws(b: u8) -> bool {
 	matches!(b, b' ' | b'\t' | b'\n' | b'\r' | 0x0B | 0x0C)
+}
+
+#[inline]
+const fn is_word_char(b: u8) -> bool {
+	b.is_ascii_alphanumeric() || b == b'_'
+}
+
+#[inline]
+fn is_valid_line_comment_match(line: &str, end: usize, token: &str) -> bool {
+	let Some(&first) = token.as_bytes().first() else {
+		return false;
+	};
+	if is_word_char(first) {
+		let bytes = line.as_bytes();
+		if end < bytes.len() && is_word_char(bytes[end]) {
+			return false;
+		}
+	}
+	true
 }
 
 #[cfg(test)]

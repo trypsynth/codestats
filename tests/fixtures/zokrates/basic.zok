@@ -1,7 +1,7 @@
 // expect: total=10 code=3 comment=5 blank=2 shebang=0
 
 /*This is a multi-line comment
-    written across multiple lines.
+	written across multiple lines.
 */
 
 def main() -> field {
