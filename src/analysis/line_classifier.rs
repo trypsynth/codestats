@@ -298,4 +298,69 @@ mod tests {
 		assert_eq!(classify_line("some code", None, &mut state, false), LineType::Code);
 		assert_eq!(classify_line("  more code  ", None, &mut state, false), LineType::Code);
 	}
+
+	#[test]
+	fn test_comment_state_nesting() {
+		let mut state = CommentState::new();
+		assert!(!state.is_in_comment());
+		state.enter_first_block();
+		assert!(state.is_in_comment());
+		state.enter_nested_block();
+		assert!(state.is_in_comment());
+		state.exit_block(true); // nested exit
+		assert!(state.is_in_comment());
+		state.exit_block(true);
+		assert!(!state.is_in_comment());
+	}
+
+	#[test]
+	fn test_comment_state_non_nested_exit() {
+		let mut state = CommentState::new();
+		state.enter_first_block();
+		state.enter_nested_block();
+		state.exit_block(false); // non-nested clears all
+		assert!(!state.is_in_comment());
+	}
+
+	#[test]
+	fn test_is_valid_line_comment_match() {
+		// Word-char tokens need word boundary after
+		assert!(is_valid_line_comment_match("REM hello", 3, "REM"));
+		assert!(!is_valid_line_comment_match("REMEMBER", 3, "REM")); // no boundary
+		// Symbol tokens don't need boundary
+		assert!(is_valid_line_comment_match("// test", 2, "//"));
+		assert!(is_valid_line_comment_match("//test", 2, "//"));
+	}
+
+	#[test]
+	fn test_is_ascii_ws() {
+		assert!(is_ascii_ws(b' '));
+		assert!(is_ascii_ws(b'\t'));
+		assert!(is_ascii_ws(b'\n'));
+		assert!(is_ascii_ws(b'\r'));
+		assert!(is_ascii_ws(0x0B)); // vertical tab
+		assert!(is_ascii_ws(0x0C)); // form feed
+		assert!(!is_ascii_ws(b'a'));
+		assert!(!is_ascii_ws(b'0'));
+	}
+
+	#[test]
+	fn test_is_word_char() {
+		assert!(is_word_char(b'a'));
+		assert!(is_word_char(b'Z'));
+		assert!(is_word_char(b'5'));
+		assert!(is_word_char(b'_'));
+		assert!(!is_word_char(b' '));
+		assert!(!is_word_char(b'/'));
+		assert!(!is_word_char(b'-'));
+	}
+
+	#[test]
+	fn test_line_type_labels() {
+		assert_eq!(LineType::Code.singular_label(), "code");
+		assert_eq!(LineType::Code.plural_label(), "code");
+		assert_eq!(LineType::Comment.plural_label(), "comments");
+		assert_eq!(LineType::Blank.title_label(), "Blanks");
+		assert_eq!(LineType::Shebang.singular_label(), "shebang");
+	}
 }

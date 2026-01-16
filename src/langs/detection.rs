@@ -201,4 +201,104 @@ mod tests {
 		let language = detect_language_info("example.b", Some(content)).unwrap();
 		assert_eq!(language.name, "B");
 	}
+
+	#[test]
+	fn tokenize_splits_on_non_alphanumeric() {
+		let tokens: Vec<_> = tokenize("hello_world foo-bar").collect();
+		assert_eq!(tokens, vec!["hello_world", "foo", "bar"]);
+	}
+
+	#[test]
+	fn tokenize_handles_empty_string() {
+		let tokens: Vec<_> = tokenize("").collect();
+		assert!(tokens.is_empty());
+	}
+
+	#[test]
+	fn tokenize_handles_only_delimiters() {
+		let tokens: Vec<_> = tokenize("!@#$%^&*()").collect();
+		assert!(tokens.is_empty());
+	}
+
+	#[test]
+	fn tokenize_preserves_underscores() {
+		let tokens: Vec<_> = tokenize("__init__ __main__").collect();
+		assert_eq!(tokens, vec!["__init__", "__main__"]);
+	}
+
+	#[test]
+	fn normalize_shebang_removes_space() {
+		let result = normalize_shebang("#! /usr/bin/env python");
+		assert_eq!(&*result, "#!/usr/bin/env python");
+	}
+
+	#[test]
+	fn normalize_shebang_leaves_compact_unchanged() {
+		let result = normalize_shebang("#!/bin/bash");
+		assert_eq!(&*result, "#!/bin/bash");
+	}
+
+	#[test]
+	fn detect_from_shebang_finds_python() {
+		let content = "#!/usr/bin/env python3\nprint('hello')";
+		let lang = detect_from_shebang(content);
+		assert!(lang.is_some());
+		assert_eq!(lang.unwrap().name, "Python");
+	}
+
+	#[test]
+	fn detect_from_shebang_finds_bash() {
+		let content = "#!/bin/bash\necho hello";
+		let lang = detect_from_shebang(content);
+		assert!(lang.is_some());
+		assert_eq!(lang.unwrap().name, "Bash");
+	}
+
+	#[test]
+	fn detect_from_shebang_returns_none_without_shebang() {
+		let content = "print('hello')\n# not a shebang";
+		assert!(detect_from_shebang(content).is_none());
+	}
+
+	#[test]
+	fn detect_from_shebang_handles_empty() {
+		assert!(detect_from_shebang("").is_none());
+	}
+
+	#[test]
+	fn is_symbol_only_language_detects_brainfuck() {
+		// Find Brainfuck in LANGUAGES
+		let bf = LANGUAGES.iter().find(|l| l.name == "Brainfuck");
+		assert!(bf.is_some());
+		assert!(is_symbol_only_language(bf.unwrap()));
+	}
+
+	#[test]
+	fn is_symbol_only_language_rejects_rust() {
+		let rust = LANGUAGES.iter().find(|l| l.name == "Rust");
+		assert!(rust.is_some());
+		assert!(!is_symbol_only_language(rust.unwrap()));
+	}
+
+	#[test]
+	fn single_candidate_returns_immediately() {
+		// .rs files should have only Rust as candidate
+		let lang = detect_language_info("test.rs", None);
+		assert!(lang.is_some());
+		assert_eq!(lang.unwrap().name, "Rust");
+	}
+
+	#[test]
+	fn unknown_extension_with_shebang() {
+		let content = "#!/usr/bin/env node\nconsole.log('hello');";
+		let lang = detect_language_info("script", Some(content));
+		assert!(lang.is_some());
+		assert_eq!(lang.unwrap().name, "JavaScript");
+	}
+
+	#[test]
+	fn unknown_extension_without_hints_returns_none() {
+		let lang = detect_language_info("random_file", Some("just some text"));
+		assert!(lang.is_none());
+	}
 }

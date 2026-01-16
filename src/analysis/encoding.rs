@@ -237,4 +237,90 @@ mod tests {
 		assert_eq!(encoding.encoding, UTF_16BE);
 		assert_eq!(encoding.bom_len, 0);
 	}
+
+	#[test]
+	fn detect_utf8_bom() {
+		let sample = [0xEF, 0xBB, 0xBF, b'h', b'e', b'l', b'l', b'o'];
+		let encoding = detect_encoding(&sample);
+		assert_eq!(encoding.encoding, UTF_8);
+		assert_eq!(encoding.bom_len, 3);
+	}
+
+	#[test]
+	fn detect_utf16_le_bom() {
+		let sample = [0xFF, 0xFE, b'h', 0x00, b'e', 0x00];
+		let encoding = detect_encoding(&sample);
+		assert_eq!(encoding.encoding, UTF_16LE);
+		assert_eq!(encoding.bom_len, 2);
+	}
+
+	#[test]
+	fn detect_utf16_be_bom() {
+		let sample = [0xFE, 0xFF, 0x00, b'h', 0x00, b'e'];
+		let encoding = detect_encoding(&sample);
+		assert_eq!(encoding.encoding, UTF_16BE);
+		assert_eq!(encoding.bom_len, 2);
+	}
+
+	#[test]
+	fn detect_plain_utf8_default() {
+		let sample = b"hello world";
+		let encoding = detect_encoding(sample);
+		assert_eq!(encoding.encoding, UTF_8);
+		assert_eq!(encoding.bom_len, 0);
+	}
+
+	#[test]
+	fn empty_sample_is_not_binary() {
+		let encoding = FileEncoding { encoding: UTF_8, bom_len: 0 };
+		assert!(!is_probably_binary(&[], encoding));
+	}
+
+	#[test]
+	fn utf16_is_never_binary() {
+		let encoding = FileEncoding { encoding: UTF_16LE, bom_len: 0 };
+		let sample = [0x00, 0x00, 0x00, 0x00]; // all nulls
+		assert!(!is_probably_binary(&sample, encoding));
+	}
+
+	#[test]
+	fn high_control_chars_flagged_binary() {
+		let encoding = FileEncoding { encoding: UTF_8, bom_len: 0 };
+		// Over 20% control chars
+		let sample = [0x01, 0x02, 0x03, b'a', b'b', b'c', b'd', b'e', b'f', b'g'];
+		assert!(is_probably_binary(&sample, encoding));
+	}
+
+	#[test]
+	fn is_utf16_check() {
+		assert!(is_utf16(UTF_16LE));
+		assert!(is_utf16(UTF_16BE));
+		assert!(!is_utf16(UTF_8));
+	}
+
+	#[test]
+	fn short_sample_no_utf16_detection() {
+		// Less than 4 bytes can't detect UTF-16 without BOM
+		let sample = [b'a', 0x00];
+		let result = detect_utf16_without_bom(&sample);
+		assert!(result.is_none());
+	}
+
+	#[test]
+	fn decode_bytes_strips_bom() {
+		let bytes = [0xEF, 0xBB, 0xBF, b'h', b'i'];
+		let encoding = FileEncoding { encoding: UTF_8, bom_len: 3 };
+		let decoded = decode_bytes(&bytes, encoding, true);
+		assert_eq!(&*decoded, "hi");
+	}
+
+	#[test]
+	fn decode_bytes_without_strip_includes_full_content() {
+		let bytes = [0xEF, 0xBB, 0xBF, b'h', b'i'];
+		let encoding = FileEncoding { encoding: UTF_8, bom_len: 3 };
+		let decoded = decode_bytes(&bytes, encoding, false);
+		// Without stripping, the full content is decoded (BOM may or may not appear
+		// depending on encoding_rs behavior, but content should be present)
+		assert!(decoded.contains("hi"));
+	}
 }

@@ -383,4 +383,132 @@ mod tests {
 		let pct = percentage(part, total);
 		assert!((pct - 50.0).abs() < 0.000_000_1);
 	}
+
+	#[test]
+	fn test_line_stats_merge() {
+		let mut a = LineStats::new(10, 5, 3, 1);
+		let b = LineStats::new(20, 10, 6, 2);
+		a.merge(&b);
+		assert_eq!(a.code, 30);
+		assert_eq!(a.comment, 15);
+		assert_eq!(a.blank, 9);
+		assert_eq!(a.shebang, 3);
+	}
+
+	#[test]
+	fn test_line_stats_merge_saturating() {
+		let mut a = LineStats::new(u64::MAX - 1, 0, 0, 0);
+		let b = LineStats::new(10, 0, 0, 0);
+		a.merge(&b);
+		assert_eq!(a.code, u64::MAX);
+	}
+
+	#[test]
+	fn test_file_contribution() {
+		let fc = FileContribution::new(100, 60, 20, 15, 5, 1024);
+		assert_eq!(fc.total_lines(), 100);
+		assert_eq!(fc.size(), 1024);
+	}
+
+	#[test]
+	fn test_file_stats() {
+		let fs = FileStats::new("test.rs".to_string(), 100, 60, 20, 15, 5, 2048);
+		assert_eq!(fs.path(), "test.rs");
+		assert_eq!(fs.total_lines(), 100);
+		assert_eq!(fs.code_lines(), 60);
+		assert_eq!(fs.comment_lines(), 20);
+		assert_eq!(fs.blank_lines(), 15);
+		assert_eq!(fs.shebang_lines(), 5);
+		assert_eq!(fs.size(), 2048);
+	}
+
+	#[test]
+	fn test_language_stats_add_file() {
+		let mut ls = LanguageStats::default();
+		let fc = FileContribution::new(50, 30, 10, 8, 2, 512);
+		ls.add_file(&fc, None);
+		assert_eq!(ls.files(), 1);
+		assert_eq!(ls.lines(), 50);
+		assert_eq!(ls.code_lines(), 30);
+		assert_eq!(ls.comment_lines(), 10);
+		assert_eq!(ls.blank_lines(), 8);
+		assert_eq!(ls.shebang_lines(), 2);
+		assert_eq!(ls.size(), 512);
+		assert!(ls.files_list().is_empty());
+	}
+
+	#[test]
+	fn test_language_stats_add_file_with_details() {
+		let mut ls = LanguageStats::default();
+		let fc = FileContribution::new(50, 30, 10, 8, 2, 512);
+		let fs = FileStats::new("foo.rs".to_string(), 50, 30, 10, 8, 2, 512);
+		ls.add_file(&fc, Some(fs));
+		assert_eq!(ls.files_list().len(), 1);
+		assert_eq!(ls.files_list()[0].path(), "foo.rs");
+	}
+
+	#[test]
+	fn test_language_stats_merge() {
+		let mut a = LanguageStats::default();
+		let fc1 = FileContribution::new(50, 30, 10, 8, 2, 512);
+		a.add_file(&fc1, None);
+
+		let mut b = LanguageStats::default();
+		let fc2 = FileContribution::new(100, 60, 20, 16, 4, 1024);
+		b.add_file(&fc2, None);
+
+		a.merge(b);
+		assert_eq!(a.files(), 2);
+		assert_eq!(a.lines(), 150);
+		assert_eq!(a.code_lines(), 90);
+		assert_eq!(a.size(), 1536);
+	}
+
+	#[test]
+	fn test_language_stats_average_lines_per_file() {
+		let mut ls = LanguageStats::default();
+		assert_eq!(ls.average_lines_per_file(), 0.0);
+
+		let fc1 = FileContribution::new(100, 50, 25, 20, 5, 1000);
+		let fc2 = FileContribution::new(200, 100, 50, 40, 10, 2000);
+		ls.add_file(&fc1, None);
+		ls.add_file(&fc2, None);
+		assert!((ls.average_lines_per_file() - 150.0).abs() < f64::EPSILON);
+	}
+
+	#[test]
+	fn test_language_stats_percentages() {
+		let mut ls = LanguageStats::default();
+		let fc = FileContribution::new(100, 60, 20, 18, 2, 1000);
+		ls.add_file(&fc, None);
+		assert!((ls.code_percentage() - 60.0).abs() < f64::EPSILON);
+		assert!((ls.comment_percentage() - 20.0).abs() < f64::EPSILON);
+		assert!((ls.blank_percentage() - 18.0).abs() < f64::EPSILON);
+		assert!((ls.shebang_percentage() - 2.0).abs() < f64::EPSILON);
+	}
+
+	#[test]
+	fn test_analysis_results_merge() {
+		let mut a = AnalysisResults::with_language_capacity();
+		let mut b = AnalysisResults::with_language_capacity();
+
+		// Simulating some skipped entries
+		a.set_skipped_entries(2);
+		b.set_skipped_entries(3);
+
+		a.merge(b);
+		assert_eq!(a.skipped_entries(), 5);
+	}
+
+	#[test]
+	fn test_analysis_results_totals() {
+		let results = AnalysisResults::default();
+		assert_eq!(results.total_files(), 0);
+		assert_eq!(results.total_lines(), 0);
+		assert_eq!(results.total_size(), 0);
+		assert_eq!(results.total_code_lines(), 0);
+		assert_eq!(results.total_comment_lines(), 0);
+		assert_eq!(results.total_blank_lines(), 0);
+		assert_eq!(results.total_shebang_lines(), 0);
+	}
 }

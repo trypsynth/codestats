@@ -174,4 +174,135 @@ mod tests {
 		assert_eq!(pluralize(1, "child", "children"), "child");
 		assert_eq!(pluralize(5, "child", "children"), "children");
 	}
+
+	#[test]
+	fn test_number_formatter_plain() {
+		let fmt = NumberFormatter::new(NumberStyle::Plain);
+		assert_eq!(fmt.format(0), "0");
+		assert_eq!(fmt.format(1234567), "1234567");
+	}
+
+	#[test]
+	fn test_number_formatter_comma() {
+		let fmt = NumberFormatter::new(NumberStyle::Comma);
+		assert_eq!(fmt.format(0), "0");
+		assert_eq!(fmt.format(999), "999");
+		assert_eq!(fmt.format(1000), "1,000");
+		assert_eq!(fmt.format(1234567), "1,234,567");
+	}
+
+	#[test]
+	fn test_number_formatter_underscore() {
+		let fmt = NumberFormatter::new(NumberStyle::Underscore);
+		assert_eq!(fmt.format(1234567), "1_234_567");
+	}
+
+	#[test]
+	fn test_number_formatter_space() {
+		let fmt = NumberFormatter::new(NumberStyle::Space);
+		assert_eq!(fmt.format(1234567), "1 234 567");
+	}
+
+	#[test]
+	fn test_size_formatter_binary_bytes() {
+		let num = NumberFormatter::new(NumberStyle::Plain);
+		let fmt = SizeFormatter::new(SizeStyle::Binary, num);
+		assert_eq!(fmt.format(0), "0 B");
+		assert_eq!(fmt.format(512), "512 B");
+		assert_eq!(fmt.format(1023), "1023 B");
+	}
+
+	#[test]
+	fn test_size_formatter_binary_kib() {
+		let num = NumberFormatter::new(NumberStyle::Plain);
+		let fmt = SizeFormatter::new(SizeStyle::Binary, num);
+		assert_eq!(fmt.format(1024), "1.00 KiB");
+		assert_eq!(fmt.format(1536), "1.50 KiB");
+		assert_eq!(fmt.format(10240), "10.0 KiB");
+		assert_eq!(fmt.format(102400), "100 KiB");
+	}
+
+	#[test]
+	fn test_size_formatter_binary_mib() {
+		let num = NumberFormatter::new(NumberStyle::Plain);
+		let fmt = SizeFormatter::new(SizeStyle::Binary, num);
+		assert_eq!(fmt.format(1024 * 1024), "1.00 MiB");
+		assert_eq!(fmt.format(5 * 1024 * 1024), "5.00 MiB");
+	}
+
+	#[test]
+	fn test_size_formatter_decimal() {
+		let num = NumberFormatter::new(NumberStyle::Plain);
+		let fmt = SizeFormatter::new(SizeStyle::Decimal, num);
+		assert_eq!(fmt.format(1000), "1.00 KB");
+		assert_eq!(fmt.format(1500), "1.50 KB");
+		assert_eq!(fmt.format(1_000_000), "1.00 MB");
+	}
+
+	#[test]
+	fn test_percent_formatter() {
+		let fmt = PercentFormatter::new(2);
+		assert_eq!(fmt.format(50.0), "50.00");
+		assert_eq!(fmt.format(33.333), "33.33");
+		let fmt0 = PercentFormatter::new(0);
+		assert_eq!(fmt0.format(99.9), "100");
+	}
+
+	#[test]
+	fn test_apply_sort_ascending() {
+		let mut items = vec![3u64, 1, 4, 1, 5];
+		apply_sort(
+			&mut items,
+			SortDirection::Asc,
+			|x| SortValue::Num(*x),
+			|_, _| Ordering::Equal,
+		);
+		assert_eq!(items, vec![1, 1, 3, 4, 5]);
+	}
+
+	#[test]
+	fn test_apply_sort_descending() {
+		let mut items = vec![3u64, 1, 4, 1, 5];
+		apply_sort(
+			&mut items,
+			SortDirection::Desc,
+			|x| SortValue::Num(*x),
+			|_, _| Ordering::Equal,
+		);
+		assert_eq!(items, vec![5, 4, 3, 1, 1]);
+	}
+
+	#[test]
+	fn test_apply_sort_with_tiebreaker() {
+		let mut items = vec![("b", 1), ("a", 1), ("c", 2)];
+		apply_sort(
+			&mut items,
+			SortDirection::Asc,
+			|(_, n)| SortValue::Num(*n as u64),
+			|(a, _), (b, _)| a.cmp(b),
+		);
+		assert_eq!(items, vec![("a", 1), ("b", 1), ("c", 2)]);
+	}
+
+	#[test]
+	fn test_apply_sort_text() {
+		let mut items = vec!["banana", "apple", "cherry"];
+		apply_sort(
+			&mut items,
+			SortDirection::Asc,
+			|s| SortValue::Text(s),
+			|_, _| Ordering::Equal,
+		);
+		assert_eq!(items, vec!["apple", "banana", "cherry"]);
+	}
+
+	#[test]
+	fn test_formatter_context() {
+		let options = ViewOptions::default();
+		let ctx = FormatterContext::new(options);
+		// Basic sanity check that methods work
+		assert!(!ctx.number(1000).is_empty());
+		assert!(!ctx.size(1024).is_empty());
+		assert!(!ctx.percent(50.0).is_empty());
+	}
 }
