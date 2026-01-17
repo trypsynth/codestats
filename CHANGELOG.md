@@ -7,9 +7,12 @@
 - Add support for shell completions with the `completions` subcommand
 - Bring back `langs` as a subcommand, rather than a top-level flag
 - Add `--fail-on-error` to opt into non-zero exit codes when files are skipped
-- Improve UTF-16 detection without BOMs
+- Added many new languages, bringing the total to 464
+- Documented the code better
 - Fix a couple edgecases with whitespace classification
-- Expand language coverage and refresh dependencies and docs
+- Fix the handling of shebangs with whitespace after the #!
+- Improve UTF-16 detection without BOMs
+- Update dependencies to their latest versions
 
 ## 0.5.0
 
