@@ -268,7 +268,7 @@ mod tests {
 
 	#[test]
 	fn test_sample_from_slice_large() {
-		let data: Vec<u8> = (0..10_000).map(|i| (i % 256) as u8).collect();
+		let data: Vec<u8> = (0u8..=255).cycle().take(10_000).collect();
 		let samples = sample_from_slice(&data);
 		// Should have start sample + mid sample
 		assert!(samples.len() > SAMPLE_SIZE);

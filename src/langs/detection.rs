@@ -210,14 +210,12 @@ mod tests {
 
 	#[test]
 	fn tokenize_handles_empty_string() {
-		let tokens: Vec<_> = tokenize("").collect();
-		assert!(tokens.is_empty());
+		assert!(tokenize("").next().is_none());
 	}
 
 	#[test]
 	fn tokenize_handles_only_delimiters() {
-		let tokens: Vec<_> = tokenize("!@#$%^&*()").collect();
-		assert!(tokens.is_empty());
+		assert!(tokenize("!@#$%^&*()").next().is_none());
 	}
 
 	#[test]

@@ -467,7 +467,7 @@ mod tests {
 	#[test]
 	fn test_language_stats_average_lines_per_file() {
 		let mut ls = LanguageStats::default();
-		assert_eq!(ls.average_lines_per_file(), 0.0);
+		assert!(ls.average_lines_per_file().abs() < f64::EPSILON);
 
 		let fc1 = FileContribution::new(100, 50, 25, 20, 5, 1000);
 		let fc2 = FileContribution::new(200, 100, 50, 40, 10, 2000);

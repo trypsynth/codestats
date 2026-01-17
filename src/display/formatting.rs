@@ -179,7 +179,7 @@ mod tests {
 	fn test_number_formatter_plain() {
 		let fmt = NumberFormatter::new(NumberStyle::Plain);
 		assert_eq!(fmt.format(0), "0");
-		assert_eq!(fmt.format(1234567), "1234567");
+		assert_eq!(fmt.format(1_234_567), "1234567");
 	}
 
 	#[test]
@@ -188,19 +188,19 @@ mod tests {
 		assert_eq!(fmt.format(0), "0");
 		assert_eq!(fmt.format(999), "999");
 		assert_eq!(fmt.format(1000), "1,000");
-		assert_eq!(fmt.format(1234567), "1,234,567");
+		assert_eq!(fmt.format(1_234_567), "1,234,567");
 	}
 
 	#[test]
 	fn test_number_formatter_underscore() {
 		let fmt = NumberFormatter::new(NumberStyle::Underscore);
-		assert_eq!(fmt.format(1234567), "1_234_567");
+		assert_eq!(fmt.format(1_234_567), "1_234_567");
 	}
 
 	#[test]
 	fn test_number_formatter_space() {
 		let fmt = NumberFormatter::new(NumberStyle::Space);
-		assert_eq!(fmt.format(1234567), "1 234 567");
+		assert_eq!(fmt.format(1_234_567), "1 234 567");
 	}
 
 	#[test]
@@ -219,7 +219,7 @@ mod tests {
 		assert_eq!(fmt.format(1024), "1.00 KiB");
 		assert_eq!(fmt.format(1536), "1.50 KiB");
 		assert_eq!(fmt.format(10240), "10.0 KiB");
-		assert_eq!(fmt.format(102400), "100 KiB");
+		assert_eq!(fmt.format(102_400), "100 KiB");
 	}
 
 	#[test]
@@ -274,11 +274,11 @@ mod tests {
 
 	#[test]
 	fn test_apply_sort_with_tiebreaker() {
-		let mut items = vec![("b", 1), ("a", 1), ("c", 2)];
+		let mut items = vec![("b", 1u64), ("a", 1), ("c", 2)];
 		apply_sort(
 			&mut items,
 			SortDirection::Asc,
-			|(_, n)| SortValue::Num(*n as u64),
+			|(_, n)| SortValue::Num(*n),
 			|(a, _), (b, _)| a.cmp(b),
 		);
 		assert_eq!(items, vec![("a", 1), ("b", 1), ("c", 2)]);
