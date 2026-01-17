@@ -4,19 +4,19 @@
 
 - Added the ability to filter in or out certain languages from the analysis
 - Added support for glob-based path exclusions
-- Add support for shell completions with the `completions` subcommand
-- Bring back `langs` as a subcommand, rather than a top-level flag
-- Add `--fail-on-error` to opt into non-zero exit codes when files are skipped
+- Added `--fail-on-error` to opt into non-zero exit codes when files are skipped
 - Added many new languages, bringing the total to 464
+- Added support for shell completions with the `completions` subcommand
+- Brang back `langs` as a subcommand, rather than a top-level flag
 - Documented the code better
-- Fix a couple edgecases with whitespace classification
-- Fix the handling of shebangs with whitespace after the #!
-- Improve UTF-16 detection without BOMs
-- Update dependencies to their latest versions
+- Fixed a couple edgecases with whitespace classification
+- Fixed the handling of shebangs with whitespace after the #!
+- Improveed UTF-16 detection without BOMs
+- Updated dependencies to their latest versions
 
 ## 0.5.0
 
-- Add a TOML config file with CLI compatible defaults
+- Added a TOML config file
 - Add JSON compact and TSV output formats
 - Expand sorting, number formatting, size units, and precision controls
 - Streamline CLI flags and improve output consistency
