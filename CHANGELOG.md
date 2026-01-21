@@ -11,7 +11,7 @@
 - Documented the code better
 - Fixed a couple edgecases with whitespace classification
 - Fixed the handling of shebangs with whitespace after the #!
-- Improveed UTF-16 detection without BOMs
+- Improved UTF-16 detection without BOMs
 - Updated dependencies to their latest versions
 
 ## 0.5.0
