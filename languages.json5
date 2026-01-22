@@ -22,6 +22,12 @@
 	"Ada": {
 		file_patterns: ["*.ada", "*.adb", "*.ads"],
 		line_comments: ["--"],
+		keywords: ["procedure", "function", "package", "with", "use", "begin", "end", "is", "record"],
+	},
+	"AFL": {
+		file_patterns: ["*.afl"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
 	},
 	"Agda": {
 		file_patterns: ["*.agda", "*.lagda"],
@@ -49,6 +55,12 @@
 		file_patterns: ["*.als"],
 		line_comments: ["//", "--"],
 		block_comments: [["/*", "*/"]],
+	},
+	"AMPL": {
+		file_patterns: ["*.ampl", "*.mod", "*.dat", "*.run"],
+		line_comments: ["#"],
+		block_comments: [["/*", "*/"]],
+		keywords: ["param", "var", "subject to", "minimize", "maximize", "set"],
 	},
 	"Android Interface Definition Language": {
 		file_patterns: ["*.aidl"],
@@ -84,6 +96,10 @@
 		line_comments: ["--", "#"],
 		block_comments: [["(*", "*)"]],
 	},
+	"Arc": {
+		file_patterns: ["*.arc"],
+		line_comments: [";"],
+	},
 	"ArkTs": {
 		file_patterns: ["*.ets"],
 		line_comments: ["//"],
@@ -110,6 +126,11 @@
 	"ASP.NET": {
 		file_patterns: ["*.asax", "*.ascx", "*.asmx", "*.aspx", "*.master", "*.sitemap", "*.webinfo"],
 		block_comments: [["<!--", "-->"], ["<%--", "--%>"]],
+	},
+	"AspectJ": {
+		file_patterns: ["*.aj"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
 	},
 	"Assembly": {
 		file_patterns: ["*.asm", "*.s", "*.S"],
@@ -267,6 +288,7 @@
 		file_patterns: ["*.c", "*.h", "*.ec", "*.pgc"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		keywords: ["#include", "#define", "int main", "void", "sizeof", "typedef", "struct"],
 	},
 	"C Shell": {
 		file_patterns: ["*.csh"],
@@ -341,6 +363,10 @@
 		file_patterns: ["*.catala_en", "*.catala_fr", "*.catala_pl"],
 		line_comments: ["#"],
 	},
+	"CEL": {
+		file_patterns: ["*.cel"],
+		line_comments: ["//"],
+	},
 	"Ceylon": {
 		file_patterns: ["*.ceylon"],
 		line_comments: ["//"],
@@ -366,15 +392,28 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
+	"Cilk": {
+		file_patterns: ["*.cilk", "*.cilkh"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+	},
 	"Circom": {
 		file_patterns: ["*.circom"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
+	"Clarity": {
+		file_patterns: ["*.clar"],
+		line_comments: [";;"],
+	},
 	"Clean": {
 		file_patterns: ["*.icl", "*.dcl"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+	},
+	"CLIPS": {
+		file_patterns: ["*.clp"],
+		line_comments: [";"],
 	},
 	"Clojure": {
 		file_patterns: ["*.clj", "*.cljs", "*.cljc", "*.edn"],
@@ -394,6 +433,11 @@
 		file_patterns: ["*.cobra"],
 		line_comments: ["#"],
 		block_comments: [["/#", "#/"]],
+	},
+	"Coconut": {
+		file_patterns: ["*.coco", "*.coconut"],
+		line_comments: ["#"],
+		block_comments: [["\"\"\"", "\"\"\""], ["'''", "'''"]],
 	},
 	"CodeQL": {
 		file_patterns: ["*.ql", "*.qll"],
@@ -453,6 +497,11 @@
 		file_patterns: ["*.cue"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+	},
+	"Curl": {
+		file_patterns: ["*.curl"],
+		line_comments: ["||"],
+		block_comments: [["|#", "#|"]],
 	},
 	"Curry": {
 		file_patterns: ["*.curry"],
@@ -559,9 +608,19 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
+	"E": {
+		file_patterns: ["*.E"],
+		line_comments: ["#"],
+		block_comments: [["/*", "*/"]],
+	},
 	"Earthfile": {
 		file_patterns: ["Earthfile", "*.earth", "*.earthfile"],
 		line_comments: ["#"],
+	},
+	"EasyLanguage": {
+		file_patterns: ["*.eld", "*.ela", "*.elw"],
+		line_comments: ["//"],
+		block_comments: [["{", "}"]],
 	},
 	"EBNF": {
 		file_patterns: ["*.ebnf"],
@@ -707,6 +766,7 @@
 		file_patterns: ["*.4th", "*.forth", "*.fr", "*.fth", "*.frt", "*.f83", "*.fb", "*.fpm", "*.e4", "*.rx", "*.ft"],
 		line_comments: ["\\ "],
 		block_comments: [["( ", ")"]],
+		keywords: [": ", "; ", "DUP", "DROP", "SWAP", "OVER", "ROT", "VARIABLE", "CONSTANT", "CREATE"],
 	},
 	"Fortran": {
 		file_patterns: ["*.f", "*.for", "*.f77", "*.f90", "*.f95", "*.f03", "*.f08", "*.f15", "*.f18", "*.f23"],
@@ -715,6 +775,13 @@
 	"FreeMarker": {
 		file_patterns: ["*.ftl", "*.ftlh", "*.ftlx"],
 		block_comments: [["<#--", "-->"]],
+	},
+	"Frege": {
+		file_patterns: ["*.fr"],
+		line_comments: ["--"],
+		block_comments: [["{-", "-}"]],
+		nested_blocks: true,
+		keywords: ["module", "import", "data", "class", "instance", "native", "pure"],
 	},
 	"Futhark": {
 		file_patterns: ["*.fut"],
@@ -742,6 +809,12 @@
 		file_patterns: ["*.gdshader"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+	},
+	"Genie": {
+		file_patterns: ["*.gs"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+		keywords: ["init", "uses", "def", "prop", "construct"],
 	},
 	"Gettext": {
 		file_patterns: ["*.po", "*.pot"],
@@ -783,6 +856,12 @@
 		file_patterns: ["*.gs", "*.gsx"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		keywords: ["package", "uses", "class", "function", "property", "enhancement", "var", "final"],
+	},
+	"Grace": {
+		file_patterns: ["*.grace"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
 	},
 	"Gradle": {
 		file_patterns: ["*.gradle", "gradle.properties"],
@@ -801,6 +880,11 @@
 	},
 	"Graphviz/DOT": {
 		file_patterns: ["*.dot", "*.gv"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+	},
+	"Gremlin": {
+		file_patterns: ["*.gremlin"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
@@ -836,6 +920,12 @@
 		line_comments: ["--"],
 		block_comments: [["{-", "-}"]],
 		keywords: ["%name", "%tokentype", "%token", "%%"],
+	},
+	"Harbour": {
+		file_patterns: ["*.prg", "*.hb", "*.ch"],
+		line_comments: ["//", "&&"],
+		block_comments: [["/*", "*/"]],
+		keywords: ["FUNCTION", "PROCEDURE", "CLASS", "ENDCLASS", "METHOD", "DATA"],
 	},
 	"Hare": {
 		file_patterns: ["*.ha"],
@@ -899,6 +989,7 @@
 	"Icon": {
 		file_patterns: ["*.icn"],
 		line_comments: ["#"],
+		keywords: ["procedure", "end", "every", "suspend", "fail", "return", "local", "static", "global"],
 	},
 	"IDL": {
 		file_patterns: ["*.idl", "*.widl"],
@@ -918,6 +1009,11 @@
 	"Imba": {
 		file_patterns: ["*.imba"],
 		line_comments: ["#"],
+	},
+	"Inform 6": {
+		file_patterns: ["*.inf", "*.h"],
+		line_comments: ["!"],
+		keywords: ["Object", "Class", "Nearby", "Verb", "Include", "Release"],
 	},
 	"Inform 7": {
 		file_patterns: ["*.ni", "*.i7x"],
@@ -943,10 +1039,18 @@
 		block_comments: [["{", "}"], ["(*", "*)"]],
 		nested_blocks: true,
 	},
+	"INTERCAL": {
+		file_patterns: ["*.i", "*.intercal"],
+		keywords: ["PLEASE", "DO", "COME FROM", "ABSTAIN", "REINSTATE"],
+	},
 	"Io": {
 		file_patterns: ["*.io"],
 		line_comments: ["//", "#"],
 		block_comments: [["/*", "*/"]],
+	},
+	"Ioke": {
+		file_patterns: ["*.ik"],
+		line_comments: [";"],
 	},
 	"Isabelle": {
 		file_patterns: ["*.thy"],
@@ -1001,6 +1105,16 @@
 	"Jinja2": {
 		file_patterns: ["*.j2", "*.jinja", "*.jinja2"],
 		block_comments: [["{#", "#}"]],
+	},
+	"Jolie": {
+		file_patterns: ["*.ol", "*.iol"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+	},
+	"Joy": {
+		file_patterns: ["*.joy"],
+		line_comments: ["#"],
+		block_comments: [["(*", "*)"]],
 	},
 	"jq": {
 		file_patterns: ["*.jq"],
@@ -1073,6 +1187,11 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
+	"Kitten": {
+		file_patterns: ["*.ktn"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+	},
 	"Koka": {
 		file_patterns: ["*.kk"],
 		line_comments: ["//"],
@@ -1102,6 +1221,11 @@
 		file_patterns: ["*.lalrpop"],
 		line_comments: ["//"],
 	},
+	"Lasso": {
+		file_patterns: ["*.lasso", "*.las", "*.lasso9"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+	},
 	"Lauterbach CMM": {
 		file_patterns: ["*.cmm"],
 		line_comments: [";"],
@@ -1126,10 +1250,25 @@
 		block_comments: [["/*", "*/"]],
 		keywords: ["%%", "yy", "BEGIN", "ECHO"],
 	},
+	"LFE": {
+		file_patterns: ["*.lfe"],
+		line_comments: [";"],
+		shebangs: ["#!/usr/bin/env lfe"],
+	},
+	"LIGO": {
+		file_patterns: ["*.ligo", "*.mligo", "*.jsligo", "*.religo"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"], ["(*", "*)"]],
+	},
 	"LilyPond": {
 		file_patterns: ["*.ly", "*.ily"],
 		line_comments: ["%"],
 		block_comments: [["%{", "%}"]],
+	},
+	"Limbo": {
+		file_patterns: ["*.b", "*.m"],
+		line_comments: ["#"],
+		keywords: ["implement", "include", "con", "fn", "adt", "Sys->print"],
 	},
 	"Lingua Franca": {
 		file_patterns: ["*.lf"],
@@ -1160,6 +1299,10 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
+	"Logo": {
+		file_patterns: ["*.logo", "*.lg"],
+		line_comments: [";"],
+	},
 	"Logtalk": {
 		file_patterns: ["*.lgt", "*.logtalk"],
 		line_comments: ["%"],
@@ -1169,6 +1312,17 @@
 		file_patterns: ["*.lol"],
 		line_comments: ["BTW"],
 		block_comments: [["OBTW", "TLDR"]],
+	},
+	"LPC": {
+		file_patterns: ["*.c"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+		keywords: ["inherit", "nomask", "varargs", "efun", "mixed", "mapping", "create", "init"],
+	},
+	"LSL": {
+		file_patterns: ["*.lsl"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
 	},
 	"Lua": {
 		file_patterns: ["*.lua", "*.wlua", "*.rockspec", ".luacheckrc"],
@@ -1181,6 +1335,10 @@
 		line_comments: ["--"],
 		block_comments: [["--[[", "]]"]],
 		shebangs: ["#!/usr/bin/env luau"],
+	},
+	"Lucid": {
+		file_patterns: ["*.luc"],
+		line_comments: ["%%"],
 	},
 	"M4": {
 		file_patterns: ["*.m4"],
@@ -1195,9 +1353,18 @@
 		file_patterns: ["*.mak", "*.make", "*.mk", "*.mkfile", "BSDmakefile", "GNUmakefile", "Kbuild", "Makefile", "Makefile.boot", "Makefile.frag", "Makefile.in", "Makefile.inc", "Makefile.wat", "makefile", "makefile.sco", "mkfile"],
 		line_comments: ["#"],
 	},
+	"Malbolge": {
+		file_patterns: ["*.mal", "*.malbolge"],
+	},
 	"MAML": {
 		file_patterns: ["*.maml"],
 		line_comments: ["#"],
+	},
+	"Maple": {
+		file_patterns: ["*.mpl", "*.mm"],
+		line_comments: ["#"],
+		block_comments: [["(*", "*)"]],
+		keywords: ["proc", "end proc", "module", "end module", "local", "global"],
 	},
 	"Markdown": {
 		file_patterns: ["*.md", "*.markdown", "*.mdx", "*.mdown", "*.mdwn", "*.mkd", "*.mkdn", "*.mkdown", "*.ronn"],
@@ -1254,6 +1421,11 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
+	"Michelson": {
+		file_patterns: ["*.tz"],
+		line_comments: ["#"],
+		block_comments: [["(*", "*)"]],
+	},
 	"Microsoft Developer Studio": {
 		file_patterns: ["*.dsp"],
 		line_comments: ["#"],
@@ -1261,6 +1433,11 @@
 	},
 	"Mint": {
 		file_patterns: ["*.mint"],
+	},
+	"Miranda": {
+		file_patterns: ["*.m"],
+		line_comments: ["||"],
+		keywords: ["abstype", "with", "where", "div", "mod", "otherwise", "type", "show"],
 	},
 	"Mlatu": {
 		file_patterns: ["*.mlt"],
@@ -1314,9 +1491,26 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
+	"MQL4": {
+		file_patterns: ["*.mq4", "*.mqh"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+		keywords: ["#property", "OrderSend", "iMA", "AccountBalance"],
+	},
+	"MQL5": {
+		file_patterns: ["*.mq5"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+		keywords: ["#property", "CTrade", "CPositionInfo", "input"],
+	},
 	"MSBuild": {
 		file_patterns: ["*.csproj", "*.vbproj", "*.fsproj", "*.props", "*.targets"],
 		block_comments: [["<!--", "-->"]],
+	},
+	"MUMPS": {
+		file_patterns: ["*.m", "*.mps"],
+		line_comments: [";"],
+		keywords: ["SET", "KILL", "QUIT", "FOR", "GOTO", "HALT", "WRITE", "READ", "^"],
 	},
 	"Mun": {
 		file_patterns: ["*.mun"],
@@ -1349,6 +1543,10 @@
 	"NEON": {
 		file_patterns: ["*.neon"],
 		line_comments: ["#"],
+	},
+	"Newspeak": {
+		file_patterns: ["*.ns", "*.ns2"],
+		block_comments: [["(*", "*)"]],
 	},
 	"Nextflow": {
 		file_patterns: ["*.nextflow", "*.nf"],
@@ -1389,6 +1587,11 @@
 		line_comments: [";", "#"],
 		block_comments: [["/*", "*/"]],
 	},
+	"Nu": {
+		file_patterns: ["*.nu"],
+		line_comments: [";"],
+		keywords: ["class", "imethod", "cmethod", "(global", "(set!", "(@"],
+	},
 	"NuGet Config": {
 		file_patterns: ["nuget.config", "packages.config", "nugetdefaults.config"],
 		block_comments: [["<!--", "-->"]],
@@ -1401,6 +1604,7 @@
 		file_patterns: ["*.nu"],
 		line_comments: ["#"],
 		shebangs: ["#!/usr/bin/env nu"],
+		keywords: ["def", "let", "mut", "if", "else", "for", "each", "where", "select", "open", "save"],
 	},
 	"nuspec": {
 		file_patterns: ["*.nuspec"],
@@ -1427,6 +1631,7 @@
 		file_patterns: ["*.mm"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		keywords: ["@interface", "@implementation", "@protocol", "@property", "@synthesize", "@end", "#import", "NSString", "class", "template"],
 	},
 	"Objective-J": {
 		file_patterns: ["*.j", "*.sj"],
@@ -1438,16 +1643,41 @@
 		block_comments: [["(*", "*)"]],
 		nested_blocks: true,
 	},
+	"Occam": {
+		file_patterns: ["*.occ"],
+		line_comments: ["--"],
+	},
+	"Octave": {
+		file_patterns: ["*.m"],
+		line_comments: ["#", "%"],
+		block_comments: [["#{", "#}"], ["%{", "%}"]],
+		keywords: ["function", "endfunction", "pkg", "pkg load"],
+	},
 	"Odin": {
 		file_patterns: ["*.odin"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
 	},
+	"ooc": {
+		file_patterns: ["*.ooc"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+	},
+	"Opa": {
+		file_patterns: ["*.opa"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+	},
 	"OpenCL": {
 		file_patterns: ["*.ocl", "*.cl"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["__kernel", "__global", "__local", "__constant", "get_global_id", "get_local_id", "barrier"],
+	},
+	"OpenEdge ABL": {
+		file_patterns: ["*.p", "*.w", "*.cls", "*.i"],
+		block_comments: [["/*", "*/"]],
+		keywords: ["DEFINE", "VARIABLE", "PROCEDURE", "FUNCTION", "END PROCEDURE", "RUN", "FOR EACH", "DO:"],
 	},
 	"OpenQASM": {
 		file_patterns: ["*.qasm"],
@@ -1467,14 +1697,30 @@
 		file_patterns: ["*.org"],
 		line_comments: ["#"],
 	},
+	"Oxygene": {
+		file_patterns: ["*.oxygene"],
+		line_comments: ["//"],
+		block_comments: [["(*", "*)"], ["{", "}"]],
+		nested_blocks: true,
+	},
 	"Oz": {
 		file_patterns: ["*.oz"],
 		line_comments: ["%"],
 		block_comments: [["/*", "*/"]],
 	},
+	"P4": {
+		file_patterns: ["*.p4", "*.p4i"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+	},
 	"Pan": {
 		file_patterns: ["*.pan"],
 		line_comments: ["#"],
+	},
+	"ParaSail": {
+		file_patterns: ["*.psl", "*.psi"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
 	},
 	"Pascal": {
 		file_patterns: ["*.pas", "*.pp", "*.p", "*.inc"],
@@ -1482,6 +1728,11 @@
 		block_comments: [["(*", "*)"], ["{", "}"]],
 		nested_blocks: true,
 		keywords: ["program", "begin", "end", "var", "procedure", "function", "uses"],
+	},
+	"PeopleCode": {
+		file_patterns: ["*.ppl", "*.peoplecode"],
+		line_comments: ["REM"],
+		block_comments: [["/*", "*/"]],
 	},
 	"Perl": {
 		file_patterns: ["*.pl", "*.al", "*.perl", "*.plx", "*.pm", "rexfile", "ack", "cpanfile", "cpanfile.snapshot"],
@@ -1499,10 +1750,17 @@
 		block_comments: [["/*", "*/"], ["<!--", "-->"]],
 		shebangs: ["#!/usr/bin/php", "#!/usr/bin/env php"],
 	},
+	"Pico": {
+		file_patterns: ["*.pico"],
+		line_comments: ["\\\\"],
+	},
 	"PicoLisp": {
 		file_patterns: ["*.l"],
 		line_comments: ["#"],
 		keywords: ["de", "def", "dm", "class", "rel", "var"],
+	},
+	"Piet": {
+		file_patterns: ["*.piet"],
 	},
 	"Pike": {
 		file_patterns: ["*.pike", "*.pmod"],
@@ -1523,6 +1781,15 @@
 	"Pkl": {
 		file_patterns: ["*.pkl"],
 		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+	},
+	"PL/I": {
+		file_patterns: ["*.pl1", "*.pli"],
+		block_comments: [["/*", "*/"]],
+	},
+	"PL/SQL": {
+		file_patterns: ["*.pls", "*.plb", "*.pck", "*.pkb", "*.pks", "*.plsql"],
+		line_comments: ["--"],
 		block_comments: [["/*", "*/"]],
 	},
 	"PlantUML": {
@@ -1556,6 +1823,11 @@
 	"PostScript": {
 		file_patterns: ["*.ps", "*.eps"],
 		line_comments: ["%"],
+	},
+	"PowerBuilder": {
+		file_patterns: ["*.pbl", "*.pbt", "*.pbw", "*.srd", "*.sru", "*.srw"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
 	},
 	"PowerShell": {
 		file_patterns: ["*.ps1", "*.psm1", "*.psd1", "*.ps1xml", "*.cdxml", "*.pssc", "*.psc1"],
@@ -1660,6 +1932,11 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
+	"Quorum": {
+		file_patterns: ["*.quorum"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+	},
 	"R": {
 		file_patterns: ["*.r", "*.R", "*.rmd", "*.Rmd", ".Rprofile"],
 		line_comments: ["#"],
@@ -1758,6 +2035,11 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
+	"RPG": {
+		file_patterns: ["*.rpg", "*.rpgle", "*.sqlrpgle", "*.rpgmod"],
+		line_comments: ["//"],
+		keywords: ["dcl-s", "dcl-ds", "dcl-pr", "dcl-proc", "end-proc"],
+	},
 	"Ruby": {
 		file_patterns: ["*.rb", "*.builder", "*.eye", "*.gemspec", "*.god", "*.jbuilder", "*.mspec", "*.pluginspec", "*.podspec", "*.rabl", "*.rake", "*.rbuild", "*.rbw", "*.rbx", "*.ruby", "*.thor", "*.watchr", ".irbrc", ".pryrc", "Appraisals", "Berksfile", "Brewfile", "Buildfile", "Capfile", "Dangerfile", "Deliverfile", "Fastfile", "Gemfile", "Guardfile", "Jarfile", "Mavenfile", "Podfile", "Puppetfile", "Rakefile", "Snapfile", "Thorfile"],
 		line_comments: ["#"],
@@ -1769,6 +2051,10 @@
 		line_comments: ["//", "///", "//!"],
 		block_comments: [["/*", "*/"], ["/**", "*/"], ["/*!", "*/"]],
 		nested_blocks: true,
+	},
+	"S-Lang": {
+		file_patterns: ["*.sl"],
+		line_comments: ["%"],
 	},
 	"SageMath": {
 		file_patterns: ["*.sage", "*.sagews"],
@@ -1799,6 +2085,10 @@
 		nested_blocks: true,
 		shebangs: ["#!/usr/bin/env guile", "#!/usr/bin/guile", "#!/usr/bin/env scheme"],
 	},
+	"Scilla": {
+		file_patterns: ["*.scilla"],
+		block_comments: [["(*", "*)"]],
+	},
 	"SCSS": {
 		file_patterns: ["*.scss"],
 		line_comments: ["//"],
@@ -1808,11 +2098,23 @@
 		file_patterns: ["*.sed"],
 		line_comments: ["#"],
 	},
+	"Seed7": {
+		file_patterns: ["*.s7i", "*.sd7"],
+		line_comments: ["#"],
+		block_comments: [["(*", "*)"]],
+	},
+	"Self": {
+		file_patterns: ["*.self"],
+		block_comments: [["\"", "\""]],
+	},
 	"ShaderLab": {
 		file_patterns: ["*.shader"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["Shader", "SubShader", "Pass", "Properties", "Tags"],
+	},
+	"Shakespeare": {
+		file_patterns: ["*.spl"],
 	},
 	"Shen": {
 		file_patterns: ["*.shen"],
@@ -1822,6 +2124,10 @@
 	"Sieve": {
 		file_patterns: ["*.sieve"],
 		line_comments: ["#"],
+	},
+	"SKILL": {
+		file_patterns: ["*.il", "*.ils"],
+		line_comments: [";"],
 	},
 	"Slim": {
 		file_patterns: ["*.slim"],
@@ -1835,6 +2141,7 @@
 	"Smalltalk": {
 		file_patterns: ["*.st"],
 		block_comments: [["\"", "\""]],
+		keywords: ["Object subclass:", "instanceVariableNames:", "classVariableNames:", "poolDictionaries:", "self", "super", "true", "false", "nil"],
 	},
 	"Smarty": {
 		file_patterns: ["*.tpl"],
@@ -1854,12 +2161,21 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
+	"SPARK": {
+		file_patterns: ["*.adb", "*.ads"],
+		line_comments: ["--"],
+		keywords: ["pragma SPARK_Mode", "Global", "Depends", "Pre =>", "Post =>", "Contract_Cases"],
+	},
 	"SPARQL": {
 		file_patterns: ["*.rq", "*.sparql"],
 		line_comments: ["#"],
 	},
 	"SpiderBasic": {
 		file_patterns: ["*.sb", "*.sbi", "*.sbf", "*.sbp"],
+		line_comments: [";"],
+	},
+	"SPIR-V": {
+		file_patterns: ["*.spvasm", "*.spv"],
 		line_comments: [";"],
 	},
 	"SQF": {
@@ -1891,7 +2207,7 @@
 	"Stanza": {
 		file_patterns: ["*.stanza"],
 		line_comments: [";"],
-		block_comments: [["<DOC>", "<DOC>"]],
+		block_comments: [["<doc>", "</doc>"]],
 	},
 	"Starlark": {
 		file_patterns: ["*.star"],
@@ -1901,6 +2217,12 @@
 		file_patterns: ["*.do"],
 		line_comments: ["//", "*"],
 		block_comments: [["/*", "*/"]],
+	},
+	"Structured Text": {
+		file_patterns: ["*.st", "*.scl"],
+		line_comments: ["//"],
+		block_comments: [["(*", "*)"]],
+		keywords: ["PROGRAM", "END_PROGRAM", "VAR", "END_VAR", "FUNCTION_BLOCK", "END_FUNCTION_BLOCK"],
 	},
 	"Stylus": {
 		file_patterns: ["*.styl"],
@@ -1937,6 +2259,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
+		keywords: ["%module", "%include", "%apply", "%typemap", "%inline", "%exception"],
 	},
 	"SystemVerilog": {
 		file_patterns: ["*.sv", "*.svh"],
@@ -1944,6 +2267,17 @@
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
 		keywords: ["logic", "modport", "interface", "typedef", "package", "virtual", "class", "constraint"],
+	},
+	"T-SQL": {
+		file_patterns: ["*.tsql"],
+		line_comments: ["--"],
+		block_comments: [["/*", "*/"]],
+	},
+	"TADS": {
+		file_patterns: ["*.t", "*.tl"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+		keywords: ["modify", "replace", "DefineAction", "VerbRule", "Thing", "gameMain"],
 	},
 	"TC Shell": {
 		file_patterns: ["*.tcsh"],
@@ -1958,6 +2292,7 @@
 		file_patterns: ["*.tl"],
 		line_comments: ["--"],
 		block_comments: [["--[[", "--]]"]],
+		keywords: ["local", "global", "record", "enum", "type", "function", "end", "require"],
 	},
 	"Templ": {
 		file_patterns: ["*.templ"],
@@ -1967,6 +2302,12 @@
 	"Tera": {
 		file_patterns: ["*.tera"],
 		block_comments: [["<!--", "-->"], ["{#", "#}"]],
+	},
+	"Terra": {
+		file_patterns: ["*.t"],
+		line_comments: ["--"],
+		block_comments: [["--[[", "]]"]],
+		keywords: ["terra", "struct", "quote", "escape", "import"],
 	},
 	"Terraform": {
 		file_patterns: ["*.tf", "*.tfvars", "*.tf.json", "*.tfvars.json"],
@@ -1999,6 +2340,12 @@
 		file_patterns: ["*.toml", "Cargo.lock", "poetry.lock", "Pipfile.lock"],
 		line_comments: ["#"],
 	},
+	"Turing": {
+		file_patterns: ["*.t", "*.tu"],
+		line_comments: ["%"],
+		block_comments: [["/*", "*/"]],
+		keywords: ["var", "put", "get", "loop", "exit", "proc", "fcn", "module"],
+	},
 	"Turtle": {
 		file_patterns: ["*.ttl"],
 		line_comments: ["#"],
@@ -2030,6 +2377,11 @@
 		file_patterns: ["*.um"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+	},
+	"Unicon": {
+		file_patterns: ["*.icn"],
+		line_comments: ["#"],
+		keywords: ["procedure", "method", "class", "end", "every", "suspend", "link"],
 	},
 	"Unison": {
 		file_patterns: ["*.u", "*.uu"],
@@ -2082,6 +2434,12 @@
 		keywords: ["module", "endmodule", "always", "assign", "posedge", "negedge", "wire", "reg"],
 		nested_blocks: true,
 	},
+	"Verilog-A": {
+		file_patterns: ["*.va", "*.vams"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+		keywords: ["analog", "electrical", "voltage", "current", "ddt", "idt", "branch"],
+	},
 	"VHDL": {
 		file_patterns: ["*.vhd", "*.vhdl"],
 		line_comments: ["--"],
@@ -2093,6 +2451,12 @@
 	"Visual Basic/Visual Basic .NET": {
 		file_patterns: ["*.vb", "*.cls", "*.frm", "*.frx", "*.vba", "*.vbhtml", "*.vbs"],
 		line_comments: ["'"],
+		keywords: ["Dim", "Sub", "Function", "End Sub", "End Function", "Private", "Public", "As", "If Then", "For Each"],
+	},
+	"Visual FoxPro": {
+		file_patterns: ["*.prg", "*.vcx", "*.scx", "*.pjx", "*.mnx", "*.dbf"],
+		line_comments: ["*", "&&"],
+		keywords: ["DO WHILE", "ENDDO", "SCAN", "ENDSCAN", "DEFINE CLASS", "ENDDEFINE", "PROCEDURE", "FUNCTION"],
 	},
 	"Vue": {
 		file_patterns: ["*.vue"],
@@ -2136,6 +2500,9 @@
 		line_comments: ["注曰", "//"],
 		block_comments: [["凡", "是謂"]],
 	},
+	"Whitespace": {
+		file_patterns: ["*.ws"],
+	},
 	"Windows Registry Entry": {
 		file_patterns: ["*.reg"],
 		line_comments: [";", "#"],
@@ -2157,6 +2524,16 @@
 	},
 	"Wren": {
 		file_patterns: ["*.wren"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+	},
+	"X++": {
+		file_patterns: ["*.xpp"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+	},
+	"X10": {
+		file_patterns: ["*.x10"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
@@ -2206,9 +2583,20 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
+	"Yorick": {
+		file_patterns: ["*.i"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+		keywords: ["func", "struct", "extern", "local", "include", "require"],
+	},
 	"ZenCode": {
 		file_patterns: ["*.zs"],
 		line_comments: ["//", "#"],
+		block_comments: [["/*", "*/"]],
+	},
+	"Zephir": {
+		file_patterns: ["*.zep"],
+		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
 	"Zig": {
@@ -2218,6 +2606,10 @@
 	"Ziggy": {
 		file_patterns: ["*.ziggy"],
 		line_comments: ["#"],
+	},
+	"ZIL": {
+		file_patterns: ["*.zil", "*.mud"],
+		line_comments: [";"],
 	},
 	"ZoKrates": {
 		file_patterns: ["*.zok"],
@@ -2232,5 +2624,5 @@
 		file_patterns: ["*.zsh", ".zlogin", ".zlogout", ".zprofile", ".zshenv", ".zshrc"],
 		line_comments: ["#"],
 		shebangs: ["#!/bin/zsh"],
-	},
+	}
 }
