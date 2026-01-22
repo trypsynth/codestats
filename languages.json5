@@ -2148,8 +2148,8 @@
 	},
 	"WIT": {
 		file_patterns: ["*.wit"],
-		line_comments: [";;"],
-		block_comments: [["(;", ";)"]],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
 	},
 	"WiX": {
 		file_patterns: ["*.wxs"],
