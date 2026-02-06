@@ -23,7 +23,7 @@ all-formats = ["html", "markdown"]
 
 [dependencies]
 aho-corasick = "1.1.4"
-anyhow = "1.0.100"
+anyhow = "1.0.101"
 askama = { version = "0.15.4", optional = true }
 clap = { version = "4.5.57", default-features = false, features = ["std", "derive", "help", "usage", "wrap_help"] }
 clap_complete = "4.5.65"
