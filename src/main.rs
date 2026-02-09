@@ -6,6 +6,7 @@ mod cli;
 mod completions;
 mod config;
 mod display;
+mod init;
 mod langs;
 
 use std::io::{self, Write as _};
@@ -33,6 +34,10 @@ fn main() -> Result<()> {
 				let terminal_width = terminal_size().map_or(80, |(w, _)| usize::from(w.0));
 				langs::print_all_languages(&mut stdout, terminal_width)?;
 				stdout.flush()?;
+				return Ok(());
+			}
+			Commands::Init { output, force } => {
+				init::run_init(output, force)?;
 				return Ok(());
 			}
 		}

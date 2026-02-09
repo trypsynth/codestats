@@ -28,6 +28,15 @@ pub enum Commands {
 	},
 	/// List all supported programming languages
 	Langs,
+	/// Generate a default configuration file
+	Init {
+		/// Output path for the configuration file [default: .codestats.toml]
+		#[arg(short, long)]
+		output: Option<PathBuf>,
+		/// Overwrite the file if it already exists
+		#[arg(short, long)]
+		force: bool,
+	},
 }
 
 /// Arguments for the main code analysis functionality
