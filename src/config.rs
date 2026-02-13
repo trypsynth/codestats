@@ -252,3 +252,87 @@ impl From<&Config> for ViewOptions {
 		}
 	}
 }
+
+#[cfg(test)]
+mod tests {
+	use std::{
+		env, fs,
+		time::{SystemTime, UNIX_EPOCH},
+	};
+
+	use clap::{CommandFactory, FromArgMatches};
+
+	use super::*;
+	use crate::cli::{AnalyzeArgs, Cli};
+
+	fn parse_cli(args: &[&str]) -> (AnalyzeArgs, ArgMatches) {
+		let matches = Cli::command().get_matches_from(args);
+		let cli = Cli::from_arg_matches(&matches).expect("clap already validated arguments");
+		(cli.analyze, matches)
+	}
+
+	fn write_config(contents: &str) -> PathBuf {
+		let unique = SystemTime::now().duration_since(UNIX_EPOCH).expect("system time is set").as_nanos();
+		let root = env::temp_dir().join(format!("codestats_config_test_{}_{}", std::process::id(), unique));
+		fs::create_dir_all(&root).expect("create temp dir");
+		let path = root.join("config.toml");
+		fs::write(&path, contents).expect("write temp config");
+		path
+	}
+
+	#[test]
+	fn merge_resolves_config_relative_path() {
+		let config_path = write_config("path = \"fixtures\"\n");
+		let config = Config::from_file(&config_path).expect("load config");
+		let (args, matches) = parse_cli(&["cs"]);
+		let merged = config.merge_with_cli(&args, &matches).expect("merge config");
+		let expected = config_path.parent().expect("config parent").join("fixtures");
+		assert_eq!(merged.path, expected);
+	}
+
+	#[test]
+	fn merge_preserves_cli_path_override() {
+		let config_path = write_config("path = \"fixtures\"\n");
+		let config = Config::from_file(&config_path).expect("load config");
+		let (args, matches) = parse_cli(&["cs", "custom-path"]);
+		let merged = config.merge_with_cli(&args, &matches).expect("merge config");
+		assert_eq!(merged.path, PathBuf::from("custom-path"));
+	}
+
+	#[test]
+	fn merge_clamps_precision() {
+		let config_path = write_config("[display]\nprecision = 9\n");
+		let config = Config::from_file(&config_path).expect("load config");
+		let (args, matches) = parse_cli(&["cs"]);
+		let merged = config.merge_with_cli(&args, &matches).expect("merge config");
+		assert_eq!(merged.display.precision, 6);
+	}
+
+	#[test]
+	fn merge_extends_exclude_patterns_from_cli() {
+		let config_path = write_config("[analysis]\nexclude_patterns = [\"target\"]\n");
+		let config = Config::from_file(&config_path).expect("load config");
+		let (args, matches) = parse_cli(&["cs", "--exclude", "node_modules"]);
+		let merged = config.merge_with_cli(&args, &matches).expect("merge config");
+		assert_eq!(merged.analysis.exclude_patterns, vec!["target".to_string(), "node_modules".to_string()]);
+	}
+
+	#[test]
+	fn merge_rejects_conflicting_language_filters() {
+		let config_path = write_config("[analysis]\ninclude_languages = [\"Rust\"]\n");
+		let config = Config::from_file(&config_path).expect("load config");
+		let (args, matches) = parse_cli(&["cs", "--exclude-lang", "python"]);
+		let err = config.merge_with_cli(&args, &matches).expect_err("conflicting language filters");
+		assert_eq!(err.to_string(), "Config cannot set both include_languages and exclude_languages");
+	}
+
+	#[test]
+	fn merge_applies_boolean_overrides() {
+		let config_path = write_config("[analysis]\nrespect_gitignore = true\ninclude_hidden = false\n");
+		let config = Config::from_file(&config_path).expect("load config");
+		let (args, matches) = parse_cli(&["cs", "--no-gitignore", "--hidden"]);
+		let merged = config.merge_with_cli(&args, &matches).expect("merge config");
+		assert!(!merged.analysis.respect_gitignore);
+		assert!(merged.analysis.include_hidden);
+	}
+}

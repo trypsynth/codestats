@@ -360,3 +360,51 @@ impl_formatters!(FileRecord<'_> {
 	format_shebang_lines => shebang_lines : number,
 	format_size => size : number,
 });
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use crate::display::{formatting::FormatterContext, options::ViewOptions};
+
+	#[test]
+	fn summary_line_breakdown_parts_skip_zero() {
+		let summary = Summary {
+			total_files: 1,
+			total_lines: 10,
+			total_code_lines: 5,
+			total_comment_lines: 2,
+			total_blank_lines: 3,
+			total_shebang_lines: 0,
+			total_size: 0,
+			total_size_human: "0 B".to_string(),
+			code_percentage: 50.0,
+			comment_percentage: 20.0,
+			blank_percentage: 30.0,
+			shebang_percentage: 0.0,
+		};
+		let ctx = FormatterContext::new(ViewOptions::default());
+		let parts = summary.line_breakdown_parts(true, &ctx);
+		assert_eq!(parts, vec!["5 code lines", "2 comment lines", "3 blank lines"]);
+	}
+
+	#[test]
+	fn summary_percentage_parts_skip_zero() {
+		let summary = Summary {
+			total_files: 1,
+			total_lines: 10,
+			total_code_lines: 5,
+			total_comment_lines: 2,
+			total_blank_lines: 3,
+			total_shebang_lines: 0,
+			total_size: 0,
+			total_size_human: "0 B".to_string(),
+			code_percentage: 50.0,
+			comment_percentage: 20.0,
+			blank_percentage: 30.0,
+			shebang_percentage: 0.0,
+		};
+		let ctx = FormatterContext::new(ViewOptions::default());
+		let parts = summary.percentage_parts(&ctx);
+		assert_eq!(parts, vec!["50.0% code", "20.0% comments", "30.0% blanks"]);
+	}
+}

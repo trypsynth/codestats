@@ -57,10 +57,7 @@ pub fn run_init(output: Option<PathBuf>, force: bool) -> Result<()> {
 	let path = output.unwrap_or_else(|| PathBuf::from(DEFAULT_CONFIG_PATH));
 
 	if !force && Path::new(&path).exists() {
-		bail!(
-			"File `{}` already exists. Use --force to overwrite.",
-			path.display()
-		);
+		bail!("File `{}` already exists. Use --force to overwrite.", path.display());
 	}
 
 	std::fs::write(&path, DEFAULT_CONFIG_TEMPLATE)?;

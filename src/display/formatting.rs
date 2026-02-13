@@ -251,48 +251,28 @@ mod tests {
 	#[test]
 	fn test_apply_sort_ascending() {
 		let mut items = vec![3u64, 1, 4, 1, 5];
-		apply_sort(
-			&mut items,
-			SortDirection::Asc,
-			|x| SortValue::Num(*x),
-			|_, _| Ordering::Equal,
-		);
+		apply_sort(&mut items, SortDirection::Asc, |x| SortValue::Num(*x), |_, _| Ordering::Equal);
 		assert_eq!(items, vec![1, 1, 3, 4, 5]);
 	}
 
 	#[test]
 	fn test_apply_sort_descending() {
 		let mut items = vec![3u64, 1, 4, 1, 5];
-		apply_sort(
-			&mut items,
-			SortDirection::Desc,
-			|x| SortValue::Num(*x),
-			|_, _| Ordering::Equal,
-		);
+		apply_sort(&mut items, SortDirection::Desc, |x| SortValue::Num(*x), |_, _| Ordering::Equal);
 		assert_eq!(items, vec![5, 4, 3, 1, 1]);
 	}
 
 	#[test]
 	fn test_apply_sort_with_tiebreaker() {
 		let mut items = vec![("b", 1u64), ("a", 1), ("c", 2)];
-		apply_sort(
-			&mut items,
-			SortDirection::Asc,
-			|(_, n)| SortValue::Num(*n),
-			|(a, _), (b, _)| a.cmp(b),
-		);
+		apply_sort(&mut items, SortDirection::Asc, |(_, n)| SortValue::Num(*n), |(a, _), (b, _)| a.cmp(b));
 		assert_eq!(items, vec![("a", 1), ("b", 1), ("c", 2)]);
 	}
 
 	#[test]
 	fn test_apply_sort_text() {
 		let mut items = vec!["banana", "apple", "cherry"];
-		apply_sort(
-			&mut items,
-			SortDirection::Asc,
-			|s| SortValue::Text(s),
-			|_, _| Ordering::Equal,
-		);
+		apply_sort(&mut items, SortDirection::Asc, |s| SortValue::Text(s), |_, _| Ordering::Equal);
 		assert_eq!(items, vec!["apple", "banana", "cherry"]);
 	}
 

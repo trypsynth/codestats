@@ -158,3 +158,20 @@ impl HumanFormatter {
 		Ok(())
 	}
 }
+
+#[cfg(test)]
+mod tests {
+	use super::join_with_commas_and;
+
+	#[test]
+	fn join_with_commas_and_formats_lists() {
+		let empty: Vec<String> = Vec::new();
+		assert!(join_with_commas_and(&empty).is_none());
+		let single = vec!["alpha".to_string()];
+		assert_eq!(join_with_commas_and(&single).as_deref(), Some("alpha"));
+		let pair = vec!["alpha".to_string(), "beta".to_string()];
+		assert_eq!(join_with_commas_and(&pair).as_deref(), Some("alpha and beta"));
+		let triple = vec!["alpha".to_string(), "beta".to_string(), "gamma".to_string()];
+		assert_eq!(join_with_commas_and(&triple).as_deref(), Some("alpha, beta, and gamma"));
+	}
+}
