@@ -206,96 +206,49 @@ fn drain_lines(
 
 #[cfg(test)]
 mod tests {
+	use rstest::rstest;
+
 	use super::*;
 
-	#[test]
-	fn non_utf8_text_is_not_flagged_as_binary() {
-		let encoding = FileEncoding { encoding: UTF_8, bom_len: 0 };
-		let sample = [0xC3, 0x28, b'a', b'b'];
-		assert!(!is_probably_binary(&sample, encoding));
+	#[rstest]
+	#[case::non_utf8_text_is_not_flagged_as_binary(UTF_8, 0, vec![0xC3, 0x28, b'a', b'b'], false)]
+	#[case::null_bytes_are_flagged_as_binary(UTF_8, 0, vec![0x00, b'a', b'b', b'c'], true)]
+	#[case::empty_sample_is_not_binary(UTF_8, 0, vec![], false)]
+	#[case::utf16_is_never_binary(UTF_16LE, 0, vec![0x00, 0x00, 0x00, 0x00], false)]
+	#[case::high_control_chars_flagged_binary(UTF_8, 0, vec![0x01, 0x02, 0x03, b'a', b'b', b'c', b'd', b'e', b'f', b'g'], true)]
+	fn test_is_probably_binary(
+		#[case] encoding: &'static Encoding,
+		#[case] bom_len: usize,
+		#[case] sample: Vec<u8>,
+		#[case] expected: bool,
+	) {
+		let file_encoding = FileEncoding { encoding, bom_len };
+		assert_eq!(is_probably_binary(&sample, file_encoding), expected);
 	}
 
-	#[test]
-	fn null_bytes_are_flagged_as_binary() {
-		let encoding = FileEncoding { encoding: UTF_8, bom_len: 0 };
-		let sample = [0x00, b'a', b'b', b'c'];
-		assert!(is_probably_binary(&sample, encoding));
+	#[rstest]
+	#[case::detect_utf16_le_without_bom(vec![b'a', 0x00, b'b', 0x00, b'c', 0x00, b'd', 0x00], UTF_16LE, 0)]
+	#[case::detect_utf16_be_without_bom(vec![0x00, b'a', 0x00, b'b', 0x00, b'c', 0x00, b'd'], UTF_16BE, 0)]
+	#[case::detect_utf8_bom(vec![0xEF, 0xBB, 0xBF, b'h', b'e', b'l', b'l', b'o'], UTF_8, 3)]
+	#[case::detect_utf16_le_bom(vec![0xFF, 0xFE, b'h', 0x00, b'e', 0x00], UTF_16LE, 2)]
+	#[case::detect_utf16_be_bom(vec![0xFE, 0xFF, 0x00, b'h', 0x00, b'e'], UTF_16BE, 2)]
+	#[case::detect_plain_utf8_default(b"hello world".to_vec(), UTF_8, 0)]
+	fn test_detect_encoding(
+		#[case] sample: Vec<u8>,
+		#[case] expected_encoding: &'static Encoding,
+		#[case] expected_bom_len: usize,
+	) {
+		let result = detect_encoding(&sample);
+		assert_eq!(result.encoding, expected_encoding);
+		assert_eq!(result.bom_len, expected_bom_len);
 	}
 
-	#[test]
-	fn detect_utf16_le_without_bom() {
-		let sample = [b'a', 0x00, b'b', 0x00, b'c', 0x00, b'd', 0x00];
-		let encoding = detect_encoding(&sample);
-		assert_eq!(encoding.encoding, UTF_16LE);
-		assert_eq!(encoding.bom_len, 0);
-	}
-
-	#[test]
-	fn detect_utf16_be_without_bom() {
-		let sample = [0x00, b'a', 0x00, b'b', 0x00, b'c', 0x00, b'd'];
-		let encoding = detect_encoding(&sample);
-		assert_eq!(encoding.encoding, UTF_16BE);
-		assert_eq!(encoding.bom_len, 0);
-	}
-
-	#[test]
-	fn detect_utf8_bom() {
-		let sample = [0xEF, 0xBB, 0xBF, b'h', b'e', b'l', b'l', b'o'];
-		let encoding = detect_encoding(&sample);
-		assert_eq!(encoding.encoding, UTF_8);
-		assert_eq!(encoding.bom_len, 3);
-	}
-
-	#[test]
-	fn detect_utf16_le_bom() {
-		let sample = [0xFF, 0xFE, b'h', 0x00, b'e', 0x00];
-		let encoding = detect_encoding(&sample);
-		assert_eq!(encoding.encoding, UTF_16LE);
-		assert_eq!(encoding.bom_len, 2);
-	}
-
-	#[test]
-	fn detect_utf16_be_bom() {
-		let sample = [0xFE, 0xFF, 0x00, b'h', 0x00, b'e'];
-		let encoding = detect_encoding(&sample);
-		assert_eq!(encoding.encoding, UTF_16BE);
-		assert_eq!(encoding.bom_len, 2);
-	}
-
-	#[test]
-	fn detect_plain_utf8_default() {
-		let sample = b"hello world";
-		let encoding = detect_encoding(sample);
-		assert_eq!(encoding.encoding, UTF_8);
-		assert_eq!(encoding.bom_len, 0);
-	}
-
-	#[test]
-	fn empty_sample_is_not_binary() {
-		let encoding = FileEncoding { encoding: UTF_8, bom_len: 0 };
-		assert!(!is_probably_binary(&[], encoding));
-	}
-
-	#[test]
-	fn utf16_is_never_binary() {
-		let encoding = FileEncoding { encoding: UTF_16LE, bom_len: 0 };
-		let sample = [0x00, 0x00, 0x00, 0x00]; // all nulls
-		assert!(!is_probably_binary(&sample, encoding));
-	}
-
-	#[test]
-	fn high_control_chars_flagged_binary() {
-		let encoding = FileEncoding { encoding: UTF_8, bom_len: 0 };
-		// Over 20% control chars
-		let sample = [0x01, 0x02, 0x03, b'a', b'b', b'c', b'd', b'e', b'f', b'g'];
-		assert!(is_probably_binary(&sample, encoding));
-	}
-
-	#[test]
-	fn is_utf16_check() {
-		assert!(is_utf16(UTF_16LE));
-		assert!(is_utf16(UTF_16BE));
-		assert!(!is_utf16(UTF_8));
+	#[rstest]
+	#[case::utf16_le(UTF_16LE, true)]
+	#[case::utf16_be(UTF_16BE, true)]
+	#[case::utf8(UTF_8, false)]
+	fn test_is_utf16(#[case] encoding: &'static Encoding, #[case] expected: bool) {
+		assert_eq!(is_utf16(encoding), expected);
 	}
 
 	#[test]

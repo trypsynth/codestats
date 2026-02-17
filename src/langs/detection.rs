@@ -124,6 +124,8 @@ pub fn detect_language_info(filename: &str, content: Option<&str>) -> Option<&'s
 
 #[cfg(test)]
 mod tests {
+	use rstest::rstest;
+
 	use super::*;
 
 	const TEST_LANGUAGE_ALPHA: Language = Language {
@@ -202,65 +204,31 @@ mod tests {
 		assert_eq!(language.name, "B");
 	}
 
-	#[test]
-	fn tokenize_splits_on_non_alphanumeric() {
-		let tokens: Vec<_> = tokenize("hello_world foo-bar").collect();
-		assert_eq!(tokens, vec!["hello_world", "foo", "bar"]);
+	#[rstest]
+	#[case::splits_on_non_alnum("hello_world foo-bar", vec!["hello_world", "foo", "bar"])]
+	#[case::empty("", vec![])]
+	#[case::only_delimiters("!@#$%^&*()", vec![])]
+	#[case::preserves_underscores("__init__ __main__", vec!["__init__", "__main__"])]
+	fn test_tokenize(#[case] input: &str, #[case] expected: Vec<&str>) {
+		let tokens: Vec<_> = tokenize(input).collect();
+		assert_eq!(tokens, expected);
 	}
 
-	#[test]
-	fn tokenize_handles_empty_string() {
-		assert!(tokenize("").next().is_none());
+	#[rstest]
+	#[case::removes_space("#! /usr/bin/env python", "#!/usr/bin/env python")]
+	#[case::leaves_compact_unchanged("#!/bin/bash", "#!/bin/bash")]
+	fn test_normalize_shebang(#[case] input: &str, #[case] expected: &str) {
+		assert_eq!(&*normalize_shebang(input), expected);
 	}
 
-	#[test]
-	fn tokenize_handles_only_delimiters() {
-		assert!(tokenize("!@#$%^&*()").next().is_none());
-	}
-
-	#[test]
-	fn tokenize_preserves_underscores() {
-		let tokens: Vec<_> = tokenize("__init__ __main__").collect();
-		assert_eq!(tokens, vec!["__init__", "__main__"]);
-	}
-
-	#[test]
-	fn normalize_shebang_removes_space() {
-		let result = normalize_shebang("#! /usr/bin/env python");
-		assert_eq!(&*result, "#!/usr/bin/env python");
-	}
-
-	#[test]
-	fn normalize_shebang_leaves_compact_unchanged() {
-		let result = normalize_shebang("#!/bin/bash");
-		assert_eq!(&*result, "#!/bin/bash");
-	}
-
-	#[test]
-	fn detect_from_shebang_finds_python() {
-		let content = "#!/usr/bin/env python3\nprint('hello')";
-		let lang = detect_from_shebang(content);
-		assert!(lang.is_some());
-		assert_eq!(lang.unwrap().name, "Python");
-	}
-
-	#[test]
-	fn detect_from_shebang_finds_bash() {
-		let content = "#!/bin/bash\necho hello";
-		let lang = detect_from_shebang(content);
-		assert!(lang.is_some());
-		assert_eq!(lang.unwrap().name, "Bash");
-	}
-
-	#[test]
-	fn detect_from_shebang_returns_none_without_shebang() {
-		let content = "print('hello')\n# not a shebang";
-		assert!(detect_from_shebang(content).is_none());
-	}
-
-	#[test]
-	fn detect_from_shebang_handles_empty() {
-		assert!(detect_from_shebang("").is_none());
+	#[rstest]
+	#[case::python("#!/usr/bin/env python3\nprint('hello')", Some("Python"))]
+	#[case::bash("#!/bin/bash\necho hello", Some("Bash"))]
+	#[case::no_shebang("print('hello')\n# not a shebang", None)]
+	#[case::empty("", None)]
+	fn test_detect_from_shebang(#[case] content: &str, #[case] expected_name: Option<&str>) {
+		let result = detect_from_shebang(content);
+		assert_eq!(result.map(|l| l.name), expected_name);
 	}
 
 	#[test]

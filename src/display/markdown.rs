@@ -1,4 +1,6 @@
-#![allow(clippy::unnecessary_wraps)]
+#![expect(clippy::unnecessary_wraps)]
+// The askama `#[filter_fn]` macro generates code that triggers these lints.
+#![allow(clippy::inline_always, clippy::unused_self)]
 
 use std::{io::Write, path::Path};
 

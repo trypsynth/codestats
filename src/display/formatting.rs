@@ -164,88 +164,60 @@ pub enum SortValue<'a> {
 
 #[cfg(test)]
 mod tests {
+	use rstest::rstest;
+
 	use super::*;
 
-	#[test]
-	fn test_pluralize() {
-		assert_eq!(pluralize(1, "file", "files"), "file");
-		assert_eq!(pluralize(0, "file", "files"), "files");
-		assert_eq!(pluralize(2, "file", "files"), "files");
-		assert_eq!(pluralize(1, "child", "children"), "child");
-		assert_eq!(pluralize(5, "child", "children"), "children");
+	#[rstest]
+	#[case(NumberStyle::Plain, 0, "0")]
+	#[case(NumberStyle::Plain, 1_234_567, "1234567")]
+	#[case(NumberStyle::Comma, 0, "0")]
+	#[case(NumberStyle::Comma, 999, "999")]
+	#[case(NumberStyle::Comma, 1000, "1,000")]
+	#[case(NumberStyle::Comma, 1_234_567, "1,234,567")]
+	#[case(NumberStyle::Underscore, 1_234_567, "1_234_567")]
+	#[case(NumberStyle::Space, 1_234_567, "1 234 567")]
+	fn test_number_formatter(#[case] style: NumberStyle, #[case] value: u64, #[case] expected: &str) {
+		let fmt = NumberFormatter::new(style);
+		assert_eq!(fmt.format(value), expected);
 	}
 
-	#[test]
-	fn test_number_formatter_plain() {
-		let fmt = NumberFormatter::new(NumberStyle::Plain);
-		assert_eq!(fmt.format(0), "0");
-		assert_eq!(fmt.format(1_234_567), "1234567");
-	}
-
-	#[test]
-	fn test_number_formatter_comma() {
-		let fmt = NumberFormatter::new(NumberStyle::Comma);
-		assert_eq!(fmt.format(0), "0");
-		assert_eq!(fmt.format(999), "999");
-		assert_eq!(fmt.format(1000), "1,000");
-		assert_eq!(fmt.format(1_234_567), "1,234,567");
-	}
-
-	#[test]
-	fn test_number_formatter_underscore() {
-		let fmt = NumberFormatter::new(NumberStyle::Underscore);
-		assert_eq!(fmt.format(1_234_567), "1_234_567");
-	}
-
-	#[test]
-	fn test_number_formatter_space() {
-		let fmt = NumberFormatter::new(NumberStyle::Space);
-		assert_eq!(fmt.format(1_234_567), "1 234 567");
-	}
-
-	#[test]
-	fn test_size_formatter_binary_bytes() {
+	#[rstest]
+	#[case(SizeStyle::Binary, 0, "0 B")]
+	#[case(SizeStyle::Binary, 512, "512 B")]
+	#[case(SizeStyle::Binary, 1023, "1023 B")]
+	#[case(SizeStyle::Binary, 1024, "1.00 KiB")]
+	#[case(SizeStyle::Binary, 1536, "1.50 KiB")]
+	#[case(SizeStyle::Binary, 10240, "10.0 KiB")]
+	#[case(SizeStyle::Binary, 102_400, "100 KiB")]
+	#[case(SizeStyle::Binary, 1024 * 1024, "1.00 MiB")]
+	#[case(SizeStyle::Binary, 5 * 1024 * 1024, "5.00 MiB")]
+	#[case(SizeStyle::Decimal, 1000, "1.00 KB")]
+	#[case(SizeStyle::Decimal, 1500, "1.50 KB")]
+	#[case(SizeStyle::Decimal, 1_000_000, "1.00 MB")]
+	fn test_size_formatter(#[case] style: SizeStyle, #[case] bytes: u64, #[case] expected: &str) {
 		let num = NumberFormatter::new(NumberStyle::Plain);
-		let fmt = SizeFormatter::new(SizeStyle::Binary, num);
-		assert_eq!(fmt.format(0), "0 B");
-		assert_eq!(fmt.format(512), "512 B");
-		assert_eq!(fmt.format(1023), "1023 B");
+		let fmt = SizeFormatter::new(style, num);
+		assert_eq!(fmt.format(bytes), expected);
 	}
 
-	#[test]
-	fn test_size_formatter_binary_kib() {
-		let num = NumberFormatter::new(NumberStyle::Plain);
-		let fmt = SizeFormatter::new(SizeStyle::Binary, num);
-		assert_eq!(fmt.format(1024), "1.00 KiB");
-		assert_eq!(fmt.format(1536), "1.50 KiB");
-		assert_eq!(fmt.format(10240), "10.0 KiB");
-		assert_eq!(fmt.format(102_400), "100 KiB");
+	#[rstest]
+	#[case(2, 50.0, "50.00")]
+	#[case(2, 33.333, "33.33")]
+	#[case(0, 99.9, "100")]
+	fn test_percent_formatter(#[case] precision: u8, #[case] value: f64, #[case] expected: &str) {
+		let fmt = PercentFormatter::new(precision);
+		assert_eq!(fmt.format(value), expected);
 	}
 
-	#[test]
-	fn test_size_formatter_binary_mib() {
-		let num = NumberFormatter::new(NumberStyle::Plain);
-		let fmt = SizeFormatter::new(SizeStyle::Binary, num);
-		assert_eq!(fmt.format(1024 * 1024), "1.00 MiB");
-		assert_eq!(fmt.format(5 * 1024 * 1024), "5.00 MiB");
-	}
-
-	#[test]
-	fn test_size_formatter_decimal() {
-		let num = NumberFormatter::new(NumberStyle::Plain);
-		let fmt = SizeFormatter::new(SizeStyle::Decimal, num);
-		assert_eq!(fmt.format(1000), "1.00 KB");
-		assert_eq!(fmt.format(1500), "1.50 KB");
-		assert_eq!(fmt.format(1_000_000), "1.00 MB");
-	}
-
-	#[test]
-	fn test_percent_formatter() {
-		let fmt = PercentFormatter::new(2);
-		assert_eq!(fmt.format(50.0), "50.00");
-		assert_eq!(fmt.format(33.333), "33.33");
-		let fmt0 = PercentFormatter::new(0);
-		assert_eq!(fmt0.format(99.9), "100");
+	#[rstest]
+	#[case(1, "file", "files", "file")]
+	#[case(0, "file", "files", "files")]
+	#[case(2, "file", "files", "files")]
+	#[case(1, "child", "children", "child")]
+	#[case(5, "child", "children", "children")]
+	fn test_pluralize(#[case] count: u64, #[case] singular: &str, #[case] plural: &str, #[case] expected: &str) {
+		assert_eq!(pluralize(count, singular, plural), expected);
 	}
 
 	#[test]

@@ -227,21 +227,30 @@ fn process_file_mmap(
 
 #[cfg(test)]
 mod tests {
+	use rstest::rstest;
+
 	use super::*;
 
-	#[test]
-	fn test_sample_ranges_small_file() {
-		// File smaller than SAMPLE_SIZE (4096)
-		let (start_len, mid) = sample_ranges(100);
-		assert_eq!(start_len, 100);
-		assert!(mid.is_none());
+	#[rstest]
+	#[case::empty(b"" as &[u8], vec![])]
+	#[case::single_no_newline(b"hello" as &[u8], vec![b"hello".to_vec()])]
+	#[case::single_with_newline(b"hello\n" as &[u8], vec![b"hello\n".to_vec()])]
+	#[case::multiple(b"line1\nline2\nline3" as &[u8], vec![b"line1\n".to_vec(), b"line2\n".to_vec(), b"line3".to_vec()])]
+	#[case::crlf(b"line1\r\nline2\r\n" as &[u8], vec![b"line1\r\n".to_vec(), b"line2\r\n".to_vec()])]
+	fn test_mmap_line_source(#[case] data: &[u8], #[case] expected: Vec<Vec<u8>>) {
+		let mut source = MmapLineSource::new(data);
+		let mut lines = Vec::new();
+		source.for_each_line(&mut |line| lines.push(line.to_vec())).unwrap();
+		assert_eq!(lines, expected);
 	}
 
-	#[test]
-	fn test_sample_ranges_exact_sample_size() {
-		let (start_len, mid) = sample_ranges(SAMPLE_SIZE as u64);
-		assert_eq!(start_len, SAMPLE_SIZE);
-		assert!(mid.is_none());
+	#[rstest]
+	#[case::small(100, 100, true)]
+	#[case::exact(SAMPLE_SIZE as u64, SAMPLE_SIZE, true)]
+	fn test_sample_ranges_no_mid(#[case] file_len: u64, #[case] expected_start: usize, #[case] mid_is_none: bool) {
+		let (start_len, mid) = sample_ranges(file_len);
+		assert_eq!(start_len, expected_start);
+		assert_eq!(mid.is_none(), mid_is_none);
 	}
 
 	#[test]
@@ -275,58 +284,6 @@ mod tests {
 		assert!(samples.len() <= SAMPLE_SIZE * 2);
 		// First SAMPLE_SIZE bytes should match
 		assert_eq!(&samples[..SAMPLE_SIZE], &data[..SAMPLE_SIZE]);
-	}
-
-	#[test]
-	fn test_mmap_line_source_empty() {
-		let data: &[u8] = b"";
-		let mut source = MmapLineSource::new(data);
-		let mut lines = Vec::new();
-		source.for_each_line(&mut |line| lines.push(line.to_vec())).unwrap();
-		assert!(lines.is_empty());
-	}
-
-	#[test]
-	fn test_mmap_line_source_single_line_no_newline() {
-		let data = b"hello";
-		let mut source = MmapLineSource::new(data);
-		let mut lines = Vec::new();
-		source.for_each_line(&mut |line| lines.push(line.to_vec())).unwrap();
-		assert_eq!(lines.len(), 1);
-		assert_eq!(lines[0], b"hello");
-	}
-
-	#[test]
-	fn test_mmap_line_source_single_line_with_newline() {
-		let data = b"hello\n";
-		let mut source = MmapLineSource::new(data);
-		let mut lines = Vec::new();
-		source.for_each_line(&mut |line| lines.push(line.to_vec())).unwrap();
-		assert_eq!(lines.len(), 1);
-		assert_eq!(lines[0], b"hello\n");
-	}
-
-	#[test]
-	fn test_mmap_line_source_multiple_lines() {
-		let data = b"line1\nline2\nline3";
-		let mut source = MmapLineSource::new(data);
-		let mut lines = Vec::new();
-		source.for_each_line(&mut |line| lines.push(line.to_vec())).unwrap();
-		assert_eq!(lines.len(), 3);
-		assert_eq!(lines[0], b"line1\n");
-		assert_eq!(lines[1], b"line2\n");
-		assert_eq!(lines[2], b"line3");
-	}
-
-	#[test]
-	fn test_mmap_line_source_crlf() {
-		let data = b"line1\r\nline2\r\n";
-		let mut source = MmapLineSource::new(data);
-		let mut lines = Vec::new();
-		source.for_each_line(&mut |line| lines.push(line.to_vec())).unwrap();
-		assert_eq!(lines.len(), 2);
-		assert_eq!(lines[0], b"line1\r\n");
-		assert_eq!(lines[1], b"line2\r\n");
 	}
 
 	#[test]

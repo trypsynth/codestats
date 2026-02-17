@@ -407,4 +407,115 @@ mod tests {
 		let parts = summary.percentage_parts(&ctx);
 		assert_eq!(parts, vec!["50.0% code", "20.0% comments", "30.0% blanks"]);
 	}
+
+	#[test]
+	fn summary_metrics_returns_all_fields() {
+		let summary = Summary {
+			total_files: 10,
+			total_lines: 100,
+			total_code_lines: 60,
+			total_comment_lines: 20,
+			total_blank_lines: 15,
+			total_shebang_lines: 5,
+			total_size: 4096,
+			total_size_human: "4.0 KiB".to_string(),
+			code_percentage: 60.0,
+			comment_percentage: 20.0,
+			blank_percentage: 15.0,
+			shebang_percentage: 5.0,
+		};
+		let metrics: Vec<_> = summary.metrics().collect();
+		assert_eq!(metrics.len(), 7);
+		let labels: Vec<&str> = metrics.iter().map(|m| m.label).collect();
+		assert_eq!(
+			labels,
+			vec![
+				"Total Files",
+				"Total Lines",
+				"Code Lines",
+				"Comment Lines",
+				"Blank Lines",
+				"Shebang Lines",
+				"Total Size",
+			]
+		);
+		// First two metrics (Total Files, Total Lines) have no percentage
+		assert!(metrics[0].percentage.is_none());
+		assert!(metrics[1].percentage.is_none());
+		// Line-type metrics have percentages
+		assert_eq!(metrics[2].percentage, Some(60.0));
+		assert_eq!(metrics[3].percentage, Some(20.0));
+		assert_eq!(metrics[4].percentage, Some(15.0));
+		assert_eq!(metrics[5].percentage, Some(5.0));
+		// Total Size has human_readable
+		assert_eq!(metrics[6].human_readable, Some("4.0 KiB"));
+		assert!(metrics[6].percentage.is_none());
+	}
+
+	#[test]
+	fn summary_line_breakdown_pluralize() {
+		let summary = Summary {
+			total_files: 1,
+			total_lines: 4,
+			total_code_lines: 1,
+			total_comment_lines: 1,
+			total_blank_lines: 1,
+			total_shebang_lines: 1,
+			total_size: 0,
+			total_size_human: "0 B".to_string(),
+			code_percentage: 25.0,
+			comment_percentage: 25.0,
+			blank_percentage: 25.0,
+			shebang_percentage: 25.0,
+		};
+		let ctx = FormatterContext::new(ViewOptions::default());
+		let parts = summary.line_breakdown_parts(true, &ctx);
+		// When count is 1 and pluralize=true, should use singular "line"
+		assert_eq!(parts, vec!["1 code line", "1 comment line", "1 blank line", "1 shebang line"]);
+	}
+
+	#[test]
+	fn summary_line_breakdown_no_pluralize() {
+		let summary = Summary {
+			total_files: 1,
+			total_lines: 40,
+			total_code_lines: 10,
+			total_comment_lines: 15,
+			total_blank_lines: 10,
+			total_shebang_lines: 5,
+			total_size: 0,
+			total_size_human: "0 B".to_string(),
+			code_percentage: 25.0,
+			comment_percentage: 37.5,
+			blank_percentage: 25.0,
+			shebang_percentage: 12.5,
+		};
+		let ctx = FormatterContext::new(ViewOptions::default());
+		let parts = summary.line_breakdown_parts(false, &ctx);
+		// When pluralize=false, should use plural labels without "line"/"lines" suffix
+		assert_eq!(parts, vec!["10 code", "15 comments", "10 blanks", "5 shebangs"]);
+	}
+
+	#[test]
+	fn line_type_stats_labels() {
+		let code = LineTypeStats { kind: LineType::Code, count: 10, percentage: 50.0 };
+		assert_eq!(code.singular_label(), "code");
+		assert_eq!(code.plural_label(), "code");
+		assert_eq!(code.title_label(), "Code");
+
+		let comment = LineTypeStats { kind: LineType::Comment, count: 5, percentage: 25.0 };
+		assert_eq!(comment.singular_label(), "comment");
+		assert_eq!(comment.plural_label(), "comments");
+		assert_eq!(comment.title_label(), "Comments");
+
+		let blank = LineTypeStats { kind: LineType::Blank, count: 3, percentage: 15.0 };
+		assert_eq!(blank.singular_label(), "blank");
+		assert_eq!(blank.plural_label(), "blanks");
+		assert_eq!(blank.title_label(), "Blanks");
+
+		let shebang = LineTypeStats { kind: LineType::Shebang, count: 2, percentage: 10.0 };
+		assert_eq!(shebang.singular_label(), "shebang");
+		assert_eq!(shebang.plural_label(), "shebangs");
+		assert_eq!(shebang.title_label(), "Shebangs");
+	}
 }

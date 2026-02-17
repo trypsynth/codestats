@@ -368,20 +368,19 @@ impl_percentage_methods!(AnalysisResults, total_lines, line_stats);
 
 #[cfg(test)]
 mod tests {
+	use rstest::rstest;
+
 	use super::*;
 
-	#[test]
-	fn test_percentage() {
-		const EPSILON: f64 = f64::EPSILON;
-		assert!((percentage(0, 100) - 0.0).abs() <= EPSILON);
-		assert!((percentage(50, 100) - 50.0).abs() <= EPSILON);
-		assert!((percentage(25, 100) - 25.0).abs() <= EPSILON);
-		assert!((percentage(100, 100) - 100.0).abs() <= EPSILON);
-		assert!((percentage(10, 0) - 0.0).abs() <= EPSILON);
-		let part = u64::MAX / 2;
-		let total = u64::MAX;
-		let pct = percentage(part, total);
-		assert!((pct - 50.0).abs() < 0.000_000_1);
+	#[rstest]
+	#[case(0, 100, 0.0, f64::EPSILON)]
+	#[case(50, 100, 50.0, f64::EPSILON)]
+	#[case(25, 100, 25.0, f64::EPSILON)]
+	#[case(100, 100, 100.0, f64::EPSILON)]
+	#[case(10, 0, 0.0, f64::EPSILON)]
+	#[case(u64::MAX / 2, u64::MAX, 50.0, 0.000_000_1)]
+	fn test_percentage(#[case] part: u64, #[case] total: u64, #[case] expected: f64, #[case] epsilon: f64) {
+		assert!((percentage(part, total) - expected).abs() <= epsilon);
 	}
 
 	#[test]

@@ -77,7 +77,7 @@ impl Default for Config {
 }
 
 /// Analysis settings loaded from TOML and the CLI.
-#[allow(clippy::struct_excessive_bools)]
+#[expect(clippy::struct_excessive_bools)]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(default)]
 pub struct AnalysisConfig {
@@ -133,7 +133,6 @@ impl Default for DisplayConfig {
 
 /// Internal analyzer settings derived from the merged config.
 #[derive(Clone, Debug, Default)]
-#[allow(clippy::struct_excessive_bools)]
 pub struct AnalyzerConfig {
 	pub analysis: AnalysisConfig,
 	pub collect_file_details: bool,

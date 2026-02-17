@@ -78,14 +78,15 @@ where
 		if pair.len() != 2 {
 			return Err(err("must contain exactly start and end delimiters"));
 		}
-		let [start, end]: [String; 2] = pair.try_into().unwrap();
+		let mut iter = pair.into_iter();
+		let start = iter.next().unwrap();
+		let end = iter.next().unwrap();
 		if start.is_empty() {
 			return Err(err("start cannot be empty"));
 		}
 		if end.is_empty() {
 			return Err(err("end cannot be empty"));
 		}
-		#[allow(clippy::tuple_array_conversions)]
 		out.push((start, end));
 	}
 	Ok(out)

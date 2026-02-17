@@ -260,18 +260,21 @@ fn is_valid_line_comment_match(line: &str, end: usize, token: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
+	use rstest::rstest;
+
 	use super::*;
 
-	#[test]
-	fn test_trim_ascii() {
-		assert_eq!(trim_ascii("  hello  "), "hello");
-		assert_eq!(trim_ascii("\t\tworld\t\t"), "world");
-		assert_eq!(trim_ascii("   "), "");
-		assert_eq!(trim_ascii(""), "");
-		assert_eq!(trim_ascii("hello\n"), "hello");
-		assert_eq!(trim_ascii("hello\r\n"), "hello");
-		assert_eq!(trim_ascii("  hello  \n"), "hello");
-		assert_eq!(trim_ascii("  hello  \r\n"), "hello");
+	#[rstest]
+	#[case::spaces("  hello  ", "hello")]
+	#[case::tabs("\t\tworld\t\t", "world")]
+	#[case::only_spaces("   ", "")]
+	#[case::empty("", "")]
+	#[case::trailing_lf("hello\n", "hello")]
+	#[case::trailing_crlf("hello\r\n", "hello")]
+	#[case::spaces_trailing_lf("  hello  \n", "hello")]
+	#[case::spaces_trailing_crlf("  hello  \r\n", "hello")]
+	fn test_trim_ascii(#[case] input: &str, #[case] expected: &str) {
+		assert_eq!(trim_ascii(input), expected);
 	}
 
 	#[test]
@@ -284,19 +287,21 @@ mod tests {
 		assert!(contains_non_whitespace("\u{000B}x"));
 	}
 
-	#[test]
-	fn test_classify_blank_lines() {
+	#[rstest]
+	#[case::empty("")]
+	#[case::spaces("   ")]
+	#[case::tabs("\t\t")]
+	fn test_classify_blank_lines(#[case] line: &str) {
 		let mut state = CommentState::new();
-		assert_eq!(classify_line("", None, &mut state, false), LineType::Blank);
-		assert_eq!(classify_line("   ", None, &mut state, false), LineType::Blank);
-		assert_eq!(classify_line("\t\t", None, &mut state, false), LineType::Blank);
+		assert_eq!(classify_line(line, None, &mut state, false), LineType::Blank);
 	}
 
-	#[test]
-	fn test_classify_code_without_language() {
+	#[rstest]
+	#[case("some code")]
+	#[case("  more code  ")]
+	fn test_classify_code_without_language(#[case] line: &str) {
 		let mut state = CommentState::new();
-		assert_eq!(classify_line("some code", None, &mut state, false), LineType::Code);
-		assert_eq!(classify_line("  more code  ", None, &mut state, false), LineType::Code);
+		assert_eq!(classify_line(line, None, &mut state, false), LineType::Code);
 	}
 
 	#[test]
@@ -332,27 +337,29 @@ mod tests {
 		assert!(is_valid_line_comment_match("//test", 2, "//"));
 	}
 
-	#[test]
-	fn test_is_ascii_ws() {
-		assert!(is_ascii_ws(b' '));
-		assert!(is_ascii_ws(b'\t'));
-		assert!(is_ascii_ws(b'\n'));
-		assert!(is_ascii_ws(b'\r'));
-		assert!(is_ascii_ws(0x0B)); // vertical tab
-		assert!(is_ascii_ws(0x0C)); // form feed
-		assert!(!is_ascii_ws(b'a'));
-		assert!(!is_ascii_ws(b'0'));
+	#[rstest]
+	#[case(b' ', true)]
+	#[case(b'\t', true)]
+	#[case(b'\n', true)]
+	#[case(b'\r', true)]
+	#[case(0x0B, true)]
+	#[case(0x0C, true)]
+	#[case(b'a', false)]
+	#[case(b'0', false)]
+	fn test_is_ascii_ws(#[case] byte: u8, #[case] expected: bool) {
+		assert_eq!(is_ascii_ws(byte), expected);
 	}
 
-	#[test]
-	fn test_is_word_char() {
-		assert!(is_word_char(b'a'));
-		assert!(is_word_char(b'Z'));
-		assert!(is_word_char(b'5'));
-		assert!(is_word_char(b'_'));
-		assert!(!is_word_char(b' '));
-		assert!(!is_word_char(b'/'));
-		assert!(!is_word_char(b'-'));
+	#[rstest]
+	#[case(b'a', true)]
+	#[case(b'Z', true)]
+	#[case(b'5', true)]
+	#[case(b'_', true)]
+	#[case(b' ', false)]
+	#[case(b'/', false)]
+	#[case(b'-', false)]
+	fn test_is_word_char(#[case] byte: u8, #[case] expected: bool) {
+		assert_eq!(is_word_char(byte), expected);
 	}
 
 	#[test]
