@@ -5,9 +5,6 @@ on:
     branches: [master]
   pull_request:
 
-env:
-  CARGO_TERM_COLOR: always
-
 jobs:
   check:
     name: Check (${{ matrix.rust }})
@@ -22,7 +19,12 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
-          components: rustfmt, clippy
+          components: clippy
+
+      - uses: dtolnay/rust-toolchain@nightly
+        if: matrix.rust == 'stable'
+        with:
+          components: rustfmt
 
       - uses: actions/cache@v4
         with:
@@ -38,7 +40,7 @@ jobs:
 
       - name: Check formatting
         if: matrix.rust == 'stable'
-        run: cargo fmt --check
+        run: cargo +nightly fmt --check
 
       - name: Clippy
         run: cargo clippy -- -D warnings
