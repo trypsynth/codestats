@@ -66,12 +66,11 @@ impl OutputFormatter for JsonCompactFormatter {
 mod tests {
 	use std::path::Path;
 
+	use super::*;
 	use crate::{
 		analysis::AnalysisResults,
 		display::{ViewOptions, options::IndentStyle},
 	};
-
-	use super::*;
 
 	#[test]
 	fn json_pretty_uses_configured_indent() {
@@ -105,7 +104,9 @@ mod tests {
 		let mut buf = Vec::new();
 		formatter.write_output(&results, Path::new("."), false, options, &mut buf).unwrap();
 		let output = String::from_utf8(buf).unwrap();
-		assert!(!output.contains('\n') || output.ends_with('\n') && output.matches('\n').count() == 1,
-			"compact JSON should be single line");
+		assert!(
+			!output.contains('\n') || output.ends_with('\n') && output.matches('\n').count() == 1,
+			"compact JSON should be single line"
+		);
 	}
 }
