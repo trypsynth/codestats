@@ -92,6 +92,8 @@ impl HumanFormatter {
 		verbose: bool,
 		writer: &mut dyn Write,
 	) -> Result<()> {
+		let i1 = ctx.indent(1);
+		let i2 = ctx.indent(2);
 		let file_pct = percentage(language.files, summary.total_files);
 		let line_pct = percentage(language.lines, summary.total_lines);
 		let size_pct = percentage(language.size, summary.total_size);
@@ -102,25 +104,25 @@ impl HumanFormatter {
 		writeln!(writer, "{}:", language.name)?;
 		writeln!(
 			writer,
-			"\tFiles: {} {} ({}% of total).",
+			"{i1}Files: {} {} ({}% of total).",
 			ctx.number(language.files),
 			pluralize(language.files, "file", "files"),
 			file_pct_str
 		)?;
 		writeln!(
 			writer,
-			"\tLines: {} {} ({}% of total).",
+			"{i1}Lines: {} {} ({}% of total).",
 			ctx.number(language.lines),
 			pluralize(language.lines, "line", "lines"),
 			line_pct_str
 		)?;
-		writeln!(writer, "\tAverage lines per file: {:.1}.", language.avg_lines_per_file)?;
-		writeln!(writer, "\tSize: {size_human} ({size_pct_str}% of total).")?;
-		writeln!(writer, "\tLine breakdown:")?;
+		writeln!(writer, "{i1}Average lines per file: {:.1}.", language.avg_lines_per_file)?;
+		writeln!(writer, "{i1}Size: {size_human} ({size_pct_str}% of total).")?;
+		writeln!(writer, "{i1}Line breakdown:")?;
 		for line_type in language.line_types() {
 			writeln!(
 				writer,
-				"\t\t{}: {} lines ({}%).",
+				"{i2}{}: {} lines ({}%).",
 				line_type.title_label(),
 				ctx.number(line_type.count),
 				ctx.percent(line_type.percentage)
@@ -138,7 +140,9 @@ impl HumanFormatter {
 		ctx: &FormatterContext,
 		writer: &mut dyn Write,
 	) -> Result<()> {
-		writeln!(writer, "\tFile breakdown:")?;
+		let i1 = ctx.indent(1);
+		let i2 = ctx.indent(2);
+		writeln!(writer, "{i1}File breakdown:")?;
 		let Some(files) = &language.files_detail else {
 			return Ok(());
 		};
@@ -148,7 +152,7 @@ impl HumanFormatter {
 			let size_human = &file_stat.size_human;
 			writeln!(
 				writer,
-				"\t\t{}: {} lines, {} ({}% of total lines).",
+				"{i2}{}: {} lines, {} ({}% of total lines).",
 				file_stat.path,
 				ctx.number(file_stat.total_lines),
 				size_human,
@@ -161,7 +165,13 @@ impl HumanFormatter {
 
 #[cfg(test)]
 mod tests {
-	use super::join_with_commas_and;
+	use std::path::Path;
+
+	use super::{HumanFormatter, join_with_commas_and};
+	use crate::{
+		analysis::{AnalysisResults, stats::FileContribution},
+		display::{OutputFormatter, ViewOptions, options::IndentStyle},
+	};
 
 	#[test]
 	fn join_with_commas_and_formats_lists() {
@@ -173,5 +183,21 @@ mod tests {
 		assert_eq!(join_with_commas_and(&pair).as_deref(), Some("alpha and beta"));
 		let triple = vec!["alpha".to_string(), "beta".to_string(), "gamma".to_string()];
 		assert_eq!(join_with_commas_and(&triple).as_deref(), Some("alpha, beta, and gamma"));
+	}
+
+	#[test]
+	fn human_output_uses_configured_indent() {
+		let mut results = AnalysisResults::default();
+		let lang = crate::langs::LANGUAGES.iter().find(|l| l.name == "Rust").unwrap();
+		let contribution = FileContribution::new(12, 10, 0, 2, 0, 100);
+		results.add_file_stats(lang, contribution, None);
+		let mut options = ViewOptions::default();
+		options.indent_style = IndentStyle::Spaces(2);
+		let formatter = HumanFormatter;
+		let mut buf = Vec::new();
+		formatter.write_output(&results, Path::new("."), false, options, &mut buf).unwrap();
+		let output = String::from_utf8(buf).unwrap();
+		assert!(output.contains("  Files:"), "expected 2-space indent for Files, got:\n{output}");
+		assert!(!output.contains("\tFiles:"), "should not contain tab-indented Files");
 	}
 }

@@ -18,6 +18,7 @@
 //! - Percentage precision: 0-6 decimal places.
 //! - Sort order: by lines, code, comments, blanks, files, size, or filename.
 //! - Sort direction: ascending or descending.
+//! - Indentation style: tab or 1-8 spaces.
 
 pub mod formatting;
 #[cfg(feature = "html")]
@@ -47,7 +48,7 @@ pub use human::HumanFormatter;
 pub use json::{JsonCompactFormatter, JsonFormatter};
 #[cfg(feature = "markdown")]
 pub use markdown::MarkdownFormatter;
-pub use options::{LanguageSortKey, NumberStyle, SizeStyle, SortDirection, ViewOptions};
+pub use options::{IndentStyle, LanguageSortKey, NumberStyle, SizeStyle, SortDirection, ViewOptions};
 pub use report::ReportData;
 pub use separated_values::{CsvFormatter, TsvFormatter};
 use serde::{Deserialize, Serialize};

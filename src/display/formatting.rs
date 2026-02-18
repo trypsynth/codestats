@@ -2,7 +2,7 @@ use std::cmp::Ordering;
 
 use num_format::{CustomFormat, Grouping, ToFormattedString};
 
-use super::options::{NumberStyle, SizeStyle, SortDirection, ViewOptions};
+use super::options::{IndentStyle, NumberStyle, SizeStyle, SortDirection, ViewOptions};
 
 #[derive(Debug, Clone)]
 pub struct FormatterContext {
@@ -34,6 +34,14 @@ impl FormatterContext {
 	#[must_use]
 	pub fn percent(&self, value: f64) -> String {
 		self.percent.format(value)
+	}
+
+	#[must_use]
+	pub fn indent(&self, level: usize) -> String {
+		match self.options.indent_style {
+			IndentStyle::Tab => "\t".repeat(level),
+			IndentStyle::Spaces(n) => " ".repeat(usize::from(n) * level),
+		}
 	}
 }
 
@@ -246,6 +254,22 @@ mod tests {
 		let mut items = vec!["banana", "apple", "cherry"];
 		apply_sort(&mut items, SortDirection::Asc, |s| SortValue::Text(s), |_, _| Ordering::Equal);
 		assert_eq!(items, vec!["apple", "banana", "cherry"]);
+	}
+
+	#[rstest]
+	#[case(IndentStyle::Tab, 0, "")]
+	#[case(IndentStyle::Tab, 1, "\t")]
+	#[case(IndentStyle::Tab, 2, "\t\t")]
+	#[case(IndentStyle::Spaces(2), 0, "")]
+	#[case(IndentStyle::Spaces(2), 1, "  ")]
+	#[case(IndentStyle::Spaces(2), 2, "    ")]
+	#[case(IndentStyle::Spaces(4), 1, "    ")]
+	#[case(IndentStyle::Spaces(4), 2, "        ")]
+	fn test_indent(#[case] style: IndentStyle, #[case] level: usize, #[case] expected: &str) {
+		let mut options = ViewOptions::default();
+		options.indent_style = style;
+		let ctx = FormatterContext::new(options);
+		assert_eq!(ctx.indent(level), expected);
 	}
 
 	#[test]

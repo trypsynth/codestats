@@ -54,6 +54,9 @@ const DEFAULT_CONFIG_TEMPLATE: &str = "\
 
 # Output format: human, json, json-compact, csv, tsv, markdown, html
 # output = \"human\"
+
+# Indentation style: \"tab\" or a number 1-8 for spaces
+# indent = \"tab\"
 ";
 
 pub fn run_init(output: Option<PathBuf>, force: bool) -> Result<()> {
@@ -136,5 +139,6 @@ mod tests {
 		assert!(content.contains("[display]"), "should contain [display] section");
 		assert!(content.contains("# verbose = false"), "should contain verbose option");
 		assert!(content.contains("# sort_by = \"lines\""), "should contain sort_by option");
+		assert!(content.contains("# indent = \"tab\""), "should contain indent option");
 	}
 }

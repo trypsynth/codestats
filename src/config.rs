@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
 	cli::AnalyzeArgs,
-	display::{LanguageSortKey, NumberStyle, OutputFormat, SizeStyle, SortDirection, ViewOptions},
+	display::{IndentStyle, LanguageSortKey, NumberStyle, OutputFormat, SizeStyle, SortDirection, ViewOptions},
 };
 
 /// Helper to create error context for config file reading operations.
@@ -116,6 +116,7 @@ pub struct DisplayConfig {
 	pub sort_by: LanguageSortKey,
 	pub sort_direction: SortDirection,
 	pub output: OutputFormat,
+	pub indent: IndentStyle,
 }
 
 impl Default for DisplayConfig {
@@ -127,6 +128,7 @@ impl Default for DisplayConfig {
 			sort_by: LanguageSortKey::Lines,
 			sort_direction: SortDirection::Desc,
 			output: OutputFormat::Human,
+			indent: IndentStyle::Tab,
 		}
 	}
 }
@@ -203,6 +205,7 @@ impl Config {
 		apply!("language_sort", self.display.sort_by = analyze_args.language_sort);
 		apply!("sort_direction", self.display.sort_direction = analyze_args.sort_direction);
 		apply!("output", self.display.output = analyze_args.output);
+		apply!("indent", self.display.indent = analyze_args.indent);
 		if Self::cli_overrode(matches, "exclude") {
 			self.analysis.exclude_patterns.extend(analyze_args.exclude.clone());
 		}
@@ -248,6 +251,7 @@ impl From<&Config> for ViewOptions {
 			percent_precision: config.display.precision,
 			language_sort_key: config.display.sort_by,
 			sort_direction: config.display.sort_direction,
+			indent_style: config.display.indent,
 		}
 	}
 }
@@ -333,5 +337,32 @@ mod tests {
 		let merged = config.merge_with_cli(&args, &matches).expect("merge config");
 		assert!(!merged.analysis.respect_gitignore);
 		assert!(merged.analysis.include_hidden);
+	}
+
+	#[test]
+	fn merge_applies_indent_from_cli() {
+		let config_path = write_config("");
+		let config = Config::from_file(&config_path).expect("load config");
+		let (args, matches) = parse_cli(&["cs", "--indent", "4"]);
+		let merged = config.merge_with_cli(&args, &matches).expect("merge config");
+		assert_eq!(merged.display.indent, IndentStyle::Spaces(4));
+	}
+
+	#[test]
+	fn merge_applies_indent_from_config() {
+		let config_path = write_config("[display]\nindent = \"2\"\n");
+		let config = Config::from_file(&config_path).expect("load config");
+		let (args, matches) = parse_cli(&["cs"]);
+		let merged = config.merge_with_cli(&args, &matches).expect("merge config");
+		assert_eq!(merged.display.indent, IndentStyle::Spaces(2));
+	}
+
+	#[test]
+	fn merge_indent_defaults_to_tab() {
+		let config_path = write_config("");
+		let config = Config::from_file(&config_path).expect("load config");
+		let (args, matches) = parse_cli(&["cs"]);
+		let merged = config.merge_with_cli(&args, &matches).expect("merge config");
+		assert_eq!(merged.display.indent, IndentStyle::Tab);
 	}
 }

@@ -4,7 +4,7 @@ use clap::{ArgMatches, CommandFactory, FromArgMatches, Parser, Subcommand};
 
 use crate::{
 	completions::Shell,
-	display::{LanguageSortKey, NumberStyle, OutputFormat, SizeStyle, SortDirection},
+	display::{IndentStyle, LanguageSortKey, NumberStyle, OutputFormat, SizeStyle, SortDirection},
 };
 
 /// A tool for analyzing code statistics across different programming languages
@@ -78,6 +78,9 @@ pub struct AnalyzeArgs {
 	/// Sorting direction
 	#[arg(short = 'd', long = "sort-dir", value_enum, default_value = "desc")]
 	pub sort_direction: SortDirection,
+	/// Indentation style: "tab" or a number 1-8 for spaces
+	#[arg(long, default_value = "tab")]
+	pub indent: IndentStyle,
 	/// Output format
 	#[arg(short, long, default_value = "human")]
 	pub output: OutputFormat,

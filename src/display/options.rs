@@ -38,6 +38,50 @@ pub enum SortDirection {
 	Desc,
 }
 
+/// Indentation style for output formatting.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub enum IndentStyle {
+	#[default]
+	Tab,
+	Spaces(u8),
+}
+
+impl std::str::FromStr for IndentStyle {
+	type Err = String;
+
+	fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+		if s.eq_ignore_ascii_case("tab") {
+			return Ok(Self::Tab);
+		}
+		match s.parse::<u8>() {
+			Ok(n @ 1..=8) => Ok(Self::Spaces(n)),
+			_ => Err(format!("indent must be 'tab' or a number 1-8, got '{s}'")),
+		}
+	}
+}
+
+impl std::fmt::Display for IndentStyle {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		match self {
+			Self::Tab => f.write_str("tab"),
+			Self::Spaces(n) => write!(f, "{n}"),
+		}
+	}
+}
+
+impl Serialize for IndentStyle {
+	fn serialize<S: serde::Serializer>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error> {
+		serializer.serialize_str(&self.to_string())
+	}
+}
+
+impl<'de> Deserialize<'de> for IndentStyle {
+	fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> std::result::Result<Self, D::Error> {
+		let s = String::deserialize(deserializer)?;
+		s.parse().map_err(serde::de::Error::custom)
+	}
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ViewOptions {
 	pub number_style: NumberStyle,
@@ -45,6 +89,7 @@ pub struct ViewOptions {
 	pub percent_precision: u8,
 	pub language_sort_key: LanguageSortKey,
 	pub sort_direction: SortDirection,
+	pub indent_style: IndentStyle,
 }
 
 impl Default for ViewOptions {
@@ -55,6 +100,7 @@ impl Default for ViewOptions {
 			percent_precision: 1,
 			language_sort_key: LanguageSortKey::Lines,
 			sort_direction: SortDirection::Desc,
+			indent_style: IndentStyle::Tab,
 		}
 	}
 }
@@ -73,6 +119,7 @@ mod tests {
 		assert_eq!(opts.percent_precision, 1);
 		assert_eq!(opts.language_sort_key, LanguageSortKey::Lines);
 		assert_eq!(opts.sort_direction, SortDirection::Desc);
+		assert_eq!(opts.indent_style, IndentStyle::Tab);
 	}
 
 	#[rstest]
@@ -159,5 +206,40 @@ mod tests {
 	fn sort_direction_from_lowercase(#[case] input: &str, #[case] expected: SortDirection) {
 		let result: SortDirection = serde_json::from_str(input).unwrap();
 		assert_eq!(result, expected);
+	}
+
+	#[rstest]
+	#[case::tab("tab", IndentStyle::Tab)]
+	#[case::one("1", IndentStyle::Spaces(1))]
+	#[case::two("2", IndentStyle::Spaces(2))]
+	#[case::four("4", IndentStyle::Spaces(4))]
+	#[case::eight("8", IndentStyle::Spaces(8))]
+	fn parse_indent_style(#[case] input: &str, #[case] expected: IndentStyle) {
+		assert_eq!(input.parse::<IndentStyle>().unwrap(), expected);
+	}
+
+	#[rstest]
+	#[case::zero("0")]
+	#[case::nine("9")]
+	#[case::garbage("foo")]
+	#[case::negative("-1")]
+	fn parse_indent_style_rejects_invalid(#[case] input: &str) {
+		assert!(input.parse::<IndentStyle>().is_err());
+	}
+
+	#[test]
+	fn indent_style_display_roundtrip() {
+		assert_eq!(IndentStyle::Tab.to_string(), "tab");
+		assert_eq!(IndentStyle::Spaces(4).to_string(), "4");
+	}
+
+	#[rstest]
+	#[case::tab(IndentStyle::Tab, "\"tab\"")]
+	#[case::spaces(IndentStyle::Spaces(4), "\"4\"")]
+	fn indent_style_serde_roundtrip(#[case] variant: IndentStyle, #[case] expected_json: &str) {
+		let json = serde_json::to_string(&variant).unwrap();
+		assert_eq!(json, expected_json);
+		let deserialized: IndentStyle = serde_json::from_str(&json).unwrap();
+		assert_eq!(deserialized, variant);
 	}
 }
