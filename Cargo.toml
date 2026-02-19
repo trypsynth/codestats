@@ -36,7 +36,7 @@ num-format = { version = "0.4", default-features = false, features = ["std"] }
 serde = { version = "1.0.228", default-features = false, features = ["std", "derive"] }
 serde_json = { version = "1.0.149", default-features = false, features = ["std"] }
 terminal_size = "0.4.3"
-toml = "1.0.2"
+toml = "1.0.3"
 
 [build-dependencies]
 indexmap = { version = "2.13.0", features = ["serde"] }
