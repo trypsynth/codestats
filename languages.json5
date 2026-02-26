@@ -1479,7 +1479,6 @@
 	"MoonScript": {
 		file_patterns: ["*.moon"],
 		line_comments: ["--"],
-		block_comments: [["--[[", "--]]"]],
 	},
 	"Motoko": {
 		file_patterns: ["*.mot"],
