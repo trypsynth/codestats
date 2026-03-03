@@ -74,14 +74,14 @@ jobs:
 
       - name: Upload artifact (Unix)
         if: runner.os != 'Windows'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: cs-${{ matrix.target }}
           path: cs-${{ matrix.target }}
 
       - name: Upload artifact (Windows)
         if: runner.os == 'Windows'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: cs-${{ matrix.target }}
           path: cs-${{ matrix.target }}.exe
