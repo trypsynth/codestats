@@ -24,7 +24,7 @@ all-formats = ["html", "markdown"]
 [dependencies]
 aho-corasick = "1.1.4"
 anyhow = "1.0.102"
-askama = { version = "0.15.5", optional = true }
+askama = { version = "0.15.6", optional = true }
 clap = { version = "4.6.0", default-features = false, features = ["std", "derive", "help", "usage", "wrap_help"] }
 clap_complete = "4.6.0"
 encoding_rs = "0.8.35"
@@ -36,7 +36,7 @@ num-format = { version = "0.4", default-features = false, features = ["std"] }
 serde = { version = "1.0.228", default-features = false, features = ["std", "derive"] }
 serde_json = { version = "1.0.149", default-features = false, features = ["std"] }
 terminal_size = "0.4.4"
-toml = "1.1.0"
+toml = "1.1.2"
 
 [build-dependencies]
 indexmap = { version = "2.13.0", features = ["serde"] }
