@@ -82,8 +82,26 @@ impl<'de> Deserialize<'de> for IndentStyle {
 	}
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Deserialize, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Verbosity {
+	/// Only show totals
+	Summary,
+	/// Show totals and language breakdown
+	Regular,
+	/// Show totals, language breakdown, and per-file details
+	Verbose,
+}
+
+impl Default for Verbosity {
+	fn default() -> Self {
+		Self::Regular
+	}
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ViewOptions {
+	pub verbosity: Verbosity,
 	pub number_style: NumberStyle,
 	pub size_style: SizeStyle,
 	pub percent_precision: u8,
@@ -95,6 +113,7 @@ pub struct ViewOptions {
 impl Default for ViewOptions {
 	fn default() -> Self {
 		Self {
+			verbosity: Verbosity::default(),
 			number_style: NumberStyle::Plain,
 			size_style: SizeStyle::Binary,
 			percent_precision: 1,

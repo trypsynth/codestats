@@ -7,7 +7,7 @@ use std::{io::Write, path::Path};
 use anyhow::Result;
 use askama::{Result as AskamaResult, Template, Values};
 
-use super::{FormatterContext, OutputFormatter, ReportData, ViewOptions};
+use super::{FormatterContext, OutputFormatter, ReportData, Verbosity, ViewOptions};
 use crate::{
 	analysis::AnalysisResults,
 	display::report::{LanguageRecord, Summary},
@@ -43,19 +43,18 @@ impl OutputFormatter for MarkdownFormatter {
 		&self,
 		results: &AnalysisResults,
 		path: &Path,
-		verbose: bool,
 		view_options: ViewOptions,
 		writer: &mut dyn Write,
 	) -> Result<()> {
-		let (ctx, report) = self.prepare_report(results, path, verbose, view_options);
-		Self::write_markdown(&report, verbose, &ctx, writer)
+		let (ctx, report) = self.prepare_report(results, path, view_options);
+		Self::write_markdown(&report, view_options.verbosity, &ctx, writer)
 	}
 }
 
 impl MarkdownFormatter {
 	fn write_markdown(
 		report: &ReportData,
-		verbose: bool,
+		verbosity: Verbosity,
 		ctx: &FormatterContext,
 		writer: &mut dyn Write,
 	) -> Result<()> {
@@ -69,7 +68,7 @@ impl MarkdownFormatter {
 			line_breakdown,
 			totals,
 			languages: &report.languages,
-			show_files: verbose,
+			show_files: verbosity == Verbosity::Verbose,
 		};
 		let rendered = template.render()?;
 		writer.write_all(rendered.as_bytes())?;

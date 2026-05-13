@@ -2,7 +2,7 @@ use std::{borrow::Cow, io::Write, path::Path};
 
 use anyhow::Result;
 
-use super::{FormatterContext, OutputFormatter, ReportData, ViewOptions};
+use super::{FormatterContext, OutputFormatter, ReportData, Verbosity, ViewOptions};
 use crate::{analysis::AnalysisResults, display::report::LanguageRecord};
 
 /// Trait for field escaping strategies in separated value formats.
@@ -61,15 +61,14 @@ impl<const DELIMITER: u8, E: FieldEscaper> OutputFormatter for SeparatedValuesFo
 		&self,
 		results: &AnalysisResults,
 		path: &Path,
-		verbose: bool,
 		view_options: ViewOptions,
 		writer: &mut dyn Write,
 	) -> Result<()> {
-		let (ctx, report) = self.prepare_report(results, path, verbose, view_options);
-		if verbose {
-			Self::write_verbose(&report, &ctx, writer)
-		} else {
-			Self::write_simple(&report.languages, &ctx, writer)
+		let (ctx, report) = self.prepare_report(results, path, view_options);
+		match view_options.verbosity {
+			Verbosity::Summary => Self::write_summary_section(&report, &ctx, writer),
+			Verbosity::Regular => Self::write_simple(&report.languages, &ctx, writer),
+			Verbosity::Verbose => Self::write_verbose(&report, &ctx, writer),
 		}
 	}
 }

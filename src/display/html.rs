@@ -3,7 +3,7 @@ use std::{io::Write, path::Path};
 use anyhow::Result;
 use askama::Template;
 
-use super::{FormatterContext, OutputFormatter, ReportData, ViewOptions};
+use super::{FormatterContext, OutputFormatter, ReportData, Verbosity, ViewOptions};
 use crate::{
 	analysis::AnalysisResults,
 	display::report::{LanguageRecord, Summary},
@@ -31,19 +31,18 @@ impl OutputFormatter for HtmlFormatter {
 		&self,
 		results: &AnalysisResults,
 		path: &Path,
-		verbose: bool,
 		view_options: ViewOptions,
 		writer: &mut dyn Write,
 	) -> Result<()> {
-		let (ctx, report) = self.prepare_report(results, path, verbose, view_options);
-		Self::write_document(&report, verbose, &ctx, writer)
+		let (ctx, report) = self.prepare_report(results, path, view_options);
+		Self::write_document(&report, view_options.verbosity, &ctx, writer)
 	}
 }
 
 impl HtmlFormatter {
 	fn write_document(
 		report: &ReportData,
-		verbose: bool,
+		verbosity: Verbosity,
 		ctx: &FormatterContext,
 		writer: &mut dyn Write,
 	) -> Result<()> {
@@ -55,7 +54,7 @@ impl HtmlFormatter {
 			totals,
 			languages: &report.languages,
 			ctx,
-			show_files: verbose,
+			show_files: verbosity == Verbosity::Verbose,
 		};
 		let rendered = template.render()?;
 		writer.write_all(rendered.as_bytes())?;

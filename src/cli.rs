@@ -4,7 +4,7 @@ use clap::{ArgMatches, CommandFactory, FromArgMatches, Parser, Subcommand};
 
 use crate::{
 	completions::Shell,
-	display::{IndentStyle, LanguageSortKey, NumberStyle, OutputFormat, SizeStyle, SortDirection},
+	display::{IndentStyle, LanguageSortKey, NumberStyle, OutputFormat, SizeStyle, SortDirection, Verbosity},
 };
 
 /// A tool for analyzing code statistics across different programming languages
@@ -50,8 +50,14 @@ pub struct AnalyzeArgs {
 	/// The path to analyze
 	#[arg(value_name = "PATH", default_value = ".")]
 	pub path: PathBuf,
-	/// Enable verbose output
-	#[arg(short, long)]
+	/// Set the output verbosity level
+	#[arg(long, value_enum, default_value = "regular", conflicts_with_all = ["summary", "verbose"])]
+	pub verbosity: Verbosity,
+	/// Only show totals (alias for --verbosity summary)
+	#[arg(short = 'q', long, conflicts_with_all = ["verbosity", "verbose"])]
+	pub summary: bool,
+	/// Show per-file details (alias for --verbosity verbose)
+	#[arg(short, long, conflicts_with_all = ["verbosity", "summary"])]
 	pub verbose: bool,
 	/// Do not respect .gitignore files
 	#[arg(short = 'i', long)]

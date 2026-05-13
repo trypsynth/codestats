@@ -2,7 +2,7 @@ use std::{borrow::Cow, io::Write, path::Path};
 
 use anyhow::Result;
 
-use super::{FormatterContext, OutputFormatter, ReportData, ViewOptions};
+use super::{FormatterContext, OutputFormatter, ReportData, Verbosity, ViewOptions};
 use crate::{
 	analysis::{AnalysisResults, stats::percentage},
 	display::{
@@ -32,17 +32,19 @@ impl OutputFormatter for HumanFormatter {
 		&self,
 		results: &AnalysisResults,
 		path: &Path,
-		verbose: bool,
 		view_options: ViewOptions,
 		writer: &mut dyn Write,
 	) -> Result<()> {
-		let (ctx, report) = self.prepare_report(results, path, verbose, view_options);
+		let (ctx, report) = self.prepare_report(results, path, view_options);
 		Self::write_overview(&report, &ctx, writer)?;
+		if view_options.verbosity == Verbosity::Summary {
+			return Ok(());
+		}
 		if report.languages.is_empty() {
 			writeln!(writer, "No recognized programming languages found.")?;
 			return Ok(());
 		}
-		Self::write_language_breakdown(&report, &ctx, verbose, writer)?;
+		Self::write_language_breakdown(&report, &ctx, view_options.verbosity == Verbosity::Verbose, writer)?;
 		Ok(())
 	}
 }
@@ -195,7 +197,7 @@ mod tests {
 		options.indent_style = IndentStyle::Spaces(2);
 		let formatter = HumanFormatter;
 		let mut buf = Vec::new();
-		formatter.write_output(&results, Path::new("."), false, options, &mut buf).unwrap();
+		formatter.write_output(&results, Path::new("."), options, &mut buf).unwrap();
 		let output = String::from_utf8(buf).unwrap();
 		assert!(output.contains("  Files:"), "expected 2-space indent for Files, got:\n{output}");
 		assert!(!output.contains("\tFiles:"), "should not contain tab-indented Files");

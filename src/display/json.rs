@@ -11,12 +11,11 @@ fn write_json(
 	formatter: &impl OutputFormatter,
 	results: &AnalysisResults,
 	path: &Path,
-	verbose: bool,
 	view_options: ViewOptions,
 	writer: &mut dyn Write,
 	pretty: bool,
 ) -> Result<()> {
-	let (_ctx, report) = formatter.prepare_report(results, path, verbose, view_options);
+	let (_ctx, report) = formatter.prepare_report(results, path, view_options);
 	if pretty {
 		let indent_bytes: Vec<u8> = match view_options.indent_style {
 			IndentStyle::Tab => b"\t".to_vec(),
@@ -39,11 +38,10 @@ impl OutputFormatter for JsonFormatter {
 		&self,
 		results: &AnalysisResults,
 		path: &Path,
-		verbose: bool,
 		view_options: ViewOptions,
 		writer: &mut dyn Write,
 	) -> Result<()> {
-		write_json(self, results, path, verbose, view_options, writer, true)
+		write_json(self, results, path, view_options, writer, true)
 	}
 }
 
@@ -54,11 +52,10 @@ impl OutputFormatter for JsonCompactFormatter {
 		&self,
 		results: &AnalysisResults,
 		path: &Path,
-		verbose: bool,
 		view_options: ViewOptions,
 		writer: &mut dyn Write,
 	) -> Result<()> {
-		write_json(self, results, path, verbose, view_options, writer, false)
+		write_json(self, results, path, view_options, writer, false)
 	}
 }
 
@@ -79,7 +76,7 @@ mod tests {
 		options.indent_style = IndentStyle::Spaces(4);
 		let formatter = JsonFormatter;
 		let mut buf = Vec::new();
-		formatter.write_output(&results, Path::new("."), false, options, &mut buf).unwrap();
+		formatter.write_output(&results, Path::new("."), options, &mut buf).unwrap();
 		let output = String::from_utf8(buf).unwrap();
 		assert!(output.contains("    \""), "expected 4-space indent in JSON, got:\n{output}");
 	}
@@ -90,7 +87,7 @@ mod tests {
 		let options = ViewOptions::default(); // default is Tab
 		let formatter = JsonFormatter;
 		let mut buf = Vec::new();
-		formatter.write_output(&results, Path::new("."), false, options, &mut buf).unwrap();
+		formatter.write_output(&results, Path::new("."), options, &mut buf).unwrap();
 		let output = String::from_utf8(buf).unwrap();
 		assert!(output.contains("\t\""), "expected tab indent in JSON, got:\n{output}");
 	}
@@ -102,7 +99,7 @@ mod tests {
 		options.indent_style = IndentStyle::Spaces(4);
 		let formatter = JsonCompactFormatter;
 		let mut buf = Vec::new();
-		formatter.write_output(&results, Path::new("."), false, options, &mut buf).unwrap();
+		formatter.write_output(&results, Path::new("."), options, &mut buf).unwrap();
 		let output = String::from_utf8(buf).unwrap();
 		assert!(
 			!output.contains('\n') || output.ends_with('\n') && output.matches('\n').count() == 1,

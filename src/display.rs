@@ -48,7 +48,7 @@ pub use human::HumanFormatter;
 pub use json::{JsonCompactFormatter, JsonFormatter};
 #[cfg(feature = "markdown")]
 pub use markdown::MarkdownFormatter;
-pub use options::{IndentStyle, LanguageSortKey, NumberStyle, SizeStyle, SortDirection, ViewOptions};
+pub use options::{IndentStyle, LanguageSortKey, NumberStyle, SizeStyle, SortDirection, Verbosity, ViewOptions};
 pub use report::ReportData;
 pub use separated_values::{CsvFormatter, TsvFormatter};
 use serde::{Deserialize, Serialize};
@@ -96,7 +96,6 @@ pub trait OutputFormatter {
 		&self,
 		results: &AnalysisResults,
 		path: &Path,
-		verbose: bool,
 		view_options: ViewOptions,
 		writer: &mut dyn Write,
 	) -> Result<()>;
@@ -105,11 +104,10 @@ pub trait OutputFormatter {
 		&self,
 		results: &'a AnalysisResults,
 		path: &Path,
-		verbose: bool,
 		view_options: ViewOptions,
 	) -> (FormatterContext, ReportData<'a>) {
 		let ctx = FormatterContext::new(view_options);
-		let report = ReportData::from_results(results, path, verbose, &ctx);
+		let report = ReportData::from_results(results, path, view_options.verbosity, &ctx);
 		(ctx, report)
 	}
 }
@@ -136,20 +134,19 @@ impl Formatter {
 		&self,
 		results: &AnalysisResults,
 		path: &Path,
-		verbose: bool,
 		view_options: ViewOptions,
 		writer: &mut dyn Write,
 	) -> Result<()> {
 		match self {
-			Self::Human(f) => f.write_output(results, path, verbose, view_options, writer),
-			Self::Json(f) => f.write_output(results, path, verbose, view_options, writer),
-			Self::JsonCompact(f) => f.write_output(results, path, verbose, view_options, writer),
-			Self::Csv(f) => f.write_output(results, path, verbose, view_options, writer),
-			Self::Tsv(f) => f.write_output(results, path, verbose, view_options, writer),
+			Self::Human(f) => f.write_output(results, path, view_options, writer),
+			Self::Json(f) => f.write_output(results, path, view_options, writer),
+			Self::JsonCompact(f) => f.write_output(results, path, view_options, writer),
+			Self::Csv(f) => f.write_output(results, path, view_options, writer),
+			Self::Tsv(f) => f.write_output(results, path, view_options, writer),
 			#[cfg(feature = "markdown")]
-			Self::Markdown(f) => f.write_output(results, path, verbose, view_options, writer),
+			Self::Markdown(f) => f.write_output(results, path, view_options, writer),
 			#[cfg(feature = "html")]
-			Self::Html(f) => f.write_output(results, path, verbose, view_options, writer),
+			Self::Html(f) => f.write_output(results, path, view_options, writer),
 		}
 	}
 }

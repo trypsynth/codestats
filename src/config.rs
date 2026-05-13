@@ -9,7 +9,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
 	cli::AnalyzeArgs,
-	display::{IndentStyle, LanguageSortKey, NumberStyle, OutputFormat, SizeStyle, SortDirection, ViewOptions},
+	display::{
+		IndentStyle, LanguageSortKey, NumberStyle, OutputFormat, SizeStyle, SortDirection, Verbosity, ViewOptions,
+	},
 };
 
 /// Helper to create error context for config file reading operations.
@@ -81,7 +83,7 @@ impl Default for Config {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(default)]
 pub struct AnalysisConfig {
-	pub verbose: bool,
+	pub verbosity: Verbosity,
 	pub respect_gitignore: bool,
 	pub include_hidden: bool,
 	pub follow_symlinks: bool,
@@ -94,7 +96,7 @@ pub struct AnalysisConfig {
 impl Default for AnalysisConfig {
 	fn default() -> Self {
 		Self {
-			verbose: false,
+			verbosity: Verbosity::Regular,
 			respect_gitignore: true,
 			include_hidden: false,
 			follow_symlinks: false,
@@ -194,7 +196,13 @@ impl Config {
 				}
 			};
 		}
-		apply!("verbose", self.analysis.verbose = analyze_args.verbose);
+		apply!("verbosity", self.analysis.verbosity = analyze_args.verbosity);
+		if Self::cli_overrode(matches, "summary") && analyze_args.summary {
+			self.analysis.verbosity = Verbosity::Summary;
+		}
+		if Self::cli_overrode(matches, "verbose") && analyze_args.verbose {
+			self.analysis.verbosity = Verbosity::Verbose;
+		}
 		apply!("no_gitignore", self.analysis.respect_gitignore = !analyze_args.no_gitignore);
 		apply!("hidden", self.analysis.include_hidden = analyze_args.hidden);
 		apply!("symlinks", self.analysis.follow_symlinks = analyze_args.symlinks);
@@ -239,13 +247,17 @@ impl Config {
 
 impl From<&Config> for AnalyzerConfig {
 	fn from(config: &Config) -> Self {
-		Self { analysis: config.analysis.clone(), collect_file_details: config.analysis.verbose }
+		Self {
+			analysis: config.analysis.clone(),
+			collect_file_details: config.analysis.verbosity == Verbosity::Verbose,
+		}
 	}
 }
 
 impl From<&Config> for ViewOptions {
 	fn from(config: &Config) -> Self {
 		Self {
+			verbosity: config.analysis.verbosity,
 			number_style: config.display.number_style,
 			size_style: config.display.size_units,
 			percent_precision: config.display.precision,
@@ -364,5 +376,23 @@ mod tests {
 		let (args, matches) = parse_cli(&["cs"]);
 		let merged = config.merge_with_cli(&args, &matches).expect("merge config");
 		assert_eq!(merged.display.indent, IndentStyle::Tab);
+	}
+
+	#[test]
+	fn merge_applies_verbosity_overrides() {
+		let config_path = write_config("[analysis]\nverbosity = \"regular\"\n");
+		let config = Config::from_file(&config_path).expect("load config");
+
+		let (args, matches) = parse_cli(&["cs", "--summary"]);
+		let merged = config.clone().merge_with_cli(&args, &matches).expect("merge config");
+		assert_eq!(merged.analysis.verbosity, Verbosity::Summary);
+
+		let (args, matches) = parse_cli(&["cs", "--verbose"]);
+		let merged = config.clone().merge_with_cli(&args, &matches).expect("merge config");
+		assert_eq!(merged.analysis.verbosity, Verbosity::Verbose);
+
+		let (args, matches) = parse_cli(&["cs", "--verbosity", "summary"]);
+		let merged = config.merge_with_cli(&args, &matches).expect("merge config");
+		assert_eq!(merged.analysis.verbosity, Verbosity::Summary);
 	}
 }

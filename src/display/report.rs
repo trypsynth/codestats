@@ -7,7 +7,7 @@ use crate::{
 	display::{
 		apply_sort,
 		formatting::{FormatterContext, SortValue, pluralize as pluralize_fn},
-		options::LanguageSortKey,
+		options::{LanguageSortKey, Verbosity},
 	},
 };
 
@@ -35,9 +35,16 @@ pub struct ReportData<'a> {
 
 impl<'a> ReportData<'a> {
 	#[must_use]
-	pub fn from_results(results: &'a AnalysisResults, path: &Path, verbose: bool, ctx: &FormatterContext) -> Self {
+	pub fn from_results(
+		results: &'a AnalysisResults,
+		path: &Path,
+		verbosity: Verbosity,
+		ctx: &FormatterContext,
+	) -> Self {
 		let summary = Summary::from_results(results, ctx);
-		let languages = LanguageRecord::from_results(results, verbose, ctx);
+		let languages = (verbosity > Verbosity::Summary)
+			.then(|| LanguageRecord::from_results(results, verbosity, ctx))
+			.unwrap_or_default();
 		Self { analysis_path: path.display().to_string(), summary, languages }
 	}
 }
@@ -253,7 +260,7 @@ pub struct LanguageRecord<'a> {
 
 impl<'a> LanguageRecord<'a> {
 	#[must_use]
-	fn from_results(results: &'a AnalysisResults, verbose: bool, ctx: &FormatterContext) -> Vec<Self> {
+	fn from_results(results: &'a AnalysisResults, verbosity: Verbosity, ctx: &FormatterContext) -> Vec<Self> {
 		let mut stats_vec: Vec<_> = results.languages().map(|(lang, stats)| (lang.name, stats)).collect();
 		let sort_key = ctx.options.language_sort_key;
 		apply_sort(
@@ -262,12 +269,12 @@ impl<'a> LanguageRecord<'a> {
 			|(name, stats)| sort_key_for_language_record(name, stats, sort_key),
 			|a, b| a.0.cmp(b.0),
 		);
-		stats_vec.into_iter().map(|(name, stats)| Self::from_stats(name, stats, verbose, ctx)).collect()
+		stats_vec.into_iter().map(|(name, stats)| Self::from_stats(name, stats, verbosity, ctx)).collect()
 	}
 
 	#[must_use]
-	fn from_stats(name: &'a str, stats: &'a LanguageStats, verbose: bool, ctx: &FormatterContext) -> Self {
-		let files_detail = verbose.then(|| {
+	fn from_stats(name: &'a str, stats: &'a LanguageStats, verbosity: Verbosity, ctx: &FormatterContext) -> Self {
+		let files_detail = (verbosity == Verbosity::Verbose).then(|| {
 			let mut files: Vec<_> = stats.files_list().iter().collect();
 			let sort_key = ctx.options.language_sort_key;
 			apply_sort(
@@ -517,5 +524,33 @@ mod tests {
 		assert_eq!(shebang.singular_label(), "shebang");
 		assert_eq!(shebang.plural_label(), "shebangs");
 		assert_eq!(shebang.title_label(), "Shebangs");
+	}
+
+	#[test]
+	fn report_data_summary_verbosity_skips_languages() {
+		let mut results = AnalysisResults::default();
+		let lang = crate::langs::LANGUAGES.iter().find(|l| l.name == "Rust").unwrap();
+		results.add_file_stats(lang, crate::analysis::stats::FileContribution::new(10, 10, 0, 0, 0, 100), None);
+
+		let ctx = FormatterContext::new(ViewOptions::default());
+		let report = ReportData::from_results(&results, Path::new("."), Verbosity::Summary, &ctx);
+
+		assert_eq!(report.summary.total_files, 1);
+		assert!(report.languages.is_empty());
+	}
+
+	#[test]
+	fn report_data_regular_verbosity_includes_languages() {
+		let mut results = AnalysisResults::default();
+		let lang = crate::langs::LANGUAGES.iter().find(|l| l.name == "Rust").unwrap();
+		results.add_file_stats(lang, crate::analysis::stats::FileContribution::new(10, 10, 0, 0, 0, 100), None);
+
+		let ctx = FormatterContext::new(ViewOptions::default());
+		let report = ReportData::from_results(&results, Path::new("."), Verbosity::Regular, &ctx);
+
+		assert_eq!(report.summary.total_files, 1);
+		assert_eq!(report.languages.len(), 1);
+		assert_eq!(report.languages[0].name, "Rust");
+		assert!(report.languages[0].files_detail.is_none());
 	}
 }

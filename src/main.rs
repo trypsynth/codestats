@@ -54,13 +54,12 @@ fn main() -> Result<()> {
 		ensure!(config.path.metadata().is_ok(), "Cannot read file metadata for `{}`", config.path.display());
 	}
 	let analyzer_config: AnalyzerConfig = (&config).into();
-	let verbose = config.analysis.verbose;
 	let analyzer = CodeAnalyzer::new(&config.path, analyzer_config);
 	let results = analyzer.analyze()?;
 	let view_options: ViewOptions = (&config).into();
 	let formatter = get_formatter(config.display.output);
 	let mut stdout = io::stdout();
-	formatter.write_output(&results, &config.path, verbose, view_options, &mut stdout)?;
+	formatter.write_output(&results, &config.path, view_options, &mut stdout)?;
 	stdout.flush()?;
 	if config.analysis.fail_on_error && results.skipped_entries() > 0 {
 		return Err(anyhow!("Skipped {} entries due to errors", results.skipped_entries()));

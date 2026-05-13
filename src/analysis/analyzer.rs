@@ -10,7 +10,7 @@ use anyhow::Result;
 use ignore::{WalkBuilder, overrides::OverrideBuilder};
 
 use super::{pipeline, stats::AnalysisResults};
-use crate::config::AnalyzerConfig;
+use crate::{config::AnalyzerConfig, display::Verbosity};
 
 /// Thread-local accumulator for parallel file analysis.
 ///
@@ -61,7 +61,7 @@ impl CodeAnalyzer {
 	/// which should hopefully never happen.
 	pub fn analyze(&self) -> Result<AnalysisResults> {
 		let error_counter = Arc::new(AtomicU64::new(0));
-		let verbose = self.config.analysis.verbose;
+		let verbosity = self.config.analysis.verbosity;
 		let collect_details = self.config.collect_file_details;
 		let include_languages = self.config.analysis.include_languages.clone();
 		let exclude_languages = self.config.analysis.exclude_languages.clone();
@@ -108,14 +108,14 @@ impl CodeAnalyzer {
 							&include_languages,
 							&exclude_languages,
 						) {
-							if verbose {
+							if verbosity == Verbosity::Verbose {
 								eprintln!("Failed to process {}: {err}", entry.path().display());
 							}
 							error_counter.fetch_add(1, Ordering::Relaxed);
 						}
 					}
 					Err(err) => {
-						if verbose {
+						if verbosity == Verbosity::Verbose {
 							eprintln!("Walker error: {err}");
 						}
 						error_counter.fetch_add(1, Ordering::Relaxed);
@@ -135,7 +135,7 @@ impl CodeAnalyzer {
 		});
 		let skipped = error_counter.load(Ordering::Relaxed);
 		if skipped > 0 {
-			if verbose {
+			if verbosity == Verbosity::Verbose {
 				eprintln!("Skipped {skipped} entries due to errors.");
 			} else {
 				eprintln!("Skipped {skipped} entries due to errors (re-run with --verbose for details).");
