@@ -1,2 +1,0 @@
-** (Mix) The task "phx.server" could not be found
-Note no mix.exs was found in the current directory
