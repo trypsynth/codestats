@@ -53,27 +53,27 @@ jobs:
       - name: Build
         run: cargo zigbuild --release --locked --target ${{ matrix.target }}
 
-      - name: Package (Unix)
+      - name: Copy binary (Unix)
         if: "!contains(matrix.target, 'windows')"
-        run: |
-          mkdir -p release
-          cp LICENSE README.md release/
-          cp target/${{ matrix.target }}/release/cs release/
-          cd release && tar -czvf ../cs-${{ matrix.target }}.tar.gz .
+        run: cp target/${{ matrix.target }}/release/cs cs-${{ matrix.target }}
 
-      - name: Package (Windows)
+      - name: Copy binary (Windows)
         if: contains(matrix.target, 'windows')
-        run: |
-          mkdir -p release
-          cp LICENSE README.md release/
-          cp target/${{ matrix.target }}/release/cs.exe release/
-          cd release && zip -r ../cs-${{ matrix.target }}.zip .
+        run: cp target/${{ matrix.target }}/release/cs.exe cs-${{ matrix.target }}.exe
 
-      - name: Upload artifact
+      - name: Upload artifact (Unix)
+        if: "!contains(matrix.target, 'windows')"
         uses: actions/upload-artifact@v7
         with:
           name: cs-${{ matrix.target }}
-          path: cs-${{ matrix.target }}.*
+          path: cs-${{ matrix.target }}
+
+      - name: Upload artifact (Windows)
+        if: contains(matrix.target, 'windows')
+        uses: actions/upload-artifact@v7
+        with:
+          name: cs-${{ matrix.target }}
+          path: cs-${{ matrix.target }}.exe
 
   release:
     name: Publish nightly release
