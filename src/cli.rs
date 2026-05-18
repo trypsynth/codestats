@@ -99,6 +99,9 @@ pub struct AnalyzeArgs {
 	/// Exclude files of the specified language(s). Can be specified multiple times, and cannot be used together with --lang.
 	#[arg(long = "exclude-lang", conflicts_with = "include_lang")]
 	pub exclude_lang: Vec<String>,
+	/// Only show the top N languages in the breakdown
+	#[arg(short = 't', long, value_name = "N")]
+	pub top_languages: Option<usize>,
 	/// Exit with a non-zero status code if any files are skipped due to errors.
 	#[arg(long = "fail-on-error")]
 	pub fail_on_error: bool,

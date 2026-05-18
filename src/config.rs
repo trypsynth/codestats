@@ -119,6 +119,7 @@ pub struct DisplayConfig {
 	pub sort_direction: SortDirection,
 	pub output: OutputFormat,
 	pub indent: IndentStyle,
+	pub top_languages: Option<usize>,
 }
 
 impl Default for DisplayConfig {
@@ -131,6 +132,7 @@ impl Default for DisplayConfig {
 			sort_direction: SortDirection::Desc,
 			output: OutputFormat::Human,
 			indent: IndentStyle::Tab,
+			top_languages: None,
 		}
 	}
 }
@@ -214,6 +216,7 @@ impl Config {
 		apply!("sort_direction", self.display.sort_direction = analyze_args.sort_direction);
 		apply!("output", self.display.output = analyze_args.output);
 		apply!("indent", self.display.indent = analyze_args.indent);
+		apply!("top_languages", self.display.top_languages = analyze_args.top_languages);
 		if Self::cli_overrode(matches, "exclude") {
 			self.analysis.exclude_patterns.extend(analyze_args.exclude.clone());
 		}
@@ -264,6 +267,7 @@ impl From<&Config> for ViewOptions {
 			language_sort_key: config.display.sort_by,
 			sort_direction: config.display.sort_direction,
 			indent_style: config.display.indent,
+			top_languages: config.display.top_languages,
 		}
 	}
 }

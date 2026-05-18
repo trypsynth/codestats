@@ -57,6 +57,9 @@ const DEFAULT_CONFIG_TEMPLATE: &str = "\
 
 # Indentation style: \"tab\" or a number 1-8 for spaces
 # indent = \"tab\"
+
+# Limit language breakdown to the top N languages
+# top_languages = 10
 ";
 
 pub fn run_init(output: Option<PathBuf>, force: bool) -> Result<()> {

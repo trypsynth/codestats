@@ -271,6 +271,9 @@ impl<'a> LanguageRecord<'a> {
 			|(name, stats)| sort_key_for_language_record(name, stats, sort_key),
 			|a, b| a.0.cmp(b.0),
 		);
+		if let Some(n) = ctx.options.top_languages {
+			stats_vec.truncate(n);
+		}
 		stats_vec.into_iter().map(|(name, stats)| Self::from_stats(name, stats, verbosity, ctx)).collect()
 	}
 

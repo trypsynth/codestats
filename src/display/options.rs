@@ -103,6 +103,7 @@ pub struct ViewOptions {
 	pub language_sort_key: LanguageSortKey,
 	pub sort_direction: SortDirection,
 	pub indent_style: IndentStyle,
+	pub top_languages: Option<usize>,
 }
 
 impl Default for ViewOptions {
@@ -115,6 +116,7 @@ impl Default for ViewOptions {
 			language_sort_key: LanguageSortKey::Lines,
 			sort_direction: SortDirection::Desc,
 			indent_style: IndentStyle::Tab,
+			top_languages: None,
 		}
 	}
 }
