@@ -42,9 +42,11 @@ impl<'a> ReportData<'a> {
 		ctx: &FormatterContext,
 	) -> Self {
 		let summary = Summary::from_results(results, ctx);
-		let languages = (verbosity > Verbosity::Summary)
-			.then(|| LanguageRecord::from_results(results, verbosity, ctx))
-			.unwrap_or_default();
+		let languages = if verbosity > Verbosity::Summary {
+			LanguageRecord::from_results(results, verbosity, ctx)
+		} else {
+			Vec::default()
+		};
 		Self { analysis_path: path.display().to_string(), summary, languages }
 	}
 }

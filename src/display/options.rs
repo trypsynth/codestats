@@ -82,21 +82,16 @@ impl<'de> Deserialize<'de> for IndentStyle {
 	}
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Deserialize, Serialize)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Verbosity {
 	/// Only show totals
 	Summary,
 	/// Show totals and language breakdown
+	#[default]
 	Regular,
 	/// Show totals, language breakdown, and per-file details
 	Verbose,
-}
-
-impl Default for Verbosity {
-	fn default() -> Self {
-		Self::Regular
-	}
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
