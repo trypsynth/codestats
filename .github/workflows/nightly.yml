@@ -48,7 +48,7 @@ jobs:
             ${{ runner.os }}-${{ matrix.target }}-cargo-
 
       - name: Install cargo-zigbuild
-        run: cargo install cargo-zigbuild
+        run: cargo install cargo-zigbuild --force
 
       - name: Build
         run: cargo zigbuild --release --locked --target ${{ matrix.target }}
