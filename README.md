@@ -37,16 +37,65 @@ cargo install --path .
 
 ## Quick start
 
-- Human-readable report of the current directory: `cs`
-- Verbose per-file detail for `src/` in JSON: `cs -v src -o json`
-- List supported languages: `cs langs`
-- Generate shell completions: `cs completions <shell>`
-- Ignore `.gitignore` rules: `cs -i`
-- Follow symlinks and include hidden files: `cs -SH`
-- Analyze only Rust files: `cs -L rust`
-- Analyze everything except tests and documentation: `cs -e 'test_*' -e '*.md'`
-- Exclude specific languages: `cs --exclude-lang markdown --exclude-lang toml`
-- Fail when any files are skipped: `cs --fail-on-error`
+### Analyze the current directory
+
+```bash
+cs
+```
+
+### Verbose per-file detail for `src/` in JSON
+
+```bash
+cs -v src -o json
+```
+
+### Show only the top 10 languages
+
+```bash
+cs -t 10
+```
+
+### Analyze only Rust files
+
+```bash
+cs -L rust
+```
+
+### Exclude files by glob pattern
+
+```bash
+cs -e 'test_*' -e '*.md'
+```
+
+### Exclude specific languages
+
+```bash
+cs --exclude-lang markdown --exclude-lang toml
+```
+
+### Follow symlinks and include hidden files
+
+```bash
+cs -SH
+```
+
+### Ignore `.gitignore` rules
+
+```bash
+cs -i
+```
+
+### List supported languages
+
+```bash
+cs langs
+```
+
+### Generate shell completions
+
+```bash
+cs completions <shell>
+```
 
 ## Output formats
 
@@ -71,6 +120,7 @@ Usage: `cs [OPTIONS] [PATH]` (defaults to the current directory)
 - `-p, --precision <0-6>` Percentage precision. Default: `1`
 - `-s, --sort-by <lines|code|comments|blanks|files|size|name>` Sort key for languages and per-file detail. Default: `lines`
 - `-d, --sort-dir <asc|desc>` Sort direction. Default: `desc`
+- `-t, --top-languages <N>` Limit the language breakdown to the top N languages
 - `-o, --output <human|json|json-compact|csv|tsv|markdown|html>` Output format. Default: `human`
 - `--fail-on-error` Exit with a non-zero status code if any files are skipped due to errors
 - `-c, --config <PATH>` Use a TOML config file
@@ -112,6 +162,7 @@ precision = 4
 sort_by = "files"
 sort_direction = "desc"
 output = "human"
+top_languages = 10
 ```
 
 ## Technical Notes
