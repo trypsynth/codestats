@@ -1,8 +1,9 @@
-name: Nightly Build
+name: Release
 
 on:
   push:
-    branches: [master]
+    tags:
+      - 'v*'
 
 env:
   CARGO_TERM_COLOR: always
@@ -25,7 +26,7 @@ jobs:
           - x86_64-apple-darwin
           - aarch64-apple-darwin
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -70,37 +71,23 @@ jobs:
           cd release && zip -r ../cs-${{ matrix.target }}.zip .
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: cs-${{ matrix.target }}
           path: cs-${{ matrix.target }}.*
 
   release:
-    name: Publish nightly release
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@v4
         with:
           path: artifacts/
           merge-multiple: true
 
-      - name: Create/update nightly release
-        uses: softprops/action-gh-release@v3
+      - name: Release
+        uses: softprops/action-gh-release@v2
         with:
-          tag_name: nightly
-          name: Nightly Build
-          body: |
-            Automated nightly build from `master` branch.
-
-            **Commit:** ${{ github.sha }}
-            **Date:** ${{ github.event.head_commit.timestamp }}
-
-            These are development builds — use at your own risk.
-          prerelease: true
-          make_latest: false
           files: artifacts/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
