@@ -62,6 +62,9 @@ pub struct AnalyzeArgs {
 	/// Do not respect .gitignore files
 	#[arg(short = 'i', long)]
 	pub no_gitignore: bool,
+	/// Count generated files (lockfiles, minified assets) which are excluded by default
+	#[arg(long)]
+	pub include_generated: bool,
 	/// Search hidden files and directories
 	#[arg(short = 'H', long = "hidden")]
 	pub hidden: bool,

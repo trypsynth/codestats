@@ -24,6 +24,9 @@ const DEFAULT_CONFIG_TEMPLATE: &str = "\
 # Follow symbolic links
 # follow_symlinks = false
 
+# Count generated files (lockfiles, minified assets) excluded by default
+# include_generated = false
+
 # Glob patterns to exclude (can specify multiple)
 # exclude_patterns = [\"*.tmp\", \"node_modules/*\"]
 

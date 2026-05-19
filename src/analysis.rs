@@ -10,6 +10,7 @@
 mod analyzer;
 mod encoding;
 mod file_io;
+pub mod generated;
 mod line_classifier;
 mod line_counter;
 mod pipeline;

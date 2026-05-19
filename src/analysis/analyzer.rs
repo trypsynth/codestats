@@ -77,8 +77,15 @@ impl CodeAnalyzer {
 			.git_exclude(self.config.analysis.respect_gitignore)
 			.require_git(false)
 			.hidden(!self.config.analysis.include_hidden);
-		if !self.config.analysis.exclude_patterns.is_empty() {
+		let needs_overrides =
+			!self.config.analysis.exclude_patterns.is_empty() || !self.config.analysis.include_generated;
+		if needs_overrides {
 			let mut override_builder = OverrideBuilder::new(&self.root);
+			if !self.config.analysis.include_generated {
+				for pattern in super::generated::PATTERNS {
+					override_builder.add(&format!("!{pattern}"))?;
+				}
+			}
 			for pattern in &self.config.analysis.exclude_patterns {
 				// OverrideBuilder treats patterns without '!' as include rules, so we invert to enforce exclusion.
 				let owned;
