@@ -5,6 +5,8 @@
 - Added verbosity levels via `--verbosity <summary|regular|verbose>`: `summary` shows totals only, `regular` (default) adds a language breakdown, and `verbose` adds per-file details. Also available as `-q`/`--summary` and `-v`/`--verbose` shorthands
 - Added `--top-languages N` to limit the language breakdown to the top N languages
 - Generated files (lockfiles and minified assets) are now excluded by default; pass `--include-generated` to count them
+- Added `--max-depth N` to limit directory traversal depth
+- Added `--min-lines N` to hide languages with fewer than N total lines from the breakdown
 - Fixed unsupported block comment definitions for MoonScript
 
 ## 0.6.0

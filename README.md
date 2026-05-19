@@ -111,6 +111,8 @@ Usage: `cs [OPTIONS] [PATH]` (defaults to the current directory)
 - `-v, --verbose` Show per-file detail instead of just the summary
 - `-i, --no-gitignore` Do not respect `.gitignore`
 - `--include-generated` Count generated files (lockfiles, minified assets) which are excluded by default
+- `--max-depth <N>` Limit directory traversal to N levels deep
+- `--min-lines <N>` Hide languages with fewer than N total lines
 - `-H, --hidden` Search hidden files and directories
 - `-S, --symlinks` Follow symlinks (avoid cycles)
 - `-e, --exclude <PATTERN>` Exclude files or directories matching glob patterns (can be specified multiple times)

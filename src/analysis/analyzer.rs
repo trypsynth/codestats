@@ -76,7 +76,8 @@ impl CodeAnalyzer {
 			.git_global(self.config.analysis.respect_gitignore)
 			.git_exclude(self.config.analysis.respect_gitignore)
 			.require_git(false)
-			.hidden(!self.config.analysis.include_hidden);
+			.hidden(!self.config.analysis.include_hidden)
+			.max_depth(self.config.analysis.max_depth);
 		let needs_overrides =
 			!self.config.analysis.exclude_patterns.is_empty() || !self.config.analysis.include_generated;
 		if needs_overrides {

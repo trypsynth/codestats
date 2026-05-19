@@ -274,6 +274,9 @@ impl<'a> LanguageRecord<'a> {
 		if let Some(n) = ctx.options.top_languages {
 			stats_vec.truncate(n);
 		}
+		if let Some(min) = ctx.options.min_lines {
+			stats_vec.retain(|(_, stats)| stats.lines() >= min);
+		}
 		stats_vec.into_iter().map(|(name, stats)| Self::from_stats(name, stats, verbosity, ctx)).collect()
 	}
 

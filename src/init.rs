@@ -27,6 +27,9 @@ const DEFAULT_CONFIG_TEMPLATE: &str = "\
 # Count generated files (lockfiles, minified assets) excluded by default
 # include_generated = false
 
+# Limit directory traversal depth
+# max_depth = 5
+
 # Glob patterns to exclude (can specify multiple)
 # exclude_patterns = [\"*.tmp\", \"node_modules/*\"]
 
@@ -63,6 +66,9 @@ const DEFAULT_CONFIG_TEMPLATE: &str = "\
 
 # Limit language breakdown to the top N languages
 # top_languages = 10
+
+# Hide languages with fewer than N total lines
+# min_lines = 100
 ";
 
 pub fn run_init(output: Option<PathBuf>, force: bool) -> Result<()> {

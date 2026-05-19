@@ -104,6 +104,7 @@ pub struct ViewOptions {
 	pub sort_direction: SortDirection,
 	pub indent_style: IndentStyle,
 	pub top_languages: Option<usize>,
+	pub min_lines: Option<u64>,
 }
 
 impl Default for ViewOptions {
@@ -117,6 +118,7 @@ impl Default for ViewOptions {
 			sort_direction: SortDirection::Desc,
 			indent_style: IndentStyle::Tab,
 			top_languages: None,
+			min_lines: None,
 		}
 	}
 }

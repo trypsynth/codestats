@@ -65,6 +65,9 @@ pub struct AnalyzeArgs {
 	/// Count generated files (lockfiles, minified assets) which are excluded by default
 	#[arg(long)]
 	pub include_generated: bool,
+	/// Limit directory traversal to N levels deep
+	#[arg(long, value_name = "N")]
+	pub max_depth: Option<usize>,
 	/// Search hidden files and directories
 	#[arg(short = 'H', long = "hidden")]
 	pub hidden: bool,
@@ -105,6 +108,9 @@ pub struct AnalyzeArgs {
 	/// Only show the top N languages in the breakdown
 	#[arg(short = 't', long, value_name = "N")]
 	pub top_languages: Option<usize>,
+	/// Hide languages with fewer than N total lines
+	#[arg(long, value_name = "N")]
+	pub min_lines: Option<u64>,
 	/// Exit with a non-zero status code if any files are skipped due to errors.
 	#[arg(long = "fail-on-error")]
 	pub fail_on_error: bool,

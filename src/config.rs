@@ -88,6 +88,7 @@ pub struct AnalysisConfig {
 	pub include_hidden: bool,
 	pub follow_symlinks: bool,
 	pub include_generated: bool,
+	pub max_depth: Option<usize>,
 	pub exclude_patterns: Vec<String>,
 	pub include_languages: Vec<String>,
 	pub exclude_languages: Vec<String>,
@@ -102,6 +103,7 @@ impl Default for AnalysisConfig {
 			include_hidden: false,
 			follow_symlinks: false,
 			include_generated: false,
+			max_depth: None,
 			exclude_patterns: Vec::new(),
 			include_languages: Vec::new(),
 			exclude_languages: Vec::new(),
@@ -122,6 +124,7 @@ pub struct DisplayConfig {
 	pub output: OutputFormat,
 	pub indent: IndentStyle,
 	pub top_languages: Option<usize>,
+	pub min_lines: Option<u64>,
 }
 
 impl Default for DisplayConfig {
@@ -135,6 +138,7 @@ impl Default for DisplayConfig {
 			output: OutputFormat::Human,
 			indent: IndentStyle::Tab,
 			top_languages: None,
+			min_lines: None,
 		}
 	}
 }
@@ -210,6 +214,7 @@ impl Config {
 		apply!("no_gitignore", self.analysis.respect_gitignore = !analyze_args.no_gitignore);
 		apply!("hidden", self.analysis.include_hidden = analyze_args.hidden);
 		apply!("include_generated", self.analysis.include_generated = analyze_args.include_generated);
+		apply!("max_depth", self.analysis.max_depth = analyze_args.max_depth);
 		apply!("symlinks", self.analysis.follow_symlinks = analyze_args.symlinks);
 		apply!("fail_on_error", self.analysis.fail_on_error = analyze_args.fail_on_error);
 		apply!("number_style", self.display.number_style = analyze_args.number_style);
@@ -220,6 +225,7 @@ impl Config {
 		apply!("output", self.display.output = analyze_args.output);
 		apply!("indent", self.display.indent = analyze_args.indent);
 		apply!("top_languages", self.display.top_languages = analyze_args.top_languages);
+		apply!("min_lines", self.display.min_lines = analyze_args.min_lines);
 		if Self::cli_overrode(matches, "exclude") {
 			self.analysis.exclude_patterns.extend(analyze_args.exclude.clone());
 		}
@@ -271,6 +277,7 @@ impl From<&Config> for ViewOptions {
 			sort_direction: config.display.sort_direction,
 			indent_style: config.display.indent,
 			top_languages: config.display.top_languages,
+			min_lines: config.display.min_lines,
 		}
 	}
 }
