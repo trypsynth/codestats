@@ -21,6 +21,26 @@ A small CLI tool that summarizes codebases at blazing speed. Built for quick aud
 
 ## Install
 
+### Pre-built binaries
+
+Download the latest binary for your platform from [GitHub Releases](https://github.com/trypsynth/codestats/releases/latest):
+
+| Platform | Download |
+| --- | --- |
+| Linux x86_64 | [cs-x86_64-unknown-linux-musl](https://github.com/trypsynth/codestats/releases/latest/download/cs-x86_64-unknown-linux-musl) |
+| Linux ARM64 | [cs-aarch64-unknown-linux-musl](https://github.com/trypsynth/codestats/releases/latest/download/cs-aarch64-unknown-linux-musl) |
+| macOS Intel | [cs-x86_64-apple-darwin](https://github.com/trypsynth/codestats/releases/latest/download/cs-x86_64-apple-darwin) |
+| macOS Apple Silicon | [cs-aarch64-apple-darwin](https://github.com/trypsynth/codestats/releases/latest/download/cs-aarch64-apple-darwin) |
+| Windows x86_64 | [cs-x86_64-pc-windows-gnu.exe](https://github.com/trypsynth/codestats/releases/latest/download/cs-x86_64-pc-windows-gnu.exe) |
+| Windows ARM64 | [cs-aarch64-pc-windows-gnullvm.exe](https://github.com/trypsynth/codestats/releases/latest/download/cs-aarch64-pc-windows-gnullvm.exe) |
+
+On Linux and macOS, make the binary executable and move it somewhere on your `PATH`:
+
+```bash
+chmod +x cs-*
+sudo mv cs-* /usr/local/bin/cs
+```
+
 ### With cargo
 
 ```bash
