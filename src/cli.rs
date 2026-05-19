@@ -111,6 +111,9 @@ pub struct AnalyzeArgs {
 	/// Hide languages with fewer than N total lines
 	#[arg(long, value_name = "N")]
 	pub min_lines: Option<u64>,
+	/// Show a breakdown by directory instead of by language
+	#[arg(short = 'D', long)]
+	pub by_dir: bool,
 	/// Exit with a non-zero status code if any files are skipped due to errors.
 	#[arg(long = "fail-on-error")]
 	pub fail_on_error: bool,

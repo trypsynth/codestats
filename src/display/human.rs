@@ -7,7 +7,7 @@ use crate::{
 	analysis::{AnalysisResults, stats::percentage},
 	display::{
 		formatting::pluralize,
-		report::{LanguageRecord, Summary},
+		report::{DirRecord, LanguageRecord, Summary},
 	},
 };
 
@@ -38,6 +38,14 @@ impl OutputFormatter for HumanFormatter {
 		let (ctx, report) = self.prepare_report(results, path, view_options);
 		Self::write_overview(&report, &ctx, writer)?;
 		if view_options.verbosity == Verbosity::Summary {
+			return Ok(());
+		}
+		if view_options.by_dir {
+			if report.directories.is_empty() {
+				writeln!(writer, "No recognized programming languages found.")?;
+			} else {
+				Self::write_dir_breakdown(&report, &ctx, writer)?;
+			}
 			return Ok(());
 		}
 		if report.languages.is_empty() {
@@ -132,6 +140,55 @@ impl HumanFormatter {
 		}
 		if verbose {
 			Self::write_file_breakdown(language, summary, ctx, writer)?;
+		}
+		Ok(())
+	}
+
+	fn write_dir_breakdown(report: &ReportData, ctx: &FormatterContext, writer: &mut dyn Write) -> Result<()> {
+		writeln!(writer, "Directory breakdown:")?;
+		for dir in &report.directories {
+			Self::write_dir_stats(dir, &report.summary, ctx, writer)?;
+		}
+		Ok(())
+	}
+
+	fn write_dir_stats(
+		dir: &DirRecord,
+		summary: &Summary,
+		ctx: &FormatterContext,
+		writer: &mut dyn Write,
+	) -> Result<()> {
+		let i1 = ctx.indent(1);
+		let i2 = ctx.indent(2);
+		let file_pct = percentage(dir.files, summary.total_files);
+		let line_pct = percentage(dir.lines, summary.total_lines);
+		let size_pct = percentage(dir.size, summary.total_size);
+		let size_human = &dir.size_human;
+		writeln!(writer, "{}:", dir.path)?;
+		writeln!(
+			writer,
+			"{i1}Files: {} {} ({}% of total).",
+			ctx.number(dir.files),
+			pluralize(dir.files, "file", "files"),
+			ctx.percent(file_pct)
+		)?;
+		writeln!(
+			writer,
+			"{i1}Lines: {} {} ({}% of total).",
+			ctx.number(dir.lines),
+			pluralize(dir.lines, "line", "lines"),
+			ctx.percent(line_pct)
+		)?;
+		writeln!(writer, "{i1}Size: {size_human} ({}% of total).", ctx.percent(size_pct))?;
+		writeln!(writer, "{i1}Line breakdown:")?;
+		for line_type in dir.line_types() {
+			writeln!(
+				writer,
+				"{i2}{}: {} lines ({}%).",
+				line_type.title_label(),
+				ctx.number(line_type.count),
+				ctx.percent(line_type.percentage)
+			)?;
 		}
 		Ok(())
 	}

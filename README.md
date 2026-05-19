@@ -91,6 +91,12 @@ cs -i
 cs langs
 ```
 
+### Show breakdown by directory
+
+```bash
+cs -D
+```
+
 ### Generate shell completions
 
 ```bash
@@ -124,6 +130,7 @@ Usage: `cs [OPTIONS] [PATH]` (defaults to the current directory)
 - `-s, --sort-by <lines|code|comments|blanks|files|size|name>` Sort key for languages and per-file detail. Default: `lines`
 - `-d, --sort-dir <asc|desc>` Sort direction. Default: `desc`
 - `-t, --top-languages <N>` Limit the language breakdown to the top N languages
+- `-D, --by-dir` Show a breakdown by directory instead of by language
 - `-o, --output <human|json|json-compact|csv|tsv|markdown|html>` Output format. Default: `human`
 - `--fail-on-error` Exit with a non-zero status code if any files are skipped due to errors
 - `-c, --config <PATH>` Use a TOML config file
@@ -166,6 +173,7 @@ sort_by = "files"
 sort_direction = "desc"
 output = "human"
 top_languages = 10
+by_dir = false
 ```
 
 ## Technical Notes

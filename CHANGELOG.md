@@ -2,6 +2,7 @@
 
 ## 0.7.0
 
+- Added `--by-dir` (`-D`) to show a breakdown by directory instead of by language
 - Added verbosity levels via `--verbosity <summary|regular|verbose>`: `summary` shows totals only, `regular` (default) adds a language breakdown, and `verbose` adds per-file details. Also available as `-q`/`--summary` and `-v`/`--verbose` shorthands
 - Added `--top-languages N` to limit the language breakdown to the top N languages
 - Generated files (lockfiles and minified assets) are now excluded by default; pass `--include-generated` to count them

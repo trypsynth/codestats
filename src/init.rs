@@ -69,6 +69,9 @@ const DEFAULT_CONFIG_TEMPLATE: &str = "\
 
 # Hide languages with fewer than N total lines
 # min_lines = 100
+
+# Show a breakdown by directory instead of by language
+# by_dir = false
 ";
 
 pub fn run_init(output: Option<PathBuf>, force: bool) -> Result<()> {

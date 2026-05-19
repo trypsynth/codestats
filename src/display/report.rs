@@ -1,9 +1,12 @@
-use std::path::Path;
+use std::{
+	collections::HashMap,
+	path::{Component, Path},
+};
 
 use serde::Serialize;
 
 use crate::{
-	analysis::{AnalysisResults, FileStats, LanguageStats, LineType},
+	analysis::{AnalysisResults, FileStats, LanguageStats, LineType, stats::percentage},
 	display::{
 		apply_sort,
 		formatting::{FormatterContext, SortValue, pluralize as pluralize_fn},
@@ -31,6 +34,8 @@ pub struct ReportData<'a> {
 	pub analysis_path: String,
 	pub summary: Summary,
 	pub languages: Vec<LanguageRecord<'a>>,
+	#[serde(skip_serializing_if = "Vec::is_empty")]
+	pub directories: Vec<DirRecord>,
 }
 
 impl<'a> ReportData<'a> {
@@ -47,7 +52,12 @@ impl<'a> ReportData<'a> {
 		} else {
 			Vec::default()
 		};
-		Self { analysis_path: path.display().to_string(), summary, languages }
+		let directories = if ctx.options.by_dir && verbosity > Verbosity::Summary {
+			DirRecord::from_results(results, path, ctx)
+		} else {
+			Vec::new()
+		};
+		Self { analysis_path: path.display().to_string(), summary, languages, directories }
 	}
 }
 
@@ -375,6 +385,109 @@ impl_formatters!(FileRecord<'_> {
 	format_shebang_lines => shebang_lines : number,
 	format_size => size : number,
 });
+
+fn dir_key(file_path_str: &str, root: &Path) -> String {
+	let path = Path::new(file_path_str);
+	let relative = path.strip_prefix(root).unwrap_or(path);
+	let mut components = relative.components();
+	match (components.next(), components.next()) {
+		(Some(Component::Normal(first)), Some(_)) => first.to_string_lossy().into_owned(),
+		_ => "(root)".to_string(),
+	}
+}
+
+#[derive(Debug, Default)]
+struct DirAccumulator {
+	files: u64,
+	lines: u64,
+	code_lines: u64,
+	comment_lines: u64,
+	blank_lines: u64,
+	shebang_lines: u64,
+	size: u64,
+}
+
+#[derive(Debug, Serialize)]
+pub struct DirRecord {
+	pub path: String,
+	pub files: u64,
+	pub lines: u64,
+	pub code_lines: u64,
+	pub comment_lines: u64,
+	pub blank_lines: u64,
+	pub shebang_lines: u64,
+	pub size: u64,
+	pub size_human: String,
+	pub code_percentage: f64,
+	pub comment_percentage: f64,
+	pub blank_percentage: f64,
+	pub shebang_percentage: f64,
+}
+
+impl DirRecord {
+	fn from_results(results: &AnalysisResults, root: &Path, ctx: &FormatterContext) -> Vec<Self> {
+		let mut map: HashMap<String, DirAccumulator> = HashMap::new();
+		for (_, stats) in results.languages() {
+			for file in stats.files_list() {
+				let key = dir_key(file.path(), root);
+				let acc = map.entry(key).or_default();
+				acc.files = acc.files.saturating_add(1);
+				acc.lines = acc.lines.saturating_add(file.total_lines());
+				acc.code_lines = acc.code_lines.saturating_add(file.code_lines());
+				acc.comment_lines = acc.comment_lines.saturating_add(file.comment_lines());
+				acc.blank_lines = acc.blank_lines.saturating_add(file.blank_lines());
+				acc.shebang_lines = acc.shebang_lines.saturating_add(file.shebang_lines());
+				acc.size = acc.size.saturating_add(file.size());
+			}
+		}
+		let sort_key = ctx.options.language_sort_key;
+		let mut records: Vec<_> = map
+			.into_iter()
+			.map(|(path, acc)| Self {
+				size_human: ctx.size(acc.size),
+				code_percentage: percentage(acc.code_lines, acc.lines),
+				comment_percentage: percentage(acc.comment_lines, acc.lines),
+				blank_percentage: percentage(acc.blank_lines, acc.lines),
+				shebang_percentage: percentage(acc.shebang_lines, acc.lines),
+				path,
+				files: acc.files,
+				lines: acc.lines,
+				code_lines: acc.code_lines,
+				comment_lines: acc.comment_lines,
+				blank_lines: acc.blank_lines,
+				shebang_lines: acc.shebang_lines,
+				size: acc.size,
+			})
+			.collect();
+		apply_sort(
+			&mut records,
+			ctx.options.sort_direction,
+			|r| match sort_key {
+				LanguageSortKey::Lines | LanguageSortKey::Files => SortValue::Num(r.lines),
+				LanguageSortKey::Code => SortValue::Num(r.code_lines),
+				LanguageSortKey::Comments => SortValue::Num(r.comment_lines),
+				LanguageSortKey::Blanks => SortValue::Num(r.blank_lines),
+				LanguageSortKey::Size => SortValue::Num(r.size),
+				LanguageSortKey::Name => SortValue::Text(r.path.as_str()),
+			},
+			|a, b| a.path.cmp(&b.path),
+		);
+		records
+	}
+
+	pub fn line_types(&self) -> impl Iterator<Item = LineTypeStats> + '_ {
+		iter_line_types(LineTypeSeries {
+			code: self.code_lines,
+			comment: self.comment_lines,
+			blank: self.blank_lines,
+			shebang: self.shebang_lines,
+			code_pct: self.code_percentage,
+			comment_pct: self.comment_percentage,
+			blank_pct: self.blank_percentage,
+			shebang_pct: self.shebang_percentage,
+		})
+	}
+}
 
 #[cfg(test)]
 mod tests {

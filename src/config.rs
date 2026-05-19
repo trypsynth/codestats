@@ -125,6 +125,7 @@ pub struct DisplayConfig {
 	pub indent: IndentStyle,
 	pub top_languages: Option<usize>,
 	pub min_lines: Option<u64>,
+	pub by_dir: bool,
 }
 
 impl Default for DisplayConfig {
@@ -139,6 +140,7 @@ impl Default for DisplayConfig {
 			indent: IndentStyle::Tab,
 			top_languages: None,
 			min_lines: None,
+			by_dir: false,
 		}
 	}
 }
@@ -226,6 +228,7 @@ impl Config {
 		apply!("indent", self.display.indent = analyze_args.indent);
 		apply!("top_languages", self.display.top_languages = analyze_args.top_languages);
 		apply!("min_lines", self.display.min_lines = analyze_args.min_lines);
+		apply!("by_dir", self.display.by_dir = analyze_args.by_dir);
 		if Self::cli_overrode(matches, "exclude") {
 			self.analysis.exclude_patterns.extend(analyze_args.exclude.clone());
 		}
@@ -261,7 +264,7 @@ impl From<&Config> for AnalyzerConfig {
 	fn from(config: &Config) -> Self {
 		Self {
 			analysis: config.analysis.clone(),
-			collect_file_details: config.analysis.verbosity == Verbosity::Verbose,
+			collect_file_details: config.analysis.verbosity == Verbosity::Verbose || config.display.by_dir,
 		}
 	}
 }
@@ -278,6 +281,7 @@ impl From<&Config> for ViewOptions {
 			indent_style: config.display.indent,
 			top_languages: config.display.top_languages,
 			min_lines: config.display.min_lines,
+			by_dir: config.display.by_dir,
 		}
 	}
 }

@@ -105,6 +105,7 @@ pub struct ViewOptions {
 	pub indent_style: IndentStyle,
 	pub top_languages: Option<usize>,
 	pub min_lines: Option<u64>,
+	pub by_dir: bool,
 }
 
 impl Default for ViewOptions {
@@ -119,6 +120,7 @@ impl Default for ViewOptions {
 			indent_style: IndentStyle::Tab,
 			top_languages: None,
 			min_lines: None,
+			by_dir: false,
 		}
 	}
 }
