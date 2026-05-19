@@ -11,7 +11,7 @@
 - Generated files such as lockfiles and minified assets are now excluded by default; pass `--include-generated` to count them
 - Pre-built binaries are now published to GitHub Releases for Linux (x86_64/ARM64), macOS (Intel/Apple Silicon), and Windows (x86_64/ARM64)
 - Renamed `--sort-dir` to `--sort-direction`; dropped the `-i` shorthand from `--no-gitignore` and `-S` from `--symlinks`
-- Verbosity is now controlled with `-q`/`--quiet` (summary only) and `-v`/`--verbose` (per-file details) instead of a `--verbosity` enum; the default shows the language breakdown without file details
+- Verbosity is now controlled with `-q`/`--quiet` (summary only) and `-v`/`--verbose` (per-file details); the default shows the language breakdown without file details
 
 ## 0.6.0
 
