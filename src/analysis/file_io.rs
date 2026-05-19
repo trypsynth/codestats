@@ -119,7 +119,7 @@ impl FileSource {
 
 	pub(super) fn process(
 		self,
-		file_path: &Path,
+		display_path: &str,
 		file_size: u64,
 		results: &mut AnalysisResults,
 		collect_details: bool,
@@ -128,10 +128,10 @@ impl FileSource {
 	) -> Result<()> {
 		match self {
 			Self::Buffered(file) => {
-				process_file_buffered(file_path, file, file_size, results, collect_details, language, encoding)
+				process_file_buffered(display_path, file, file_size, results, collect_details, language, encoding)
 			}
 			Self::Mapped(mmap) => {
-				process_file_mmap(file_path, file_size, results, collect_details, language, encoding, &mmap)
+				process_file_mmap(display_path, file_size, results, collect_details, language, encoding, &mmap)
 			}
 		}
 	}
@@ -182,7 +182,7 @@ fn sample_from_slice(file_bytes: &[u8]) -> Vec<u8> {
 }
 
 fn process_file_buffered(
-	file_path: &Path,
+	display_path: &str,
 	file: File,
 	file_size: u64,
 	results: &mut AnalysisResults,
@@ -193,7 +193,7 @@ fn process_file_buffered(
 	if encoding::is_utf16(encoding.encoding) {
 		let mut reader = BufReader::with_capacity(64 * 1024, file);
 		return encoding::process_utf16_stream(
-			file_path,
+			display_path,
 			file_size,
 			results,
 			collect_details,
@@ -204,11 +204,11 @@ fn process_file_buffered(
 	}
 	let reader = BufReader::with_capacity(64 * 1024, file);
 	let mut source = BufLineSource::new(reader);
-	line_counter::process_lines(file_path, file_size, results, collect_details, language, encoding, &mut source)
+	line_counter::process_lines(display_path, file_size, results, collect_details, language, encoding, &mut source)
 }
 
 fn process_file_mmap(
-	file_path: &Path,
+	display_path: &str,
 	file_size: u64,
 	results: &mut AnalysisResults,
 	collect_details: bool,
@@ -218,11 +218,19 @@ fn process_file_mmap(
 ) -> Result<()> {
 	let file_bytes = mmap.as_ref();
 	if encoding::is_utf16(encoding.encoding) {
-		encoding::process_utf16_bytes(file_path, file_size, results, collect_details, language, encoding, file_bytes);
+		encoding::process_utf16_bytes(
+			display_path,
+			file_size,
+			results,
+			collect_details,
+			language,
+			encoding,
+			file_bytes,
+		);
 		return Ok(());
 	}
 	let mut source = MmapLineSource::new(file_bytes);
-	line_counter::process_lines(file_path, file_size, results, collect_details, language, encoding, &mut source)
+	line_counter::process_lines(display_path, file_size, results, collect_details, language, encoding, &mut source)
 }
 
 #[cfg(test)]

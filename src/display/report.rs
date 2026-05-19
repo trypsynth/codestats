@@ -36,6 +36,10 @@ pub struct ReportData<'a> {
 	pub languages: Vec<LanguageRecord<'a>>,
 	#[serde(skip_serializing_if = "Vec::is_empty")]
 	pub directories: Vec<DirRecord>,
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub languages_hidden: Option<usize>,
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub dirs_hidden: Option<usize>,
 }
 
 impl<'a> ReportData<'a> {
@@ -47,17 +51,26 @@ impl<'a> ReportData<'a> {
 		ctx: &FormatterContext,
 	) -> Self {
 		let summary = Summary::from_results(results, ctx);
-		let languages = if verbosity > Verbosity::Summary {
+		let (languages, languages_hidden) = if verbosity > Verbosity::Summary {
 			LanguageRecord::from_results(results, verbosity, ctx)
 		} else {
-			Vec::default()
+			(Vec::default(), 0)
 		};
-		let directories = if ctx.options.by_dir && verbosity > Verbosity::Summary {
+		let (directories, dirs_hidden) = if ctx.options.by_dir && verbosity > Verbosity::Summary {
 			DirRecord::from_results(results, path, ctx)
 		} else {
-			Vec::new()
+			(Vec::new(), 0)
 		};
-		Self { analysis_path: path.display().to_string(), summary, languages, directories }
+		let languages_hidden = (languages_hidden > 0).then_some(languages_hidden);
+		let dirs_hidden = (dirs_hidden > 0).then_some(dirs_hidden);
+		Self {
+			analysis_path: path.display().to_string(),
+			summary,
+			languages,
+			directories,
+			languages_hidden,
+			dirs_hidden,
+		}
 	}
 }
 
@@ -272,8 +285,9 @@ pub struct LanguageRecord<'a> {
 
 impl<'a> LanguageRecord<'a> {
 	#[must_use]
-	fn from_results(results: &'a AnalysisResults, verbosity: Verbosity, ctx: &FormatterContext) -> Vec<Self> {
+	fn from_results(results: &'a AnalysisResults, verbosity: Verbosity, ctx: &FormatterContext) -> (Vec<Self>, usize) {
 		let mut stats_vec: Vec<_> = results.languages().map(|(lang, stats)| (lang.name, stats)).collect();
+		let total = stats_vec.len();
 		let sort_key = ctx.options.language_sort_key;
 		apply_sort(
 			&mut stats_vec,
@@ -287,7 +301,10 @@ impl<'a> LanguageRecord<'a> {
 		if let Some(min) = ctx.options.min_lines {
 			stats_vec.retain(|(_, stats)| stats.lines() >= min);
 		}
-		stats_vec.into_iter().map(|(name, stats)| Self::from_stats(name, stats, verbosity, ctx)).collect()
+		let hidden = total.saturating_sub(stats_vec.len());
+		let records =
+			stats_vec.into_iter().map(|(name, stats)| Self::from_stats(name, stats, verbosity, ctx)).collect();
+		(records, hidden)
 	}
 
 	#[must_use]
@@ -425,7 +442,7 @@ pub struct DirRecord {
 }
 
 impl DirRecord {
-	fn from_results(results: &AnalysisResults, root: &Path, ctx: &FormatterContext) -> Vec<Self> {
+	fn from_results(results: &AnalysisResults, root: &Path, ctx: &FormatterContext) -> (Vec<Self>, usize) {
 		let mut map: HashMap<String, DirAccumulator> = HashMap::new();
 		for (_, stats) in results.languages() {
 			for file in stats.files_list() {
@@ -440,6 +457,7 @@ impl DirRecord {
 				acc.size = acc.size.saturating_add(file.size());
 			}
 		}
+		let total = map.len();
 		let sort_key = ctx.options.language_sort_key;
 		let mut records: Vec<_> = map
 			.into_iter()
@@ -472,7 +490,14 @@ impl DirRecord {
 			},
 			|a, b| a.path.cmp(&b.path),
 		);
-		records
+		if let Some(n) = ctx.options.top_languages {
+			records.truncate(n);
+		}
+		if let Some(min) = ctx.options.min_lines {
+			records.retain(|r| r.lines >= min);
+		}
+		let hidden = total.saturating_sub(records.len());
+		(records, hidden)
 	}
 
 	pub fn line_types(&self) -> impl Iterator<Item = LineTypeStats> + '_ {

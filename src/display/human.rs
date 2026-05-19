@@ -92,6 +92,9 @@ impl HumanFormatter {
 		for language in &report.languages {
 			Self::write_language_stats(language, &report.summary, ctx, verbose, writer)?;
 		}
+		if let Some(n) = report.languages_hidden {
+			writeln!(writer, "({n} {} not shown)", pluralize(n as u64, "language", "languages"))?;
+		}
 		Ok(())
 	}
 
@@ -148,6 +151,9 @@ impl HumanFormatter {
 		writeln!(writer, "Directory breakdown:")?;
 		for dir in &report.directories {
 			Self::write_dir_stats(dir, &report.summary, ctx, writer)?;
+		}
+		if let Some(n) = report.dirs_hidden {
+			writeln!(writer, "({n} {} not shown)", pluralize(n as u64, "directory", "directories"))?;
 		}
 		Ok(())
 	}

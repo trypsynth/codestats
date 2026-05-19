@@ -1,4 +1,4 @@
-use std::{borrow::Cow, io::Read, path::Path};
+use std::{borrow::Cow, io::Read};
 
 use anyhow::Result;
 use encoding_rs::{CoderResult, Decoder, Encoding, UTF_8, UTF_16BE, UTF_16LE};
@@ -84,7 +84,7 @@ fn detect_utf16_without_bom(samples: &[u8]) -> Option<FileEncoding> {
 }
 
 pub(super) fn process_utf16_bytes(
-	file_path: &Path,
+	display_path: &str,
 	file_size: u64,
 	results: &mut AnalysisResults,
 	collect_details: bool,
@@ -113,11 +113,11 @@ pub(super) fn process_utf16_bytes(
 	pending.push_str(&output);
 	output.clear();
 	drain_lines(&mut pending, language, &mut line_counts, &mut comment_state, &mut is_first_line, true);
-	finish_file_stats(file_path, file_size, results, collect_details, language, &line_counts);
+	finish_file_stats(display_path, file_size, results, collect_details, language, &line_counts);
 }
 
 pub(super) fn process_utf16_stream<R: Read>(
-	file_path: &Path,
+	display_path: &str,
 	file_size: u64,
 	results: &mut AnalysisResults,
 	collect_details: bool,
@@ -157,7 +157,7 @@ pub(super) fn process_utf16_stream<R: Read>(
 	pending.push_str(&output);
 	output.clear();
 	drain_lines(&mut pending, language, &mut line_counts, &mut comment_state, &mut is_first_line, true);
-	finish_file_stats(file_path, file_size, results, collect_details, language, &line_counts);
+	finish_file_stats(display_path, file_size, results, collect_details, language, &line_counts);
 	Ok(())
 }
 

@@ -30,11 +30,13 @@ fn read_metadata_context(path: &Path) -> String {
 /// Returns an error for I/O or decoding failures.
 pub fn process_file(
 	file_path: &Path,
+	display_root: &Path,
 	results: &mut AnalysisResults,
 	collect_details: bool,
 	include_languages: &[String],
 	exclude_languages: &[String],
 ) -> Result<()> {
+	let display_path = file_path.strip_prefix(display_root).unwrap_or(file_path).display().to_string();
 	let filename_os = file_path.file_name().context("Missing file name")?;
 	let filename_lossy = filename_os.to_string_lossy();
 	let filename: Cow<'_, str> = if filename_lossy.contains('\u{FFFD}') {
@@ -58,8 +60,7 @@ pub fn process_file(
 				return Ok(());
 			}
 			let contribution = FileContribution::new(0, 0, 0, 0, 0, file_size);
-			let file_stats =
-				collect_details.then(|| FileStats::new(file_path.display().to_string(), 0, 0, 0, 0, 0, file_size));
+			let file_stats = collect_details.then(|| FileStats::new(display_path.clone(), 0, 0, 0, 0, 0, file_size));
 			results.add_file_stats(language, contribution, file_stats);
 		}
 		return Ok(());
@@ -72,7 +73,7 @@ pub fn process_file(
 	if !should_process_language(language, include_languages, exclude_languages) {
 		return Ok(());
 	}
-	source.process(file_path, file_size, results, collect_details, language, encoding)
+	source.process(&display_path, file_size, results, collect_details, language, encoding)
 }
 
 fn detect_language_from_samples(filename: &str, samples: &[u8], encoding: FileEncoding) -> Option<&'static Language> {

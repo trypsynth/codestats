@@ -62,7 +62,7 @@ fn fixtures_match_expected_counts() {
 			String::from_utf8_lossy(&output.stderr)
 		)
 	});
-	let file_map = build_file_map(&analysis);
+	let file_map = build_file_map(&analysis, &fixtures_root);
 	for fixture in fixtures {
 		let expected = parse_expectations(&fixture);
 		let normalized = normalize_path(&fixture);
@@ -94,12 +94,12 @@ fn collect_fixtures(root: &Path) -> Vec<PathBuf> {
 	files
 }
 
-fn build_file_map(analysis: &AnalysisOutput) -> HashMap<PathBuf, ExpectedCounts> {
+fn build_file_map(analysis: &AnalysisOutput, fixtures_root: &Path) -> HashMap<PathBuf, ExpectedCounts> {
 	let mut map = HashMap::new();
 	for language in &analysis.languages {
 		let Some(files) = &language.files_detail else { continue };
 		for file in files {
-			let path = normalize_path(&file.path);
+			let path = normalize_path(fixtures_root.join(&file.path));
 			map.insert(
 				path,
 				ExpectedCounts {

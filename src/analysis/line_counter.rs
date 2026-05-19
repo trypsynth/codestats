@@ -1,5 +1,3 @@
-use std::path::Path;
-
 use anyhow::Result;
 
 use super::{
@@ -39,7 +37,7 @@ impl LineCounts {
 }
 
 pub(super) fn process_lines<S>(
-	file_path: &Path,
+	display_path: &str,
 	file_size: u64,
 	results: &mut AnalysisResults,
 	collect_details: bool,
@@ -61,12 +59,12 @@ where
 		},
 		language,
 	)?;
-	finish_file_stats(file_path, file_size, results, collect_details, language, &line_counts);
+	finish_file_stats(display_path, file_size, results, collect_details, language, &line_counts);
 	Ok(())
 }
 
 pub(super) fn finish_file_stats(
-	file_path: &Path,
+	display_path: &str,
 	file_size: u64,
 	results: &mut AnalysisResults,
 	collect_details: bool,
@@ -80,7 +78,7 @@ pub(super) fn finish_file_stats(
 	let shebang = line_counts.shebang;
 	let contribution = FileContribution::new(total, code, comment, blank, shebang, file_size);
 	let file_stats = collect_details
-		.then(|| FileStats::new(file_path.display().to_string(), total, code, comment, blank, shebang, file_size));
+		.then(|| FileStats::new(display_path.to_owned(), total, code, comment, blank, shebang, file_size));
 	results.add_file_stats(language, contribution, file_stats);
 }
 
