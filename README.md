@@ -157,11 +157,11 @@ Codestats can read settings from TOML while keeping full CLI compatibility. Sear
 
 ```toml
 [analysis]
-verbose = true
+verbosity = "verbose"
 respect_gitignore = true
 include_hidden = true
 follow_symlinks = false
-exclude_patterns = ["*.tmp", "test_*", "node_modules/*"]
+exclude_patterns = ["languages.json5", "*.tmp", "node_modules/*"]  # filenames or globs
 include_languages = ["rust", "python"]  # Only analyze these languages
 # exclude_languages = ["markdown", "toml"]  # Or exclude these (cannot use both)
 fail_on_error = false
