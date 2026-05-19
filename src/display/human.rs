@@ -7,7 +7,7 @@ use crate::{
 	analysis::{AnalysisResults, stats::percentage},
 	display::{
 		formatting::pluralize,
-		report::{DirRecord, LanguageRecord, Summary},
+		report::{DirFileRecord, DirRecord, LanguageRecord, Summary},
 	},
 };
 
@@ -194,6 +194,32 @@ impl HumanFormatter {
 				line_type.title_label(),
 				ctx.number(line_type.count),
 				ctx.percent(line_type.percentage)
+			)?;
+		}
+		if let Some(files) = &dir.files_detail {
+			Self::write_dir_file_breakdown(files, summary, ctx, writer)?;
+		}
+		Ok(())
+	}
+
+	fn write_dir_file_breakdown(
+		files: &[DirFileRecord],
+		summary: &Summary,
+		ctx: &FormatterContext,
+		writer: &mut dyn Write,
+	) -> Result<()> {
+		let i1 = ctx.indent(1);
+		let i2 = ctx.indent(2);
+		writeln!(writer, "{i1}File breakdown:")?;
+		for file in files {
+			let file_pct = percentage(file.total_lines, summary.total_lines);
+			writeln!(
+				writer,
+				"{i2}{}: {} lines, {} ({}% of total lines).",
+				file.path,
+				ctx.number(file.total_lines),
+				file.size_human,
+				ctx.percent(file_pct)
 			)?;
 		}
 		Ok(())

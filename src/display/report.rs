@@ -403,6 +403,18 @@ impl_formatters!(FileRecord<'_> {
 	format_size => size : number,
 });
 
+#[derive(Debug, Serialize)]
+pub struct DirFileRecord {
+	pub path: String,
+	pub total_lines: u64,
+	pub code_lines: u64,
+	pub comment_lines: u64,
+	pub blank_lines: u64,
+	pub shebang_lines: u64,
+	pub size: u64,
+	pub size_human: String,
+}
+
 fn dir_key(file_path_str: &str, root: &Path) -> String {
 	let path = Path::new(file_path_str);
 	let relative = path.strip_prefix(root).unwrap_or(path);
@@ -422,6 +434,7 @@ struct DirAccumulator {
 	blank_lines: u64,
 	shebang_lines: u64,
 	size: u64,
+	file_stats: Vec<DirFileRecord>,
 }
 
 #[derive(Debug, Serialize)]
@@ -439,10 +452,13 @@ pub struct DirRecord {
 	pub comment_percentage: f64,
 	pub blank_percentage: f64,
 	pub shebang_percentage: f64,
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub files_detail: Option<Vec<DirFileRecord>>,
 }
 
 impl DirRecord {
 	fn from_results(results: &AnalysisResults, root: &Path, ctx: &FormatterContext) -> (Vec<Self>, usize) {
+		let verbose = ctx.options.verbosity == Verbosity::Verbose;
 		let mut map: HashMap<String, DirAccumulator> = HashMap::new();
 		for (_, stats) in results.languages() {
 			for file in stats.files_list() {
@@ -455,26 +471,58 @@ impl DirRecord {
 				acc.blank_lines = acc.blank_lines.saturating_add(file.blank_lines());
 				acc.shebang_lines = acc.shebang_lines.saturating_add(file.shebang_lines());
 				acc.size = acc.size.saturating_add(file.size());
+				if verbose {
+					acc.file_stats.push(DirFileRecord {
+						path: file.path().to_owned(),
+						total_lines: file.total_lines(),
+						code_lines: file.code_lines(),
+						comment_lines: file.comment_lines(),
+						blank_lines: file.blank_lines(),
+						shebang_lines: file.shebang_lines(),
+						size: file.size(),
+						size_human: ctx.size(file.size()),
+					});
+				}
 			}
 		}
 		let total = map.len();
 		let sort_key = ctx.options.language_sort_key;
 		let mut records: Vec<_> = map
 			.into_iter()
-			.map(|(path, acc)| Self {
-				size_human: ctx.size(acc.size),
-				code_percentage: percentage(acc.code_lines, acc.lines),
-				comment_percentage: percentage(acc.comment_lines, acc.lines),
-				blank_percentage: percentage(acc.blank_lines, acc.lines),
-				shebang_percentage: percentage(acc.shebang_lines, acc.lines),
-				path,
-				files: acc.files,
-				lines: acc.lines,
-				code_lines: acc.code_lines,
-				comment_lines: acc.comment_lines,
-				blank_lines: acc.blank_lines,
-				shebang_lines: acc.shebang_lines,
-				size: acc.size,
+			.map(|(path, acc)| {
+				let files_detail = verbose.then(|| {
+					let mut files = acc.file_stats;
+					apply_sort(
+						&mut files,
+						ctx.options.sort_direction,
+						|file| match sort_key {
+							LanguageSortKey::Lines => SortValue::Num(file.total_lines),
+							LanguageSortKey::Code => SortValue::Num(file.code_lines),
+							LanguageSortKey::Comments => SortValue::Num(file.comment_lines),
+							LanguageSortKey::Blanks => SortValue::Num(file.blank_lines),
+							LanguageSortKey::Size => SortValue::Num(file.size),
+							LanguageSortKey::Files | LanguageSortKey::Name => SortValue::Text(file.path.as_str()),
+						},
+						|a, b| a.path.cmp(&b.path),
+					);
+					files
+				});
+				Self {
+					size_human: ctx.size(acc.size),
+					code_percentage: percentage(acc.code_lines, acc.lines),
+					comment_percentage: percentage(acc.comment_lines, acc.lines),
+					blank_percentage: percentage(acc.blank_lines, acc.lines),
+					shebang_percentage: percentage(acc.shebang_lines, acc.lines),
+					path,
+					files: acc.files,
+					lines: acc.lines,
+					code_lines: acc.code_lines,
+					comment_lines: acc.comment_lines,
+					blank_lines: acc.blank_lines,
+					shebang_lines: acc.shebang_lines,
+					size: acc.size,
+					files_detail,
+				}
 			})
 			.collect();
 		apply_sort(
