@@ -4,7 +4,7 @@ use clap::{ArgMatches, CommandFactory, FromArgMatches, Parser, Subcommand};
 
 use crate::{
 	completions::Shell,
-	display::{IndentStyle, LanguageSortKey, NumberStyle, OutputFormat, SizeStyle, SortDirection, Verbosity},
+	display::{IndentStyle, LanguageSortKey, NumberStyle, OutputFormat, SizeStyle, SortDirection},
 };
 
 /// A tool for analyzing code statistics across different programming languages
@@ -50,17 +50,14 @@ pub struct AnalyzeArgs {
 	/// The path to analyze
 	#[arg(value_name = "PATH", default_value = ".")]
 	pub path: PathBuf,
-	/// Set the output verbosity level
-	#[arg(long, value_enum, default_value = "regular", conflicts_with_all = ["summary", "verbose"])]
-	pub verbosity: Verbosity,
-	/// Only show totals (alias for --verbosity summary)
-	#[arg(short = 'q', long, conflicts_with_all = ["verbosity", "verbose"])]
-	pub summary: bool,
-	/// Show per-file details (alias for --verbosity verbose)
-	#[arg(short, long, conflicts_with_all = ["verbosity", "summary"])]
+	/// Show totals only, no language breakdown
+	#[arg(short = 'q', long, conflicts_with = "verbose")]
+	pub quiet: bool,
+	/// Show per-file details in addition to the language breakdown
+	#[arg(short, long, conflicts_with = "quiet")]
 	pub verbose: bool,
 	/// Do not respect .gitignore files
-	#[arg(short = 'i', long)]
+	#[arg(long)]
 	pub no_gitignore: bool,
 	/// Count generated files (lockfiles, minified assets) which are excluded by default
 	#[arg(long)]
@@ -73,7 +70,7 @@ pub struct AnalyzeArgs {
 	pub hidden: bool,
 	/// Follow symbolic links and include their targets in the analysis.
 	/// Use with caution as this can lead to infinite loops with circular symlinks
-	#[arg(short = 'S', long)]
+	#[arg(long)]
 	pub symlinks: bool,
 	/// Output number formatting style
 	#[arg(short, long, value_enum, default_value = "plain")]
@@ -88,7 +85,7 @@ pub struct AnalyzeArgs {
 	#[arg(short = 's', long = "sort-by", value_enum, default_value = "lines")]
 	pub language_sort: LanguageSortKey,
 	/// Sorting direction
-	#[arg(short = 'd', long = "sort-dir", value_enum, default_value = "desc")]
+	#[arg(short = 'd', long = "sort-direction", value_enum, default_value = "desc")]
 	pub sort_direction: SortDirection,
 	/// Indentation style: "tab" or a number 1-8 for spaces
 	#[arg(long, default_value = "tab")]

@@ -206,8 +206,7 @@ impl Config {
 				}
 			};
 		}
-		apply!("verbosity", self.analysis.verbosity = analyze_args.verbosity);
-		if Self::cli_overrode(matches, "summary") && analyze_args.summary {
+		if Self::cli_overrode(matches, "quiet") && analyze_args.quiet {
 			self.analysis.verbosity = Verbosity::Summary;
 		}
 		if Self::cli_overrode(matches, "verbose") && analyze_args.verbose {
@@ -401,16 +400,12 @@ mod tests {
 		let config_path = write_config("[analysis]\nverbosity = \"regular\"\n");
 		let config = Config::from_file(&config_path).expect("load config");
 
-		let (args, matches) = parse_cli(&["cs", "--summary"]);
+		let (args, matches) = parse_cli(&["cs", "--quiet"]);
 		let merged = config.clone().merge_with_cli(&args, &matches).expect("merge config");
 		assert_eq!(merged.analysis.verbosity, Verbosity::Summary);
 
 		let (args, matches) = parse_cli(&["cs", "--verbose"]);
-		let merged = config.clone().merge_with_cli(&args, &matches).expect("merge config");
-		assert_eq!(merged.analysis.verbosity, Verbosity::Verbose);
-
-		let (args, matches) = parse_cli(&["cs", "--verbosity", "summary"]);
 		let merged = config.merge_with_cli(&args, &matches).expect("merge config");
-		assert_eq!(merged.analysis.verbosity, Verbosity::Summary);
+		assert_eq!(merged.analysis.verbosity, Verbosity::Verbose);
 	}
 }

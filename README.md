@@ -76,7 +76,7 @@ cs --exclude-lang markdown --exclude-lang toml
 ### Follow symlinks and include hidden files
 
 ```bash
-cs -SH
+cs --symlinks -H
 ```
 
 ### Ignore `.gitignore` rules
@@ -114,13 +114,14 @@ cs completions <shell>
 
 Usage: `cs [OPTIONS] [PATH]` (defaults to the current directory)
 
-- `-v, --verbose` Show per-file detail instead of just the summary
-- `-i, --no-gitignore` Do not respect `.gitignore`
+- `-q, --quiet` Show totals only, no language breakdown
+- `-v, --verbose` Show per-file details in addition to the language breakdown
+- `--no-gitignore` Do not respect `.gitignore`
 - `--include-generated` Count generated files (lockfiles, minified assets) which are excluded by default
 - `--max-depth <N>` Limit directory traversal to N levels deep
 - `--min-lines <N>` Hide languages with fewer than N total lines
 - `-H, --hidden` Search hidden files and directories
-- `-S, --symlinks` Follow symlinks (avoid cycles)
+- `--symlinks` Follow symlinks (avoid cycles)
 - `-e, --exclude <PATTERN>` Exclude files or directories matching glob patterns (can be specified multiple times)
 - `-L, --lang <LANGUAGE>` Only analyze files of the specified language(s) (can be specified multiple times, cannot be used with `--exclude-lang`)
 - `--exclude-lang <LANGUAGE>` Exclude files of the specified language(s) (can be specified multiple times, cannot be used with `--lang`)
@@ -128,7 +129,7 @@ Usage: `cs [OPTIONS] [PATH]` (defaults to the current directory)
 - `-u, --size-units <binary|decimal>` Human-readable size units. Default: `binary`
 - `-p, --precision <0-6>` Percentage precision. Default: `1`
 - `-s, --sort-by <lines|code|comments|blanks|files|size|name>` Sort key for languages and per-file detail. Default: `lines`
-- `-d, --sort-dir <asc|desc>` Sort direction. Default: `desc`
+- `-d, --sort-direction <asc|desc>` Sort direction. Default: `desc`
 - `-t, --top-languages <N>` Limit the language breakdown to the top N languages
 - `-D, --by-dir` Show a breakdown by directory instead of by language
 - `-o, --output <human|json|json-compact|csv|tsv|markdown|html>` Output format. Default: `human`

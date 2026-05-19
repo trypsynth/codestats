@@ -3,7 +3,8 @@
 ## 0.7.0
 
 - Added `--by-dir` (`-D`) to show a breakdown by directory instead of by language
-- Added verbosity levels via `--verbosity <summary|regular|verbose>`: `summary` shows totals only, `regular` (default) adds a language breakdown, and `verbose` adds per-file details. Also available as `-q`/`--summary` and `-v`/`--verbose` shorthands
+- Added verbosity control via `-q`/`--quiet` (totals only) and `-v`/`--verbose` (per-file details); default shows the language breakdown
+- Renamed `--sort-dir` to `--sort-direction`; dropped the `-i` shorthand on `--no-gitignore` and `-S` on `--symlinks`
 - Added `--top-languages N` to limit the language breakdown to the top N languages
 - Generated files (lockfiles and minified assets) are now excluded by default; pass `--include-generated` to count them
 - Added `--max-depth N` to limit directory traversal depth

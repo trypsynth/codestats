@@ -12,8 +12,8 @@ const DEFAULT_CONFIG_TEMPLATE: &str = "\
 # See: cs --help for details on each option
 
 [analysis]
-# Show per-file detail in output
-# verbose = false
+# Verbosity level: summary (totals only), regular (default), verbose (per-file details)
+# verbosity = \"regular\"
 
 # Respect .gitignore rules when scanning
 # respect_gitignore = true
@@ -152,7 +152,7 @@ mod tests {
 		assert!(content.contains("# Codestats configuration file"), "should contain header comment");
 		assert!(content.contains("[analysis]"), "should contain [analysis] section");
 		assert!(content.contains("[display]"), "should contain [display] section");
-		assert!(content.contains("# verbose = false"), "should contain verbose option");
+		assert!(content.contains("# verbosity = "), "should contain verbosity option");
 		assert!(content.contains("# sort_by = \"lines\""), "should contain sort_by option");
 		assert!(content.contains("# indent = \"tab\""), "should contain indent option");
 	}
