@@ -2,14 +2,16 @@
 
 ## 0.7.0
 
-- Added `--by-dir` (`-D`) to show a breakdown by directory instead of by language
-- Added verbosity control via `-q`/`--quiet` (totals only) and `-v`/`--verbose` (per-file details); default shows the language breakdown
-- Renamed `--sort-dir` to `--sort-direction`; dropped the `-i` shorthand on `--no-gitignore` and `-S` on `--symlinks`
-- Added `--top-languages N` to limit the language breakdown to the top N languages
-- Generated files (lockfiles and minified assets) are now excluded by default; pass `--include-generated` to count them
-- Added `--max-depth N` to limit directory traversal depth
-- Added `--min-lines N` to hide languages with fewer than N total lines from the breakdown
+- Added `--by-dir` (`-D`) to show a breakdown by directory instead of by language; combining it with `--verbose` also lists individual files under each directory
+- Added `--max-depth N` to cap directory traversal depth
+- Added `--min-lines N` to hide entries with fewer than N total lines from the breakdown
+- Added `--top-languages N` to limit the breakdown to the top N entries; the output notes how many were omitted when entries are hidden by either flag
+- File paths in verbose and directory output are now shown relative to the analysis root instead of absolute
 - Fixed unsupported block comment definitions for MoonScript
+- Generated files such as lockfiles and minified assets are now excluded by default; pass `--include-generated` to count them
+- Pre-built binaries are now published to GitHub Releases for Linux (x86_64/ARM64), macOS (Intel/Apple Silicon), and Windows (x86_64/ARM64)
+- Renamed `--sort-dir` to `--sort-direction`; dropped the `-i` shorthand from `--no-gitignore` and `-S` from `--symlinks`
+- Verbosity is now controlled with `-q`/`--quiet` (summary only) and `-v`/`--verbose` (per-file details) instead of a `--verbosity` enum; the default shows the language breakdown without file details
 
 ## 0.6.0
 
