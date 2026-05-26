@@ -43,6 +43,7 @@ static LANGUAGE_MATCHERS: LazyLock<Vec<LanguageMatchers>> =
 	LazyLock::new(|| LANGUAGES.iter().map(build_language_matchers).collect());
 
 #[inline]
+#[must_use]
 pub fn language_matchers(lang: &Language) -> &'static LanguageMatchers {
 	&LANGUAGE_MATCHERS[lang.index]
 }

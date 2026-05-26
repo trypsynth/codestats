@@ -53,6 +53,10 @@ pub enum NumberFormatter {
 }
 
 impl NumberFormatter {
+	/// # Panics
+	///
+	/// Panics if the `num_format` custom format builder produces an invalid configuration,
+	/// which cannot happen with the separator strings used here.
 	#[must_use]
 	pub fn new(style: NumberStyle) -> Self {
 		match style {
@@ -139,6 +143,7 @@ impl PercentFormatter {
 
 /// Return `singular` when `count` equals 1, otherwise return `plural`.
 #[inline]
+#[must_use]
 pub const fn pluralize<'a>(count: u64, singular: &'a str, plural: &'a str) -> &'a str {
 	if count == 1 { singular } else { plural }
 }

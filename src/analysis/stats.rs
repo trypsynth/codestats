@@ -7,6 +7,7 @@ const INITIAL_FILE_LIST_CAPACITY: usize = 256;
 ///
 /// Returns `0.0` when `total` is `0` to avoid division-by-zero panics.
 #[inline]
+#[must_use]
 #[expect(clippy::cast_precision_loss)]
 pub fn percentage(part: u64, total: u64) -> f64 {
 	if total == 0 { 0.0 } else { (part as f64 / total as f64) * 100.0 }

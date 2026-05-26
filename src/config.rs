@@ -157,6 +157,9 @@ struct RawConfig {
 }
 
 impl Config {
+	/// # Errors
+	///
+	/// Returns an error if the file cannot be read or its TOML is invalid.
 	pub fn from_file(path: impl AsRef<Path>) -> Result<Self> {
 		let path = path.as_ref();
 		let contents = fs::read_to_string(path).with_context(|| read_config_context(path))?;
@@ -172,10 +175,14 @@ impl Config {
 		Ok(config)
 	}
 
+	/// # Errors
+	///
+	/// Returns an error if a config file is found but cannot be read or parsed.
 	pub fn load_default() -> Result<Self> {
 		Self::find_config_file().map_or_else(|| Ok(Self::default()), Self::from_file)
 	}
 
+	#[must_use]
 	pub fn find_config_file() -> Option<PathBuf> {
 		let mut candidates = vec![PathBuf::from(".codestats.toml"), PathBuf::from("codestats.toml")];
 		if let Some(cfg_dir) = config_dir() {
