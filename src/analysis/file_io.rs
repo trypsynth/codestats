@@ -138,8 +138,8 @@ impl FileSource {
 }
 
 fn sample_ranges(file_len: u64) -> (usize, Option<(u64, usize)>) {
-	// SAFETY: SAMPLE_SIZE is a small constant (4096), so this conversion will always succeed.
-	let start_len = usize::try_from(file_len.min(SAMPLE_SIZE as u64)).unwrap();
+	let start_len = usize::try_from(file_len.min(SAMPLE_SIZE as u64))
+		.expect("SAMPLE_SIZE is 4096, well within usize range on any supported platform");
 	if file_len <= SAMPLE_SIZE as u64 {
 		return (start_len, None);
 	}
@@ -148,8 +148,8 @@ fn sample_ranges(file_len: u64) -> (usize, Option<(u64, usize)>) {
 		// Keep UTF-16 code units aligned when sampling from the middle.
 		mid_offset = mid_offset.saturating_sub(1);
 	}
-	// SAFETY: SAMPLE_SIZE is a small constant (4096), so this conversion will always succeed.
-	let mid_len = usize::try_from((mid_offset + SAMPLE_SIZE as u64).min(file_len) - mid_offset).unwrap();
+	let mid_len = usize::try_from((mid_offset + SAMPLE_SIZE as u64).min(file_len) - mid_offset)
+		.expect("result is bounded by SAMPLE_SIZE (4096), well within usize range");
 	(start_len, Some((mid_offset, mid_len)))
 }
 
@@ -174,8 +174,8 @@ fn sample_from_slice(file_bytes: &[u8]) -> Vec<u8> {
 	let (start_len, mid_range) = sample_ranges(file_bytes.len() as u64);
 	samples.extend_from_slice(&file_bytes[..start_len]);
 	if let Some((mid_offset, mid_len)) = mid_range {
-		// SAFETY: mid_offset is derived from file_bytes.len() which is a usize, so it must fit in usize.
-		let offset = usize::try_from(mid_offset).unwrap();
+		let offset =
+			usize::try_from(mid_offset).expect("mid_offset derives from file_bytes.len() which is already a usize");
 		samples.extend_from_slice(&file_bytes[offset..offset + mid_len]);
 	}
 	samples

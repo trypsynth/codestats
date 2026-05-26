@@ -8,7 +8,10 @@ const INITIAL_FILE_LIST_CAPACITY: usize = 256;
 /// Returns `0.0` when `total` is `0` to avoid division-by-zero panics.
 #[inline]
 #[must_use]
-#[expect(clippy::cast_precision_loss)]
+#[expect(
+	clippy::cast_precision_loss,
+	reason = "percentage values are display-only; sub-percent precision loss is acceptable"
+)]
 pub fn percentage(part: u64, total: u64) -> f64 {
 	if total == 0 { 0.0 } else { (part as f64 / total as f64) * 100.0 }
 }
@@ -245,7 +248,10 @@ impl LanguageStats {
 
 	/// Calculate the average lines per file for this language
 	#[must_use]
-	#[expect(clippy::cast_precision_loss)]
+	#[expect(
+		clippy::cast_precision_loss,
+		reason = "average line counts are display-only; sub-unit precision loss is acceptable"
+	)]
 	pub fn average_lines_per_file(&self) -> f64 {
 		if self.files == 0 { 0.0 } else { self.lines as f64 / self.files as f64 }
 	}

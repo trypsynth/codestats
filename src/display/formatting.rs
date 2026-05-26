@@ -98,7 +98,10 @@ impl SizeFormatter {
 	}
 
 	#[must_use]
-	#[expect(clippy::cast_precision_loss)]
+	#[expect(
+		clippy::cast_precision_loss,
+		reason = "file sizes are display-only; sub-unit precision loss in the float division is acceptable"
+	)]
 	pub fn format(&self, size: u64) -> String {
 		let base: f64 = match self.style {
 			SizeStyle::Binary => 1024.0,

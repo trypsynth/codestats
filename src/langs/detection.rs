@@ -48,7 +48,11 @@ fn score_language(lang: &Language, content: &str, tokens: &[&str]) -> i32 {
 		};
 		let clamped_count = count.min(usize::try_from(i32::MAX / KEYWORD_MATCH_SCORE).unwrap_or(usize::MAX));
 		// We now know that this is safe because we've clamped the value.
-		#[expect(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
+		#[expect(
+			clippy::cast_possible_truncation,
+			clippy::cast_possible_wrap,
+			reason = "clamped_count is bounded to i32::MAX / KEYWORD_MATCH_SCORE above, so the cast is safe"
+		)]
 		let count_i32 = clamped_count as i32;
 		score = score.saturating_add(count_i32.saturating_mul(KEYWORD_MATCH_SCORE));
 	}

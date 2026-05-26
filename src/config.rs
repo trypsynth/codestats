@@ -75,7 +75,10 @@ impl Default for Config {
 }
 
 /// Analysis settings loaded from TOML and the CLI.
-#[expect(clippy::struct_excessive_bools)]
+#[expect(
+	clippy::struct_excessive_bools,
+	reason = "each bool maps to a distinct on/off analysis option with no meaningful grouping as an enum"
+)]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(default)]
 pub struct AnalysisConfig {

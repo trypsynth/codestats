@@ -44,7 +44,10 @@ pub enum Commands {
 /// Arguments for the main code analysis functionality
 #[derive(Parser)]
 // CLI flags necessarily map to booleans, so clippy::struct_excessive_bools would just add noise here.
-#[expect(clippy::struct_excessive_bools)]
+#[expect(
+	clippy::struct_excessive_bools,
+	reason = "CLI flags are inherently boolean; grouping them into an enum would add complexity without clarity"
+)]
 pub struct AnalyzeArgs {
 	/// Path to configuration file (TOML format)
 	#[arg(short = 'c', long = "config")]
