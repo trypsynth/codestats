@@ -11,6 +11,10 @@ keywords = ["code", "analysis", "cli", "tool"]
 categories = ["command-line-utilities", "development-tools", "filesystem"]
 rust-version = "1.88.0"
 
+[lib]
+name = "codestats"
+path = "src/lib.rs"
+
 [[bin]]
 name = "cs"
 path = "src/main.rs"

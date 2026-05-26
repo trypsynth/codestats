@@ -3,15 +3,11 @@ use std::{
 	path::{Path, PathBuf},
 };
 
-use anyhow::{Context, Result, ensure};
-use clap::{ArgMatches, parser::ValueSource};
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 
-use crate::{
-	cli::AnalyzeArgs,
-	display::{
-		IndentStyle, LanguageSortKey, NumberStyle, OutputFormat, SizeStyle, SortDirection, Verbosity, ViewOptions,
-	},
+use crate::display::{
+	IndentStyle, LanguageSortKey, NumberStyle, OutputFormat, SizeStyle, SortDirection, Verbosity, ViewOptions,
 };
 
 /// Helper to create error context for config file reading operations.
@@ -190,73 +186,6 @@ impl Config {
 		}
 		candidates.into_iter().find(|path| path.is_file())
 	}
-
-	/// Merge CLI arguments into this configuration, with CLI taking precedence.
-	///
-	/// Returns an error when the merged config sets both include and exclude languages.
-	pub fn merge_with_cli(mut self, analyze_args: &AnalyzeArgs, matches: &ArgMatches) -> Result<Self> {
-		let path_overridden = Self::cli_overrode(matches, "path");
-		if path_overridden {
-			self.path.clone_from(&analyze_args.path);
-		}
-		macro_rules! apply {
-			($id:literal, $body:expr) => {
-				if Self::cli_overrode(matches, $id) {
-					$body
-				}
-			};
-		}
-		if Self::cli_overrode(matches, "quiet") && analyze_args.quiet {
-			self.analysis.verbosity = Verbosity::Summary;
-		}
-		if Self::cli_overrode(matches, "verbose") && analyze_args.verbose {
-			self.analysis.verbosity = Verbosity::Verbose;
-		}
-		apply!("no_gitignore", self.analysis.respect_gitignore = !analyze_args.no_gitignore);
-		apply!("hidden", self.analysis.include_hidden = analyze_args.hidden);
-		apply!("include_generated", self.analysis.include_generated = analyze_args.include_generated);
-		apply!("max_depth", self.analysis.max_depth = analyze_args.max_depth);
-		apply!("symlinks", self.analysis.follow_symlinks = analyze_args.symlinks);
-		apply!("fail_on_error", self.analysis.fail_on_error = analyze_args.fail_on_error);
-		apply!("number_style", self.display.number_style = analyze_args.number_style);
-		apply!("size_style", self.display.size_units = analyze_args.size_style);
-		apply!("percent_precision", self.display.precision = analyze_args.percent_precision);
-		apply!("language_sort", self.display.sort_by = analyze_args.language_sort);
-		apply!("sort_direction", self.display.sort_direction = analyze_args.sort_direction);
-		apply!("output", self.display.output = analyze_args.output);
-		apply!("indent", self.display.indent = analyze_args.indent);
-		apply!("top_languages", self.display.top_languages = analyze_args.top_languages);
-		apply!("min_lines", self.display.min_lines = analyze_args.min_lines);
-		apply!("by_dir", self.display.by_dir = analyze_args.by_dir);
-		if Self::cli_overrode(matches, "exclude") {
-			self.analysis.exclude_patterns.extend(analyze_args.exclude.clone());
-		}
-		if Self::cli_overrode(matches, "include_lang") {
-			self.analysis.include_languages.extend(analyze_args.include_lang.clone());
-		}
-		if Self::cli_overrode(matches, "exclude_lang") {
-			self.analysis.exclude_languages.extend(analyze_args.exclude_lang.clone());
-		}
-		if !path_overridden
-			&& self.path_overridden
-			&& let Some(source) = &self.source
-			&& self.path.is_relative()
-			&& let Some(parent) = source.parent()
-		{
-			// Resolve config-relative paths against the config file location unless CLI overrides it.
-			self.path = parent.join(&self.path);
-		}
-		self.display.precision = self.display.precision.min(6);
-		ensure!(
-			self.analysis.include_languages.is_empty() || self.analysis.exclude_languages.is_empty(),
-			"Config cannot set both include_languages and exclude_languages"
-		);
-		Ok(self)
-	}
-
-	fn cli_overrode(matches: &ArgMatches, id: &str) -> bool {
-		matches.value_source(id) == Some(ValueSource::CommandLine)
-	}
 }
 
 impl From<&Config> for AnalyzerConfig {
@@ -282,130 +211,5 @@ impl From<&Config> for ViewOptions {
 			min_lines: config.display.min_lines,
 			by_dir: config.display.by_dir,
 		}
-	}
-}
-
-#[cfg(test)]
-mod tests {
-	use std::{
-		env, fs,
-		time::{SystemTime, UNIX_EPOCH},
-	};
-
-	use clap::{CommandFactory, FromArgMatches};
-
-	use super::*;
-	use crate::cli::{AnalyzeArgs, Cli};
-
-	fn parse_cli(args: &[&str]) -> (AnalyzeArgs, ArgMatches) {
-		let matches = Cli::command().get_matches_from(args);
-		let cli = Cli::from_arg_matches(&matches).expect("clap already validated arguments");
-		(cli.analyze, matches)
-	}
-
-	fn write_config(contents: &str) -> PathBuf {
-		let unique = SystemTime::now().duration_since(UNIX_EPOCH).expect("system time is set").as_nanos();
-		let root = env::temp_dir().join(format!("codestats_config_test_{}_{}", std::process::id(), unique));
-		fs::create_dir_all(&root).expect("create temp dir");
-		let path = root.join("config.toml");
-		fs::write(&path, contents).expect("write temp config");
-		path
-	}
-
-	#[test]
-	fn merge_resolves_config_relative_path() {
-		let config_path = write_config("path = \"fixtures\"\n");
-		let config = Config::from_file(&config_path).expect("load config");
-		let (args, matches) = parse_cli(&["cs"]);
-		let merged = config.merge_with_cli(&args, &matches).expect("merge config");
-		let expected = config_path.parent().expect("config parent").join("fixtures");
-		assert_eq!(merged.path, expected);
-	}
-
-	#[test]
-	fn merge_preserves_cli_path_override() {
-		let config_path = write_config("path = \"fixtures\"\n");
-		let config = Config::from_file(&config_path).expect("load config");
-		let (args, matches) = parse_cli(&["cs", "custom-path"]);
-		let merged = config.merge_with_cli(&args, &matches).expect("merge config");
-		assert_eq!(merged.path, PathBuf::from("custom-path"));
-	}
-
-	#[test]
-	fn merge_clamps_precision() {
-		let config_path = write_config("[display]\nprecision = 9\n");
-		let config = Config::from_file(&config_path).expect("load config");
-		let (args, matches) = parse_cli(&["cs"]);
-		let merged = config.merge_with_cli(&args, &matches).expect("merge config");
-		assert_eq!(merged.display.precision, 6);
-	}
-
-	#[test]
-	fn merge_extends_exclude_patterns_from_cli() {
-		let config_path = write_config("[analysis]\nexclude_patterns = [\"target\"]\n");
-		let config = Config::from_file(&config_path).expect("load config");
-		let (args, matches) = parse_cli(&["cs", "--exclude", "node_modules"]);
-		let merged = config.merge_with_cli(&args, &matches).expect("merge config");
-		assert_eq!(merged.analysis.exclude_patterns, vec!["target".to_string(), "node_modules".to_string()]);
-	}
-
-	#[test]
-	fn merge_rejects_conflicting_language_filters() {
-		let config_path = write_config("[analysis]\ninclude_languages = [\"Rust\"]\n");
-		let config = Config::from_file(&config_path).expect("load config");
-		let (args, matches) = parse_cli(&["cs", "--exclude-lang", "python"]);
-		let err = config.merge_with_cli(&args, &matches).expect_err("conflicting language filters");
-		assert_eq!(err.to_string(), "Config cannot set both include_languages and exclude_languages");
-	}
-
-	#[test]
-	fn merge_applies_boolean_overrides() {
-		let config_path = write_config("[analysis]\nrespect_gitignore = true\ninclude_hidden = false\n");
-		let config = Config::from_file(&config_path).expect("load config");
-		let (args, matches) = parse_cli(&["cs", "--no-gitignore", "--hidden"]);
-		let merged = config.merge_with_cli(&args, &matches).expect("merge config");
-		assert!(!merged.analysis.respect_gitignore);
-		assert!(merged.analysis.include_hidden);
-	}
-
-	#[test]
-	fn merge_applies_indent_from_cli() {
-		let config_path = write_config("");
-		let config = Config::from_file(&config_path).expect("load config");
-		let (args, matches) = parse_cli(&["cs", "--indent", "4"]);
-		let merged = config.merge_with_cli(&args, &matches).expect("merge config");
-		assert_eq!(merged.display.indent, IndentStyle::Spaces(4));
-	}
-
-	#[test]
-	fn merge_applies_indent_from_config() {
-		let config_path = write_config("[display]\nindent = \"2\"\n");
-		let config = Config::from_file(&config_path).expect("load config");
-		let (args, matches) = parse_cli(&["cs"]);
-		let merged = config.merge_with_cli(&args, &matches).expect("merge config");
-		assert_eq!(merged.display.indent, IndentStyle::Spaces(2));
-	}
-
-	#[test]
-	fn merge_indent_defaults_to_tab() {
-		let config_path = write_config("");
-		let config = Config::from_file(&config_path).expect("load config");
-		let (args, matches) = parse_cli(&["cs"]);
-		let merged = config.merge_with_cli(&args, &matches).expect("merge config");
-		assert_eq!(merged.display.indent, IndentStyle::Tab);
-	}
-
-	#[test]
-	fn merge_applies_verbosity_overrides() {
-		let config_path = write_config("[analysis]\nverbosity = \"regular\"\n");
-		let config = Config::from_file(&config_path).expect("load config");
-
-		let (args, matches) = parse_cli(&["cs", "--quiet"]);
-		let merged = config.clone().merge_with_cli(&args, &matches).expect("merge config");
-		assert_eq!(merged.analysis.verbosity, Verbosity::Summary);
-
-		let (args, matches) = parse_cli(&["cs", "--verbose"]);
-		let merged = config.merge_with_cli(&args, &matches).expect("merge config");
-		assert_eq!(merged.analysis.verbosity, Verbosity::Verbose);
 	}
 }

@@ -1,25 +1,21 @@
-#![warn(clippy::all, clippy::cargo, clippy::nursery, clippy::pedantic, clippy::perf, unused_crate_dependencies)]
+#![warn(clippy::all, clippy::cargo, clippy::nursery, clippy::pedantic, clippy::perf)]
 #![deny(warnings)]
 
-mod analysis;
 mod cli;
 mod completions;
-mod config;
-mod display;
 mod init;
-mod langs;
 
 use std::io::{self, Write as _};
 
 use anyhow::{Result, anyhow, ensure};
 use cli::{Cli, Commands};
-use terminal_size::terminal_size;
-
-use crate::{
+use codestats::{
 	analysis::CodeAnalyzer,
 	config::{AnalyzerConfig, Config},
 	display::{ViewOptions, get_formatter},
+	langs,
 };
+use terminal_size::terminal_size;
 
 fn main() -> Result<()> {
 	let (cli, matches) = Cli::parse_with_matches();
@@ -48,7 +44,7 @@ fn main() -> Result<()> {
 	} else {
 		Config::load_default()?
 	};
-	let config = config.merge_with_cli(analyze, &matches)?;
+	let config = cli::merge_config(config, analyze, &matches)?;
 	ensure!(config.path.exists(), "Path `{}` not found", config.path.display());
 	if config.path.is_file() {
 		ensure!(config.path.metadata().is_ok(), "Cannot read file metadata for `{}`", config.path.display());
