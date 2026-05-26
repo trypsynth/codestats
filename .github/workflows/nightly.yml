@@ -1,15 +1,9 @@
 name: Nightly Build
-
 on:
   push:
     branches: [master]
-
-env:
-  CARGO_TERM_COLOR: always
-
 permissions:
   contents: write
-
 jobs:
   build:
     name: Build (${{ matrix.target }})
@@ -26,15 +20,12 @@ jobs:
           - aarch64-apple-darwin
     steps:
       - uses: actions/checkout@v6
-
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
-
       - uses: goto-bus-stop/setup-zig@v2
         with:
           zig-version: master
-
       - uses: actions/cache@v5
         with:
           path: |
@@ -46,47 +37,38 @@ jobs:
           key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-${{ matrix.target }}-cargo-
-
       - name: Install cargo-zigbuild
         run: cargo install cargo-zigbuild --force
-
       - name: Build
         run: cargo zigbuild --release --locked --target ${{ matrix.target }}
-
       - name: Copy binary (Unix)
         if: "!contains(matrix.target, 'windows')"
         run: cp target/${{ matrix.target }}/release/cs cs-${{ matrix.target }}
-
       - name: Copy binary (Windows)
         if: contains(matrix.target, 'windows')
         run: cp target/${{ matrix.target }}/release/cs.exe cs-${{ matrix.target }}.exe
-
       - name: Upload artifact (Unix)
         if: "!contains(matrix.target, 'windows')"
         uses: actions/upload-artifact@v7
         with:
           name: cs-${{ matrix.target }}
           path: cs-${{ matrix.target }}
-
       - name: Upload artifact (Windows)
         if: contains(matrix.target, 'windows')
         uses: actions/upload-artifact@v7
         with:
           name: cs-${{ matrix.target }}
           path: cs-${{ matrix.target }}.exe
-
   release:
     name: Publish nightly release
     needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-
       - uses: actions/download-artifact@v8
         with:
           path: artifacts/
           merge-multiple: true
-
       - name: Create/update nightly release
         uses: softprops/action-gh-release@v3
         with:
