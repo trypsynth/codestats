@@ -14,7 +14,7 @@
 		line_comments: [";"],
 	},
 	"ActionScript": {
-		file_patterns: ["*.actionscript", "*.as"],
+		file_patterns: ["*.as"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["package", "import", "function", "var", "flash.display", "Vector.<"],
@@ -660,7 +660,7 @@
 		block_comments: [["/*", "*/"], ["<!--", "-->"]],
 	},
 	"Elixir": {
-		file_patterns: ["*.ex", "*.exs"],
+		file_patterns: ["*.ex", "*.exs", "mix.lock"],
 		line_comments: ["#"],
 		keywords: ["defmodule", "def", "defp", "do", "end", "|>"],
 		shebangs: ["#!/usr/bin/env elixir"],
@@ -762,6 +762,12 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
+	"Flix": {
+		file_patterns: ["*.flix"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+		keywords: ["def", "let", "enum", "match", "namespace", "use", "pub", "with", "forall"],
+	},
 	"Forth": {
 		file_patterns: ["*.4th", "*.forth", "*.fr", "*.fth", "*.frt", "*.f83", "*.fb", "*.fpm", "*.e4", "*.rx", "*.ft"],
 		line_comments: ["\\ "],
@@ -825,7 +831,7 @@
 		line_comments: ["#"],
 	},
 	"Git Config": {
-		file_patterns: [".gitconfig", ".gitmodules"],
+		file_patterns: [".gitconfig", ".gitmodules", ".gitattributes"],
 		line_comments: ["#", ";"],
 		keywords: ["core", "user", "name", "email", "remote", "url"],
 	},
@@ -848,7 +854,7 @@
 		line_comments: ["#"],
 	},
 	"Go": {
-		file_patterns: ["*.go", "*.tmpl", "*.gohtml", "*.gotmpl", "go.mod", "go.sum", "go.work", "go.work.sum"],
+		file_patterns: ["*.go", "*.tmpl", "*.gohtml", "*.gotmpl", "go.mod", "go.work"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
@@ -945,7 +951,7 @@
 		block_comments: [["/*", "*/"]],
 	},
 	"HCL": {
-		file_patterns: ["*.hcl", "*.tf", "*.tf.json", "*.tfvars"],
+		file_patterns: ["*.hcl", ".terraform.lock.hcl"],
 		line_comments: ["#", "//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["job", "group", "task", "source", "build", "provisioner", "template"],
@@ -1011,7 +1017,7 @@
 		line_comments: ["#"],
 	},
 	"Inform 6": {
-		file_patterns: ["*.inf", "*.h"],
+		file_patterns: ["*.inf"],
 		line_comments: ["!"],
 		keywords: ["Object", "Class", "Nearby", "Verb", "Include", "Release"],
 	},
@@ -1125,7 +1131,7 @@
 		line_comments: ["//"],
 	},
 	"JSON": {
-		file_patterns: ["*.json", "*.geojson", "*.ndjson", "*.jsonl"],
+		file_patterns: ["*.json", "*.geojson", "*.ndjson", "*.jsonl", "package-lock.json", "composer.lock", "flake.lock", "deno.lock"],
 	},
 	"JSON5": {
 		file_patterns: ["*.json5"],
@@ -1266,7 +1272,7 @@
 		block_comments: [["%{", "%}"]],
 	},
 	"Limbo": {
-		file_patterns: ["*.b", "*.m"],
+		file_patterns: ["*.m"],
 		line_comments: ["#"],
 		keywords: ["implement", "include", "con", "fn", "adt", "Sys->print"],
 	},
@@ -1576,6 +1582,12 @@
 		line_comments: ["#"],
 		block_comments: [["/*", "*/"]],
 	},
+	"Noir": {
+		file_patterns: ["*.nr"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+		keywords: ["fn", "struct", "impl", "trait", "use", "mod", "let", "pub", "contract", "unconstrained"],
+	},
 	"Not Quite Perl": {
 		file_patterns: ["*.nqp"],
 		line_comments: ["#"],
@@ -1585,11 +1597,6 @@
 		file_patterns: ["*.nsi", "*.nsh"],
 		line_comments: [";", "#"],
 		block_comments: [["/*", "*/"]],
-	},
-	"Nu": {
-		file_patterns: ["*.nu"],
-		line_comments: [";"],
-		keywords: ["class", "imethod", "cmethod", "(global", "(set!", "(@"],
 	},
 	"NuGet Config": {
 		file_patterns: ["nuget.config", "packages.config", "nugetdefaults.config"],
@@ -2336,7 +2343,7 @@
 		line_comments: ["#"],
 	},
 	"TOML": {
-		file_patterns: ["*.toml", "Cargo.lock", "poetry.lock", "Pipfile.lock"],
+		file_patterns: ["*.toml", "Cargo.lock", "poetry.lock", "Pipfile.lock", "uv.lock"],
 		line_comments: ["#"],
 	},
 	"Turing": {
@@ -2438,6 +2445,12 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["analog", "electrical", "voltage", "current", "ddt", "idt", "branch"],
+	},
+	"Verse": {
+		file_patterns: ["*.verse"],
+		line_comments: ["#"],
+		block_comments: [["(*", "*)"]],
+		keywords: ["module", "using", "var", "class", "struct", "interface", "for", "if", "return", "agent", "spawns"],
 	},
 	"VHDL": {
 		file_patterns: ["*.vhd", "*.vhdl"],
@@ -2569,7 +2582,7 @@
 		keywords: ["%token", "%type", "%start", "yyparse"],
 	},
 	"YAML": {
-		file_patterns: ["*.yaml", "*.yml", "*.yaml.tmpl", "*.yaml-tmpl", ".yamllint", ".clang-format", ".clang-tidy", ".gemrc"],
+		file_patterns: ["*.yaml", "*.yml", "*.yaml.tmpl", "*.yaml-tmpl", ".yamllint", ".clang-format", ".clang-tidy", ".gemrc", "pnpm-lock.yaml", "pubspec.lock", "Podfile.lock"],
 		line_comments: ["#"],
 	},
 	"YANG": {
