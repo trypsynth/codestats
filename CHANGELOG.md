@@ -55,14 +55,13 @@
 - Added support for extensionless files with shebangs
 - Expanded language detection and added more tests
 - Improved output formatting and writer-based rendering
-- Switched language data to JSON5 with a cleaner build pipeline
 
 ## 0.2.0
 
-- Added many new languages and improved comment detection
-- Added stricter language data validation and cleaned up output formatting
-- Improved CLI flags and analyzer defaults
-- Split the project into a library and binary crate and refactored the core
+- Added many new languages.
+- Cleaned up output formatting.
+- Improved comment detection.
+- Streamlined CLI arguments and usage.
 
 ## 0.1.0
 
