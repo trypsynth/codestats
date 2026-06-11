@@ -6,6 +6,7 @@
 - Added `--max-depth N` to cap directory traversal depth
 - Added `--min-lines N` to hide entries with fewer than N total lines from the breakdown
 - Added `--top-languages N` to limit the breakdown to the top N entries; the output notes how many were omitted when entries are hidden by either flag
+- Expanded language coverage, now covering 544 total programming languages.
 - File paths in verbose and directory output are now shown relative to the analysis root instead of absolute
 - Fixed unsupported block comment definitions for MoonScript
 - Generated files such as lockfiles and minified assets are now excluded by default; pass `--include-generated` to count them
