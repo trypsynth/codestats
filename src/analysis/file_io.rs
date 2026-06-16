@@ -18,6 +18,26 @@ use crate::langs::Language;
 const MMAP_THRESHOLD: u64 = 256 * 1024;
 /// Size of sample chunks extracted from files for binary/language detection. For large files, we sample from both the start and middle of the file.
 const SAMPLE_SIZE: usize = 4 * 1024;
+const MAX_SAMPLE: usize = SAMPLE_SIZE * 2;
+
+/// Stack-allocated sample buffer; avoids a heap allocation per file during detection.
+pub(super) struct SampleBuf {
+	data: [u8; MAX_SAMPLE],
+	len: usize,
+}
+
+impl SampleBuf {
+	const fn new() -> Self {
+		Self { data: [0u8; MAX_SAMPLE], len: 0 }
+	}
+}
+
+impl std::ops::Deref for SampleBuf {
+	type Target = [u8];
+	fn deref(&self) -> &[u8] {
+		&self.data[..self.len]
+	}
+}
 
 /// Helper to create error context for file opening operations.
 fn open_file_context(path: &Path) -> String {
@@ -110,7 +130,7 @@ impl FileSource {
 		}
 	}
 
-	pub(super) fn sample(&mut self, file_size: u64) -> Result<Vec<u8>> {
+	pub(super) fn sample(&mut self, file_size: u64) -> Result<SampleBuf> {
 		match self {
 			Self::Buffered(file) => sample_file(file, file_size),
 			Self::Mapped(mmap) => Ok(sample_from_slice(mmap)),
@@ -153,32 +173,33 @@ fn sample_ranges(file_len: u64) -> (usize, Option<(u64, usize)>) {
 	(start_len, Some((mid_offset, mid_len)))
 }
 
-fn sample_file(file: &mut File, file_size: u64) -> Result<Vec<u8>> {
-	let mut buffer = Vec::with_capacity(SAMPLE_SIZE * 2);
-	let mut chunk = [0u8; SAMPLE_SIZE];
+fn sample_file(file: &mut File, file_size: u64) -> Result<SampleBuf> {
+	let mut buf = SampleBuf::new();
 	let (start_len, mid_range) = sample_ranges(file_size);
-	let read_start = file.read(&mut chunk[..start_len])?;
-	buffer.extend_from_slice(&chunk[..read_start]);
+	let read_start = file.read(&mut buf.data[..start_len])?;
+	buf.len = read_start;
 	if let Some((mid_offset, mid_len)) = mid_range {
 		file.seek(SeekFrom::Start(mid_offset))?;
-		let read_mid = file.read(&mut chunk[..mid_len])?;
-		buffer.extend_from_slice(&chunk[..read_mid]);
+		let read_mid = file.read(&mut buf.data[buf.len..buf.len + mid_len])?;
+		buf.len += read_mid;
 	}
 	// Reset for actual reading.
 	file.rewind()?;
-	Ok(buffer)
+	Ok(buf)
 }
 
-fn sample_from_slice(file_bytes: &[u8]) -> Vec<u8> {
-	let mut samples = Vec::with_capacity(SAMPLE_SIZE * 2);
+fn sample_from_slice(file_bytes: &[u8]) -> SampleBuf {
+	let mut buf = SampleBuf::new();
 	let (start_len, mid_range) = sample_ranges(file_bytes.len() as u64);
-	samples.extend_from_slice(&file_bytes[..start_len]);
+	buf.data[..start_len].copy_from_slice(&file_bytes[..start_len]);
+	buf.len = start_len;
 	if let Some((mid_offset, mid_len)) = mid_range {
 		let offset =
 			usize::try_from(mid_offset).expect("mid_offset derives from file_bytes.len() which is already a usize");
-		samples.extend_from_slice(&file_bytes[offset..offset + mid_len]);
+		buf.data[buf.len..buf.len + mid_len].copy_from_slice(&file_bytes[offset..offset + mid_len]);
+		buf.len += mid_len;
 	}
-	samples
+	buf
 }
 
 fn process_file_buffered(
