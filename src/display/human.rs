@@ -2,11 +2,12 @@ use std::{borrow::Cow, io::Write, path::Path};
 
 use anyhow::Result;
 
-use super::{FormatterContext, OutputFormatter, ReportData, Verbosity, ViewOptions};
+use super::{FormatterContext, OutputFormatter, ReportData, Verbosity, ViewOptions, apply_sort};
 use crate::{
 	analysis::{AnalysisResults, stats::percentage},
 	display::{
-		formatting::pluralize,
+		formatting::{SortValue, pluralize},
+		options::LanguageSortKey,
 		report::{DirFileRecord, DirRecord, LanguageRecord, Summary},
 	},
 };
@@ -38,6 +39,7 @@ impl OutputFormatter for HumanFormatter {
 		let (ctx, report) = self.prepare_report(results, path, view_options);
 		Self::write_overview(&report, &ctx, writer)?;
 		if view_options.verbosity == Verbosity::Summary {
+			Self::write_language_summary(results, &report.summary, &ctx, view_options, writer)?;
 			return Ok(());
 		}
 		if view_options.by_dir {
@@ -79,6 +81,55 @@ impl HumanFormatter {
 		if let Some(percentages) = join_with_commas_and(&percentage_parts) {
 			writeln!(writer, "Percentages: {percentages}.")?;
 		}
+		Ok(())
+	}
+
+	fn write_language_summary(
+		results: &AnalysisResults,
+		summary: &Summary,
+		ctx: &FormatterContext,
+		view_options: ViewOptions,
+		writer: &mut dyn Write,
+	) -> Result<()> {
+		let mut langs: Vec<_> = results.languages().collect();
+		if langs.is_empty() {
+			return Ok(());
+		}
+		let sort_key = view_options.language_sort_key;
+		apply_sort(
+			&mut langs,
+			view_options.sort_direction,
+			|(lang, stats)| match sort_key {
+				LanguageSortKey::Lines => SortValue::Num(stats.lines()),
+				LanguageSortKey::Code => SortValue::Num(stats.code_lines()),
+				LanguageSortKey::Comments => SortValue::Num(stats.comment_lines()),
+				LanguageSortKey::Blanks => SortValue::Num(stats.blank_lines()),
+				LanguageSortKey::Files => SortValue::Num(stats.files()),
+				LanguageSortKey::Size => SortValue::Num(stats.size()),
+				LanguageSortKey::Name => SortValue::Text(lang.name),
+			},
+			|a, b| a.0.name.cmp(b.0.name),
+		);
+		if let Some(n) = view_options.top_languages {
+			langs.truncate(n);
+		}
+		if let Some(min) = view_options.min_lines {
+			langs.retain(|(_, stats)| stats.lines() >= min);
+		}
+		let parts: Vec<String> = langs
+			.iter()
+			.map(|(lang, stats)| {
+				let pct = percentage(stats.files(), summary.total_files);
+				format!(
+					"{} {} {} ({}%)",
+					ctx.number(stats.files()),
+					lang.name,
+					pluralize(stats.files(), "file", "files"),
+					ctx.percent(pct)
+				)
+			})
+			.collect();
+		writeln!(writer, "Languages: {}.", parts.join(", "))?;
 		Ok(())
 	}
 
