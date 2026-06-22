@@ -1,0 +1,10 @@
+# expect: total=10 code=6 comment=3 blank=1 shebang=0
+# graphql schema fixture
+
+# User type definition
+type User {
+	id: ID!
+	name: String!
+	email: String!
+}
+type Query { user(id: ID!): User }
