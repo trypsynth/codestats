@@ -34,8 +34,8 @@ clap_complete = "4.6.5"
 encoding_rs = "0.8.35"
 globset = "0.4.18"
 ignore = "0.4.26"
-memchr = "2.8.1"
-memmap2 = "0.9.10"
+memchr = "2.8.2"
+memmap2 = "0.9.11"
 num-format = { version = "0.4", default-features = false, features = ["std"] }
 serde = { version = "1.0.228", default-features = false, features = ["std", "derive"] }
 serde_json = { version = "1.0.150", default-features = false, features = ["std"] }
