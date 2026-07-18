@@ -60,7 +60,7 @@ pub fn process_file(
 				return Ok(());
 			}
 			let contribution = FileContribution::new(0, 0, 0, 0, 0, file_size);
-			let file_stats = collect_details.then(|| FileStats::new(display_path.clone(), 0, 0, 0, 0, 0, file_size));
+			let file_stats = collect_details.then(|| FileStats::new(display_path, 0, 0, 0, 0, 0, file_size));
 			results.add_file_stats(language, contribution, file_stats);
 		}
 		return Ok(());

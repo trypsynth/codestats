@@ -168,14 +168,13 @@ impl Config {
 		let contents = fs::read_to_string(path).with_context(|| read_config_context(path))?;
 		let raw: RawConfig = toml::from_str(&contents).with_context(|| parse_config_context(path))?;
 		let path_overridden = raw.path.is_some();
-		let config = Self {
+		Ok(Self {
 			path: raw.path.unwrap_or_else(|| PathBuf::from(".")),
 			analysis: raw.analysis,
 			display: raw.display,
 			source: Some(path.to_path_buf()),
 			path_overridden,
-		};
-		Ok(config)
+		})
 	}
 
 	/// # Errors
@@ -187,14 +186,11 @@ impl Config {
 
 	#[must_use]
 	pub fn find_config_file() -> Option<PathBuf> {
-		let mut candidates = vec![PathBuf::from(".codestats.toml"), PathBuf::from("codestats.toml")];
-		if let Some(cfg_dir) = config_dir() {
-			candidates.push(cfg_dir.join("codestats").join("config.toml"));
-		}
-		if let Some(home) = home_dir() {
-			candidates.push(home.join(".codestats.toml"));
-		}
-		candidates.into_iter().find(|path| path.is_file())
+		[PathBuf::from(".codestats.toml"), PathBuf::from("codestats.toml")]
+			.into_iter()
+			.chain(config_dir().map(|d| d.join("codestats").join("config.toml")))
+			.chain(home_dir().map(|h| h.join(".codestats.toml")))
+			.find(|path| path.is_file())
 	}
 }
 

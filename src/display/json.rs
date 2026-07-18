@@ -72,8 +72,7 @@ mod tests {
 	#[test]
 	fn json_pretty_uses_configured_indent() {
 		let results = AnalysisResults::default();
-		let mut options = ViewOptions::default();
-		options.indent_style = IndentStyle::Spaces(4);
+		let options = ViewOptions { indent_style: IndentStyle::Spaces(4), ..Default::default() };
 		let formatter = JsonFormatter;
 		let mut buf = Vec::new();
 		formatter.write_output(&results, Path::new("."), options, &mut buf).unwrap();
@@ -95,8 +94,7 @@ mod tests {
 	#[test]
 	fn json_compact_ignores_indent() {
 		let results = AnalysisResults::default();
-		let mut options = ViewOptions::default();
-		options.indent_style = IndentStyle::Spaces(4);
+		let options = ViewOptions { indent_style: IndentStyle::Spaces(4), ..Default::default() };
 		let formatter = JsonCompactFormatter;
 		let mut buf = Vec::new();
 		formatter.write_output(&results, Path::new("."), options, &mut buf).unwrap();

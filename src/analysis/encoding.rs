@@ -44,10 +44,7 @@ pub(super) fn is_probably_binary(sample: &[u8], encoding: FileEncoding) -> bool 
 	}
 	let non_text = sample.iter().filter(|b| matches!(**b, 0x00..=0x08 | 0x0B | 0x0C | 0x0E..=0x1F | 0x7F)).count();
 	let non_text_pct = non_text * 100 / sample.len();
-	if non_text_pct > BINARY_THRESHOLD_PERCENT || sample.contains(&0) {
-		return true;
-	}
-	false
+	non_text_pct > BINARY_THRESHOLD_PERCENT || sample.contains(&0)
 }
 
 pub(super) fn is_utf16(encoding: &'static Encoding) -> bool {
@@ -58,17 +55,8 @@ fn detect_utf16_without_bom(samples: &[u8]) -> Option<FileEncoding> {
 	if samples.len() < 4 {
 		return None;
 	}
-	let mut zero_even = 0usize;
-	let mut zero_odd = 0usize;
-	for (idx, byte) in samples.iter().enumerate() {
-		if *byte == 0 {
-			if idx % 2 == 0 {
-				zero_even += 1;
-			} else {
-				zero_odd += 1;
-			}
-		}
-	}
+	let zero_even = samples.iter().step_by(2).filter(|&&b| b == 0).count();
+	let zero_odd = samples.iter().skip(1).step_by(2).filter(|&&b| b == 0).count();
 	// Heuristic: UTF-16 text typically has a strong zero-byte bias on one parity.
 	let total_zeros = zero_even + zero_odd;
 	if total_zeros < samples.len() / 4 {

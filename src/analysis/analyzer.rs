@@ -1,4 +1,5 @@
 use std::{
+	borrow::Cow,
 	path::{Path, PathBuf},
 	sync::{
 		Arc, Mutex, PoisonError,
@@ -90,14 +91,12 @@ impl CodeAnalyzer {
 			}
 			for pattern in &self.config.analysis.exclude_patterns {
 				// OverrideBuilder treats patterns without '!' as include rules, so we invert to enforce exclusion.
-				let owned;
-				let glob = if pattern.starts_with('!') {
-					pattern.as_str()
+				let glob: Cow<'_, str> = if pattern.starts_with('!') {
+					Cow::Borrowed(pattern.as_str())
 				} else {
-					owned = format!("!{pattern}");
-					owned.as_str()
+					Cow::Owned(format!("!{pattern}"))
 				};
-				override_builder.add(glob)?;
+				override_builder.add(&glob)?;
 			}
 			builder.overrides(override_builder.build()?);
 		}

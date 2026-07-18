@@ -20,9 +20,10 @@ fn join_with_commas_and(parts: &[String]) -> Option<Cow<'_, str>> {
 		[first] => Some(Cow::Borrowed(first.as_str())),
 		[first, second] => Some(Cow::Owned(format!("{first} and {second}"))),
 		items => {
-			let mut result = items[..items.len() - 1].join(", ");
+			let (last, rest) = items.split_last().expect("items has at least 3 elements");
+			let mut result = rest.join(", ");
 			result.push_str(", and ");
-			result.push_str(&items[items.len() - 1]);
+			result.push_str(last);
 			Some(Cow::Owned(result))
 		}
 	}
@@ -333,8 +334,7 @@ mod tests {
 		let lang = crate::langs::LANGUAGES.iter().find(|l| l.name == "Rust").unwrap();
 		let contribution = FileContribution::new(12, 10, 0, 2, 0, 100);
 		results.add_file_stats(lang, contribution, None);
-		let mut options = ViewOptions::default();
-		options.indent_style = IndentStyle::Spaces(2);
+		let options = ViewOptions { indent_style: IndentStyle::Spaces(2), ..Default::default() };
 		let formatter = HumanFormatter;
 		let mut buf = Vec::new();
 		formatter.write_output(&results, Path::new("."), options, &mut buf).unwrap();

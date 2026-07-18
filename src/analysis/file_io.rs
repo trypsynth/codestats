@@ -39,16 +39,6 @@ impl std::ops::Deref for SampleBuf {
 	}
 }
 
-/// Helper to create error context for file opening operations.
-fn open_file_context(path: &Path) -> String {
-	format!("Failed to open file {}", path.display())
-}
-
-/// Helper to create error context for memory-mapping operations.
-fn mmap_file_context(path: &Path) -> String {
-	format!("Failed to memory-map file {}", path.display())
-}
-
 pub(super) trait LineSource {
 	fn for_each_line<F>(&mut self, f: &mut F) -> Result<()>
 	where
@@ -117,13 +107,14 @@ pub(super) enum FileSource {
 
 impl FileSource {
 	pub(super) fn open(file_path: &Path, file_size: u64) -> Result<Self> {
-		let file = File::open(file_path).with_context(|| open_file_context(file_path))?;
+		let file = File::open(file_path).with_context(|| format!("Failed to open file {}", file_path.display()))?;
 		if file_size >= MMAP_THRESHOLD {
 			// SAFETY: Memory-mapping is safe under these conditions:
 			// 1. We only read from the mmap, never write.
 			// 2. The mapping is dropped before returning, so no references escape.
 			// 3. ASSUMPTION: The file will not be modified by external processes during analysis. This is a reasonable assumption for typical code analysis workflows where files are stable during the scan. However, concurrent modifications by other processes could cause undefined behavior.
-			let mmap = unsafe { Mmap::map(&file) }.with_context(|| mmap_file_context(file_path))?;
+			let mmap = unsafe { Mmap::map(&file) }
+				.with_context(|| format!("Failed to memory-map file {}", file_path.display()))?;
 			Ok(Self::Mapped(mmap))
 		} else {
 			Ok(Self::Buffered(file))

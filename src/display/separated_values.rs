@@ -15,7 +15,7 @@ pub struct CsvEscaper;
 
 impl FieldEscaper for CsvEscaper {
 	fn escape(field: &str) -> Cow<'_, str> {
-		let needs_quotes = field.contains(',') || field.contains('"') || field.contains('\n') || field.contains('\r');
+		let needs_quotes = field.contains([',', '"', '\n', '\r']);
 		if !needs_quotes {
 			return Cow::Borrowed(field);
 		}
@@ -29,7 +29,7 @@ pub struct TsvEscaper;
 
 impl FieldEscaper for TsvEscaper {
 	fn escape(field: &str) -> Cow<'_, str> {
-		if !field.contains(&['\\', '\t', '\n', '\r'][..]) {
+		if !field.contains(['\\', '\t', '\n', '\r']) {
 			return Cow::Borrowed(field);
 		}
 		let mut result = String::with_capacity(field.len());

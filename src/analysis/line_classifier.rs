@@ -151,7 +151,7 @@ pub fn classify_line(
 	let Some(lang) = lang_info else {
 		return LineType::Code;
 	};
-	let mut line_remainder: &str = trimmed;
+	let mut line_remainder = trimmed;
 	let matchers = language_matchers(lang);
 	#[expect(
 		clippy::option_if_let_else,

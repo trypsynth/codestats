@@ -59,21 +59,18 @@ impl NumberFormatter {
 	/// which cannot happen with the separator strings used here.
 	#[must_use]
 	pub fn new(style: NumberStyle) -> Self {
-		match style {
-			NumberStyle::Plain => Self::Plain,
-			NumberStyle::Comma => {
-				let format = CustomFormat::builder().grouping(Grouping::Standard).separator(",").build().unwrap();
-				Self::Formatted(Box::new(format))
-			}
-			NumberStyle::Underscore => {
-				let format = CustomFormat::builder().grouping(Grouping::Standard).separator("_").build().unwrap();
-				Self::Formatted(Box::new(format))
-			}
-			NumberStyle::Space => {
-				let format = CustomFormat::builder().grouping(Grouping::Standard).separator(" ").build().unwrap();
-				Self::Formatted(Box::new(format))
-			}
-		}
+		let separator = match style {
+			NumberStyle::Plain => return Self::Plain,
+			NumberStyle::Comma => ",",
+			NumberStyle::Underscore => "_",
+			NumberStyle::Space => " ",
+		};
+		let format = CustomFormat::builder()
+			.grouping(Grouping::Standard)
+			.separator(separator)
+			.build()
+			.expect("static separator strings are always valid");
+		Self::Formatted(Box::new(format))
 	}
 
 	#[must_use]
@@ -274,8 +271,7 @@ mod tests {
 	#[case(IndentStyle::Spaces(4), 1, "    ")]
 	#[case(IndentStyle::Spaces(4), 2, "        ")]
 	fn test_indent(#[case] style: IndentStyle, #[case] level: usize, #[case] expected: &str) {
-		let mut options = ViewOptions::default();
-		options.indent_style = style;
+		let options = ViewOptions { indent_style: style, ..Default::default() };
 		let ctx = FormatterContext::new(options);
 		assert_eq!(ctx.indent(level), expected);
 	}

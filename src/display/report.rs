@@ -421,7 +421,7 @@ fn dir_key(file_path_str: &str, root: &Path) -> String {
 	let mut components = relative.components();
 	match (components.next(), components.next()) {
 		(Some(Component::Normal(first)), Some(_)) => first.to_string_lossy().into_owned(),
-		_ => "(root)".to_string(),
+		_ => "(root)".to_owned(),
 	}
 }
 

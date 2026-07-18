@@ -95,7 +95,7 @@ mod tests {
 
 	fn unique_temp_dir(label: &str) -> PathBuf {
 		let unique = SystemTime::now().duration_since(UNIX_EPOCH).expect("system time is set").as_nanos();
-		let dir = std::env::temp_dir().join(format!("codestats_init_test_{}_{}_{label}", std::process::id(), unique,));
+		let dir = std::env::temp_dir().join(format!("codestats_init_test_{}_{}_{label}", std::process::id(), unique));
 		fs::create_dir_all(&dir).expect("create temp dir");
 		dir
 	}
@@ -121,7 +121,7 @@ mod tests {
 		let file = dir.join("existing.toml");
 		fs::write(&file, "old content").expect("seed file");
 
-		let result = run_init(Some(file.clone()), false);
+		let result = run_init(Some(file), false);
 
 		assert!(result.is_err(), "should fail when file exists and force is false");
 		let err_msg = result.unwrap_err().to_string();

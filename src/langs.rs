@@ -112,7 +112,7 @@ mod tests {
 		let mut buf = Vec::new();
 		print_all_languages(&mut buf, 80).unwrap();
 		let output = String::from_utf8(buf).unwrap();
-		let last_non_empty = output.lines().filter(|l| !l.is_empty()).last().unwrap();
+		let last_non_empty = output.lines().rfind(|l| !l.is_empty()).unwrap();
 		assert!(last_non_empty.ends_with('.'), "last non-empty line should end with a period, got: {last_non_empty}");
 	}
 
