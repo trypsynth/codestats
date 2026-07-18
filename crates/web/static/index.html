@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>codestats</title>
+<style>
+	:root {
+		color-scheme: light dark;
+		--bg: #ffffff;
+		--fg: #1a1a1a;
+		--muted: #6b7280;
+		--border: #e5e7eb;
+		--accent: #2563eb;
+		--accent-fg: #ffffff;
+		--bar: #2563eb;
+		--error-bg: #fef2f2;
+		--error-fg: #b91c1c;
+	}
+	@media (prefers-color-scheme: dark) {
+		:root {
+			--bg: #111318;
+			--fg: #e5e7eb;
+			--muted: #9ca3af;
+			--border: #2a2e37;
+			--accent: #3b82f6;
+			--accent-fg: #0b0d12;
+			--bar: #3b82f6;
+			--error-bg: #2a1414;
+			--error-fg: #f87171;
+		}
+	}
+	* {
+		box-sizing: border-box;
+	}
+	body {
+		margin: 0;
+		padding: 1.5rem 1rem 4rem;
+		background: var(--bg);
+		color: var(--fg);
+		font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+		line-height: 1.5;
+	}
+	main {
+		max-width: 640px;
+		margin: 0 auto;
+	}
+	h1 {
+		font-size: 1.5rem;
+		margin: 0 0 0.25rem;
+	}
+	.tagline {
+		color: var(--muted);
+		margin: 0 0 1.5rem;
+	}
+	.tabs {
+		display: flex;
+		gap: 0.5rem;
+		margin-bottom: 1rem;
+	}
+	.tab {
+		flex: 1;
+		padding: 0.75rem 1rem;
+		font-size: 1rem;
+		border: 1px solid var(--border);
+		background: transparent;
+		color: var(--fg);
+		border-radius: 0.5rem;
+		cursor: pointer;
+	}
+	.tab.active {
+		background: var(--accent);
+		color: var(--accent-fg);
+		border-color: var(--accent);
+	}
+	form {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+	input[type="url"],
+	input[type="file"] {
+		width: 100%;
+		padding: 0.75rem;
+		font-size: 1rem;
+		border: 1px solid var(--border);
+		border-radius: 0.5rem;
+		background: var(--bg);
+		color: var(--fg);
+	}
+	button[type="submit"] {
+		padding: 0.75rem 1rem;
+		font-size: 1rem;
+		border: none;
+		border-radius: 0.5rem;
+		background: var(--accent);
+		color: var(--accent-fg);
+		cursor: pointer;
+	}
+	button[type="submit"]:disabled {
+		opacity: 0.6;
+		cursor: default;
+	}
+	#status {
+		margin-top: 1rem;
+	}
+	#status.error {
+		padding: 0.75rem 1rem;
+		border-radius: 0.5rem;
+		background: var(--error-bg);
+		color: var(--error-fg);
+	}
+	#results {
+		margin-top: 2rem;
+	}
+	.summary {
+		margin-bottom: 1.5rem;
+	}
+	.summary .totals {
+		font-size: 1.1rem;
+	}
+	.table-wrap {
+		overflow-x: auto;
+	}
+	table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: 0.95rem;
+	}
+	th,
+	td {
+		text-align: left;
+		padding: 0.5rem 0.75rem;
+		border-bottom: 1px solid var(--border);
+		white-space: nowrap;
+	}
+	th:last-child,
+	td:last-child {
+		width: 100%;
+		white-space: normal;
+	}
+	.bar-track {
+		background: var(--border);
+		border-radius: 0.25rem;
+		overflow: hidden;
+		height: 0.6rem;
+		min-width: 6rem;
+	}
+	.bar-fill {
+		height: 100%;
+		background: var(--bar);
+	}
+	[hidden] {
+		display: none !important;
+	}
+</style>
+</head>
+<body>
+<main>
+	<h1>codestats</h1>
+	<p class="tagline">Paste a git URL or upload a zip to see a language breakdown.</p>
+
+	<div class="tabs">
+		<button type="button" class="tab active" data-tab="git">Git URL</button>
+		<button type="button" class="tab" data-tab="zip">Upload zip</button>
+	</div>
+
+	<form id="git-form">
+		<input type="url" id="git-url" placeholder="https://github.com/user/repo" required />
+		<button type="submit">Analyze</button>
+	</form>
+
+	<form id="zip-form" hidden>
+		<input type="file" id="zip-file" accept=".zip" required />
+		<button type="submit">Analyze</button>
+	</form>
+
+	<div id="status"></div>
+	<div id="results" hidden></div>
+</main>
+
+<script>
+	const tabs = document.querySelectorAll(".tab");
+	const forms = { git: document.getElementById("git-form"), zip: document.getElementById("zip-form") };
+	for (const tab of tabs) {
+		tab.addEventListener("click", () => {
+			for (const t of tabs) t.classList.toggle("active", t === tab);
+			for (const [name, form] of Object.entries(forms)) form.hidden = name !== tab.dataset.tab;
+			clearStatus();
+			clearResults();
+		});
+	}
+
+	const statusEl = document.getElementById("status");
+	const resultsEl = document.getElementById("results");
+
+	function clearStatus() {
+		statusEl.textContent = "";
+		statusEl.className = "";
+	}
+
+	function clearResults() {
+		resultsEl.hidden = true;
+		resultsEl.innerHTML = "";
+	}
+
+	function showError(message) {
+		statusEl.textContent = message;
+		statusEl.className = "error";
+	}
+
+	function setBusy(form, busy) {
+		const button = form.querySelector("button[type=submit]");
+		button.disabled = busy;
+		button.textContent = busy ? "Analyzing…" : "Analyze";
+	}
+
+	async function handleResponse(response) {
+		const body = await response.json();
+		if (!response.ok) {
+			throw new Error(body.error || `Request failed with status ${response.status}`);
+		}
+		return body;
+	}
+
+	function escapeHtml(value) {
+		return String(value).replace(/[&<>"']/g, (ch) => ({
+			"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+		})[ch]);
+	}
+
+	function renderResults(report) {
+		const s = report.summary;
+		const rows = report.languages
+			.map((lang) => {
+				const share = s.total_lines > 0 ? (lang.lines / s.total_lines) * 100 : 0;
+				return `<tr>
+					<td>${escapeHtml(lang.name)}</td>
+					<td>${lang.files.toLocaleString()}</td>
+					<td>${lang.lines.toLocaleString()}</td>
+					<td>
+						<div class="bar-track"><div class="bar-fill" style="width:${share.toFixed(1)}%"></div></div>
+					</td>
+				</tr>`;
+			})
+			.join("");
+		resultsEl.innerHTML = `
+			<div class="summary">
+				<div class="totals">${s.total_files.toLocaleString()} files, ${s.total_lines.toLocaleString()} lines, ${escapeHtml(s.total_size_human)}</div>
+			</div>
+			<div class="table-wrap">
+				<table>
+					<thead><tr><th>Language</th><th>Files</th><th>Lines</th><th>Share</th></tr></thead>
+					<tbody>${rows}</tbody>
+				</table>
+			</div>
+		`;
+		resultsEl.hidden = false;
+	}
+
+	async function analyze(form, request) {
+		clearStatus();
+		clearResults();
+		setBusy(form, true);
+		try {
+			const response = await request();
+			const report = await handleResponse(response);
+			renderResults(report);
+		} catch (err) {
+			showError(err.message || String(err));
+		} finally {
+			setBusy(form, false);
+		}
+	}
+
+	forms.git.addEventListener("submit", (event) => {
+		event.preventDefault();
+		const url = document.getElementById("git-url").value;
+		analyze(forms.git, () =>
+			fetch("/api/analyze/git", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ url }),
+			}),
+		);
+	});
+
+	forms.zip.addEventListener("submit", (event) => {
+		event.preventDefault();
+		const file = document.getElementById("zip-file").files[0];
+		const data = new FormData();
+		data.append("file", file);
+		analyze(forms.zip, () => fetch("/api/analyze/zip", { method: "POST", body: data }));
+	});
+</script>
+</body>
+</html>

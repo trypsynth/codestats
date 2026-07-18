@@ -15,7 +15,7 @@ use axum::{
 	Json, Router,
 	extract::{DefaultBodyLimit, Multipart},
 	http::header,
-	response::{IntoResponse, Response},
+	response::{Html, IntoResponse, Response},
 	routing::{get, post},
 };
 use codestats::{
@@ -26,10 +26,13 @@ use codestats::{
 use error::AppError;
 use serde::Deserialize;
 
+const INDEX_HTML: &str = include_str!("../static/index.html");
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
 	let addr = std::env::var("CODESTATS_WEB_ADDR").unwrap_or_else(|_| "127.0.0.1:3000".to_owned());
 	let app = Router::new()
+		.route("/", get(|| async { Html(INDEX_HTML) }))
 		.route("/health", get(|| async { "ok" }))
 		.route("/api/analyze/zip", post(analyze_zip).layer(DefaultBodyLimit::max(zip_source::MAX_UPLOAD_BYTES)))
 		.route("/api/analyze/git", post(analyze_git));
