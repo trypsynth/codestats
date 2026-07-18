@@ -3,6 +3,7 @@
 
 mod cli;
 mod completions;
+mod config_discovery;
 mod init;
 
 use std::io::{self, Write as _};
@@ -42,7 +43,7 @@ fn main() -> Result<()> {
 	let config = if let Some(ref config_path) = analyze.config {
 		Config::from_file(config_path)?
 	} else {
-		Config::load_default()?
+		config_discovery::load_default()?
 	};
 	let config = cli::merge_config(config, analyze, &matches)?;
 	ensure!(config.path.exists(), "Path `{}` not found", config.path.display());

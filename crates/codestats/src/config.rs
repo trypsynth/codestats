@@ -1,5 +1,5 @@
 use std::{
-	env, fs,
+	fs,
 	path::{Path, PathBuf},
 };
 
@@ -20,31 +20,6 @@ fn read_config_context(path: &Path) -> String {
 #[inline]
 fn parse_config_context(path: &Path) -> String {
 	format!("Failed to parse config file `{}`", path.display())
-}
-
-/// Get the user's home directory.
-fn home_dir() -> Option<PathBuf> {
-	env::var_os("HOME").map(PathBuf::from)
-}
-
-/// Get the platform-specific config directory.
-fn config_dir() -> Option<PathBuf> {
-	#[cfg(target_os = "linux")]
-	{
-		env::var_os("XDG_CONFIG_HOME").map(PathBuf::from).or_else(|| home_dir().map(|h| h.join(".config")))
-	}
-	#[cfg(target_os = "macos")]
-	{
-		home_dir().map(|h| h.join("Library/Application Support"))
-	}
-	#[cfg(target_os = "windows")]
-	{
-		env::var_os("APPDATA").map(PathBuf::from)
-	}
-	#[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
-	{
-		home_dir().map(|h| h.join(".config"))
-	}
 }
 
 /// Resolved configuration after loading defaults, config files, and CLI overrides.
@@ -175,22 +150,6 @@ impl Config {
 			source: Some(path.to_path_buf()),
 			path_overridden,
 		})
-	}
-
-	/// # Errors
-	///
-	/// Returns an error if a config file is found but cannot be read or parsed.
-	pub fn load_default() -> Result<Self> {
-		Self::find_config_file().map_or_else(|| Ok(Self::default()), Self::from_file)
-	}
-
-	#[must_use]
-	pub fn find_config_file() -> Option<PathBuf> {
-		[PathBuf::from(".codestats.toml"), PathBuf::from("codestats.toml")]
-			.into_iter()
-			.chain(config_dir().map(|d| d.join("codestats").join("config.toml")))
-			.chain(home_dir().map(|h| h.join(".codestats.toml")))
-			.find(|path| path.is_file())
 	}
 }
 
