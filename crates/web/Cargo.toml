@@ -1,0 +1,24 @@
+[package]
+name = "codestats-web"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+description = "HTTP API: analyze a git repository or an uploaded zip with codestats"
+repository.workspace = true
+license.workspace = true
+publish = false
+rust-version.workspace = true
+
+[[bin]]
+name = "codestats-web"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+axum = { version = "0.8", features = ["multipart"] }
+codestats = { path = "../codestats", default-features = false }
+gix = { version = "0.85", features = ["blocking-http-transport-reqwest-rust-tls"] }
+serde = { workspace = true, features = ["derive"] }
+tempfile = "3.15"
+tokio = { version = "1.43", features = ["rt-multi-thread", "macros", "fs"] }
+zip = { version = "2", default-features = false, features = ["deflate"] }

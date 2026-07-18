@@ -41,7 +41,7 @@ jobs:
       - name: Install cargo-zigbuild
         run: cargo install cargo-zigbuild --force
       - name: Build
-        run: cargo zigbuild --release --locked --target ${{ matrix.target }}
+        run: cargo zigbuild --release --locked --target ${{ matrix.target }} -p codestats-cli
       - name: Copy binary (Unix)
         if: "!contains(matrix.target, 'windows')"
         run: cp target/${{ matrix.target }}/release/cs cs-${{ matrix.target }}
