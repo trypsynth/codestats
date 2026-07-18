@@ -1,13 +1,27 @@
 use std::path::PathBuf;
 
 use anyhow::{Result, ensure};
-use clap::{ArgMatches, CommandFactory, FromArgMatches, Parser, Subcommand, parser::ValueSource};
+use clap::{
+	ArgMatches, CommandFactory, FromArgMatches, Parser, Subcommand,
+	builder::{PossibleValuesParser, TypedValueParser as _},
+	parser::ValueSource,
+};
 use codestats::{
 	config::Config,
 	display::{IndentStyle, LanguageSortKey, NumberStyle, OutputFormat, SizeStyle, SortDirection, Verbosity},
 };
 
 use crate::completions::Shell;
+
+fn output_format_values() -> Vec<&'static str> {
+	#[allow(unused_mut)]
+	let mut values = vec!["human", "json", "json-compact", "csv", "tsv"];
+	#[cfg(feature = "markdown")]
+	values.push("markdown");
+	#[cfg(feature = "html")]
+	values.push("html");
+	values
+}
 
 /// A tool for analyzing code statistics across different programming languages
 #[derive(Parser)]
@@ -78,25 +92,45 @@ pub struct AnalyzeArgs {
 	#[arg(long)]
 	pub symlinks: bool,
 	/// Output number formatting style
-	#[arg(short, long, value_enum, default_value = "plain")]
+	#[arg(
+		short, long, default_value = "plain",
+		value_parser = PossibleValuesParser::new(["plain", "comma", "underscore", "space"])
+			.map(|s| s.parse::<NumberStyle>().expect("value already validated by PossibleValuesParser")),
+	)]
 	pub number_style: NumberStyle,
 	/// Human-readable size units
-	#[arg(short = 'u', long = "size-units", value_enum, default_value = "binary")]
+	#[arg(
+		short = 'u', long = "size-units", default_value = "binary",
+		value_parser = PossibleValuesParser::new(["binary", "decimal"])
+			.map(|s| s.parse::<SizeStyle>().expect("value already validated by PossibleValuesParser")),
+	)]
 	pub size_style: SizeStyle,
 	/// Percentage precision (0-6)
 	#[arg(short = 'p', long = "precision", default_value_t = 1, value_parser = clap::value_parser!(u8).range(0..=6))]
 	pub percent_precision: u8,
 	/// Sorting key for languages (and per-file details when verbose)
-	#[arg(short = 's', long = "sort-by", value_enum, default_value = "lines")]
+	#[arg(
+		short = 's', long = "sort-by", default_value = "lines",
+		value_parser = PossibleValuesParser::new(["lines", "code", "comments", "blanks", "files", "size", "name"])
+			.map(|s| s.parse::<LanguageSortKey>().expect("value already validated by PossibleValuesParser")),
+	)]
 	pub language_sort: LanguageSortKey,
 	/// Sorting direction
-	#[arg(short = 'd', long = "sort-direction", value_enum, default_value = "desc")]
+	#[arg(
+		short = 'd', long = "sort-direction", default_value = "desc",
+		value_parser = PossibleValuesParser::new(["asc", "desc"])
+			.map(|s| s.parse::<SortDirection>().expect("value already validated by PossibleValuesParser")),
+	)]
 	pub sort_direction: SortDirection,
 	/// Indentation style: "tab" or a number 1-8 for spaces
 	#[arg(long, default_value = "tab")]
 	pub indent: IndentStyle,
 	/// Output format
-	#[arg(short, long, default_value = "human")]
+	#[arg(
+		short, long, default_value = "human",
+		value_parser = PossibleValuesParser::new(output_format_values())
+			.map(|s| s.parse::<OutputFormat>().expect("value already validated by PossibleValuesParser")),
+	)]
 	pub output: OutputFormat,
 	/// Exclude files or directories matching the given glob patterns. Can be specified more than once.
 	#[arg(short, long)]

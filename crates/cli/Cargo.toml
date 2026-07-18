@@ -15,11 +15,17 @@ rust-version.workspace = true
 name = "cs"
 path = "src/main.rs"
 
+[features]
+default = ["html", "markdown"]
+html = ["codestats/html"]
+markdown = ["codestats/markdown"]
+all-formats = ["html", "markdown"]
+
 [dependencies]
 anyhow.workspace = true
 clap = { workspace = true, features = ["std", "derive", "help", "usage", "wrap_help"] }
 clap_complete.workspace = true
-codestats = { version = "0.7.0", path = "../codestats" }
+codestats = { version = "0.7.0", path = "../codestats", default-features = false }
 terminal_size.workspace = true
 
 [dev-dependencies]

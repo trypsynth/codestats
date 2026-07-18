@@ -21,7 +21,6 @@ all-formats = ["html", "markdown"]
 aho-corasick.workspace = true
 anyhow.workspace = true
 askama = { workspace = true, optional = true }
-clap = { workspace = true, features = ["std", "derive"] }
 encoding_rs.workspace = true
 globset.workspace = true
 ignore.workspace = true

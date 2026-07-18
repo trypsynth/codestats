@@ -40,7 +40,6 @@ use std::{
 };
 
 use anyhow::Result;
-use clap::ValueEnum;
 pub use formatting::{FormatterContext, apply_sort};
 #[cfg(feature = "html")]
 pub use html::HtmlFormatter;
@@ -55,7 +54,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::analysis::AnalysisResults;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum OutputFormat {
 	Human,
@@ -81,6 +80,25 @@ impl Display for OutputFormat {
 			Self::Markdown => write!(f, "markdown"),
 			#[cfg(feature = "html")]
 			Self::Html => write!(f, "html"),
+		}
+	}
+}
+
+impl std::str::FromStr for OutputFormat {
+	type Err = String;
+
+	fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+		match s {
+			"human" => Ok(Self::Human),
+			"json" => Ok(Self::Json),
+			"json-compact" => Ok(Self::JsonCompact),
+			"csv" => Ok(Self::Csv),
+			"tsv" => Ok(Self::Tsv),
+			#[cfg(feature = "markdown")]
+			"markdown" => Ok(Self::Markdown),
+			#[cfg(feature = "html")]
+			"html" => Ok(Self::Html),
+			_ => Err(format!("invalid output format '{s}'")),
 		}
 	}
 }
