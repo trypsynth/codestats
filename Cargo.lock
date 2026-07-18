@@ -169,7 +169,6 @@ dependencies = [
  "anyhow",
  "askama",
  "clap",
- "clap_complete",
  "encoding_rs",
  "globset",
  "ignore",
@@ -181,8 +180,20 @@ dependencies = [
  "rstest",
  "serde",
  "serde_json",
- "terminal_size",
  "toml",
+]
+
+[[package]]
+name = "codestats-cli"
+version = "0.7.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "clap_complete",
+ "codestats",
+ "serde",
+ "serde_json",
+ "terminal_size",
 ]
 
 [[package]]

@@ -1,0 +1,27 @@
+[package]
+name = "codestats-cli"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+description = "A CLI tool for analyzing code statistics across different programming languages"
+readme = "../../README.md"
+repository.workspace = true
+license.workspace = true
+keywords = ["code", "analysis", "cli", "tool"]
+categories = ["command-line-utilities", "development-tools", "filesystem"]
+rust-version.workspace = true
+
+[[bin]]
+name = "cs"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+clap = { workspace = true, features = ["std", "derive", "help", "usage", "wrap_help"] }
+clap_complete.workspace = true
+codestats = { version = "0.7.0", path = "../codestats" }
+terminal_size.workspace = true
+
+[dev-dependencies]
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true

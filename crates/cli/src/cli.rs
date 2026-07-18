@@ -11,7 +11,7 @@ use crate::completions::Shell;
 
 /// A tool for analyzing code statistics across different programming languages
 #[derive(Parser)]
-#[command(version, about, long_about = None)]
+#[command(name = "codestats", version, about, long_about = None)]
 pub struct Cli {
 	#[command(subcommand)]
 	pub command: Option<Commands>,

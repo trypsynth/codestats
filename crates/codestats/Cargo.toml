@@ -1,0 +1,41 @@
+[package]
+name = "codestats"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+description = "Core engine for analyzing code statistics across different programming languages"
+readme = "../../README.md"
+repository.workspace = true
+license.workspace = true
+keywords = ["code", "analysis", "statistics"]
+categories = ["development-tools", "filesystem"]
+rust-version.workspace = true
+
+[features]
+default = ["html", "markdown"]
+html = ["dep:askama"]
+markdown = ["dep:askama"]
+all-formats = ["html", "markdown"]
+
+[dependencies]
+aho-corasick.workspace = true
+anyhow.workspace = true
+askama = { workspace = true, optional = true }
+clap = { workspace = true, features = ["std", "derive"] }
+encoding_rs.workspace = true
+globset.workspace = true
+ignore.workspace = true
+memchr.workspace = true
+memmap2.workspace = true
+num-format.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+toml.workspace = true
+
+[build-dependencies]
+indexmap.workspace = true
+json5.workspace = true
+serde.workspace = true
+
+[dev-dependencies]
+rstest = "0.26.1"
