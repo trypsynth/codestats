@@ -248,7 +248,7 @@ const fn is_word_char(b: u8) -> bool {
 }
 
 #[inline]
-fn is_valid_line_comment_match(line: &str, end: usize, token: &str) -> bool {
+const fn is_valid_line_comment_match(line: &str, end: usize, token: &str) -> bool {
 	let Some(&first) = token.as_bytes().first() else {
 		return false;
 	};
