@@ -21,4 +21,4 @@ gix = { version = "0.85", features = ["blocking-http-transport-reqwest-rust-tls"
 serde = { workspace = true, features = ["derive"] }
 tempfile = "3.15"
 tokio = { version = "1.43", features = ["rt-multi-thread", "macros", "fs"] }
-zip = { version = "2", default-features = false, features = ["deflate"] }
+zip = { version = "8", default-features = false, features = ["deflate"] }
