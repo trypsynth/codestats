@@ -17,7 +17,7 @@ path = "src/main.rs"
 anyhow.workspace = true
 axum = { version = "0.8", features = ["multipart"] }
 codestats = { path = "../codestats", default-features = false }
-gix = { version = "0.85", features = ["blocking-http-transport-reqwest-rust-tls"] }
+gix = { version = "0.86", features = ["blocking-http-transport-reqwest-rust-tls"] }
 serde = { workspace = true, features = ["derive"] }
 tempfile = "3.15"
 tokio = { version = "1.43", features = ["rt-multi-thread", "macros", "fs"] }
