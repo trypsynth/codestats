@@ -1,5 +1,9 @@
 #![warn(clippy::all, clippy::cargo, clippy::nursery, clippy::pedantic, clippy::perf)]
 #![deny(warnings)]
+#![allow(
+	clippy::multiple_crate_versions,
+	reason = "gix and reqwest's transitive deps pull in duplicate versions we don't control"
+)]
 
 mod cli;
 mod completions;
