@@ -58,6 +58,11 @@
 		gap: 0.5rem;
 		margin-bottom: 1rem;
 	}
+	.tab-input {
+		position: absolute;
+		opacity: 0;
+		pointer-events: none;
+	}
 	.tab {
 		flex: 1;
 		padding: 0.75rem 1rem;
@@ -67,11 +72,16 @@
 		color: var(--fg);
 		border-radius: 0.5rem;
 		cursor: pointer;
+		text-align: center;
 	}
-	.tab.active {
+	.tab-input:checked + .tab {
 		background: var(--accent);
 		color: var(--accent-fg);
 		border-color: var(--accent);
+	}
+	.tab-input:focus-visible + .tab {
+		outline: 2px solid var(--accent);
+		outline-offset: 2px;
 	}
 	form {
 		display: flex;
@@ -159,32 +169,29 @@
 <main>
 	<h1>codestats</h1>
 	<p class="tagline">Paste a git URL or upload a zip to see a language breakdown.</p>
-
-	<div class="tabs">
-		<button type="button" class="tab active" data-tab="git">Git URL</button>
-		<button type="button" class="tab" data-tab="zip">Upload zip</button>
+	<div class="tabs" role="radiogroup">
+		<input type="radio" name="source" id="tab-git" class="tab-input" data-tab="git" checked />
+		<label for="tab-git" class="tab">Git URL</label>
+		<input type="radio" name="source" id="tab-zip" class="tab-input" data-tab="zip" />
+		<label for="tab-zip" class="tab">Upload zip</label>
 	</div>
-
 	<form id="git-form">
 		<input type="url" id="git-url" placeholder="https://github.com/user/repo" required />
 		<button type="submit">Analyze</button>
 	</form>
-
 	<form id="zip-form" hidden>
 		<input type="file" id="zip-file" accept=".zip" required />
 		<button type="submit">Analyze</button>
 	</form>
-
 	<div id="status"></div>
 	<div id="results" hidden></div>
 </main>
 
 <script>
-	const tabs = document.querySelectorAll(".tab");
+	const tabs = document.querySelectorAll(".tab-input");
 	const forms = { git: document.getElementById("git-form"), zip: document.getElementById("zip-form") };
 	for (const tab of tabs) {
-		tab.addEventListener("click", () => {
-			for (const t of tabs) t.classList.toggle("active", t === tab);
+		tab.addEventListener("change", () => {
 			for (const [name, form] of Object.entries(forms)) form.hidden = name !== tab.dataset.tab;
 			clearStatus();
 			clearResults();
