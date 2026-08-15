@@ -149,7 +149,14 @@
 		width: 100%;
 		white-space: normal;
 	}
+	.share-cell {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
 	.bar-track {
+		flex: 1 1 auto;
+		width: 100%;
 		background: var(--border);
 		border-radius: 0.25rem;
 		overflow: hidden;
@@ -157,8 +164,16 @@
 		min-width: 6rem;
 	}
 	.bar-fill {
+		display: block;
 		height: 100%;
 		background: var(--bar);
+	}
+	.share-pct {
+		flex: 0 0 auto;
+		width: 3.5rem;
+		text-align: right;
+		color: var(--muted);
+		font-variant-numeric: tabular-nums;
 	}
 	[hidden] {
 		display: none !important;
@@ -246,7 +261,10 @@
 					<td>${lang.files.toLocaleString()}</td>
 					<td>${lang.lines.toLocaleString()}</td>
 					<td>
-						<div class="bar-track"><div class="bar-fill" style="width:${share.toFixed(1)}%"></div></div>
+						<div class="share-cell">
+							<div class="bar-track"><div class="bar-fill" style="width:${share.toFixed(1)}%"></div></div>
+							<span class="share-pct">${share.toFixed(1)}%</span>
+						</div>
 					</td>
 				</tr>`;
 			})
