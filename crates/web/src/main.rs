@@ -30,7 +30,7 @@ const INDEX_HTML: &str = include_str!("../static/index.html");
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-	let addr = std::env::var("CODESTATS_WEB_ADDR").unwrap_or_else(|_| "127.0.0.1:3000".to_owned());
+	let addr = std::env::var("CODESTATS_WEB_ADDR").unwrap_or_else(|_| "0.0.0.0:3000".to_owned());
 	let app = Router::new()
 		.route("/", get(|| async { Html(INDEX_HTML) }))
 		.route("/health", get(|| async { "ok" }))
