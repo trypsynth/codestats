@@ -1,0 +1,11 @@
+# expect: lang="Icon" total=11 code=9 comment=2 blank=0 shebang=0
+# Print each word of the input on its own line.
+procedure main()
+   local line, word
+   every line := !&input do {
+      line ? while tab(upto(&letters)) do {
+         word := tab(many(&letters))
+         write(word)
+      }
+   }
+end

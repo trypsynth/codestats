@@ -51,7 +51,7 @@ fn fixtures_match_expected_counts() {
 	assert!(!fixtures.is_empty(), "Add at least one fixture under {}", fixtures_root.display());
 	let binary = env!("CARGO_BIN_EXE_cs");
 	let output = Command::new(binary)
-		.args([fixtures_root.to_str().expect("Non-UTF-8 fixtures root"), "-o", "json", "-v"])
+		.args([fixtures_root.to_str().expect("Non-UTF-8 fixtures root"), "-o", "json", "-v", "--hidden"])
 		.output()
 		.unwrap_or_else(|err| panic!("Failed to run codestats for {}: {err}", fixtures_root.display()));
 	assert!(
@@ -160,9 +160,13 @@ fn parse_expectation_line(line: &str) -> Option<Expectation> {
 	let meaningful = trimmed.trim_start_matches(|c: char| !c.is_ascii_alphanumeric() && c != '_');
 	let rest = meaningful.strip_prefix("expect:")?.trim();
 	// The language is quoted since names can contain spaces or punctuation, e.g. `lang="Common Lisp"`.
-	let (lang, rest) = match rest.split_once("lang=\"") {
+	// Unquoted names (`lang=Smalltalk`) are also accepted, for comment syntaxes that can't contain quotes.
+	let (lang, rest) = match rest.split_once("lang=") {
 		Some((before, after)) => {
-			let (lang, after) = after.split_once('"')?;
+			let (lang, after) = match after.strip_prefix('"') {
+				Some(quoted) => quoted.split_once('"')?,
+				None => after.split_once(char::is_whitespace).unwrap_or((after, "")),
+			};
 			(Some(lang.to_owned()), format!("{before} {after}"))
 		}
 		None => (None, rest.to_owned()),

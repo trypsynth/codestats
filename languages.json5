@@ -242,7 +242,7 @@
 		file_patterns: ["*.y", "*.yy"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
-		keywords: ["%token", "%type", "%start", "yyparse"],
+		keywords: ["%token", "%type", "%start", "yyparse", "%define", "%code", "%require", "%language", "%skeleton", "%locations"],
 	},
 	"BitBake": {
 		file_patterns: ["*.bb", "*.bbappend", "*.bbclass", "*.inc"],
@@ -1026,7 +1026,7 @@
 		block_comments: [["[", "]"]],
 	},
 	"INI": {
-		file_patterns: ["*.ini", "*.cfg", "*.prefs", ".editorconfig", ".gitconfig", "buildozer.spec"],
+		file_patterns: ["*.ini", "*.cfg", "*.prefs", "buildozer.spec"],
 		line_comments: [";", "#"],
 		keywords: ["[", "]", "="],
 	},
@@ -2170,7 +2170,7 @@
 	"SPARK": {
 		file_patterns: ["*.adb", "*.ads"],
 		line_comments: ["--"],
-		keywords: ["pragma SPARK_Mode", "Global", "Depends", "Pre =>", "Post =>", "Contract_Cases"],
+		keywords: ["procedure", "function", "package", "with", "use", "begin", "end", "is", "record", "SPARK_Mode", "Global", "Depends", "Pre =>", "Post =>", "Contract_Cases"],
 	},
 	"SPARQL": {
 		file_patterns: ["*.rq", "*.sparql"],

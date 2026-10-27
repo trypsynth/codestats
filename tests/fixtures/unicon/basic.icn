@@ -1,0 +1,19 @@
+# expect: lang="Unicon" total=19 code=14 comment=2 blank=3 shebang=0
+# A small Unicon class.
+link printf
+
+class Counter(count)
+   method increment()
+      count +:= 1
+      return count
+   end
+
+initially
+   count := 0
+end
+
+procedure main()
+   c := Counter()
+   every 1 to 3 do c.increment()
+   write(c.count)
+end

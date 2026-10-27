@@ -1,0 +1,11 @@
+# expect: lang="Git Config" total=11 code=9 comment=2 blank=0 shebang=0
+# Personal git configuration.
+[user]
+	name = Example User
+	email = user@example.com
+[core]
+	editor = vim
+	autocrlf = input
+[remote "origin"]
+	url = https://example.com/repo.git
+	fetch = +refs/heads/*:refs/remotes/origin/*

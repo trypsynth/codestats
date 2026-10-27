@@ -1,0 +1,16 @@
+-- expect: lang="Frege" total=16 code=7 comment=5 blank=4 shebang=0
+module examples.Hello where
+
+{-
+    A tiny Frege program.
+-}
+import frege.java.Util (List)
+
+data Shape = Circle Double | Square Double
+
+-- Compute the area of a shape.
+area :: Shape -> Double
+area (Circle r) = pi * r * r
+area (Square s) = s * s
+
+main _ = println (area (Circle 2.0))

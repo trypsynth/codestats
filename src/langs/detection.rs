@@ -93,11 +93,14 @@ fn is_symbol_only_language(lang: &Language) -> bool {
 #[inline]
 fn disambiguate<'a>(candidates: &[&'a Language], content: &str) -> Option<&'a Language> {
 	let tokens: Vec<_> = tokenize(content).collect();
-	// On ties, the earliest candidate wins (e.g. C over Objective-C for a `.h` with no distinguishing signal).
+	// On ties, prefer the candidate with fewer keywords, then the earliest one. A language that extends another (e.g. Bison over Yacc) lists the base language's keywords plus its own, so without extension-specific keywords the base language is the better guess.
 	let mut best: Option<(&'a Language, i32)> = None;
 	for lang in candidates {
 		let score = score_language(lang, content, &tokens);
-		if score > 0 && best.is_none_or(|(_, best_score)| score > best_score) {
+		if score > 0
+			&& best.is_none_or(|(best_lang, best_score)| {
+				score > best_score || (score == best_score && lang.keywords.len() < best_lang.keywords.len())
+			}) {
 			best = Some((lang, score));
 		}
 	}
@@ -185,6 +188,15 @@ mod tests {
 		assert_eq!(chosen_alpha.name, "Alpha");
 		let chosen_beta = disambiguate(&candidates, beta_content).unwrap();
 		assert_eq!(chosen_beta.name, "Beta");
+	}
+
+	#[test]
+	fn disambiguate_prefers_base_language_on_tie() {
+		const BASE: Language = Language { name: "Base", keywords: &["alpha"], ..TEST_LANGUAGE_ALPHA };
+		const EXTENDED: Language = Language { name: "Extended", keywords: &["alpha", "omega"], ..TEST_LANGUAGE_ALPHA };
+		let candidates = vec![&EXTENDED, &BASE];
+		assert_eq!(disambiguate(&candidates, "// alpha").unwrap().name, "Base");
+		assert_eq!(disambiguate(&candidates, "// alpha omega").unwrap().name, "Extended");
 	}
 
 	#[test]
