@@ -27,7 +27,7 @@ fn score_language(lang: &Language, content: &str, tokens: &[&str]) -> i32 {
 	}
 	let mut score: i32 = 0;
 	for comment in lang.line_comments {
-		if content.contains(comment) {
+		if has_line_comment(content, comment) {
 			score = score.saturating_add(COMMENT_MATCH_SCORE);
 		}
 	}
@@ -72,6 +72,17 @@ fn score_language(lang: &Language, content: &str, tokens: &[&str]) -> i32 {
 	score
 }
 
+/// Check whether any line starts with `marker` as a comment.
+///
+/// The marker must begin the line (after indentation) and must not be immediately followed by an identifier character, so that preprocessor directives like `#import` or format specifiers like `%ld` aren't mistaken for `#` or `%` comments.
+fn has_line_comment(content: &str, marker: &str) -> bool {
+	content.lines().any(|line| {
+		line.trim_start()
+			.strip_prefix(marker)
+			.is_some_and(|rest| !rest.starts_with(|c: char| c.is_ascii_alphanumeric() || c == '_'))
+	})
+}
+
 fn is_symbol_only_language(lang: &Language) -> bool {
 	!lang.keywords.is_empty()
 		&& lang.keywords.iter().all(|kw| kw.chars().all(|c| !c.is_ascii_alphanumeric() && c != '_'))
@@ -82,12 +93,15 @@ fn is_symbol_only_language(lang: &Language) -> bool {
 #[inline]
 fn disambiguate<'a>(candidates: &[&'a Language], content: &str) -> Option<&'a Language> {
 	let tokens: Vec<_> = tokenize(content).collect();
-	candidates
-		.iter()
-		.map(|lang| (*lang, score_language(lang, content, &tokens)))
-		.max_by_key(|(_, score)| *score)
-		.filter(|(_, score)| *score > 0)
-		.map(|(lang, _)| lang)
+	// On ties, the earliest candidate wins (e.g. C over Objective-C for a `.h` with no distinguishing signal).
+	let mut best: Option<(&'a Language, i32)> = None;
+	for lang in candidates {
+		let score = score_language(lang, content, &tokens);
+		if score > 0 && best.is_none_or(|(_, best_score)| score > best_score) {
+			best = Some((lang, score));
+		}
+	}
+	best.map(|(lang, _)| lang)
 }
 
 #[inline]
@@ -178,6 +192,40 @@ mod tests {
 		let content = "@interface Foo : NSObject\n@end\n";
 		let language = detect_language_info("example.m", Some(content)).unwrap();
 		assert_eq!(language.name, "Objective-C");
+	}
+
+	#[rstest]
+	#[case::directives_and_format_specifiers(
+		"example.m",
+		"#import <Foundation/Foundation.h>\n#include <stdio.h>\n\nvoid f(NSInteger n) {\n\tNSLog(@\"%ld\", (long)n);\n}\n",
+		"Objective-C"
+	)]
+	#[case::autoreleasepool(
+		"main.m",
+		"#import \"App.h\"\n\nint main(void) {\n\t@autoreleasepool {\n\t\t[[App alloc] init];\n\t}\n\treturn 0;\n}\n",
+		"Objective-C"
+	)]
+	#[case::objc_header(
+		"App.h",
+		"#import <Foundation/Foundation.h>\n\n@interface App : NSObject\n- (void)run;\n@end\n",
+		"Objective-C"
+	)]
+	#[case::c_header("util.h", "#ifndef UTIL_H\n#define UTIL_H\n\nint add(int a, int b);\n\n#endif\n", "C")]
+	#[case::c_header_comments_only("util.h", "// helpers\n/* nothing here */\n", "C")]
+	#[case::octave_function("example.m", "# compute\nfunction y = f(x)\n\ty = x;\nendfunction\n", "Octave")]
+	fn detect_m_and_h_files(#[case] filename: &str, #[case] content: &str, #[case] expected: &str) {
+		assert_eq!(detect_language_info(filename, Some(content)).map(|l| l.name), Some(expected));
+	}
+
+	#[rstest]
+	#[case::hash_comment("# comment", "#", true)]
+	#[case::indented("\t  # comment", "#", true)]
+	#[case::bare_marker("#", "#", true)]
+	#[case::directive("#import <Foundation/Foundation.h>", "#", false)]
+	#[case::mid_line("printf(\"%ld\", x);", "%", false)]
+	#[case::url("see https://example.com", "//", false)]
+	fn test_has_line_comment(#[case] content: &str, #[case] marker: &str, #[case] expected: bool) {
+		assert_eq!(has_line_comment(content, marker), expected);
 	}
 
 	#[test]

@@ -288,7 +288,7 @@
 		file_patterns: ["*.c", "*.h", "*.ec", "*.pgc"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
-		keywords: ["#include", "#define", "int main", "void", "sizeof", "typedef", "struct"],
+		keywords: ["#include", "#define", "#ifndef", "#pragma", "int main", "void", "sizeof", "typedef", "struct", "extern"],
 	},
 	"C Shell": {
 		file_patterns: ["*.csh"],
@@ -1628,10 +1628,10 @@
 		nested_blocks: true,
 	},
 	"Objective-C": {
-		file_patterns: ["*.m"],
+		file_patterns: ["*.m", "*.h"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
-		keywords: ["@interface", "@implementation", "@protocol", "@property", "@synthesize", "@end", "NSString", "#import", "NSObject"],
+		keywords: ["@interface", "@implementation", "@protocol", "@property", "@synthesize", "@end", "@autoreleasepool", "@selector", "@class", "@\"", "NSString", "NSInteger", "#import", "NSObject"],
 	},
 	"Objective-C++": {
 		file_patterns: ["*.mm"],
