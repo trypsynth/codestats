@@ -7,7 +7,8 @@
 use std::{env, path::PathBuf};
 
 use anyhow::Result;
-use codestats::config::Config;
+
+use crate::config::Config;
 
 /// Get the user's home directory.
 fn home_dir() -> Option<PathBuf> {

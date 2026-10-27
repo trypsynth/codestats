@@ -6,12 +6,12 @@ use clap::{
 	builder::{PossibleValuesParser, TypedValueParser as _},
 	parser::ValueSource,
 };
-use codestats::{
+
+use crate::{
+	completions::Shell,
 	config::Config,
 	display::{IndentStyle, LanguageSortKey, NumberStyle, OutputFormat, SizeStyle, SortDirection, Verbosity},
 };
-
-use crate::completions::Shell;
 
 fn output_format_values() -> Vec<&'static str> {
 	#[allow(unused_mut)]
@@ -241,12 +241,12 @@ mod tests {
 	};
 
 	use clap::{CommandFactory, FromArgMatches};
-	use codestats::{
+
+	use super::{AnalyzeArgs, Cli, merge_config};
+	use crate::{
 		config::Config,
 		display::{IndentStyle, Verbosity},
 	};
-
-	use super::{AnalyzeArgs, Cli, merge_config};
 
 	fn parse_cli(args: &[&str]) -> (AnalyzeArgs, clap::ArgMatches) {
 		let matches = Cli::command().get_matches_from(args);

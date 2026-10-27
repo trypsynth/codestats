@@ -1,26 +1,35 @@
-[workspace]
-resolver = "3"
-members = ["crates/codestats", "crates/cli", "crates/web"]
-
-[workspace.package]
+[package]
+name = "codestats"
 version = "0.7.0"
 authors = ["Quin Gillespie <trypsynth@gmail.com>"]
 edition = "2024"
+description = "A CLI tool for analyzing code statistics across different programming languages"
+readme = "README.md"
 repository = "https://github.com/trypsynth/codestats"
 license = "MIT"
+keywords = ["code", "analysis", "cli", "statistics"]
+categories = ["command-line-utilities", "development-tools", "filesystem"]
 rust-version = "1.88.0"
 
-[workspace.dependencies]
+[[bin]]
+name = "cs"
+path = "src/main.rs"
+
+[features]
+default = ["html", "markdown"]
+html = ["dep:askama"]
+markdown = ["dep:askama"]
+all-formats = ["html", "markdown"]
+
+[dependencies]
 aho-corasick = "1.1.5"
 anyhow = "1.0.104"
-askama = "0.16.1"
-clap = { version = "4.6.7", default-features = false }
+askama = { version = "0.16.1", optional = true }
+clap = { version = "4.6.7", default-features = false, features = ["std", "derive", "help", "usage", "wrap_help"] }
 clap_complete = "4.6.11"
 encoding_rs = "0.8.42"
 globset = "0.4.20"
 ignore = "0.4.33"
-indexmap = { version = "2.14.2", features = ["serde"] }
-json5 = "1.3.1"
 memchr = "2.8.3"
 memmap2 = "0.9.11"
 num-format = { version = "0.4", default-features = false, features = ["std"] }
@@ -28,6 +37,14 @@ serde = { version = "1.0.229", default-features = false, features = ["std", "der
 serde_json = { version = "1.0.151", default-features = false, features = ["std"] }
 terminal_size = "0.4.4"
 toml = "1.1.6"
+
+[build-dependencies]
+indexmap = { version = "2.14.2", features = ["serde"] }
+json5 = "1.3.1"
+serde = { version = "1.0.229", default-features = false, features = ["std", "derive"] }
+
+[dev-dependencies]
+rstest = "0.27.0"
 
 [profile.release]
 strip = true

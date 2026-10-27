@@ -1,25 +1,22 @@
 #![warn(clippy::all, clippy::cargo, clippy::nursery, clippy::pedantic, clippy::perf)]
 #![deny(warnings)]
-#![allow(
-	clippy::multiple_crate_versions,
-	reason = "gix and reqwest's transitive deps pull in duplicate versions we don't control"
-)]
 
+mod analysis;
 mod cli;
 mod completions;
+mod config;
 mod config_discovery;
+mod display;
 mod init;
+mod langs;
 
 use std::io::{self, Write as _};
 
+use analysis::CodeAnalyzer;
 use anyhow::{Result, anyhow, ensure};
 use cli::{Cli, Commands};
-use codestats::{
-	analysis::CodeAnalyzer,
-	config::{AnalyzerConfig, Config},
-	display::{ViewOptions, get_formatter},
-	langs,
-};
+use config::{AnalyzerConfig, Config};
+use display::{ViewOptions, get_formatter};
 use terminal_size::terminal_size;
 
 fn main() -> Result<()> {

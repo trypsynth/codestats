@@ -44,7 +44,7 @@ sudo mv cs-* /usr/local/bin/cs
 ### With cargo
 
 ```bash
-cargo install codestats-cli
+cargo install codestats
 ```
 
 ### From source
@@ -52,7 +52,7 @@ cargo install codestats-cli
 ```bash
 git clone https://github.com/trypsynth/codestats
 cd codestats
-cargo install --path crates/cli
+cargo install --path .
 ```
 
 ## Quick start
