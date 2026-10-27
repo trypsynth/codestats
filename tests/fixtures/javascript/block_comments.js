@@ -1,4 +1,4 @@
-// expect: total=11 code=4 comment=5 blank=2 shebang=0
+// expect: lang="JavaScript" total=11 code=4 comment=5 blank=2 shebang=0
 // jsdoc-style block comment fixture
 
 /**

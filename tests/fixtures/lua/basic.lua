@@ -1,4 +1,4 @@
--- expect: total=13 code=4 comment=6 blank=3 shebang=0
+-- expect: lang="Lua" total=13 code=4 comment=6 blank=3 shebang=0
 -- simple lua fixture
 
 --[[

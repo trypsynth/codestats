@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// expect: total=6 code=2 comment=2 blank=1 shebang=1
+// expect: lang="JavaScript" total=6 code=2 comment=2 blank=1 shebang=1
 // node script with no extension
 console.log("hi");
 

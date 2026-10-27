@@ -1,4 +1,4 @@
-// expect: total=12 code=5 comment=4 blank=3 shebang=0
+// expect: lang="Go" total=12 code=5 comment=4 blank=3 shebang=0
 // go block comment fixture
 
 package main

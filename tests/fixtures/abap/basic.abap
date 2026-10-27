@@ -1,4 +1,4 @@
-* expect: total=10 code=3 comment=3 blank=4 shebang=0
+* expect: lang="ABAP" total=10 code=3 comment=3 blank=4 shebang=0
 
 * another comment
 REPORT z_example.

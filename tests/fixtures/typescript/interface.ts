@@ -1,4 +1,4 @@
-// expect: total=13 code=8 comment=3 blank=2 shebang=0
+// expect: lang="TypeScript" total=13 code=8 comment=3 blank=2 shebang=0
 // typescript interface fixture
 
 interface User {

@@ -1,4 +1,4 @@
-% expect: total=10 code=5 comment=2 blank=3 shebang=0
+% expect: lang="Erlang" total=10 code=5 comment=2 blank=3 shebang=0
 % simple erlang fixture
 
 -module(sample).

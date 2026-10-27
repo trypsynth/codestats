@@ -1,4 +1,4 @@
-; expect: total=10 code=5 comment=3 blank=2 shebang=0
+; expect: lang="Scheme" total=10 code=5 comment=3 blank=2 shebang=0
 ; simple scheme fixture
 
 #| block comment |#

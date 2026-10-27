@@ -1,4 +1,4 @@
-// expect: total=14 code=6 comment=5 blank=3 shebang=0
+// expect: lang="Rust" total=14 code=6 comment=5 blank=3 shebang=0
 /* rust supports block comments */
 
 /* multi-line

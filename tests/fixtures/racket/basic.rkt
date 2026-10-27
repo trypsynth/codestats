@@ -1,4 +1,4 @@
-; expect: total=12 code=6 comment=3 blank=3 shebang=0
+; expect: lang="Racket" total=12 code=6 comment=3 blank=3 shebang=0
 ; simple racket fixture
 
 #lang racket

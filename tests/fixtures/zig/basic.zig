@@ -1,4 +1,4 @@
-// expect: total=15 code=8 comment=4 blank=3 shebang=0
+// expect: lang="Zig" total=15 code=8 comment=4 blank=3 shebang=0
 // Simple Zig fixture.
 
 const std = @import("std");

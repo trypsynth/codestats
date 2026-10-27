@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# expect: total=8 code=4 comment=2 blank=1 shebang=1
+# expect: lang="Bash" total=8 code=4 comment=2 blank=1 shebang=1
 # small bash script
 echo "hello"
 

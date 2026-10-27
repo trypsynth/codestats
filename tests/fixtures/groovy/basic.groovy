@@ -1,4 +1,4 @@
-// expect: total=11 code=6 comment=3 blank=2 shebang=0
+// expect: lang="Groovy" total=11 code=6 comment=3 blank=2 shebang=0
 // simple groovy fixture
 
 /* scripting fixture */

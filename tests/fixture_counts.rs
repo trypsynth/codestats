@@ -8,7 +8,13 @@ use std::{
 use serde::Deserialize;
 
 #[derive(Debug, PartialEq, Eq)]
-struct ExpectedCounts {
+struct Expectation {
+	lang: Option<String>,
+	counts: LineCounts,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+struct LineCounts {
 	total: u64,
 	code: u64,
 	comment: u64,
@@ -23,6 +29,7 @@ struct AnalysisOutput {
 
 #[derive(Debug, Deserialize)]
 struct LanguageOutput {
+	name: String,
 	files_detail: Option<Vec<FileOutput>>,
 }
 
@@ -66,8 +73,12 @@ fn fixtures_match_expected_counts() {
 	for fixture in fixtures {
 		let expected = parse_expectations(&fixture);
 		let normalized = normalize_path(&fixture);
-		let actual =
+		let (actual_lang, actual) =
 			file_map.get(&normalized).unwrap_or_else(|| panic!("Missing file detail for {}", fixture.display()));
+		if let Some(lang) = &expected.lang {
+			assert_eq!(lang, actual_lang, "language mismatch for {}", fixture.display());
+		}
+		let expected = expected.counts;
 		assert_eq!(expected.total, actual.total, "total lines mismatch for {}", fixture.display());
 		assert_eq!(expected.code, actual.code, "code lines mismatch for {}", fixture.display());
 		assert_eq!(expected.comment, actual.comment, "comment lines mismatch for {}", fixture.display());
@@ -94,7 +105,7 @@ fn collect_fixtures(root: &Path) -> Vec<PathBuf> {
 	files
 }
 
-fn build_file_map(analysis: &AnalysisOutput, fixtures_root: &Path) -> HashMap<PathBuf, ExpectedCounts> {
+fn build_file_map(analysis: &AnalysisOutput, fixtures_root: &Path) -> HashMap<PathBuf, (String, LineCounts)> {
 	let mut map = HashMap::new();
 	for language in &analysis.languages {
 		let Some(files) = &language.files_detail else { continue };
@@ -102,13 +113,16 @@ fn build_file_map(analysis: &AnalysisOutput, fixtures_root: &Path) -> HashMap<Pa
 			let path = normalize_path(fixtures_root.join(&file.path));
 			map.insert(
 				path,
-				ExpectedCounts {
-					total: file.total_lines,
-					code: file.code_lines,
-					comment: file.comment_lines,
-					blank: file.blank_lines,
-					shebang: file.shebang_lines,
-				},
+				(
+					language.name.clone(),
+					LineCounts {
+						total: file.total_lines,
+						code: file.code_lines,
+						comment: file.comment_lines,
+						blank: file.blank_lines,
+						shebang: file.shebang_lines,
+					},
+				),
 			);
 		}
 	}
@@ -121,7 +135,7 @@ fn normalize_path(path: impl AsRef<Path>) -> PathBuf {
 	fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
 }
 
-fn parse_expectations(path: &Path) -> ExpectedCounts {
+fn parse_expectations(path: &Path) -> Expectation {
 	let contents =
 		fs::read_to_string(path).unwrap_or_else(|err| panic!("Failed to read fixture {}: {err}", path.display()));
 	for line in contents.lines() {
@@ -129,7 +143,7 @@ fn parse_expectations(path: &Path) -> ExpectedCounts {
 		if trimmed.starts_with("#!") || trimmed.is_empty() {
 			continue;
 		}
-		// Expect the first meaningful line to contain "expect: total=... code=... comment=... blank=... shebang=...".
+		// Expect the first meaningful line to contain `expect: [lang="..."] total=... code=... comment=... blank=... shebang=...`.
 		if let Some(expectation) = parse_expectation_line(line) {
 			return expectation;
 		}
@@ -141,12 +155,20 @@ fn parse_expectations(path: &Path) -> ExpectedCounts {
 	);
 }
 
-fn parse_expectation_line(line: &str) -> Option<ExpectedCounts> {
+fn parse_expectation_line(line: &str) -> Option<Expectation> {
 	let trimmed = line.trim_start();
 	let meaningful = trimmed.trim_start_matches(|c: char| !c.is_ascii_alphanumeric() && c != '_');
 	let rest = meaningful.strip_prefix("expect:")?.trim();
+	// The language is quoted since names can contain spaces or punctuation, e.g. `lang="Common Lisp"`.
+	let (lang, rest) = match rest.split_once("lang=\"") {
+		Some((before, after)) => {
+			let (lang, after) = after.split_once('"')?;
+			(Some(lang.to_owned()), format!("{before} {after}"))
+		}
+		None => (None, rest.to_owned()),
+	};
 	let rest = rest.trim_end_matches(|c: char| !c.is_ascii_alphanumeric() && c != '_');
-	let mut counts = ExpectedCounts { total: 0, code: 0, comment: 0, blank: 0, shebang: 0 };
+	let mut counts = LineCounts { total: 0, code: 0, comment: 0, blank: 0, shebang: 0 };
 	let mut seen_mask = 0u8;
 	for token in rest.split_whitespace() {
 		let (key, value) = token.split_once('=')?;
@@ -175,5 +197,5 @@ fn parse_expectation_line(line: &str) -> Option<ExpectedCounts> {
 			_ => {}
 		}
 	}
-	if seen_mask == 0b11111 { Some(counts) } else { None }
+	if seen_mask == 0b11111 { Some(Expectation { lang, counts }) } else { None }
 }

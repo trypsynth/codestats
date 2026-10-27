@@ -1,5 +1,5 @@
 #!/bin/zsh
-# expect: total=9 code=5 comment=2 blank=1 shebang=1
+# expect: lang="ZSH" total=9 code=5 comment=2 blank=1 shebang=1
 # simple zsh fixture
 
 function greet() {

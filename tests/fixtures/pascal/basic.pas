@@ -1,4 +1,4 @@
-// expect: total=12 code=7 comment=3 blank=2 shebang=0
+// expect: lang="Pascal" total=12 code=7 comment=3 blank=2 shebang=0
 // simple pascal fixture
 
 program Hello;

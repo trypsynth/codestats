@@ -1,4 +1,4 @@
-// expect: total=10 code=5 comment=2 blank=3 shebang=0
+// expect: lang="OpenQASM" total=10 code=5 comment=2 blank=3 shebang=0
 // simple openqasm fixture
 
 OPENQASM 2.0;

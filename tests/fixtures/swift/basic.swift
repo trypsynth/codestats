@@ -1,4 +1,4 @@
-// expect: total=14 code=5 comment=5 blank=4 shebang=0
+// expect: lang="Swift" total=14 code=5 comment=5 blank=4 shebang=0
 // simple swift fixture
 
 /*

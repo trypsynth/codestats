@@ -1,4 +1,4 @@
-; expect: total=10 code=4 comment=3 blank=3 shebang=0
+; expect: lang="ABNF" total=10 code=4 comment=3 blank=3 shebang=0
 ; simple abnf fixture
 
 digit = %x30-39

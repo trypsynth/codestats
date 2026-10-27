@@ -1,4 +1,4 @@
-; expect: total=12 code=6 comment=4 blank=2 shebang=0
+; expect: lang="Assembly" total=12 code=6 comment=4 blank=2 shebang=0
 ; simple assembly fixture
 
 section .data

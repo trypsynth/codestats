@@ -1,4 +1,4 @@
-// expect: total=8 code=3 comment=3 blank=2 shebang=0
+// expect: lang="JavaScript" total=8 code=3 comment=3 blank=2 shebang=0
 // simple javascript fixture
 
 const x = 1;

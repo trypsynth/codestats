@@ -1,4 +1,4 @@
-// expect: total=7 code=4 comment=2 blank=1 shebang=0
+// expect: lang="Rust" total=7 code=4 comment=2 blank=1 shebang=0
 // helper module
 
 pub fn square(x: i32) -> i32 { x * x }
