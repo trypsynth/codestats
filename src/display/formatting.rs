@@ -281,8 +281,8 @@ mod tests {
 		let options = ViewOptions::default();
 		let ctx = FormatterContext::new(options);
 		// Basic sanity check that methods work
-		assert!(!ctx.number(1000).is_empty());
-		assert!(!ctx.size(1024).is_empty());
-		assert!(!ctx.percent(50.0).is_empty());
+		assert_ne!(ctx.number(1000), "");
+		assert_ne!(ctx.size(1024), "");
+		assert_ne!(ctx.percent(50.0), "");
 	}
 }

@@ -440,7 +440,7 @@ mod tests {
 		assert_eq!(ls.blank_lines(), 8);
 		assert_eq!(ls.shebang_lines(), 2);
 		assert_eq!(ls.size(), 512);
-		assert!(ls.files_list().is_empty());
+		assert_eq!(ls.files_list(), []);
 	}
 
 	#[test]
