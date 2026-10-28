@@ -108,20 +108,25 @@ fn is_symbol_only_language(lang: &Language) -> bool {
 }
 
 #[inline]
-fn disambiguate<'a>(candidates: &[&'a Language], content: &str) -> Option<&'a Language> {
+/// Pick the best-scoring candidate, returning it with how far it beat the runner-up.
+fn disambiguate<'a>(candidates: &[&'a Language], content: &str) -> (Option<&'a Language>, i32) {
 	let tokens: Vec<_> = tokenize(content).collect();
+	let mut runner_up = 0;
 	// On ties, prefer the candidate with fewer keywords, then the earliest one. A language that extends another (e.g. Bison over Yacc) lists the base language's keywords plus its own, so without extension-specific keywords the base language is the better guess.
 	let mut best: Option<(&'a Language, i32)> = None;
 	for lang in candidates {
 		let score = score_language(lang, content, &tokens);
-		if score > 0
-			&& best.is_none_or(|(best_lang, best_score)| {
-				score > best_score || (score == best_score && lang.keywords.len() < best_lang.keywords.len())
-			}) {
+		let beats_best = best.is_none_or(|(best_lang, best_score)| {
+			score > best_score || (score == best_score && lang.keywords.len() < best_lang.keywords.len())
+		});
+		if score > 0 && beats_best {
+			runner_up = runner_up.max(best.map_or(0, |(_, best_score)| best_score));
 			best = Some((lang, score));
+		} else {
+			runner_up = runner_up.max(score);
 		}
 	}
-	best.map(|(lang, _)| lang)
+	best.map_or((None, 0), |(lang, score)| (Some(lang), score - runner_up))
 }
 
 #[inline]
@@ -184,24 +189,42 @@ fn default_candidate(candidates: &[&'static Language]) -> Option<&'static Langua
 	}
 }
 
-/// Whether a filename matches several languages, so its content decides which.
+/// The language detected for a file, and whether content decided it by a narrow margin, so that more of the file might change the answer.
+#[derive(Debug, Clone, Copy)]
+pub struct Detection {
+	pub language: Option<&'static Language>,
+	pub close_call: bool,
+}
+
+/// How far the winning candidate must beat the runner-up (three keyword hits) for a decision from a small sample to stand.
+const DECISIVE_MARGIN: i32 = 3 * KEYWORD_MATCH_SCORE;
+
 #[must_use]
-pub fn is_ambiguous(filename: &str) -> bool {
-	get_candidates(filename).len() > 1
+pub fn detect_language(filename: &str, content: Option<&str>) -> Detection {
+	let candidates = get_candidates(filename);
+	let decided = |language| Detection { language, close_call: false };
+	match candidates.len() {
+		0 => decided(content.and_then(detect_from_shebang)),
+		1 => decided(Some(candidates[0])),
+		_ => {
+			let Some(file_content) = content else {
+				return decided(default_candidate(&candidates));
+			};
+			if let Some(language) = detect_from_shebang(file_content) {
+				return decided(Some(language));
+			}
+			let (language, margin) = disambiguate(&candidates, file_content);
+			Detection {
+				language: language.or_else(|| default_candidate(&candidates)),
+				close_call: margin < DECISIVE_MARGIN,
+			}
+		}
+	}
 }
 
 #[must_use]
 pub fn detect_language_info(filename: &str, content: Option<&str>) -> Option<&'static Language> {
-	let candidates = get_candidates(filename);
-	match candidates.len() {
-		0 => content.and_then(detect_from_shebang),
-		1 => Some(candidates[0]),
-		_ => content
-			.and_then(|file_content| {
-				detect_from_shebang(file_content).or_else(|| disambiguate(&candidates, file_content))
-			})
-			.or_else(|| default_candidate(&candidates)),
-	}
+	detect_language(filename, content).language
 }
 
 #[cfg(test)]
@@ -255,7 +278,7 @@ mod tests {
 		const DISTINCT: Language =
 			Language { name: "Distinct", keywords: &["void", "struct", "sizeof", "typedef"], ..TEST_LANGUAGE_ALPHA };
 		let content = format!("// x\n{}void f(struct s); sizeof(int); typedef int t;", "mapping ".repeat(50));
-		assert_eq!(disambiguate(&[&REPEATED, &DISTINCT], &content).unwrap().name, "Distinct");
+		assert_eq!(disambiguate(&[&REPEATED, &DISTINCT], &content).0.unwrap().name, "Distinct");
 	}
 
 	#[test]
@@ -263,9 +286,9 @@ mod tests {
 		let candidates = vec![&TEST_LANGUAGE_ALPHA, &TEST_LANGUAGE_BETA];
 		let alpha_content = "alpha only";
 		let beta_content = "# winner winner";
-		let chosen_alpha = disambiguate(&candidates, alpha_content).unwrap();
+		let chosen_alpha = disambiguate(&candidates, alpha_content).0.unwrap();
 		assert_eq!(chosen_alpha.name, "Alpha");
-		let chosen_beta = disambiguate(&candidates, beta_content).unwrap();
+		let chosen_beta = disambiguate(&candidates, beta_content).0.unwrap();
 		assert_eq!(chosen_beta.name, "Beta");
 	}
 
@@ -274,8 +297,8 @@ mod tests {
 		const BASE: Language = Language { name: "Base", keywords: &["alpha"], ..TEST_LANGUAGE_ALPHA };
 		const EXTENDED: Language = Language { name: "Extended", keywords: &["alpha", "omega"], ..TEST_LANGUAGE_ALPHA };
 		let candidates = vec![&EXTENDED, &BASE];
-		assert_eq!(disambiguate(&candidates, "// alpha").unwrap().name, "Base");
-		assert_eq!(disambiguate(&candidates, "// alpha omega").unwrap().name, "Extended");
+		assert_eq!(disambiguate(&candidates, "// alpha").0.unwrap().name, "Base");
+		assert_eq!(disambiguate(&candidates, "// alpha omega").0.unwrap().name, "Extended");
 	}
 
 	#[test]

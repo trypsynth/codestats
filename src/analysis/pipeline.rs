@@ -74,16 +74,13 @@ pub fn process_file(
 	if is_probably_binary(&sample_bytes, encoding) {
 		return Ok(());
 	}
-	// A shared extension is decided by content, so look further than the small sample: a long license or doc comment at the top of a file can otherwise drown out its code.
-	let wide_sample;
-	let detection_bytes: &[u8] = if file_size > sample_bytes.len() as u64 && langs::is_ambiguous(filename.as_ref()) {
-		wide_sample = source.head(DETECTION_WINDOW)?;
-		&wide_sample
-	} else {
-		&sample_bytes
-	};
-	let decoded = decode_bytes(detection_bytes, encoding, true);
-	let Some(language) = langs::detect_language_info(filename.as_ref(), Some(decoded.as_ref())) else {
+	let mut detection = langs::detect_language(filename.as_ref(), Some(&decode_bytes(&sample_bytes, encoding, true)));
+	// When a shared extension was a close call on the small sample, look further: a long license or doc comment at the top of a file can drown out its code.
+	if detection.close_call && file_size > sample_bytes.len() as u64 {
+		let wide_sample = source.head(DETECTION_WINDOW)?;
+		detection = langs::detect_language(filename.as_ref(), Some(&decode_bytes(&wide_sample, encoding, true)));
+	}
+	let Some(language) = detection.language else {
 		return Ok(());
 	};
 	if !should_process_language(language, include_languages, exclude_languages) {
