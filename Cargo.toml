@@ -10,7 +10,7 @@ license = "MIT"
 keywords = ["code", "analysis", "cli", "statistics"]
 categories = ["command-line-utilities", "development-tools", "filesystem"]
 rust-version = "1.88.0"
-include = ["/src", "/templates", "/build.rs", "/languages.json5", "/README.md", "/LICENSE", "/CHANGELOG.md"]
+include = ["/src", "/templates", "/build.rs", "/build", "/languages.json5", "/README.md", "/LICENSE", "/CHANGELOG.md"]
 
 [[bin]]
 name = "cs"
