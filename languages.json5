@@ -121,6 +121,7 @@
 		file_patterns: ["*.applescript"],
 		line_comments: ["--", "#"],
 		block_comments: [["(*", "*)"]],
+		shebangs: ["#!/usr/bin/env osascript", "#!/usr/bin/osascript"],
 	},
 	"Arc": {
 		file_patterns: ["*.arc"],
@@ -218,7 +219,7 @@
 	"Bash": {
 		file_patterns: ["*.bash", "*.sh", ".profile", ".bash_logout", ".bash_profile", ".bashrc", ".bash_aliases"],
 		line_comments: ["#"],
-		shebangs: ["#!/bin/bash", "#!/usr/bin/env bash", "#!/bin/sh", "#!/usr/bin/env sh"],
+		shebangs: ["#!/bin/bash", "#!/usr/bin/env bash", "#!/bin/sh", "#!/usr/bin/env sh", "#!/bin/dash", "#!/usr/bin/env dash"],
 	},
 	"Batch": {
 		file_patterns: ["*.bat", "*.cmd"],
@@ -498,6 +499,7 @@
 		line_comments: [";"],
 		block_comments: [["#|", "|#"]],
 		nested_blocks: true,
+		shebangs: ["#!/usr/bin/env sbcl", "#!/usr/bin/sbcl"],
 		keywords: ["defun", "defvar", "defclass", "let", "lambda", "setf"],
 	},
 	"Coq": {
@@ -1161,7 +1163,7 @@
 		file_patterns: ["*.js", "*.cjs", "*.jsx", "*.jscad", "*.jsfl", "*.mjs", "*.njs", "*.sjs", "*.ssjs", "*.xsjs", "*.xsjslib", "*.es", "*.es6", "*.jake"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
-		shebangs: ["#!/usr/bin/node", "#!/usr/bin/env node"],
+		shebangs: ["#!/usr/bin/node", "#!/usr/bin/env node", "#!/usr/bin/env bun"],
 		strings: ["\"", "'", {open: "`", multiline: true}],
 	},
 	"JAWS Script": {
@@ -1274,6 +1276,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
+		shebangs: ["#!/usr/bin/env kotlin"],
 		strings: ["\"", {open: "'", char: true}, {open: "\"\"\"", escape: null, multiline: true}],
 	},
 	"Kusto": {
@@ -1424,6 +1427,7 @@
 	"Makefile": {
 		file_patterns: ["*.mak", "*.make", "*.mk", "*.mkfile", "BSDmakefile", "GNUmakefile", "Kbuild", "Makefile", "Makefile.boot", "Makefile.frag", "Makefile.in", "Makefile.inc", "Makefile.wat", "makefile", "makefile.sco", "mkfile"],
 		line_comments: ["#"],
+		shebangs: ["#!/usr/bin/make", "#!/usr/bin/env make"],
 	},
 	"Malbolge": {
 		file_patterns: ["*.mal", "*.malbolge"],
@@ -1915,6 +1919,7 @@
 		file_patterns: ["*.ps1", "*.psm1", "*.psd1", "*.pssc"],
 		line_comments: ["#"],
 		block_comments: [["<#", "#>"]],
+		shebangs: ["#!/usr/bin/env pwsh", "#!/usr/bin/pwsh"],
 	},
 	"Prisma": {
 		file_patterns: ["*.prisma"],
@@ -2021,6 +2026,7 @@
 	"R": {
 		file_patterns: ["*.r", "*.R", ".Rprofile"],
 		line_comments: ["#"],
+		shebangs: ["#!/usr/bin/env Rscript", "#!/usr/bin/Rscript"],
 		keywords: ["<-", "function", "library", "data.frame", "ggplot", "lm"],
 	},
 	"Racket": {
@@ -2034,7 +2040,7 @@
 		file_patterns: ["*.raku", "*.rakumod", "*.rakutest", "*.pm6", "*.pl6", "*.p6"],
 		line_comments: ["#", "#|"],
 		block_comments: [["#`(", ")"], ["=begin", "=end"]],
-		shebangs: ["#!/usr/bin/raku", "#!/usr/bin/perl6"],
+		shebangs: ["#!/usr/bin/raku", "#!/usr/bin/perl6", "#!/usr/bin/env raku", "#!/usr/bin/env perl6"],
 	},
 	"RAML": {
 		file_patterns: ["*.raml", "*.rml"],
@@ -2346,6 +2352,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
+		shebangs: ["#!/usr/bin/env swift", "#!/usr/bin/swift"],
 		strings: ["\"", {open: "\"\"\"", multiline: true}],
 	},
 	"Swig": {
@@ -2461,6 +2468,7 @@
 		file_patterns: ["*.ts", "*.tsx", "*.d.ts", "*.cts", "*.mts", "*.d.cts", "*.d.mts"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		shebangs: ["#!/usr/bin/env deno", "#!/usr/bin/env tsx", "#!/usr/bin/env ts-node"],
 		strings: ["\"", "'", {open: "`", multiline: true}],
 	},
 	"Typst": {
