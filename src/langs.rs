@@ -20,7 +20,7 @@ mod data;
 mod detection;
 
 pub use data::{LANGUAGES, Language};
-pub use detection::{detect_language_info, is_shebang_for, scoring};
+pub use detection::{detect_language_info, is_ambiguous, is_shebang_for, scoring};
 
 use crate::display::formatting::pluralize;
 

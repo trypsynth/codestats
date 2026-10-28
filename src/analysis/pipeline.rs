@@ -3,13 +3,16 @@ use std::{borrow::Cow, path::Path};
 use anyhow::{Context as _, Result};
 
 use super::{
-	encoding::{FileEncoding, decode_bytes, detect_encoding, is_probably_binary},
+	encoding::{decode_bytes, detect_encoding, is_probably_binary},
 	file_io::FileSource,
 	stats::{AnalysisResults, FileContribution, FileStats},
 };
 use crate::langs::{self, Language};
 
 /// Check if a language should be processed based on include/exclude filters.
+/// How much of a file to read when its extension is shared by several languages and its content decides.
+const DETECTION_WINDOW: usize = 64 * 1024;
+
 fn should_process_language(language: &Language, include_languages: &[String], exclude_languages: &[String]) -> bool {
 	if !include_languages.is_empty() {
 		return include_languages.iter().any(|filter| filter.eq_ignore_ascii_case(language.name));
@@ -67,24 +70,24 @@ pub fn process_file(
 	}
 	let mut source = FileSource::open(file_path, file_size)?;
 	let sample_bytes = source.sample(file_size)?;
-	let Some((language, encoding)) = detect_language_and_encoding(filename.as_ref(), &sample_bytes) else {
+	let encoding = detect_encoding(&sample_bytes);
+	if is_probably_binary(&sample_bytes, encoding) {
+		return Ok(());
+	}
+	// A shared extension is decided by content, so look further than the small sample: a long license or doc comment at the top of a file can otherwise drown out its code.
+	let wide_sample;
+	let detection_bytes: &[u8] = if file_size > sample_bytes.len() as u64 && langs::is_ambiguous(filename.as_ref()) {
+		wide_sample = source.head(DETECTION_WINDOW)?;
+		&wide_sample
+	} else {
+		&sample_bytes
+	};
+	let decoded = decode_bytes(detection_bytes, encoding, true);
+	let Some(language) = langs::detect_language_info(filename.as_ref(), Some(decoded.as_ref())) else {
 		return Ok(());
 	};
 	if !should_process_language(language, include_languages, exclude_languages) {
 		return Ok(());
 	}
 	source.process(&display_path, file_size, results, collect_details, language, encoding)
-}
-
-fn detect_language_from_samples(filename: &str, samples: &[u8], encoding: FileEncoding) -> Option<&'static Language> {
-	if is_probably_binary(samples, encoding) {
-		return None;
-	}
-	let decoded = decode_bytes(samples, encoding, true);
-	langs::detect_language_info(filename, Some(decoded.as_ref()))
-}
-
-fn detect_language_and_encoding(filename: &str, samples: &[u8]) -> Option<(&'static Language, FileEncoding)> {
-	let encoding = detect_encoding(samples);
-	detect_language_from_samples(filename, samples, encoding).map(|language| (language, encoding))
 }

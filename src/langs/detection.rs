@@ -10,6 +10,8 @@ use super::data::{LANGUAGES, Language};
 const COMMENT_MATCH_SCORE: i32 = 50;
 /// Score awarded for each keyword match when disambiguating languages.
 const KEYWORD_MATCH_SCORE: i32 = 10;
+/// Occurrences of a single keyword that count toward the score, so one identifier repeated hundreds of times (`mapping` in a C file, scored for LPC) can't outweigh several distinct keywords.
+const MAX_KEYWORD_OCCURRENCES: usize = 3;
 
 /// Calculate a language match score based on comment styles and keywords found in content.
 ///
@@ -48,15 +50,8 @@ fn score_language(lang: &Language, content: &str, tokens: &[&str]) -> i32 {
 			tokens.iter().filter(|token| token.eq_ignore_ascii_case(keyword)).count()
 		};
 		keyword_hits = keyword_hits.saturating_add(count);
-		let clamped_count = count.min(usize::try_from(i32::MAX / KEYWORD_MATCH_SCORE).unwrap_or(usize::MAX));
-		// We now know that this is safe because we've clamped the value.
-		#[expect(
-			clippy::cast_possible_truncation,
-			clippy::cast_possible_wrap,
-			reason = "clamped_count is bounded to i32::MAX / KEYWORD_MATCH_SCORE above, so the cast is safe"
-		)]
-		let count_i32 = clamped_count as i32;
-		score = score.saturating_add(count_i32.saturating_mul(KEYWORD_MATCH_SCORE));
+		let capped = i32::try_from(count.min(MAX_KEYWORD_OCCURRENCES)).unwrap_or(0);
+		score = score.saturating_add(capped * KEYWORD_MATCH_SCORE);
 	}
 	// Languages that share junk-drawer extensions (e.g. `.inc`) need real keyword evidence, not just a matching comment marker.
 	if lang.require_keywords && keyword_hits == 0 {
@@ -189,6 +184,12 @@ fn default_candidate(candidates: &[&'static Language]) -> Option<&'static Langua
 	}
 }
 
+/// Whether a filename matches several languages, so its content decides which.
+#[must_use]
+pub fn is_ambiguous(filename: &str) -> bool {
+	get_candidates(filename).len() > 1
+}
+
 #[must_use]
 pub fn detect_language_info(filename: &str, content: Option<&str>) -> Option<&'static Language> {
 	let candidates = get_candidates(filename);
@@ -241,6 +242,16 @@ mod tests {
 		let tokens: Vec<_> = tokenize(content).collect();
 		let score = score_language(&TEST_LANGUAGE_ALPHA, content, &tokens);
 		assert_eq!(score, 50 + 3 * 10);
+	}
+
+	#[test]
+	fn repeated_keyword_is_capped() {
+		// One keyword repeated many times shouldn't beat several distinct keywords.
+		const REPEATED: Language = Language { name: "Repeated", keywords: &["mapping"], ..TEST_LANGUAGE_ALPHA };
+		const DISTINCT: Language =
+			Language { name: "Distinct", keywords: &["void", "struct", "sizeof", "typedef"], ..TEST_LANGUAGE_ALPHA };
+		let content = format!("// x\n{}void f(struct s); sizeof(int); typedef int t;", "mapping ".repeat(50));
+		assert_eq!(disambiguate(&[&REPEATED, &DISTINCT], &content).unwrap().name, "Distinct");
 	}
 
 	#[test]
@@ -325,6 +336,16 @@ mod tests {
 	#[case::exact_filename("pom.xml", "Maven")]
 	fn most_specific_pattern_wins(#[case] filename: &str, #[case] expected: &str) {
 		assert_eq!(detect_language_info(filename, Some("")).map(|l| l.name), Some(expected));
+	}
+
+	#[test]
+	fn repeated_identifier_does_not_make_c_lpc() {
+		// CPython's C API talks about the mapping protocol constantly; that shouldn't make a C file LPC.
+		let content = format!(
+			"#include \"Python.h\"\n\nstatic PyObject *\nf(PyObject *self)\n{{\n{}    return NULL;\n}}\n",
+			"    PyMapping_Check(mapping);\n".repeat(40)
+		);
+		assert_eq!(detect_language_info("dict.c", Some(&content)).map(|l| l.name), Some("C"));
 	}
 
 	#[test]

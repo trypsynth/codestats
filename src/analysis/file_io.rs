@@ -128,6 +128,20 @@ impl FileSource {
 		}
 	}
 
+	/// Read up to `max` bytes from the start of the file, for detecting the language of files whose extension is shared.
+	pub(super) fn head(&mut self, max: usize) -> Result<Vec<u8>> {
+		match self {
+			Self::Buffered(file) => {
+				let mut buf = Vec::with_capacity(max);
+				file.by_ref().take(max as u64).read_to_end(&mut buf)?;
+				// Reset for actual reading.
+				file.rewind()?;
+				Ok(buf)
+			}
+			Self::Mapped(mmap) => Ok(mmap[..mmap.len().min(max)].to_vec()),
+		}
+	}
+
 	pub(super) fn process(
 		self,
 		display_path: &str,

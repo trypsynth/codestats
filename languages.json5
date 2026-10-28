@@ -160,9 +160,11 @@
 		block_comments: [["/*", "*/"]],
 	},
 	"Assembly": {
-		file_patterns: ["*.asm", "*.s", "*.S"],
+		file_patterns: ["*.asm", "*.s", "*.S", "*.inc"],
 		line_comments: [";", "# ", "#\t", "//"],
 		block_comments: [["/*", "*/"]],
+		keywords: ["%macro", "%endmacro", "%define", "%include", "%ifdef", "section ."],
+		require_keywords: true,
 	},
 	"Astro": {
 		file_patterns: ["*.astro"],
@@ -323,7 +325,7 @@
 		file_patterns: ["*.c", "*.h", "*.ec", "*.pgc"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
-		keywords: ["#include", "#define", "#ifndef", "#pragma", "int main", "void", "sizeof", "typedef", "struct", "extern", "#ifdef", "#endif"],
+		keywords: ["#include", "#define", "#ifndef", "#pragma", "int main", "void", "sizeof", "typedef", "struct", "extern", "#ifdef", "#endif", "static", "NULL", "unsigned"],
 		strings: ["\"", {open: "'", char: true}],
 	},
 	"C Shell": {
@@ -338,9 +340,11 @@
 		strings: ["\"", {open: "'", char: true}, {open: "@\"", close: "\"", escape: "\"", multiline: true}, {open: "\"\"\"", escape: null, multiline: true}],
 	},
 	"C++": {
-		file_patterns: ["*.cpp", "*.hpp", "*.c++", "*.h++", "*.cc", "*.cxx", "*.hxx", "*.ino", "*.ipp", "*.cppm", "*.ixx", "*.c++m", "*.pcc", "*.tpp", "*.hh", "*.inl"],
+		file_patterns: ["*.cpp", "*.hpp", "*.c++", "*.h++", "*.cc", "*.cxx", "*.hxx", "*.ino", "*.ipp", "*.cppm", "*.ixx", "*.c++m", "*.pcc", "*.tpp", "*.hh", "*.inl", "*.inc"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		keywords: ["#include", "#define", "#ifdef", "#endif", "namespace", "template", "std::", "nullptr", "static", "const char", "unsigned", "struct", "void"],
+		require_keywords: true,
 		strings: ["\"", {open: "'", char: true}, {open: "R\"(", close: ")\"", escape: null, multiline: true}],
 	},
 	"C2": {
@@ -1390,7 +1394,7 @@
 		file_patterns: ["*.c"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
-		keywords: ["inherit", "nomask", "varargs", "efun", "mapping"],
+		keywords: ["inherit", "nomask", "varargs", "efun", "([", "::create(", "this_object()", "this_player()"],
 		require_keywords: true,
 	},
 	"LSL": {
@@ -1425,9 +1429,11 @@
 		block_comments: [["{#", "#}"]],
 	},
 	"Makefile": {
-		file_patterns: ["*.mak", "*.make", "*.mk", "*.mkfile", "BSDmakefile", "GNUmakefile", "Kbuild", "Makefile", "Makefile.boot", "Makefile.frag", "Makefile.in", "Makefile.inc", "Makefile.wat", "makefile", "makefile.sco", "mkfile"],
+		file_patterns: ["*.mak", "*.make", "*.mk", "*.mkfile", "BSDmakefile", "GNUmakefile", "Kbuild", "Makefile", "Makefile.boot", "Makefile.frag", "Makefile.in", "Makefile.inc", "Makefile.wat", "makefile", "makefile.sco", "mkfile", "*.inc"],
 		line_comments: ["#"],
 		shebangs: ["#!/usr/bin/make", "#!/usr/bin/env make"],
+		keywords: [":=", "$(", "ifeq", "ifneq", ".PHONY", "$@"],
+		require_keywords: true,
 	},
 	"Malbolge": {
 		file_patterns: ["*.mal", "*.malbolge"],
@@ -1834,10 +1840,12 @@
 		line_comments: ["//"],
 	},
 	"PHP": {
-		file_patterns: ["*.php", "*.php3", "*.php4", "*.php5", "*.phps", "*.phpt", "*.phtml"],
+		file_patterns: ["*.php", "*.php3", "*.php4", "*.php5", "*.phps", "*.phpt", "*.phtml", "*.inc"],
 		line_comments: ["//", "#"],
 		block_comments: [["/*", "*/"]],
 		shebangs: ["#!/usr/bin/php", "#!/usr/bin/env php"],
+		keywords: ["<?php", "$this->", "?>", "array(", "public function", "private function"],
+		require_keywords: true,
 		strings: ["\"", "'"],
 	},
 	"Pico": {
