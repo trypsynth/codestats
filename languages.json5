@@ -485,9 +485,6 @@
 		file_patterns: ["*.css", "*.postcss"],
 		block_comments: [["/*", "*/"]],
 	},
-	"CSV": {
-		file_patterns: ["*.csv"],
-	},
 	"CUDA": {
 		file_patterns: ["*.cu", "*.cuh", "*.ptx"],
 		line_comments: ["//"],
@@ -1160,9 +1157,6 @@
 		nested_blocks: true,
 		shebangs: ["#!/usr/bin/env julia", "#!/usr/local/bin/julia"],
 	},
-	"Jupyter Notebook": {
-		file_patterns: ["*.ipynb"],
-	},
 	"Just": {
 		file_patterns: ["justfile", "Justfile"],
 		line_comments: ["#"],
@@ -1395,9 +1389,6 @@
 		file_patterns: ["pom.xml"],
 		block_comments: [["<!--", "-->"]],
 	},
-	"max": {
-		file_patterns: ["*.maxpat"],
-	},
 	"Maxima": {
 		file_patterns: ["*.mac", "*.wxm", "*.dem"],
 		block_comments: [["/*", "*/"]],
@@ -1418,9 +1409,6 @@
 	"Meson": {
 		file_patterns: ["meson.build", "meson_options.txt"],
 		line_comments: ["#"],
-	},
-	"MessagePack": {
-		file_patterns: ["*.msgpack"],
 	},
 	"Metal Shading Language": {
 		file_patterns: ["*.metal"],
@@ -1764,9 +1752,6 @@
 		file_patterns: ["*.l"],
 		line_comments: ["#"],
 		keywords: ["de", "def", "dm", "class", "rel", "var"],
-	},
-	"Piet": {
-		file_patterns: ["*.piet"],
 	},
 	"Pike": {
 		file_patterns: ["*.pike", "*.pmod"],
@@ -2512,9 +2497,6 @@
 		line_comments: ["注曰", "//"],
 		block_comments: [["凡", "是謂"]],
 	},
-	"Whitespace": {
-		file_patterns: ["*.ws"],
-	},
 	"Windows Registry Entry": {
 		file_patterns: ["*.reg"],
 		line_comments: [";", "#"],
@@ -2554,11 +2536,8 @@
 		line_comments: ["//"],
 	},
 	"XML": {
-		file_patterns: ["*.xml", "*.xsl", "*.xslt"],
+		file_patterns: ["*.xml", "*.xsl", "*.xslt", "*.xsd"],
 		block_comments: [["<!--", "-->"]],
-	},
-	"XML Schema Definition": {
-		file_patterns: ["*.xsd"],
 	},
 	"Xonsh": {
 		file_patterns: ["*.xsh"],
