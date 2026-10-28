@@ -40,14 +40,16 @@ fn score_language(lang: &Language, content: &str, tokens: &[&str]) -> i32 {
 	}
 	let mut matched_chars: usize = 0;
 	let mut keyword_hits: usize = 0;
+	// Only the capped count matters, so stop counting early; symbol-only languages need every match for their density check.
+	let limit = if is_symbol_only_language(lang) { usize::MAX } else { MAX_KEYWORD_OCCURRENCES };
 	for keyword in lang.keywords {
 		// If keyword contains special characters, use substring matching to handle cases like "@interface" in Objective-C, which wouldn't match via tokenization since @ is a delimiter.
 		let count = if keyword.chars().any(|c| !c.is_ascii_alphanumeric() && c != '_') {
-			let occurrences = count_substring_keyword(content, keyword);
+			let occurrences = count_substring_keyword(content, keyword, limit);
 			matched_chars = matched_chars.saturating_add(occurrences.saturating_mul(keyword.len()));
 			occurrences
 		} else {
-			tokens.iter().filter(|token| token.eq_ignore_ascii_case(keyword)).count()
+			tokens.iter().filter(|token| token.eq_ignore_ascii_case(keyword)).take(limit).count()
 		};
 		keyword_hits = keyword_hits.saturating_add(count);
 		let capped = i32::try_from(count.min(MAX_KEYWORD_OCCURRENCES)).unwrap_or(0);
@@ -76,16 +78,17 @@ fn score_language(lang: &Language, content: &str, tokens: &[&str]) -> i32 {
 /// Count occurrences of a punctuation-containing keyword.
 ///
 /// A keyword ending in an identifier character must not be followed by one, so `@end` doesn't match inside Doxygen's `@endcode`.
-fn count_substring_keyword(content: &str, keyword: &str) -> usize {
+fn count_substring_keyword(content: &str, keyword: &str, limit: usize) -> usize {
 	let ends_in_word = keyword.bytes().last().is_some_and(|b| b.is_ascii_alphanumeric() || b == b'_');
 	if !ends_in_word {
-		return content.matches(keyword).count();
+		return content.matches(keyword).take(limit).count();
 	}
 	content
 		.match_indices(keyword)
 		.filter(|(pos, _)| {
 			content.as_bytes().get(pos + keyword.len()).is_none_or(|&b| !b.is_ascii_alphanumeric() && b != b'_')
 		})
+		.take(limit)
 		.count()
 }
 
@@ -189,7 +192,7 @@ fn default_candidate(candidates: &[&'static Language]) -> Option<&'static Langua
 	}
 }
 
-/// The language detected for a file, and whether content decided it by a narrow margin, so that more of the file might change the answer.
+/// The language detected for a file, and whether content decided it by a narrow margin for an unexpected language, so that more of the file might change the answer.
 #[derive(Debug, Clone, Copy)]
 pub struct Detection {
 	pub language: Option<&'static Language>,
@@ -214,10 +217,10 @@ pub fn detect_language(filename: &str, content: Option<&str>) -> Detection {
 				return decided(Some(language));
 			}
 			let (language, margin) = disambiguate(&candidates, file_content);
-			Detection {
-				language: language.or_else(|| default_candidate(&candidates)),
-				close_call: margin < DECISIVE_MARGIN,
-			}
+			let default = default_candidate(&candidates);
+			// Only a narrow win for something other than the default (LPC or Objective-C over C) is worth a closer look; a narrow win for the default is the expected answer.
+			let surprising = language.is_none() || language.map(|l| l.index) != default.map(|l| l.index);
+			Detection { language: language.or(default), close_call: margin < DECISIVE_MARGIN && surprising }
 		}
 	}
 }
@@ -337,7 +340,7 @@ mod tests {
 	#[case::followed_by_punctuation("@end;", "@end", 1)]
 	#[case::symbol_keyword("a -> b -> c", "->", 2)]
 	fn test_count_substring_keyword(#[case] content: &str, #[case] keyword: &str, #[case] expected: usize) {
-		assert_eq!(count_substring_keyword(content, keyword), expected);
+		assert_eq!(count_substring_keyword(content, keyword, usize::MAX), expected);
 	}
 
 	#[rstest]
