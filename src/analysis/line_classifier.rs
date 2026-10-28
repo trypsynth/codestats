@@ -212,6 +212,26 @@ fn classify_with_strings(
 	if has_code { LineType::Code } else { LineType::Comment }
 }
 
+/// Whether a line is a C preprocessor directive written with a space after the `#` (`# define X`), in a language where `#` also starts comments. Directives that read like English (`# if the value...`) only count when followed by a condition.
+fn is_preprocessor_directive(line: &str) -> bool {
+	let Some(rest) = line.strip_prefix('#') else {
+		return false;
+	};
+	let rest = rest.trim_start();
+	let word_end = rest.find(|c: char| !c.is_ascii_alphanumeric() && c != '_').unwrap_or(rest.len());
+	let (word, after) = rest.split_at(word_end);
+	match word {
+		"define" | "undef" | "ifdef" | "ifndef" | "endif" | "include" | "pragma" => true,
+		"else" => after.trim().is_empty(),
+		"if" | "elif" => {
+			let condition = after.trim_start();
+			condition.starts_with("defined")
+				|| condition.starts_with(|c: char| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '(' || c == '!')
+		}
+		_ => false,
+	}
+}
+
 /// Whether the text after an opening `'` looks like a char literal: one character or an escape, then a closing `'`.
 fn looks_like_char(line: &[u8], start: usize) -> bool {
 	match line.get(start) {
@@ -266,6 +286,13 @@ pub fn classify_line(
 		&& lang.column_one_comments.iter().any(|marker| line.starts_with(marker))
 	{
 		return LineType::Comment;
+	}
+	if lang.c_preprocessor
+		&& !comment_state.is_in_comment()
+		&& !comment_state.is_in_string()
+		&& is_preprocessor_directive(trimmed)
+	{
+		return LineType::Code;
 	}
 	let matchers = language_matchers(lang);
 	if let Some(strings) = matchers.strings.as_ref()
@@ -480,6 +507,19 @@ mod tests {
 	fn empty_block_comment_closes() {
 		let types = classify_all("Java", &["return /**/ null;", "x();"]);
 		assert_eq!(types, [LineType::Code, LineType::Code]);
+	}
+
+	#[rstest]
+	#[case::define("# define FOO 1", true)]
+	#[case::indented_ifdef("#  ifdef CONFIG_X", true)]
+	#[case::if_condition("# if KPMDS == 3", true)]
+	#[case::if_defined("# if defined(CONFIG_PPC)", true)]
+	#[case::bare_else("# else", true)]
+	#[case::if_prose("# if the divisor is 0, take the slow path", false)]
+	#[case::else_prose("# else we fall through", false)]
+	#[case::comment("# save the frame pointer", false)]
+	fn test_is_preprocessor_directive(#[case] line: &str, #[case] expected: bool) {
+		assert_eq!(is_preprocessor_directive(line), expected);
 	}
 
 	#[test]

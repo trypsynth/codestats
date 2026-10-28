@@ -220,6 +220,7 @@ mod tests {
 		shebangs: &[],
 		keywords: &["alpha", "beta"],
 		require_keywords: false,
+		c_preprocessor: false,
 		strings: &[],
 	};
 
@@ -233,6 +234,7 @@ mod tests {
 		shebangs: &[],
 		keywords: &["winner"],
 		require_keywords: false,
+		c_preprocessor: false,
 		strings: &[],
 	};
 

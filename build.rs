@@ -185,6 +185,8 @@ struct LanguageConfig {
 	require_keywords: bool,
 	#[serde(default)]
 	strings: Vec<StringSpec>,
+	#[serde(default)]
+	c_preprocessor: bool,
 }
 
 const LANGUAGE_SCHEMA: &[(&str, &str)] = &[
@@ -199,6 +201,7 @@ const LANGUAGE_SCHEMA: &[(&str, &str)] = &[
 	("keywords", "&'static [&'static str]"),
 	("require_keywords", "bool"),
 	("strings", "&'static [StringDelimiter]"),
+	("c_preprocessor", "bool"),
 ];
 
 fn write_field(output: &mut String, name: &str, value: impl std::fmt::Display) {
@@ -244,6 +247,7 @@ fn render_languages(languages: &[LanguageConfig]) -> String {
 		write_field(&mut output, "shebangs", render_slice(&lang.shebangs, |v| format!("{v:?}")));
 		write_field(&mut output, "keywords", render_slice(&lang.keywords, |v| format!("{v:?}")));
 		write_field(&mut output, "require_keywords", lang.require_keywords);
+		write_field(&mut output, "c_preprocessor", lang.c_preprocessor);
 		write_field(
 			&mut output,
 			"strings",
