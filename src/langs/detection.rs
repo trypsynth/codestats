@@ -31,12 +31,13 @@ fn score_language(lang: &Language, content: &str, tokens: &[&str]) -> i32 {
 			score = score.saturating_add(COMMENT_MATCH_SCORE);
 		}
 	}
-	for comment_pair in lang.block_comments {
-		if content.contains(comment_pair.0) && content.contains(comment_pair.1) {
+	for &(start, end, _) in lang.block_comments {
+		if content.contains(start) && content.contains(end) {
 			score = score.saturating_add(COMMENT_MATCH_SCORE);
 		}
 	}
 	let mut matched_chars: usize = 0;
+	let mut keyword_hits: usize = 0;
 	for keyword in lang.keywords {
 		// If keyword contains special characters, use substring matching to handle cases like "@interface" in Objective-C, which wouldn't match via tokenization since @ is a delimiter.
 		let count = if keyword.chars().any(|c| !c.is_ascii_alphanumeric() && c != '_') {
@@ -46,6 +47,7 @@ fn score_language(lang: &Language, content: &str, tokens: &[&str]) -> i32 {
 		} else {
 			tokens.iter().filter(|token| token.eq_ignore_ascii_case(keyword)).count()
 		};
+		keyword_hits = keyword_hits.saturating_add(count);
 		let clamped_count = count.min(usize::try_from(i32::MAX / KEYWORD_MATCH_SCORE).unwrap_or(usize::MAX));
 		// We now know that this is safe because we've clamped the value.
 		#[expect(
@@ -55,6 +57,10 @@ fn score_language(lang: &Language, content: &str, tokens: &[&str]) -> i32 {
 		)]
 		let count_i32 = clamped_count as i32;
 		score = score.saturating_add(count_i32.saturating_mul(KEYWORD_MATCH_SCORE));
+	}
+	// Languages that share junk-drawer extensions (e.g. `.inc`) need real keyword evidence, not just a matching comment marker.
+	if lang.require_keywords && keyword_hits == 0 {
+		return 0;
 	}
 	// For symbol-only languages (all keywords are symbols), require high density if alphabetic content exists
 	if is_symbol_only_language(lang) && !tokens.is_empty() {
@@ -171,9 +177,10 @@ mod tests {
 		file_patterns: &["*.alpha"],
 		line_comments: &["//"],
 		block_comments: &[],
-		nested_blocks: false,
+		column_one_comments: &[],
 		shebangs: &[],
 		keywords: &["alpha", "beta"],
+		require_keywords: false,
 	};
 
 	const TEST_LANGUAGE_BETA: Language = Language {
@@ -182,9 +189,10 @@ mod tests {
 		file_patterns: &["*.beta"],
 		line_comments: &["#"],
 		block_comments: &[],
-		nested_blocks: false,
+		column_one_comments: &[],
 		shebangs: &[],
 		keywords: &["winner"],
+		require_keywords: false,
 	};
 
 	#[test]
@@ -263,6 +271,13 @@ mod tests {
 	#[case::url("see https://example.com", "//", false)]
 	fn test_has_line_comment(#[case] content: &str, #[case] marker: &str, #[case] expected: bool) {
 		assert_eq!(has_line_comment(content, marker), expected);
+	}
+
+	#[test]
+	fn inc_without_keywords_is_unrecognized() {
+		// A kbd keymap: its `#` comments alone shouldn't make it BitBake.
+		let content = "# Common keys\nkeycode 1 = Escape\nkeycode 2 = one exclam\n";
+		assert!(detect_language_info("qwerty-layout.inc", Some(content)).is_none());
 	}
 
 	#[test]

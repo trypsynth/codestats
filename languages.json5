@@ -251,6 +251,7 @@
 		file_patterns: ["*.bb", "*.bbappend", "*.bbclass", "*.inc"],
 		line_comments: ["#"],
 		keywords: ["DESCRIPTION", "SRC_URI", "do_compile", "do_install", "inherit", "DEPENDS", "RDEPENDS", "do_configure"],
+		require_keywords: true,
 	},
 	"Blade": {
 		file_patterns: ["*.blade.php"],
@@ -531,7 +532,7 @@
 		file_patterns: ["*.d", "*.di"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"], ["/+", "+/"]],
-		nested_blocks: true,
+		nested_blocks: ["/+"],
 		shebangs: ["#!/usr/bin/env rdmd", "#!/usr/bin/rdmd"],
 	},
 	"D2": {
@@ -587,7 +588,7 @@
 		block_comments: [["{%", "%}"]],
 	},
 	"Dockerfile": {
-		file_patterns: ["*.dockerfile", "Dockerfile", "Dockerfile.*", "Containerfile"],
+		file_patterns: ["*.dockerfile", "Dockerfile", "Dockerfile.*", "Containerfile", "dockerfile"],
 		line_comments: ["#"],
 	},
 	"Dotenv": {
@@ -779,8 +780,13 @@
 		keywords: ["DUP", "DROP", "SWAP", "OVER", "ROT", "VARIABLE", "CONSTANT", "CREATE"],
 	},
 	"Fortran": {
-		file_patterns: ["*.f", "*.for", "*.f77", "*.f90", "*.f95", "*.f03", "*.f08", "*.f15", "*.f18", "*.f23"],
-		line_comments: ["!", "C", "c"],
+		file_patterns: ["*.f90", "*.f95", "*.f03", "*.f08", "*.f15", "*.f18", "*.f23"],
+		line_comments: ["!"],
+	},
+	"Fortran (Fixed Form)": {
+		file_patterns: ["*.f", "*.for", "*.f77"],
+		line_comments: ["!"],
+		column_one_comments: ["C", "c", "*"],
 	},
 	"FreeMarker": {
 		file_patterns: ["*.ftl", "*.ftlh", "*.ftlx"],
@@ -1182,7 +1188,7 @@
 		shebangs: ["#!/usr/bin/env julia", "#!/usr/local/bin/julia"],
 	},
 	"Just": {
-		file_patterns: ["justfile", ".justfile", "*.just"],
+		file_patterns: ["justfile", ".justfile", "*.just", "Justfile"],
 		line_comments: ["#"],
 		shebangs: ["#!/usr/bin/env just --justfile"],
 	},
@@ -1755,7 +1761,8 @@
 		file_patterns: ["*.pas", "*.pp", "*.p", "*.inc"],
 		line_comments: ["//"],
 		block_comments: [["(*", "*)"], ["{", "}"]],
-		keywords: ["program", "begin", "end", "var", "procedure", "function", "uses"],
+		keywords: [":=", "end;", "begin", "procedure", "program"],
+		require_keywords: true,
 	},
 	"Pawn": {
 		file_patterns: ["*.pwn"],
@@ -2072,7 +2079,7 @@
 		keywords: ["dcl-s", "dcl-ds", "dcl-pr", "dcl-proc", "end-proc"],
 	},
 	"Ruby": {
-		file_patterns: ["*.rb", "*.builder", "*.eye", "*.gemspec", "*.god", "*.jbuilder", "*.mspec", "*.pluginspec", "*.podspec", "*.rabl", "*.rake", "*.rbuild", "*.rbw", "*.rbx", "*.ruby", "*.thor", "*.watchr", ".irbrc", ".pryrc", "Appraisals", "Berksfile", "Brewfile", "Buildfile", "Capfile", "Dangerfile", "Deliverfile", "Fastfile", "Gemfile", "Guardfile", "Jarfile", "Mavenfile", "Podfile", "Puppetfile", "Rakefile", "Snapfile", "Thorfile"],
+		file_patterns: ["*.rb", "*.builder", "*.eye", "*.gemspec", "*.god", "*.jbuilder", "*.mspec", "*.pluginspec", "*.podspec", "*.rabl", "*.rake", "*.rbuild", "*.rbw", "*.rbx", "*.ruby", "*.thor", "*.watchr", ".irbrc", ".pryrc", "Appraisals", "Berksfile", "Brewfile", "Buildfile", "Capfile", "Dangerfile", "Deliverfile", "Fastfile", "Gemfile", "Guardfile", "Jarfile", "Mavenfile", "Podfile", "Puppetfile", "Rakefile", "Snapfile", "Thorfile", "rakefile"],
 		line_comments: ["#"],
 		block_comments: [["=begin", "=end"]],
 		shebangs: ["#!/usr/bin/ruby", "#!/usr/bin/env ruby"],

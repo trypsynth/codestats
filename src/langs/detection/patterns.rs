@@ -15,7 +15,9 @@ pub(super) static LANGUAGE_GLOBSET: LazyLock<LanguageGlobs> = LazyLock::new(|| {
 	for lang in LANGUAGES {
 		for pattern in lang.file_patterns {
 			let mut glob_builder = GlobBuilder::new(pattern);
-			glob_builder.case_insensitive(true);
+			// Extensions match case-insensitively (`*.C`, `*.R`), but exact filenames don't, so `BUILD` doesn't claim a `build` script.
+			let is_exact_filename = !pattern.contains(['*', '?', '[', '{']);
+			glob_builder.case_insensitive(!is_exact_filename);
 			let glob = glob_builder
 				.build()
 				.unwrap_or_else(|e| panic!("Invalid glob pattern '{pattern}' for language {}: {e}", lang.name));

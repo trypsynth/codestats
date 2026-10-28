@@ -47,10 +47,11 @@ impl LineType {
 	}
 }
 
-/// Tracks nested block comment state across lines.
+/// Tracks block comment state across lines: how deeply nested we are, and which delimiter pair opened the comment.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct CommentState {
 	block_comment_depth: usize,
+	pair: usize,
 }
 
 impl CommentState {
@@ -61,17 +62,15 @@ impl CommentState {
 	}
 
 	#[inline]
-	const fn enter_first_block(&mut self) {
+	const fn enter_first_block(&mut self, pair: usize) {
 		self.block_comment_depth = 1;
+		self.pair = pair;
 	}
 
+	/// Close one level of comment. Non-nesting pairs never go deeper than one level, so this fully exits them.
 	#[inline]
-	const fn exit_block(&mut self, nested: bool) {
-		if nested {
-			self.block_comment_depth = self.block_comment_depth.saturating_sub(1);
-		} else {
-			self.block_comment_depth = 0;
-		}
+	const fn exit_block(&mut self) {
+		self.block_comment_depth = self.block_comment_depth.saturating_sub(1);
 	}
 
 	#[inline]
@@ -93,28 +92,27 @@ fn handle_block_comments<'a>(
 	line: &'a str,
 	matchers: &BlockCommentMatchers,
 	comment_state: &mut CommentState,
-	nested: bool,
 ) -> (&'a str, bool) {
 	let mut line_remainder = line;
 	let mut has_code = false;
 	while !line_remainder.is_empty() {
 		if !comment_state.is_in_comment() {
-			if let Some((pos, start_len)) = matchers.find_block_start(line_remainder) {
+			if let Some((pos, start_len, pair)) = matchers.find_block_start(line_remainder) {
 				if pos > 0 && contains_non_whitespace(&line_remainder[..pos]) {
 					has_code = true;
 				}
 				line_remainder = &line_remainder[pos + start_len..];
-				comment_state.enter_first_block();
+				comment_state.enter_first_block(pair);
 			} else {
 				break;
 			}
 		} else if let Some((pos, len, found_nested_start)) =
-			matchers.find_block_end_or_nested_start(line_remainder, nested)
+			matchers.find_block_end_or_nested_start(line_remainder, comment_state.pair)
 		{
-			if nested && found_nested_start {
+			if found_nested_start {
 				comment_state.enter_nested_block();
 			} else {
-				comment_state.exit_block(nested);
+				comment_state.exit_block();
 			}
 			line_remainder = &line_remainder[pos + len..];
 		} else {
@@ -151,6 +149,10 @@ pub fn classify_line(
 	let Some(lang) = lang_info else {
 		return LineType::Code;
 	};
+	// Markers like fixed-form Fortran's `C` only count in the first column, so check the untrimmed line.
+	if !comment_state.is_in_comment() && lang.column_one_comments.iter().any(|marker| line.starts_with(marker)) {
+		return LineType::Comment;
+	}
 	let mut line_remainder = trimmed;
 	let matchers = language_matchers(lang);
 	#[expect(
@@ -158,7 +160,7 @@ pub fn classify_line(
 		reason = "the two branches have different types of side effects (mutating line_remainder) that map_or_else cannot express cleanly"
 	)]
 	let mut has_code = if let Some(block_comments) = matchers.block_comments.as_ref() {
-		let (remainder, found_code) = handle_block_comments(trimmed, block_comments, comment_state, lang.nested_blocks);
+		let (remainder, found_code) = handle_block_comments(trimmed, block_comments, comment_state);
 		line_remainder = remainder;
 		found_code
 	} else {
@@ -311,23 +313,34 @@ mod tests {
 	fn test_comment_state_nesting() {
 		let mut state = CommentState::new();
 		assert!(!state.is_in_comment());
-		state.enter_first_block();
+		state.enter_first_block(0);
 		assert!(state.is_in_comment());
 		state.enter_nested_block();
 		assert!(state.is_in_comment());
-		state.exit_block(true); // nested exit
+		state.exit_block();
 		assert!(state.is_in_comment());
-		state.exit_block(true);
+		state.exit_block();
 		assert!(!state.is_in_comment());
 	}
 
-	#[test]
-	fn test_comment_state_non_nested_exit() {
+	fn classify_all(lang_name: &str, lines: &[&str]) -> Vec<LineType> {
+		let lang = crate::langs::LANGUAGES.iter().find(|l| l.name == lang_name).unwrap();
 		let mut state = CommentState::new();
-		state.enter_first_block();
-		state.enter_nested_block();
-		state.exit_block(false); // non-nested clears all
-		assert!(!state.is_in_comment());
+		lines.iter().enumerate().map(|(i, line)| classify_line(line, Some(lang), &mut state, i == 0)).collect()
+	}
+
+	#[test]
+	fn block_comment_only_closes_with_its_own_end() {
+		// `*)` must not close a comment opened with `{`.
+		let types = classify_all("Pascal", &["{ start", "still *) inside", "} x := 1;", "y := 2;"]);
+		assert_eq!(types, [LineType::Comment, LineType::Comment, LineType::Code, LineType::Code]);
+	}
+
+	#[rstest]
+	#[case::nesting_pair(&["/+ outer", "/+ inner +/", "still comment", "+/ x = 1;"], &[LineType::Comment, LineType::Comment, LineType::Comment, LineType::Code])]
+	#[case::non_nesting_pair(&["/* outer", "/* not nested */", "x = 1;"], &[LineType::Comment, LineType::Comment, LineType::Code])]
+	fn d_nests_only_plus_comments(#[case] lines: &[&str], #[case] expected: &[LineType]) {
+		assert_eq!(classify_all("D", lines), expected);
 	}
 
 	#[test]

@@ -92,6 +92,29 @@ where
 	Ok(out)
 }
 
+/// Which block comment pairs nest: `true` for all of them, or a list of the start delimiters that do.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(untagged)]
+enum NestedBlocks {
+	All(bool),
+	Starts(Vec<String>),
+}
+
+impl Default for NestedBlocks {
+	fn default() -> Self {
+		Self::All(false)
+	}
+}
+
+impl NestedBlocks {
+	fn nests(&self, start: &str) -> bool {
+		match self {
+			Self::All(all) => *all,
+			Self::Starts(starts) => starts.iter().any(|s| s == start),
+		}
+	}
+}
+
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct LanguageConfig {
@@ -104,11 +127,15 @@ struct LanguageConfig {
 	#[serde(default, deserialize_with = "deserialize_block_comments")]
 	block_comments: Vec<(String, String)>,
 	#[serde(default)]
-	nested_blocks: bool,
+	nested_blocks: NestedBlocks,
+	#[serde(default, deserialize_with = "deserialize_line_comments")]
+	column_one_comments: Vec<String>,
 	#[serde(default)]
 	shebangs: Vec<String>,
 	#[serde(default)]
 	keywords: Vec<String>,
+	#[serde(default)]
+	require_keywords: bool,
 }
 
 const LANGUAGE_SCHEMA: &[(&str, &str)] = &[
@@ -116,10 +143,12 @@ const LANGUAGE_SCHEMA: &[(&str, &str)] = &[
 	("name", "&'static str"),
 	("file_patterns", "&'static [&'static str]"),
 	("line_comments", "&'static [&'static str]"),
-	("block_comments", "&'static [(&'static str, &'static str)]"),
-	("nested_blocks", "bool"),
+	// Each block comment is (start, end, nests).
+	("block_comments", "&'static [(&'static str, &'static str, bool)]"),
+	("column_one_comments", "&'static [&'static str]"),
 	("shebangs", "&'static [&'static str]"),
 	("keywords", "&'static [&'static str]"),
+	("require_keywords", "bool"),
 ];
 
 fn write_field(output: &mut String, name: &str, value: impl std::fmt::Display) {
@@ -154,11 +183,12 @@ fn render_languages(languages: &[LanguageConfig]) -> String {
 		write_field(
 			&mut output,
 			"block_comments",
-			render_slice(&lang.block_comments, |(s, e)| format!("({s:?}, {e:?})")),
+			render_slice(&lang.block_comments, |(s, e)| format!("({s:?}, {e:?}, {})", lang.nested_blocks.nests(s))),
 		);
-		write_field(&mut output, "nested_blocks", lang.nested_blocks);
+		write_field(&mut output, "column_one_comments", render_slice(&lang.column_one_comments, |v| format!("{v:?}")));
 		write_field(&mut output, "shebangs", render_slice(&lang.shebangs, |v| format!("{v:?}")));
 		write_field(&mut output, "keywords", render_slice(&lang.keywords, |v| format!("{v:?}")));
+		write_field(&mut output, "require_keywords", lang.require_keywords);
 		output.push_str("\t},\n");
 	}
 	output.push_str("];\n\n");
@@ -210,6 +240,28 @@ impl LanguageValidator {
 			}
 			if lang.name.trim() != lang.name {
 				self.errors.push(format!("Language '{}': name has leading/trailing whitespace", lang.name));
+			}
+			if let NestedBlocks::Starts(starts) = &lang.nested_blocks {
+				for start in starts {
+					if !lang.block_comments.iter().any(|(s, _)| s == start) {
+						self.errors.push(format!(
+							"Language '{}': nested_blocks lists '{start}', which isn't a block comment start",
+							lang.name
+						));
+					}
+				}
+			}
+			for (start, end) in &lang.block_comments {
+				if start == end && lang.nested_blocks.nests(start) {
+					// Identical delimiters can't distinguish opening a nested comment from closing one.
+					self.errors.push(format!(
+						"Language '{}': block comment '{start}' can't nest because its start and end are identical",
+						lang.name
+					));
+				}
+			}
+			if lang.require_keywords && lang.keywords.is_empty() {
+				self.errors.push(format!("Language '{}': require_keywords needs keywords", lang.name));
 			}
 			for pattern in &lang.file_patterns {
 				let info = self

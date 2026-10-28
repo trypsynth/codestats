@@ -75,15 +75,21 @@ mod tests {
 	}
 
 	#[test]
-	fn get_candidates_handles_case_insensitive_literals() {
-		let candidates = get_candidates("MAKEFILE");
-		assert_eq!(candidates.len(), 1);
-		assert_eq!(candidates[0].name, "Makefile");
+	fn get_candidates_matches_exact_filenames_case_sensitively() {
+		assert!(!get_candidates("MAKEFILE").iter().any(|lang| lang.name == "Makefile"));
+		// Bazel's `BUILD` must not claim an ordinary `build` script.
+		assert!(!get_candidates("build").iter().any(|lang| lang.name == "Bazel"));
 	}
 
 	#[test]
 	fn get_candidates_supports_wildcards() {
 		let candidates = get_candidates("lib.rs");
+		assert!(candidates.iter().any(|lang| lang.name == "Rust"));
+	}
+
+	#[test]
+	fn get_candidates_matches_extensions_case_insensitively() {
+		let candidates = get_candidates("LIB.RS");
 		assert!(candidates.iter().any(|lang| lang.name == "Rust"));
 	}
 
