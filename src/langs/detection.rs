@@ -192,6 +192,7 @@ mod tests {
 		shebangs: &[],
 		keywords: &["alpha", "beta"],
 		require_keywords: false,
+		strings: &[],
 	};
 
 	const TEST_LANGUAGE_BETA: Language = Language {
@@ -204,6 +205,7 @@ mod tests {
 		shebangs: &[],
 		keywords: &["winner"],
 		require_keywords: false,
+		strings: &[],
 	};
 
 	#[test]

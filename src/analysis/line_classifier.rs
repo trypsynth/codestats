@@ -4,7 +4,7 @@ use memchr::{memchr2, memrchr};
 
 use crate::langs::{
 	Language,
-	scoring::{BlockCommentMatchers, LanguageMatchers, language_matchers},
+	scoring::{BlockCommentMatchers, LanguageMatchers, StringMatchers, Token, language_matchers},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -52,6 +52,8 @@ impl LineType {
 pub struct CommentState {
 	block_comment_depth: usize,
 	pair: usize,
+	/// The string literal left open by the previous line, as an index into the language's `strings`.
+	string: Option<usize>,
 }
 
 impl CommentState {
@@ -82,6 +84,12 @@ impl CommentState {
 	#[inline]
 	const fn is_in_comment(&self) -> bool {
 		self.block_comment_depth > 0
+	}
+
+	#[must_use]
+	#[inline]
+	const fn is_in_string(&self) -> bool {
+		self.string.is_some()
 	}
 }
 
@@ -128,6 +136,97 @@ fn handle_block_comments<'a>(
 	(line_remainder, has_code)
 }
 
+/// Classify a line in a language with string literals, scanning left to right so comment markers inside strings are ignored. String contents count as code.
+fn classify_with_strings(
+	line: &str,
+	lang: &Language,
+	matchers: &LanguageMatchers,
+	strings: &StringMatchers,
+	state: &mut CommentState,
+) -> LineType {
+	let bytes = line.as_bytes();
+	let mut pos = 0;
+	let mut has_code = false;
+	while pos < line.len() {
+		if state.is_in_comment() {
+			// Strings aren't lexed inside comments, so only the open comment's own end (or nested start) matters.
+			let Some((found, len, nested)) = matchers
+				.block_comments
+				.as_ref()
+				.and_then(|block| block.find_block_end_or_nested_start(&line[pos..], state.pair))
+			else {
+				break;
+			};
+			if nested {
+				state.enter_nested_block();
+			} else {
+				state.exit_block();
+			}
+			pos += found + len;
+		} else if let Some(index) = state.string {
+			has_code = true;
+			let delimiter = &lang.strings[index];
+			if let Some(end) = strings.find_close(bytes, pos, index, delimiter.escape) {
+				state.string = None;
+				pos = end;
+			} else {
+				// An unclosed single-line string ends with the line, unless the line ends in an escape (a continuation).
+				let continues = delimiter.escape.is_some_and(|escape| bytes.last() == Some(&escape));
+				if !delimiter.multiline && !continues {
+					state.string = None;
+				}
+				break;
+			}
+		} else {
+			let Some((start, end, token)) = strings.find_token(line, pos) else {
+				has_code |= contains_non_whitespace(&line[pos..]);
+				break;
+			};
+			has_code |= contains_non_whitespace(&line[pos..start]);
+			pos = end;
+			match token {
+				Token::LineComment(i) => {
+					if is_valid_line_comment_match(line, end, lang.line_comments[i]) {
+						return if has_code { LineType::Code } else { LineType::Comment };
+					}
+					has_code = true;
+				}
+				Token::BlockComment(pair) => state.enter_first_block(pair),
+				Token::String(i) => {
+					has_code = true;
+					let delimiter = &lang.strings[i];
+					// An escaped quote outside a string (in a regex or sigil like `~r[\"]`) doesn't open one.
+					let escaped = start > 0 && delimiter.escape == Some(bytes[start - 1]);
+					// A quote that doesn't look like a char literal (a Rust lifetime like `'a`) is just code.
+					let char_mismatch = delimiter.char_literal && !looks_like_char(bytes, end);
+					if !escaped && !char_mismatch {
+						state.string = Some(i);
+					}
+				}
+			}
+		}
+	}
+	if has_code { LineType::Code } else { LineType::Comment }
+}
+
+/// Whether the text after an opening `'` looks like a char literal: one character or an escape, then a closing `'`.
+fn looks_like_char(line: &[u8], start: usize) -> bool {
+	match line.get(start) {
+		None | Some(b'\'') => false,
+		// Escapes like `'\n'` or `'\u{1F600}'`: the escaped character, then a closing quote within a few bytes.
+		Some(b'\\') => line.get(start + 2..).is_some_and(|rest| rest.iter().take(10).any(|&b| b == b'\'')),
+		Some(&lead) => {
+			let len = match lead {
+				0x00..=0x7F => 1,
+				0xC0..=0xDF => 2,
+				0xE0..=0xEF => 3,
+				_ => 4,
+			};
+			line.get(start + len) == Some(&b'\'')
+		}
+	}
+}
+
 /// Find the position of the first valid line comment marker in `line`.
 #[inline]
 fn find_line_comment(line: &str, lang: &Language, matchers: &LanguageMatchers) -> Option<usize> {
@@ -168,11 +267,19 @@ pub fn classify_line(
 		return LineType::Code;
 	};
 	// Markers like fixed-form Fortran's `C` only count in the first column, so check the untrimmed line.
-	if !comment_state.is_in_comment() && lang.column_one_comments.iter().any(|marker| line.starts_with(marker)) {
+	if !comment_state.is_in_comment()
+		&& !comment_state.is_in_string()
+		&& lang.column_one_comments.iter().any(|marker| line.starts_with(marker))
+	{
 		return LineType::Comment;
 	}
-	let mut line_remainder = trimmed;
 	let matchers = language_matchers(lang);
+	if let Some(strings) = matchers.strings.as_ref()
+		&& (comment_state.is_in_string() || strings.may_contain_string(trimmed.as_bytes()))
+	{
+		return classify_with_strings(trimmed, lang, matchers, strings, comment_state);
+	}
+	let mut line_remainder = trimmed;
 	#[expect(
 		clippy::option_if_let_else,
 		reason = "the two branches have different types of side effects (mutating line_remainder) that map_or_else cannot express cleanly"
@@ -345,6 +452,48 @@ mod tests {
 		// `*)` must not close a comment opened with `{`.
 		let types = classify_all("Pascal", &["{ start", "still *) inside", "} x := 1;", "y := 2;"]);
 		assert_eq!(types, [LineType::Comment, LineType::Comment, LineType::Code, LineType::Code]);
+	}
+
+	#[rstest]
+	#[case::marker_in_string(&["let s = \"/* no\";", "x();"], &[LineType::Code, LineType::Code])]
+	#[case::escaped_quote(&["let s = \"\\\"/*\";", "x();"], &[LineType::Code, LineType::Code])]
+	#[case::escaped_escape(&["let s = \"\\\\\"; /* c */"], &[LineType::Code])]
+	#[case::lifetime_then_comment(&["fn f<'a>(s: &'a str) -> char { '\"' }", "/* c */"], &[LineType::Code, LineType::Comment])]
+	#[case::raw_string(&["let r = r#\"*/ \" /*\"#;", "x();"], &[LineType::Code, LineType::Code])]
+	#[case::multiline_string(&["let s = \"a", "/* in string */\";", "/* c */"], &[LineType::Code, LineType::Code, LineType::Comment])]
+	#[case::quote_in_comment(&["// don't", "x();"], &[LineType::Comment, LineType::Code])]
+	fn rust_strings(#[case] lines: &[&str], #[case] expected: &[LineType]) {
+		assert_eq!(classify_all("Rust", lines), expected);
+	}
+
+	#[rstest]
+	#[case::doubled_quotes(&["var s = @\"value=\"\"\"\" />\";", "// c"], &[LineType::Code, LineType::Comment])]
+	#[case::verbatim_backslash(&["var p = @\"C:\\temp\\\";", "// c"], &[LineType::Code, LineType::Comment])]
+	fn csharp_verbatim_strings(#[case] lines: &[&str], #[case] expected: &[LineType]) {
+		assert_eq!(classify_all("C#", lines), expected);
+	}
+
+	#[test]
+	fn escaped_quote_outside_string_does_not_open_one() {
+		let types = classify_all("Elixir", &["assert_raise E, ~r[key with \\\"=\\\"], fn ->", "# c"]);
+		assert_eq!(types, [LineType::Code, LineType::Comment]);
+	}
+
+	#[test]
+	fn unterminated_single_line_string_ends_with_line() {
+		let types = classify_all("C", &["char *s = \"abc;", "/* c */"]);
+		assert_eq!(types, [LineType::Code, LineType::Comment]);
+	}
+
+	#[rstest]
+	#[case::plain(b"a'", 0, true)]
+	#[case::escape(b"\\n'", 0, true)]
+	#[case::unicode_escape(b"\\u{1F600}'", 0, true)]
+	#[case::multibyte("é'".as_bytes(), 0, true)]
+	#[case::lifetime(b"a>", 0, false)]
+	#[case::empty(b"'", 0, false)]
+	fn test_looks_like_char(#[case] line: &[u8], #[case] start: usize, #[case] expected: bool) {
+		assert_eq!(looks_like_char(line, start), expected);
 	}
 
 	#[test]

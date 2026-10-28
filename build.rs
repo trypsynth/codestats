@@ -92,6 +92,49 @@ where
 	Ok(out)
 }
 
+#[expect(clippy::unnecessary_wraps, reason = "serde's `default` must match the field type, Option<String>")]
+fn default_escape() -> Option<String> {
+	Some("\\".to_string())
+}
+
+/// A string literal delimiter. The short form `"\""` opens and closes with the same text, uses `\` as its escape, and stays on one line.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(untagged)]
+enum StringSpec {
+	Short(String),
+	Full(StringConfig),
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct StringConfig {
+	open: String,
+	close: Option<String>,
+	/// `null` means the string has no escape character (raw strings).
+	#[serde(default = "default_escape")]
+	escape: Option<String>,
+	#[serde(default)]
+	multiline: bool,
+	/// A character literal like C's `'a'`: only treated as a string when it looks like one, so Rust lifetimes (`'a`) stay code.
+	#[serde(default, rename = "char")]
+	char_literal: bool,
+}
+
+impl StringSpec {
+	fn config(&self) -> StringConfig {
+		match self {
+			Self::Short(open) => StringConfig {
+				open: open.clone(),
+				close: None,
+				escape: default_escape(),
+				multiline: false,
+				char_literal: false,
+			},
+			Self::Full(config) => config.clone(),
+		}
+	}
+}
+
 /// Which block comment pairs nest: `true` for all of them, or a list of the start delimiters that do.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(untagged)]
@@ -136,6 +179,8 @@ struct LanguageConfig {
 	keywords: Vec<String>,
 	#[serde(default)]
 	require_keywords: bool,
+	#[serde(default)]
+	strings: Vec<StringSpec>,
 }
 
 const LANGUAGE_SCHEMA: &[(&str, &str)] = &[
@@ -149,6 +194,7 @@ const LANGUAGE_SCHEMA: &[(&str, &str)] = &[
 	("shebangs", "&'static [&'static str]"),
 	("keywords", "&'static [&'static str]"),
 	("require_keywords", "bool"),
+	("strings", "&'static [StringDelimiter]"),
 ];
 
 fn write_field(output: &mut String, name: &str, value: impl std::fmt::Display) {
@@ -166,6 +212,11 @@ fn render_slice<T>(values: &[T], render: impl Fn(&T) -> String) -> String {
 
 fn render_languages(languages: &[LanguageConfig]) -> String {
 	let mut output = String::new();
+	output.push_str("#[derive(Debug, Clone, Copy, PartialEq, Eq)]\n");
+	output.push_str("/// A string literal delimiter; comment markers inside strings are ignored.\n");
+	output.push_str(
+		"pub struct StringDelimiter {\n\tpub open: &'static str,\n\tpub close: &'static str,\n\tpub escape: Option<u8>,\n\tpub multiline: bool,\n\tpub char_literal: bool,\n}\n\n",
+	);
 	output.push_str("#[derive(Debug, Clone, PartialEq, Eq)]\n");
 	output.push_str("/// Holds information about a single programming language.\n");
 	output.push_str("pub struct Language {\n");
@@ -189,6 +240,20 @@ fn render_languages(languages: &[LanguageConfig]) -> String {
 		write_field(&mut output, "shebangs", render_slice(&lang.shebangs, |v| format!("{v:?}")));
 		write_field(&mut output, "keywords", render_slice(&lang.keywords, |v| format!("{v:?}")));
 		write_field(&mut output, "require_keywords", lang.require_keywords);
+		write_field(
+			&mut output,
+			"strings",
+			render_slice(&lang.strings, |spec| {
+				let c = spec.config();
+				let close = c.close.as_ref().unwrap_or(&c.open);
+				let escape =
+					c.escape.as_ref().map_or_else(|| "None".to_string(), |e| format!("Some({:?})", e.as_bytes()[0]));
+				format!(
+					"StringDelimiter {{ open: {:?}, close: {close:?}, escape: {escape}, multiline: {}, char_literal: {} }}",
+					c.open, c.multiline, c.char_literal
+				)
+			}),
+		);
 		output.push_str("\t},\n");
 	}
 	output.push_str("];\n\n");
@@ -257,6 +322,29 @@ impl LanguageValidator {
 					self.errors.push(format!(
 						"Language '{}': block comment '{start}' can't nest because its start and end are identical",
 						lang.name
+					));
+				}
+			}
+			for spec in &lang.strings {
+				let c = spec.config();
+				let close = c.close.as_ref().unwrap_or(&c.open);
+				if c.open.is_empty() || close.is_empty() {
+					self.errors.push(format!("Language '{}': string delimiters cannot be empty", lang.name));
+				}
+				if c.escape.as_ref().is_some_and(|e| e.len() != 1 || !e.is_ascii()) {
+					self.errors
+						.push(format!("Language '{}': string escape must be a single ASCII character", lang.name));
+				}
+				if c.char_literal && (c.open.len() != 1 || close != &c.open) {
+					self.errors
+						.push(format!("Language '{}': char literals need a single-character delimiter", lang.name));
+				}
+				let is_comment_marker =
+					lang.line_comments.contains(&c.open) || lang.block_comments.iter().any(|(s, _)| s == &c.open);
+				if is_comment_marker {
+					self.errors.push(format!(
+						"Language '{}': string delimiter '{}' is also a comment marker",
+						lang.name, c.open
 					));
 				}
 			}

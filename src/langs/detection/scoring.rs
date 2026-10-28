@@ -1,7 +1,7 @@
 use std::sync::LazyLock;
 
-use aho_corasick::{AhoCorasick, AhoCorasickBuilder, MatchKind};
-use memchr::memmem::Finder;
+use aho_corasick::{AhoCorasick, AhoCorasickBuilder, Input, MatchKind};
+use memchr::{memchr, memchr2, memchr3, memmem::Finder};
 
 use super::super::data::{LANGUAGES, Language};
 
@@ -9,6 +9,73 @@ use super::super::data::{LANGUAGES, Language};
 pub struct LanguageMatchers {
 	pub(crate) line_comments: Option<AhoCorasick>,
 	pub(crate) block_comments: Option<BlockCommentMatchers>,
+	pub(crate) strings: Option<StringMatchers>,
+}
+
+/// What a token found by [`StringMatchers::find_token`] starts.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Token {
+	LineComment(usize),
+	BlockComment(usize),
+	String(usize),
+}
+
+/// Matchers for languages with string literals: one automaton finds whichever comment marker or string opener comes first, so markers inside strings are skipped.
+#[derive(Debug)]
+pub struct StringMatchers {
+	tokens: AhoCorasick,
+	kinds: Vec<Token>,
+	closes: Vec<Finder<'static>>,
+	/// Distinct first bytes of string openers, for a fast check that a line can't contain a string.
+	open_bytes: Vec<u8>,
+	/// Lookup table over `open_bytes`, used when there are more than memchr3 can search for.
+	open_table: [bool; 256],
+}
+
+impl StringMatchers {
+	/// Whether `line` contains any byte that could open a string.
+	#[inline]
+	pub(crate) fn may_contain_string(&self, line: &[u8]) -> bool {
+		match *self.open_bytes.as_slice() {
+			[a] => memchr(a, line).is_some(),
+			[a, b] => memchr2(a, b, line).is_some(),
+			[a, b, c] => memchr3(a, b, c, line).is_some(),
+			_ => line.iter().any(|&b| self.open_table[usize::from(b)]),
+		}
+	}
+
+	/// Find the first comment marker or string opener at or after `from`, preferring the longest at a position (`"""` over `"`).
+	#[inline]
+	pub(crate) fn find_token(&self, line: &str, from: usize) -> Option<(usize, usize, Token)> {
+		self.tokens
+			.find(Input::new(line).span(from..line.len()))
+			.map(|m| (m.start(), m.end(), self.kinds[m.pattern().as_usize()]))
+	}
+
+	/// Find where the string `index` closes, starting at `from` and honoring its escape character. Returns the position just past the closing delimiter.
+	#[inline]
+	pub(crate) fn find_close(&self, line: &[u8], from: usize, index: usize, escape: Option<u8>) -> Option<usize> {
+		let close = &self.closes[index];
+		let Some(escape) = escape else {
+			return close.find(&line[from..]).map(|pos| from + pos + close.needle().len());
+		};
+		let first = close.needle()[0];
+		let mut pos = from;
+		while pos < line.len() {
+			let next = pos + memchr2(first, escape, &line[pos..])?;
+			// When the escape is the closing quote itself (C#'s `@"a""b"`), only a doubled quote is an escape.
+			let doubled = escape == first && line.get(next + 1) == Some(&escape);
+			if line[next] == escape && (escape != first || doubled) {
+				// Skip the escaped character.
+				pos = next + 2;
+			} else if line[next..].starts_with(close.needle()) {
+				return Some(next + close.needle().len());
+			} else {
+				pos = next + 1;
+			}
+		}
+		None
+	}
 }
 
 #[derive(Debug)]
@@ -83,5 +150,36 @@ fn build_language_matchers(lang: &Language) -> LanguageMatchers {
 			.collect();
 		Some(BlockCommentMatchers { start_automaton, pairs })
 	};
-	LanguageMatchers { line_comments, block_comments }
+	let strings = (!lang.strings.is_empty()).then(|| build_string_matchers(lang));
+	LanguageMatchers { line_comments, block_comments, strings }
+}
+
+fn build_string_matchers(lang: &Language) -> StringMatchers {
+	let mut patterns = Vec::new();
+	let mut kinds = Vec::new();
+	for (i, marker) in lang.line_comments.iter().enumerate() {
+		patterns.push(*marker);
+		kinds.push(Token::LineComment(i));
+	}
+	for (i, (start, _, _)) in lang.block_comments.iter().enumerate() {
+		patterns.push(*start);
+		kinds.push(Token::BlockComment(i));
+	}
+	for (i, delimiter) in lang.strings.iter().enumerate() {
+		patterns.push(delimiter.open);
+		kinds.push(Token::String(i));
+	}
+	let tokens = AhoCorasickBuilder::new()
+		.match_kind(MatchKind::LeftmostLongest)
+		.build(&patterns)
+		.expect("AhoCorasick should never fail to build with valid comment and string patterns");
+	let closes = lang.strings.iter().map(|delimiter| Finder::new(delimiter.close)).collect();
+	let mut open_bytes: Vec<u8> = lang.strings.iter().map(|delimiter| delimiter.open.as_bytes()[0]).collect();
+	open_bytes.sort_unstable();
+	open_bytes.dedup();
+	let mut open_table = [false; 256];
+	for &b in &open_bytes {
+		open_table[usize::from(b)] = true;
+	}
+	StringMatchers { tokens, kinds, closes, open_bytes, open_table }
 }

@@ -299,6 +299,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["#include", "#define", "#ifndef", "#pragma", "int main", "void", "sizeof", "typedef", "struct", "extern", "#ifdef", "#endif"],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"C Shell": {
 		file_patterns: ["*.csh", ".cshrc", ".login"],
@@ -309,11 +310,13 @@
 		file_patterns: ["*.cs", "*.csx", "*.cake", "*.cshtml.cs", "*.razor.cs"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}, {open: "@\"", close: "\"", escape: "\"", multiline: true}, {open: "\"\"\"", escape: null, multiline: true}],
 	},
 	"C++": {
 		file_patterns: ["*.cpp", "*.hpp", "*.c++", "*.h++", "*.cc", "*.cxx", "*.hxx", "*.ino", "*.ipp", "*.cppm", "*.ixx", "*.c++m", "*.pcc", "*.tpp", "*.hh", "*.inl"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}, {open: "R\"(", close: ")\"", escape: null, multiline: true}],
 	},
 	"C2": {
 		file_patterns: ["*.c2"],
@@ -666,8 +669,9 @@
 	"Elixir": {
 		file_patterns: ["*.ex", "*.exs", "mix.lock"],
 		line_comments: ["#"],
-		keywords: ["defmodule", "def", "defp", "do", "end", "|>"],
 		shebangs: ["#!/usr/bin/env elixir"],
+		keywords: ["defmodule", "def", "defp", "do", "end", "|>"],
+		strings: [{open: "\"", multiline: true}, {open: "\"\"\"", multiline: true}],
 	},
 	"Elm": {
 		file_patterns: ["*.elm"],
@@ -873,6 +877,7 @@
 		file_patterns: ["*.go", "go.mod", "go.work"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}, {open: "`", escape: null, multiline: true}],
 	},
 	"Go Template": {
 		file_patterns: ["*.gohtml", "*.gotmpl"],
@@ -1113,6 +1118,7 @@
 		file_patterns: ["*.java", "*.jav"],
 		line_comments: ["//"],
 		block_comments: [["/**", "*/"], ["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}, {open: "\"\"\"", multiline: true}],
 	},
 	"Java Properties": {
 		file_patterns: ["*.properties"],
@@ -1128,6 +1134,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		shebangs: ["#!/usr/bin/node", "#!/usr/bin/env node"],
+		strings: ["\"", "'", {open: "`", multiline: true}],
 	},
 	"JAWS Script": {
 		file_patterns: ["*.jss", "*.jsh"],
@@ -1237,6 +1244,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
+		strings: ["\"", {open: "'", char: true}, {open: "\"\"\"", escape: null, multiline: true}],
 	},
 	"Kusto": {
 		file_patterns: ["*.kql", "*.csl"],
@@ -1658,12 +1666,14 @@
 		block_comments: [["/*", "*/"]],
 		keywords: ["#include", "#define", "#ifndef", "#pragma", "#ifdef", "#endif", "@interface", "@implementation", "@protocol", "@property", "@synthesize", "@end", "@autoreleasepool", "@selector", "@class", "@\"", "NSString", "NSInteger", "#import", "NSObject"],
 		require_keywords: true,
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Objective-C++": {
 		file_patterns: ["*.mm"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["@interface", "@implementation", "@protocol", "@property", "@synthesize", "@end", "#import", "NSString", "class", "template"],
+		strings: ["\"", {open: "'", char: true}, {open: "R\"(", close: ")\"", escape: null, multiline: true}],
 	},
 	"Objective-J": {
 		file_patterns: ["*.j", "*.sj"],
@@ -1791,6 +1801,7 @@
 		line_comments: ["//", "#"],
 		block_comments: [["/*", "*/"]],
 		shebangs: ["#!/usr/bin/php", "#!/usr/bin/env php"],
+		strings: ["\"", "'"],
 	},
 	"Pico": {
 		file_patterns: ["*.pico"],
@@ -1936,6 +1947,7 @@
 		line_comments: ["#"],
 		block_comments: [["\"\"\"", "\"\"\""], ["'''", "'''"]],
 		shebangs: ["#!/usr/bin/python", "#!/usr/bin/env python", "#!/usr/bin/python3", "#!/usr/bin/env python3"],
+		strings: ["\"", "'"],
 	},
 	"Q": {
 		file_patterns: ["*.q"],
@@ -2082,12 +2094,14 @@
 		line_comments: ["#"],
 		block_comments: [["=begin", "=end"]],
 		shebangs: ["#!/usr/bin/ruby", "#!/usr/bin/env ruby"],
+		strings: ["\"", "'"],
 	},
 	"Rust": {
 		file_patterns: ["*.rs", "*.rs.in"],
 		line_comments: ["//", "///", "//!"],
 		block_comments: [["/*", "*/"], ["/**", "*/"], ["/*!", "*/"]],
 		nested_blocks: true,
+		strings: [{open: "\"", multiline: true}, {open: "'", char: true}, {open: "r\"", close: "\"", escape: null, multiline: true}, {open: "r#\"", close: "\"#", escape: null, multiline: true}, {open: "r##\"", close: "\"##", escape: null, multiline: true}],
 	},
 	"S-Lang": {
 		file_patterns: ["*.sl"],
@@ -2297,6 +2311,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
+		strings: ["\"", {open: "\"\"\"", multiline: true}],
 	},
 	"Swig": {
 		file_patterns: ["*.swg", "*.i"],
@@ -2410,6 +2425,7 @@
 		file_patterns: ["*.ts", "*.tsx", "*.d.ts", "*.cts", "*.mts", "*.d.cts", "*.d.mts"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", "'", {open: "`", multiline: true}],
 	},
 	"Typst": {
 		file_patterns: ["*.typ"],
