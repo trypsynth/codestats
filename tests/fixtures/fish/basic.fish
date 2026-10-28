@@ -1,5 +1,5 @@
 #!/usr/bin/env fish
-# expect: lang="Fish" total=9 code=5 comment=3 blank=1 shebang=0
+# expect: lang="Fish" total=9 code=5 comment=2 blank=1 shebang=1
 # simple fish fixture
 
 function greet
