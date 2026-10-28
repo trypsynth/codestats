@@ -88,6 +88,13 @@ mod tests {
 	}
 
 	#[test]
+	fn get_candidates_matches_prefix_globs_case_sensitively() {
+		// `Kconfig.*` is for `Kconfig.debug`, not Documentation/kconfig.rst.
+		let candidates = get_candidates("kconfig.rst");
+		assert!(!candidates.iter().any(|lang| lang.name == "Kconfig"));
+	}
+
+	#[test]
 	fn get_candidates_matches_extensions_case_insensitively() {
 		let candidates = get_candidates("LIB.RS");
 		assert!(candidates.iter().any(|lang| lang.name == "Rust"));

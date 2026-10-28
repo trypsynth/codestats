@@ -256,7 +256,6 @@
 	"Blade": {
 		file_patterns: ["*.blade.php"],
 		block_comments: [["{{--", "--}}"], ["<!--", "-->"]],
-		keywords: ["@extends", "@section", "@endsection", "@yield", "@include", "@foreach", "@endforeach", "@if", "@endif", "{{"],
 	},
 	"BlitzBasic": {
 		file_patterns: ["*.bb", "*.decls", "*.bb2"],
@@ -1350,6 +1349,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["inherit", "nomask", "varargs", "efun", "mapping"],
+		require_keywords: true,
 	},
 	"LSL": {
 		file_patterns: ["*.lsl"],
@@ -1657,6 +1657,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["#include", "#define", "#ifndef", "#pragma", "#ifdef", "#endif", "@interface", "@implementation", "@protocol", "@property", "@synthesize", "@end", "@autoreleasepool", "@selector", "@class", "@\"", "NSString", "NSInteger", "#import", "NSObject"],
+		require_keywords: true,
 	},
 	"Objective-C++": {
 		file_patterns: ["*.mm"],
@@ -1790,7 +1791,6 @@
 		line_comments: ["//", "#"],
 		block_comments: [["/*", "*/"]],
 		shebangs: ["#!/usr/bin/php", "#!/usr/bin/env php"],
-		keywords: ["<?php", "namespace", "function", "$this->", "echo"],
 	},
 	"Pico": {
 		file_patterns: ["*.pico"],

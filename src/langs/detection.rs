@@ -153,15 +153,26 @@ fn detect_from_shebang(content: &str) -> Option<&'static Language> {
 		.find(|lang| !lang.shebangs.is_empty() && lang.shebangs.iter().any(|shebang| normalized.starts_with(shebang)))
 }
 
+/// When nothing scores, fall back to the one candidate that doesn't require keyword evidence, if there is exactly one (e.g. C over Objective-C for a bare `.h`).
+fn default_candidate(candidates: &[&'static Language]) -> Option<&'static Language> {
+	let mut defaults = candidates.iter().filter(|lang| !lang.require_keywords);
+	match (defaults.next(), defaults.next()) {
+		(Some(lang), None) => Some(lang),
+		_ => None,
+	}
+}
+
 #[must_use]
 pub fn detect_language_info(filename: &str, content: Option<&str>) -> Option<&'static Language> {
 	let candidates = get_candidates(filename);
 	match candidates.len() {
 		0 => content.and_then(detect_from_shebang),
 		1 => Some(candidates[0]),
-		_ => content.and_then(|file_content| {
-			detect_from_shebang(file_content).or_else(|| disambiguate(&candidates, file_content))
-		}),
+		_ => content
+			.and_then(|file_content| {
+				detect_from_shebang(file_content).or_else(|| disambiguate(&candidates, file_content))
+			})
+			.or_else(|| default_candidate(&candidates)),
 	}
 }
 
@@ -271,6 +282,20 @@ mod tests {
 	#[case::url("see https://example.com", "//", false)]
 	fn test_has_line_comment(#[case] content: &str, #[case] marker: &str, #[case] expected: bool) {
 		assert_eq!(has_line_comment(content, marker), expected);
+	}
+
+	#[rstest]
+	#[case::bare_header("undef.h", "#undef STRINGLIB\n#undef STRINGLIB_LEN\n", "C")]
+	#[case::bare_c_file("basic.c", "{\n\t\"empty\",\n\t.insns = { BPF_EXIT_INSN() },\n},\n", "C")]
+	fn falls_back_to_default_candidate(#[case] filename: &str, #[case] content: &str, #[case] expected: &str) {
+		assert_eq!(detect_language_info(filename, Some(content)).map(|l| l.name), Some(expected));
+	}
+
+	#[rstest]
+	#[case::longer_extension("layout.blade.php", "Blade")]
+	#[case::exact_filename("pom.xml", "Maven")]
+	fn most_specific_pattern_wins(#[case] filename: &str, #[case] expected: &str) {
+		assert_eq!(detect_language_info(filename, Some("")).map(|l| l.name), Some(expected));
 	}
 
 	#[test]
