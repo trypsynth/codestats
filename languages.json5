@@ -252,6 +252,11 @@
 		line_comments: ["#"],
 		keywords: ["DESCRIPTION", "SRC_URI", "do_compile", "do_install", "inherit", "DEPENDS", "RDEPENDS", "do_configure"],
 	},
+	"Blade": {
+		file_patterns: ["*.blade.php"],
+		block_comments: [["{{--", "--}}"], ["<!--", "-->"]],
+		keywords: ["@extends", "@section", "@endsection", "@yield", "@include", "@foreach", "@endforeach", "@if", "@endif", "{{"],
+	},
 	"BlitzBasic": {
 		file_patterns: ["*.bb", "*.decls", "*.bb2"],
 		line_comments: [";"],
@@ -792,6 +797,10 @@
 		file_patterns: ["*.fut"],
 		line_comments: ["--"],
 	},
+	"GAP": {
+		file_patterns: ["*.gap", "*.gi"],
+		line_comments: ["#"],
+	},
 	"GCode": {
 		file_patterns: ["*.gcode", "*.nc", "*.ngc", "*.cnc"],
 		line_comments: [";"],
@@ -851,6 +860,10 @@
 		file_patterns: ["*.gn", "*.gni"],
 		line_comments: ["#"],
 	},
+	"Gnuplot": {
+		file_patterns: ["*.gp", "*.gnuplot"],
+		line_comments: ["#"],
+	},
 	"Go": {
 		file_patterns: ["*.go", "go.mod", "go.work"],
 		line_comments: ["//"],
@@ -859,6 +872,10 @@
 	"Go Template": {
 		file_patterns: ["*.gohtml", "*.gotmpl"],
 		block_comments: [["{{/*", "*/}}"], ["{{- /*", "*/ -}}"]],
+	},
+	"Godot Resource": {
+		file_patterns: ["*.tscn", "*.tres", "project.godot"],
+		line_comments: [";"],
 	},
 	"Gosu": {
 		file_patterns: ["*.gs", "*.gsx"],
@@ -980,6 +997,10 @@
 	"HTML": {
 		file_patterns: ["*.html", "*.htm", "*.xht", "*.xhtml"],
 		block_comments: [["<!--", "-->"]],
+	},
+	"HTTP": {
+		file_patterns: ["*.http"],
+		line_comments: ["#", "//"],
 	},
 	"Hurl": {
 		file_patterns: ["*.hurl"],
@@ -1736,6 +1757,11 @@
 		block_comments: [["(*", "*)"], ["{", "}"]],
 		keywords: ["program", "begin", "end", "var", "procedure", "function", "uses"],
 	},
+	"Pawn": {
+		file_patterns: ["*.pwn"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+	},
 	"PeopleCode": {
 		file_patterns: ["*.ppl", "*.peoplecode"],
 		line_comments: ["REM"],
@@ -1757,6 +1783,7 @@
 		line_comments: ["//", "#"],
 		block_comments: [["/*", "*/"]],
 		shebangs: ["#!/usr/bin/php", "#!/usr/bin/env php"],
+		keywords: ["<?php", "namespace", "function", "$this->", "echo"],
 	},
 	"Pico": {
 		file_patterns: ["*.pico"],
@@ -2084,7 +2111,7 @@
 		keywords: ["object", "class", "trait", "def", "val", "var", "extends", "with"],
 	},
 	"Scheme": {
-		file_patterns: ["*.scm", "*.ss"],
+		file_patterns: ["*.scm", "*.ss", "*.sld"],
 		line_comments: [";"],
 		block_comments: [["#|", "|#"]],
 		nested_blocks: true,
@@ -2144,6 +2171,10 @@
 		file_patterns: ["*.slint"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+	},
+	"Smali": {
+		file_patterns: ["*.smali"],
+		line_comments: ["#"],
 	},
 	"Smalltalk": {
 		file_patterns: ["*.st"],
@@ -2266,6 +2297,10 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["%module", "%include", "%apply", "%typemap", "%inline", "%exception"],
+	},
+	"systemd": {
+		file_patterns: ["*.service", "*.socket", "*.timer", "*.mount", "*.automount"],
+		line_comments: ["#", ";"],
 	},
 	"SystemVerilog": {
 		file_patterns: ["*.sv", "*.svh"],
@@ -2593,6 +2628,10 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["func", "struct", "extern", "local", "include", "require"],
+	},
+	"Yuck": {
+		file_patterns: ["*.yuck"],
+		line_comments: [";"],
 	},
 	"ZenCode": {
 		file_patterns: ["*.zs"],
