@@ -24,6 +24,8 @@
 //                        line count as a comment, like Python docstrings.
 //   c_preprocessor       The file goes through the C preprocessor although `#` also starts comments (assembly `.S`
 //                        files), so directives like `# define` or `# if defined(X)` count as code.
+//   regex_literals       `/.../` regex literals (JavaScript), so quotes or `/*` inside them are ignored. A `/` starts a
+//                        regex after an operator, opening bracket or keyword like `return`; otherwise it's division.
 {
 	"8th": {
 		file_patterns: ["*.8th"],
@@ -1172,6 +1174,7 @@
 		block_comments: [["/*", "*/"]],
 		shebangs: ["#!/usr/bin/node", "#!/usr/bin/env node", "#!/usr/bin/env bun"],
 		strings: ["\"", "'", {open: "`", multiline: true}],
+		regex_literals: true,
 	},
 	"JAWS Script": {
 		file_patterns: ["*.jss", "*.jsh"],
@@ -2481,6 +2484,7 @@
 		block_comments: [["/*", "*/"]],
 		shebangs: ["#!/usr/bin/env deno", "#!/usr/bin/env tsx", "#!/usr/bin/env ts-node"],
 		strings: ["\"", "'", {open: "`", multiline: true}],
+		regex_literals: true,
 	},
 	"Typst": {
 		file_patterns: ["*.typ"],

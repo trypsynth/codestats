@@ -29,6 +29,8 @@ pub struct LanguageConfig {
 	pub strings: Vec<StringSpec>,
 	#[serde(default)]
 	pub c_preprocessor: bool,
+	#[serde(default)]
+	pub regex_literals: bool,
 }
 
 /// Which block comment pairs nest: `true` for all of them, or a list of the start delimiters that do.

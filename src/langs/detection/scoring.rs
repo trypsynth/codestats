@@ -18,6 +18,8 @@ pub enum Token {
 	LineComment(usize),
 	BlockComment(usize),
 	String(usize),
+	/// A `/` that may start a regex literal (or be division).
+	Regex,
 }
 
 /// Matchers for languages with string literals: one automaton finds whichever comment marker or string opener comes first, so markers inside strings are skipped.
@@ -170,12 +172,20 @@ fn build_string_matchers(lang: &Language) -> StringMatchers {
 		patterns.push(delimiter.open);
 		kinds.push(Token::String(i));
 	}
+	if lang.regex_literals {
+		// Leftmost-longest matching lets `//` and `/*` win over a lone `/`.
+		patterns.push("/");
+		kinds.push(Token::Regex);
+	}
 	let tokens = AhoCorasickBuilder::new()
 		.match_kind(MatchKind::LeftmostLongest)
 		.build(&patterns)
 		.expect("AhoCorasick should never fail to build with valid comment and string patterns");
 	let closes = lang.strings.iter().map(|delimiter| Finder::new(delimiter.close)).collect();
 	let mut open_bytes: Vec<u8> = lang.strings.iter().map(|delimiter| delimiter.open.as_bytes()[0]).collect();
+	if lang.regex_literals {
+		open_bytes.push(b'/');
+	}
 	open_bytes.sort_unstable();
 	open_bytes.dedup();
 	let mut open_table = [false; 256];

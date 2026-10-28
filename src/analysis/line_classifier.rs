@@ -192,6 +192,15 @@ fn classify_with_strings(
 					has_code = true;
 				}
 				Token::BlockComment(pair) => state.enter_first_block(pair),
+				Token::Regex => {
+					has_code = true;
+					// Skip a whole regex literal so quotes, backticks and `/*` inside it don't open anything; otherwise it's division.
+					if regex_can_start(bytes, start)
+						&& let Some(regex_end) = find_regex_end(bytes, end)
+					{
+						pos = regex_end;
+					}
+				}
 				Token::String(i) => {
 					let delimiter = &lang.strings[i];
 					// An escaped quote outside a string (in a regex or sigil like `~r[\"]`) doesn't open one.
@@ -230,6 +239,70 @@ fn is_preprocessor_directive(line: &str) -> bool {
 		}
 		_ => false,
 	}
+}
+
+/// Keywords after which a `/` starts a regex literal rather than dividing.
+const REGEX_PRECEDING_KEYWORDS: &[&[u8]] = &[
+	b"return",
+	b"typeof",
+	b"instanceof",
+	b"in",
+	b"of",
+	b"new",
+	b"delete",
+	b"void",
+	b"throw",
+	b"case",
+	b"do",
+	b"else",
+	b"yield",
+	b"await",
+];
+
+/// Whether a `/` at `slash` can start a regex literal, judged by what precedes it on the line: the start of the line, an operator or opening punctuation, or a keyword like `return`. After an identifier, number or closing bracket it's division.
+// Only JavaScript-like languages reach this; keeping it out of line keeps the hot scanning loop small.
+#[inline(never)]
+fn regex_can_start(line: &[u8], slash: usize) -> bool {
+	let before = &line[..slash];
+	let Some(last) = before.iter().rposition(|b| !b.is_ascii_whitespace()) else {
+		return true;
+	};
+	match before[last] {
+		// `a++ / b` and `a-- / b` divide.
+		b'+' | b'-' => last == 0 || before[last - 1] != before[last],
+		b'(' | b',' | b'=' | b':' | b'[' | b'!' | b'&' | b'|' | b'?' | b'{' | b'}' | b';' | b'*' | b'%' | b'<'
+		| b'>' | b'~' | b'^' => true,
+		b if b.is_ascii_alphanumeric() || b == b'_' || b == b'$' => {
+			let word_start = before[..=last]
+				.iter()
+				.rposition(|b| !(b.is_ascii_alphanumeric() || *b == b'_' || *b == b'$'))
+				.map_or(0, |i| i + 1);
+			REGEX_PRECEDING_KEYWORDS.contains(&&before[word_start..=last])
+		}
+		_ => false,
+	}
+}
+
+/// Find the end of a regex literal whose body starts at `start`, returning the position after its flags. Slashes inside `[...]` classes or escaped with `\` don't end it, and a regex can't span lines, so `None` means this `/` was division.
+// Only JavaScript-like languages reach this; keeping it out of line keeps the hot scanning loop small.
+#[inline(never)]
+fn find_regex_end(line: &[u8], start: usize) -> Option<usize> {
+	let mut pos = start;
+	let mut in_class = false;
+	while pos < line.len() {
+		match line[pos] {
+			b'\\' => pos += 1,
+			b'[' => in_class = true,
+			b']' => in_class = false,
+			b'/' if !in_class => {
+				let flags = line[pos + 1..].iter().take_while(|b| b.is_ascii_alphabetic()).count();
+				return Some(pos + 1 + flags);
+			}
+			_ => {}
+		}
+		pos += 1;
+	}
+	None
 }
 
 /// Whether the text after an opening `'` looks like a char literal: one character or an escape, then a closing `'`.
@@ -520,6 +593,37 @@ mod tests {
 	#[case::comment("# save the frame pointer", false)]
 	fn test_is_preprocessor_directive(#[case] line: &str, #[case] expected: bool) {
 		assert_eq!(is_preprocessor_directive(line), expected);
+	}
+
+	#[rstest]
+	#[case::line_start(b"/re/", 0, true)]
+	#[case::after_paren(b"f(/re/)", 2, true)]
+	#[case::after_assign(b"x = /re/", 4, true)]
+	#[case::after_return(b"return /re/", 7, true)]
+	#[case::after_identifier(b"total / count", 6, false)]
+	#[case::after_number(b"a / 2 / b", 6, false)]
+	#[case::after_close_paren(b"(a) / b", 4, false)]
+	#[case::after_increment(b"i++ / 2", 4, false)]
+	#[case::identifier_ending_in_keyword(b"modulo / 2", 7, false)]
+	fn test_regex_can_start(#[case] line: &[u8], #[case] slash: usize, #[case] expected: bool) {
+		assert_eq!(regex_can_start(line, slash), expected);
+	}
+
+	#[rstest]
+	#[case::simple(b"/abc/g;", Some(6))]
+	#[case::escaped_slash(b"/a\\/b/;", Some(6))]
+	#[case::slash_in_class(b"/[/*]/g", Some(7))]
+	#[case::unterminated(b"/ 2", None)]
+	fn test_find_regex_end(#[case] line: &[u8], #[case] expected: Option<usize>) {
+		assert_eq!(find_regex_end(line, 1), expected);
+	}
+
+	#[rstest]
+	#[case::backtick_in_regex(&["s = s.replace(/[`'\"]/g, \"\");", "// c"], &[LineType::Code, LineType::Comment])]
+	#[case::block_start_in_regex(&["return /[/*]/g;", "x();"], &[LineType::Code, LineType::Code])]
+	#[case::division_then_comment(&["const r = a / b; // c", "// c"], &[LineType::Code, LineType::Comment])]
+	fn javascript_regex_literals(#[case] lines: &[&str], #[case] expected: &[LineType]) {
+		assert_eq!(classify_all("JavaScript", lines), expected);
 	}
 
 	#[test]

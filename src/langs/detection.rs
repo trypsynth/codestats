@@ -221,6 +221,7 @@ mod tests {
 		keywords: &["alpha", "beta"],
 		require_keywords: false,
 		c_preprocessor: false,
+		regex_literals: false,
 		strings: &[],
 	};
 
@@ -235,6 +236,7 @@ mod tests {
 		keywords: &["winner"],
 		require_keywords: false,
 		c_preprocessor: false,
+		regex_literals: false,
 		strings: &[],
 	};
 
