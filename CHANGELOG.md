@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.8.1
+
+- JavaScript and TypeScript regex literals are now recognized, so a regex containing a backtick or `/*` (as in jQuery Validation) no longer turns the following lines into code or comments
+- Shebangs using `env -S` (`#!/usr/bin/env -S deno run`) are recognized, and shebangs now match whole interpreter names, so `node` no longer claims `nodemon` and `perl6` is Raku rather than Perl
+- Added shebangs for deno, tsx, ts-node, bun, Rscript, pwsh, swift, kotlin, osascript, sbcl, dash, make and raku
+- Improved detection for extensions shared by several languages: a keyword repeated many times no longer outweighs several distinct ones (C files that mention "mapping" are no longer LPC), and files where the decision is close are checked against more of their content
+- `.inc` files are now also considered as C++, PHP, Makefile or NASM assembly, and are only claimed by a language with real evidence, so C++ includes are no longer counted as Pascal or BitBake and unrelated `.inc` files are left out
+- Preprocessor directives written with a space in assembly (`# define`, `# if defined(X)`) are counted as code rather than comments
+- HTML and Markdown output are always included; the `html`, `markdown` and `all-formats` features have been removed
+
 ## 0.8.0
 
 - Comment markers inside string literals are now ignored, so code like `"src/**/*.rs"` or `printf("/*")` no longer turns the following lines into comments. Supported for C, C++, C#, Objective-C, Java, Kotlin, Swift, Go, Rust, JavaScript, TypeScript, Python, Ruby, PHP, Elixir, Lua, SQL, Haskell, Dart, Scala, Groovy, Zig, Nim, CSS, SCSS, Less, JSONC, JSON5 and Tcl
