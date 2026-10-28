@@ -1,4 +1,4 @@
-use std::sync::LazyLock;
+use std::sync::{LazyLock, OnceLock};
 
 use aho_corasick::{AhoCorasick, AhoCorasickBuilder, Input, MatchKind};
 use memchr::{memchr, memchr2, memchr3, memmem::Finder};
@@ -116,13 +116,14 @@ impl BlockCommentMatchers {
 	}
 }
 
-static LANGUAGE_MATCHERS: LazyLock<Vec<LanguageMatchers>> =
-	LazyLock::new(|| LANGUAGES.iter().map(build_language_matchers).collect());
+/// Matchers are built the first time a language is seen, so startup doesn't pay for all ~550 languages.
+static LANGUAGE_MATCHERS: LazyLock<Vec<OnceLock<LanguageMatchers>>> =
+	LazyLock::new(|| LANGUAGES.iter().map(|_| OnceLock::new()).collect());
 
 #[inline]
 #[must_use]
 pub fn language_matchers(lang: &Language) -> &'static LanguageMatchers {
-	&LANGUAGE_MATCHERS[lang.index]
+	LANGUAGE_MATCHERS[lang.index].get_or_init(|| build_language_matchers(lang))
 }
 
 fn build_language_matchers(lang: &Language) -> LanguageMatchers {
