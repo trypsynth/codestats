@@ -118,6 +118,9 @@ struct StringConfig {
 	/// A character literal like C's `'a'`: only treated as a string when it looks like one, so Rust lifetimes (`'a`) stay code.
 	#[serde(default, rename = "char")]
 	char_literal: bool,
+	/// A docstring delimiter (Python's `"""`): when it starts a line, its contents count as comment rather than code.
+	#[serde(default)]
+	doc: bool,
 }
 
 impl StringSpec {
@@ -129,6 +132,7 @@ impl StringSpec {
 				escape: default_escape(),
 				multiline: false,
 				char_literal: false,
+				doc: false,
 			},
 			Self::Full(config) => config.clone(),
 		}
@@ -215,7 +219,7 @@ fn render_languages(languages: &[LanguageConfig]) -> String {
 	output.push_str("#[derive(Debug, Clone, Copy, PartialEq, Eq)]\n");
 	output.push_str("/// A string literal delimiter; comment markers inside strings are ignored.\n");
 	output.push_str(
-		"pub struct StringDelimiter {\n\tpub open: &'static str,\n\tpub close: &'static str,\n\tpub escape: Option<u8>,\n\tpub multiline: bool,\n\tpub char_literal: bool,\n}\n\n",
+		"pub struct StringDelimiter {\n\tpub open: &'static str,\n\tpub close: &'static str,\n\tpub escape: Option<u8>,\n\tpub multiline: bool,\n\tpub char_literal: bool,\n\tpub doc: bool,\n}\n\n",
 	);
 	output.push_str("#[derive(Debug, Clone, PartialEq, Eq)]\n");
 	output.push_str("/// Holds information about a single programming language.\n");
@@ -249,8 +253,8 @@ fn render_languages(languages: &[LanguageConfig]) -> String {
 				let escape =
 					c.escape.as_ref().map_or_else(|| "None".to_string(), |e| format!("Some({:?})", e.as_bytes()[0]));
 				format!(
-					"StringDelimiter {{ open: {:?}, close: {close:?}, escape: {escape}, multiline: {}, char_literal: {} }}",
-					c.open, c.multiline, c.char_literal
+					"StringDelimiter {{ open: {:?}, close: {close:?}, escape: {escape}, multiline: {}, char_literal: {}, doc: {} }}",
+					c.open, c.multiline, c.char_literal, c.doc
 				)
 			}),
 		);
@@ -317,6 +321,15 @@ impl LanguageValidator {
 				}
 			}
 			for (start, end) in &lang.block_comments {
+				let shadowed =
+					lang.block_comments.iter().any(|(s, e)| s != start && start.starts_with(s.as_str()) && e == end);
+				if shadowed {
+					// `/**` ... `*/` is already covered by `/*` ... `*/`, and as a longer start it would swallow `/**/`.
+					self.errors.push(format!(
+						"Language '{}': block comment '{start}' is redundant with a shorter start that has the same end",
+						lang.name
+					));
+				}
 				if start == end && lang.nested_blocks.nests(start) {
 					// Identical delimiters can't distinguish opening a nested comment from closing one.
 					self.errors.push(format!(

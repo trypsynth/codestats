@@ -54,6 +54,8 @@ pub struct CommentState {
 	pair: usize,
 	/// The string literal left open by the previous line, as an index into the language's `strings`.
 	string: Option<usize>,
+	/// Whether the open string is a docstring, whose contents count as comment.
+	doc_string: bool,
 }
 
 impl CommentState {
@@ -164,7 +166,7 @@ fn classify_with_strings(
 			}
 			pos += found + len;
 		} else if let Some(index) = state.string {
-			has_code = true;
+			has_code |= !state.doc_string;
 			let delimiter = &lang.strings[index];
 			if let Some(end) = strings.find_close(bytes, pos, index, delimiter.escape) {
 				state.string = None;
@@ -193,14 +195,17 @@ fn classify_with_strings(
 				}
 				Token::BlockComment(pair) => state.enter_first_block(pair),
 				Token::String(i) => {
-					has_code = true;
 					let delimiter = &lang.strings[i];
 					// An escaped quote outside a string (in a regex or sigil like `~r[\"]`) doesn't open one.
 					let escaped = start > 0 && delimiter.escape == Some(bytes[start - 1]);
 					// A quote that doesn't look like a char literal (a Rust lifetime like `'a`) is just code.
 					let char_mismatch = delimiter.char_literal && !looks_like_char(bytes, end);
+					// A docstring is a string that starts its line; after code (`x = """`) it's an ordinary string.
+					let doc_string = delimiter.doc && !has_code;
+					has_code |= !doc_string;
 					if !escaped && !char_mismatch {
 						state.string = Some(i);
+						state.doc_string = doc_string;
 					}
 				}
 			}
@@ -471,6 +476,21 @@ mod tests {
 	#[case::verbatim_backslash(&["var p = @\"C:\\temp\\\";", "// c"], &[LineType::Code, LineType::Comment])]
 	fn csharp_verbatim_strings(#[case] lines: &[&str], #[case] expected: &[LineType]) {
 		assert_eq!(classify_all("C#", lines), expected);
+	}
+
+	#[rstest]
+	#[case::docstring(&["def f():", "    \"\"\"Docstring.", "", "    More.\"\"\"", "    return 1"], &[LineType::Code, LineType::Comment, LineType::Blank, LineType::Comment, LineType::Code])]
+	#[case::one_line_docstring(&["    '''Short.'''", "x = 1"], &[LineType::Comment, LineType::Code])]
+	#[case::string_argument(&["code = dedent('''", "    pass", "''')"], &[LineType::Code, LineType::Code, LineType::Code])]
+	#[case::code_after_docstring(&["\"\"\"Doc.\"\"\"; x = 1"], &[LineType::Code])]
+	fn python_docstrings(#[case] lines: &[&str], #[case] expected: &[LineType]) {
+		assert_eq!(classify_all("Python", lines), expected);
+	}
+
+	#[test]
+	fn empty_block_comment_closes() {
+		let types = classify_all("Java", &["return /**/ null;", "x();"]);
+		assert_eq!(types, [LineType::Code, LineType::Code]);
 	}
 
 	#[test]

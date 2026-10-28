@@ -1,0 +1,5 @@
+// expect: lang="JSONC" total=5 code=4 comment=1 blank=0 shebang=0
+{
+  "include": ["src/**/*.ts"],
+  "exclude": ["dist/*"]
+}

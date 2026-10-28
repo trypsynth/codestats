@@ -1,0 +1,5 @@
+// expect: lang="SCSS" total=5 code=4 comment=1 blank=0 shebang=0
+.logo {
+  background: url("//cdn.example.com/*.png");
+  content: '/* not a comment';
+}
