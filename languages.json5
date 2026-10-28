@@ -250,12 +250,12 @@
 	"BitBake": {
 		file_patterns: ["*.bb", "*.bbappend", "*.bbclass", "*.inc"],
 		line_comments: ["#"],
-		keywords: ["DESCRIPTION", "LICENSE", "SRC_URI", "do_compile", "do_install", "inherit", "DEPENDS"],
+		keywords: ["DESCRIPTION", "SRC_URI", "do_compile", "do_install", "inherit", "DEPENDS", "RDEPENDS", "do_configure"],
 	},
 	"BlitzBasic": {
 		file_patterns: ["*.bb", "*.decls", "*.bb2"],
 		line_comments: [";"],
-		keywords: ["Graphics", "Graphics3D", "Camera", "Mesh", "Type", "Field", "New", "Repeat", "Until", "Forever"],
+		keywords: ["Graphics", "Graphics3D", "Camera", "Mesh", "Repeat", "Until", "Forever"],
 	},
 	"Bluespec": {
 		file_patterns: ["*.bsv"],
@@ -293,7 +293,7 @@
 		file_patterns: ["*.c", "*.h", "*.ec", "*.pgc"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
-		keywords: ["#include", "#define", "#ifndef", "#pragma", "int main", "void", "sizeof", "typedef", "struct", "extern"],
+		keywords: ["#include", "#define", "#ifndef", "#pragma", "int main", "void", "sizeof", "typedef", "struct", "extern", "#ifdef", "#endif"],
 	},
 	"C Shell": {
 		file_patterns: ["*.csh", ".cshrc", ".login"],
@@ -652,7 +652,7 @@
 	"Eiffel": {
 		file_patterns: ["*.e"],
 		line_comments: ["--"],
-		keywords: ["class", "feature", "is", "do", "end", "require", "ensure", "invariant"],
+		keywords: ["class", "feature", "require", "ensure", "invariant", "deferred"],
 	},
 	"EJS": {
 		file_patterns: ["*.ejs"],
@@ -739,7 +739,7 @@
 		file_patterns: ["*.dsp"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
-		keywords: ["process =", "process=", "import(", "declare ", "library(", "os.", "ba.", "si."],
+		keywords: ["process =", "process=", "import(", "declare ", "library("],
 	},
 	"Felix": {
 		file_patterns: ["*.flx"],
@@ -771,7 +771,7 @@
 		file_patterns: ["*.4th", "*.forth", "*.fr", "*.fth", "*.frt", "*.f83", "*.fb", "*.fpm", "*.e4", "*.rx", "*.ft"],
 		line_comments: ["\\ "],
 		block_comments: [["( ", ")"]],
-		keywords: [": ", "; ", "DUP", "DROP", "SWAP", "OVER", "ROT", "VARIABLE", "CONSTANT", "CREATE"],
+		keywords: ["DUP", "DROP", "SWAP", "OVER", "ROT", "VARIABLE", "CONSTANT", "CREATE"],
 	},
 	"Fortran": {
 		file_patterns: ["*.f", "*.for", "*.f77", "*.f90", "*.f95", "*.f03", "*.f08", "*.f15", "*.f18", "*.f23"],
@@ -928,7 +928,7 @@
 		file_patterns: ["*.y"],
 		line_comments: ["--"],
 		block_comments: [["{-", "-}"]],
-		keywords: ["%name", "%tokentype", "%token", "%%"],
+		keywords: ["%name", "%tokentype", "%monad", "%lexer", "%error"],
 	},
 	"Harbour": {
 		file_patterns: ["*.prg", "*.hb", "*.ch"],
@@ -1031,7 +1031,6 @@
 	"INI": {
 		file_patterns: ["*.ini", "*.cfg", "*.prefs", "buildozer.spec"],
 		line_comments: [";", "#"],
-		keywords: ["[", "]", "="],
 	},
 	"Ink": {
 		file_patterns: ["*.ink"],
@@ -1049,7 +1048,7 @@
 	},
 	"INTERCAL": {
 		file_patterns: ["*.i", "*.intercal"],
-		keywords: ["PLEASE", "DO", "COME FROM", "ABSTAIN", "REINSTATE"],
+		keywords: ["PLEASE", "COME FROM", "ABSTAIN", "REINSTATE", "READ OUT", "GIVE UP"],
 	},
 	"Io": {
 		file_patterns: ["*.io"],
@@ -1274,7 +1273,7 @@
 	"Limbo": {
 		file_patterns: ["*.m"],
 		line_comments: ["#"],
-		keywords: ["implement", "include", "con", "fn", "adt", "Sys->print"],
+		keywords: ["implement", "con", "fn", "adt", "Sys->print"],
 	},
 	"Lingua Franca": {
 		file_patterns: ["*.lf"],
@@ -1323,7 +1322,7 @@
 		file_patterns: ["*.c"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
-		keywords: ["inherit", "nomask", "varargs", "efun", "mixed", "mapping", "create", "init"],
+		keywords: ["inherit", "nomask", "varargs", "efun", "mapping"],
 	},
 	"LSL": {
 		file_patterns: ["*.lsl"],
@@ -1440,7 +1439,7 @@
 	"Miranda": {
 		file_patterns: ["*.m"],
 		line_comments: ["||"],
-		keywords: ["abstype", "with", "where", "div", "mod", "otherwise", "type", "show"],
+		keywords: ["abstype", "otherwise"],
 	},
 	"Mlatu": {
 		file_patterns: ["*.mlt"],
@@ -1515,7 +1514,7 @@
 	"MUMPS": {
 		file_patterns: ["*.m", "*.mps"],
 		line_comments: [";"],
-		keywords: ["SET", "KILL", "QUIT", "FOR", "GOTO", "HALT", "WRITE", "READ", "^"],
+		keywords: ["KILL", "QUIT", "HALT", "GOTO", "WRITE", "$GET(", "$ORDER(", "$PIECE(", "$DATA("],
 	},
 	"Mun": {
 		file_patterns: ["*.mun"],
@@ -1630,7 +1629,7 @@
 		file_patterns: ["*.m", "*.h"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
-		keywords: ["@interface", "@implementation", "@protocol", "@property", "@synthesize", "@end", "@autoreleasepool", "@selector", "@class", "@\"", "NSString", "NSInteger", "#import", "NSObject"],
+		keywords: ["#include", "#define", "#ifndef", "#pragma", "#ifdef", "#endif", "@interface", "@implementation", "@protocol", "@property", "@synthesize", "@end", "@autoreleasepool", "@selector", "@class", "@\"", "NSString", "NSInteger", "#import", "NSObject"],
 	},
 	"Objective-C++": {
 		file_patterns: ["*.mm"],
@@ -1685,7 +1684,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
-		keywords: ["DEFINE", "VARIABLE", "PROCEDURE", "FUNCTION", "END PROCEDURE", "RUN", "FOR EACH", "DO:"],
+		keywords: ["DEFINE", "VARIABLE", "PROCEDURE", "END PROCEDURE", "FOR EACH", "DO:", "NO-UNDO", "NO-LOCK"],
 	},
 	"OpenQASM": {
 		file_patterns: ["*.qasm"],
@@ -1743,10 +1742,11 @@
 		block_comments: [["/*", "*/"], ["<*", "*>"]],
 	},
 	"Perl": {
-		file_patterns: ["*.pl", "*.al", "*.perl", "*.plx", "*.pm", "rexfile", "cpanfile", "cpanfile.snapshot", "*.psgi"],
+		file_patterns: ["*.pl", "*.al", "*.perl", "*.plx", "*.pm", "rexfile", "cpanfile", "cpanfile.snapshot", "*.psgi", "*.t"],
 		line_comments: ["#"],
 		block_comments: [["=pod", "=cut"], ["=head1", "=cut"], ["=head2", "=cut"], ["=head3", "=cut"], ["=head4", "=cut"], ["=begin", "=cut"], ["=over", "=cut"], ["=for", "=cut"], ["=encoding", "=cut"]],
 		shebangs: ["#!/usr/bin/perl", "#!/usr/bin/env perl"],
+		keywords: ["use strict", "use warnings", "my", "sub", "Test::More", "done_testing"],
 	},
 	"Pest": {
 		file_patterns: ["*.pest"],
@@ -1766,7 +1766,7 @@
 		file_patterns: ["*.l"],
 		line_comments: ["#"],
 		block_comments: [["#{", "}#"]],
-		keywords: ["de", "def", "dm", "class", "rel", "var"],
+		keywords: ["de", "dm", "class", "rel"],
 	},
 	"Pike": {
 		file_patterns: ["*.pike", "*.pmod"],
@@ -2148,7 +2148,7 @@
 	"Smalltalk": {
 		file_patterns: ["*.st"],
 		block_comments: [["\"", "\""]],
-		keywords: ["Object subclass:", "instanceVariableNames:", "classVariableNames:", "poolDictionaries:", "self", "super", "true", "false", "nil"],
+		keywords: ["Object subclass:", "instanceVariableNames:", "classVariableNames:", "poolDictionaries:", "self", "super", "nil"],
 	},
 	"Smarty": {
 		file_patterns: ["*.tpl"],
@@ -2171,7 +2171,7 @@
 	"SPARK": {
 		file_patterns: ["*.adb", "*.ads"],
 		line_comments: ["--"],
-		keywords: ["procedure", "function", "package", "with", "use", "begin", "end", "is", "record", "SPARK_Mode", "Global", "Depends", "Pre =>", "Post =>", "Contract_Cases"],
+		keywords: ["procedure", "function", "package", "with", "use", "begin", "end", "is", "record", "SPARK_Mode", "Global", "Depends", "Contract_Cases"],
 	},
 	"SPARQL": {
 		file_patterns: ["*.rq", "*.sparql"],
@@ -2240,7 +2240,7 @@
 		file_patterns: ["*.sc", "*.scd"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
-		keywords: ["SinOsc", "SynthDef", "Server", "~", ".ar", ".kr"],
+		keywords: ["SinOsc", "SynthDef", "Server", ".ar", ".kr"],
 	},
 	"Svelte": {
 		file_patterns: ["*.svelte"],
@@ -2464,7 +2464,7 @@
 	"Visual Basic/Visual Basic .NET": {
 		file_patterns: ["*.vb", "*.cls", "*.frm", "*.vba", "*.vbhtml", "*.vbs"],
 		line_comments: ["'", "REM", "Rem", "rem"],
-		keywords: ["Dim", "Sub", "Function", "End Sub", "End Function", "Private", "Public", "As", "If Then", "For Each"],
+		keywords: ["Dim", "Sub", "Function", "End Sub", "End Function", "Private", "Public", "As", "For Each"],
 	},
 	"Visual FoxPro": {
 		file_patterns: ["*.prg"],

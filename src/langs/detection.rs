@@ -40,7 +40,7 @@ fn score_language(lang: &Language, content: &str, tokens: &[&str]) -> i32 {
 	for keyword in lang.keywords {
 		// If keyword contains special characters, use substring matching to handle cases like "@interface" in Objective-C, which wouldn't match via tokenization since @ is a delimiter.
 		let count = if keyword.chars().any(|c| !c.is_ascii_alphanumeric() && c != '_') {
-			let occurrences = content.matches(keyword).count();
+			let occurrences = count_substring_keyword(content, keyword);
 			matched_chars = matched_chars.saturating_add(occurrences.saturating_mul(keyword.len()));
 			occurrences
 		} else {
@@ -70,6 +70,22 @@ fn score_language(lang: &Language, content: &str, tokens: &[&str]) -> i32 {
 		}
 	}
 	score
+}
+
+/// Count occurrences of a punctuation-containing keyword.
+///
+/// A keyword ending in an identifier character must not be followed by one, so `@end` doesn't match inside Doxygen's `@endcode`.
+fn count_substring_keyword(content: &str, keyword: &str) -> usize {
+	let ends_in_word = keyword.bytes().last().is_some_and(|b| b.is_ascii_alphanumeric() || b == b'_');
+	if !ends_in_word {
+		return content.matches(keyword).count();
+	}
+	content
+		.match_indices(keyword)
+		.filter(|(pos, _)| {
+			content.as_bytes().get(pos + keyword.len()).is_none_or(|&b| !b.is_ascii_alphanumeric() && b != b'_')
+		})
+		.count()
 }
 
 /// Check whether any line starts with `marker` as a comment.
@@ -227,6 +243,15 @@ mod tests {
 	#[case::octave_function("example.m", "# compute\nfunction y = f(x)\n\ty = x;\nendfunction\n", "Octave")]
 	fn detect_m_and_h_files(#[case] filename: &str, #[case] content: &str, #[case] expected: &str) {
 		assert_eq!(detect_language_info(filename, Some(content)).map(|l| l.name), Some(expected));
+	}
+
+	#[rstest]
+	#[case::whole_keyword("@end\n", "@end", 1)]
+	#[case::doxygen_command("/** @endcode */", "@end", 0)]
+	#[case::followed_by_punctuation("@end;", "@end", 1)]
+	#[case::symbol_keyword("a -> b -> c", "->", 2)]
+	fn test_count_substring_keyword(#[case] content: &str, #[case] keyword: &str, #[case] expected: usize) {
+		assert_eq!(count_substring_keyword(content, keyword), expected);
 	}
 
 	#[rstest]
