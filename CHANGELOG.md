@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.8.0
+
+- Comment markers inside string literals are now ignored, so code like `"src/**/*.rs"` or `printf("/*")` no longer turns the following lines into comments. Supported for C, C++, C#, Objective-C, Java, Kotlin, Swift, Go, Rust, JavaScript, TypeScript, Python, Ruby, PHP, Elixir, Lua, SQL, Haskell, Dart, Scala, Groovy, Zig, Nim, CSS, SCSS, Less, JSONC, JSON5 and Tcl
+- Python docstrings are counted as comments, while other triple-quoted strings (`x = """...`) are counted as code
+- A block comment start inside a line comment (`// see "/healthz/*"`) no longer opens a block comment, and block comments now only close with their own delimiter
+- Fixed comment syntax for about 80 languages, including OpenCL `//`, ABAP `"`, uppercase `REM` in Batch, TLA+, Teal, Smarty and template comments in ERB, EJS and JSP, and corrected which languages' block comments nest
+- Improved detection for extensions shared by several languages: `.m` and `.h` files are no longer misdetected as Octave or Limbo, SPARK is told apart from Ada and Yacc from Bison, and `.editorconfig` and `.gitconfig` are no longer INI
+- Files with nothing distinctive no longer go uncounted when their extension is shared (bare `.h` and `.c` files fall back to C), and the most specific pattern now wins (`pom.xml` is Maven, `*.blade.php` is Blade)
+- Exact filenames are now matched case-sensitively, so Bazel's `BUILD` no longer claims `build` scripts
+- C++ now owns `.hh` (previously Hack), Perl `.t` test files are recognized, and config files like `.babelrc` and `Pipfile` count as their real formats
+- Fortran is split into free-form Fortran (`.f90` and later) and Fortran (Fixed Form) (`.f`, `.for`, `.f77`), where `C`, `c` and `*` comments only count in the first column
+- Added Blade, GAP, Gnuplot, Go Template, Godot Resource, HTTP, Pawn, Smali, systemd and Yuck, plus missing extensions and filenames such as `Containerfile`, `Jenkinsfile`, `.emacs` and `meson.options`
+- Removed CSV, Jupyter Notebook, MessagePack, max, Piet and Whitespace, whose line counts weren't meaningful; XML Schema files now count as XML
+- `-q` now ends with a compact list of languages and their file counts
+- Startup is about 7x faster and per-file language detection is faster, making codestats 1.5-2x faster than tokei and scc on medium-sized repositories
+- codestats is now a binary-only crate; the `codestats` library target is no longer published
+
 ## 0.7.0
 
 - Added `--by-dir` (`-D`) to show a breakdown by directory instead of by language; combining it with `--verbose` also lists individual files under each directory

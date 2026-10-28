@@ -1,3 +1,27 @@
+// Language definitions, compiled into codestats by build.rs. Entries must stay in alphabetical order.
+//
+// Fields:
+//   file_patterns        Required. Exact filenames (`Makefile`, matched case-sensitively), extensions (`*.rs`, matched
+//                        case-insensitively), or other globs (`Kconfig.*`). When patterns from several languages match a
+//                        file, only the most specific ones count: exact filenames beat globs, and `*.blade.php` beats `*.php`.
+//   line_comments        Markers that start a comment running to the end of the line. Markers made of letters (`REM`)
+//                        must be followed by a non-letter.
+//   block_comments       [start, end] pairs. A comment only closes with the end of the pair that opened it.
+//   nested_blocks        `true` if all block comments nest, or a list of the start markers that do (D: ["/+"]).
+//   column_one_comments  Markers that only count in the first column, like fixed-form Fortran's `C`.
+//   shebangs             Shebang prefixes that identify the language for files without a known extension.
+//   keywords             Used to choose between languages that share a pattern; every language sharing a pattern needs
+//                        some. Words match whole tokens case-insensitively; anything with punctuation (`@interface`,
+//                        `:=`) matches as text. On a tie, the language with fewer keywords wins, so a language that
+//                        extends another should list the base language's keywords plus its own.
+//   require_keywords     Only pick this language when a keyword matches (used for junk-drawer extensions like `.inc`).
+//                        When nothing matches, the one sharing language without this flag is used as the default.
+//   strings              String literals, so comment markers inside them are ignored and their contents count as code.
+//                        `"\""` is a one-line string with a `\` escape. The full form is
+//                        {open, close (defaults to open), escape (`null` for raw strings, or the quote itself for
+//                        doubled quotes like 'it''s'), multiline, char, doc}. `char` only opens a string when it looks
+//                        like a char literal (so Rust's `'a` lifetimes stay code). `doc` makes a string that starts a
+//                        line count as a comment, like Python docstrings.
 {
 	"8th": {
 		file_patterns: ["*.8th"],
