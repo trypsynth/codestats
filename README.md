@@ -209,14 +209,17 @@ Codestats uses parallel processing to maximize performance. Each worker thread m
 
 ## Benchmarks
 
-`hyperfine --warmup 1 "cs ~" "tokei ~"`
+Mean wall time with a warm file cache, measured with `hyperfine -N --warmup 2 --runs 10 '<tool> <repo>'` (5 runs for Linux) on shallow clones of each repository. Every tool runs with its default settings.
 
-| Command | Mean ± σ | Min … Max |
-| --- | --- | --- |
-| `cs ~` | 1.952 s ± 0.034 s | 1.915 s …  1.997 s |
-| `tokei ~` | 7.538 s ± 0.045 s | 7.466 s …  7.609 s |
+| Repository | Files | Lines | codestats | tokei | scc | gocloc | cloc |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| [ripgrep](https://github.com/BurntSushi/ripgrep) | 154 | 65K | **5.8 ms** | 9.1 ms | 8.9 ms | 37.7 ms | 1.30 s |
+| [react](https://github.com/facebook/react) | 6,963 | 1.0M | **34 ms** | 65 ms | 72 ms | 375 ms | 3.93 s |
+| [cpython](https://github.com/python/cpython) | 5,091 | 3.0M | **69 ms** | 140 ms | 126 ms | 665 ms | 11.4 s |
+| [kubernetes](https://github.com/kubernetes/kubernetes) | 27,124 | 7.2M | **180 ms** | 358 ms | 415 ms | 1.98 s | 68.3 s |
+| [linux](https://github.com/torvalds/linux) | 92,952 | 44M | **1.37 s** | 1.55 s | 2.16 s | 10.8 s | — |
 
-Codestats ran 3.86 ± 0.07 times faster than tokei on a small Beelinks mini PC over a massive home directory.
+Measured with codestats 0.7.0+, tokei 15.0.0, scc 3.7.0, gocloc (latest) and cloc 2.06 on an AMD Ryzen 7 PRO 5850U (8 cores, 16 threads) with 27 GB of RAM. cloc is single-threaded and was skipped for Linux. File and line counts are codestats' own; tools differ slightly in what they count (for example, codestats skips generated and minified files by default).
 
 ## License
 
