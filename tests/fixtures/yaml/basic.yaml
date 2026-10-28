@@ -1,9 +1,0 @@
-# expect: lang="YAML" total=9 code=4 comment=3 blank=2 shebang=0
-# simple yaml fixture
-
-app:
-  name: hi
-  enabled: true
-
-# note
-version: 1

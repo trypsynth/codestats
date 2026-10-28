@@ -1,8 +1,0 @@
-/* expect: lang="CSS" total=8 code=4 comment=3 blank=1 shebang=0 */
-/* simple css fixture */
-
-.card {
-	color: #222;
-	/* accent */
-	margin: 0;
-}

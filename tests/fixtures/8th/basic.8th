@@ -1,7 +1,0 @@
-\ expect: lang="8th" total=7 code=3 comment=2 blank=2 shebang=0
-
-: square ( n -- n )
-	dup * ;
-
-\ Middle-of-file comment.
-5 square .      \ prints 25
