@@ -4,7 +4,7 @@ use memchr::{memchr2, memrchr};
 
 use crate::langs::{
 	Language,
-	scoring::{BlockCommentMatchers, language_matchers},
+	scoring::{BlockCommentMatchers, LanguageMatchers, language_matchers},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -90,14 +90,20 @@ impl CommentState {
 #[inline]
 fn handle_block_comments<'a>(
 	line: &'a str,
-	matchers: &BlockCommentMatchers,
+	lang: &Language,
+	matchers: &LanguageMatchers,
+	block_matchers: &BlockCommentMatchers,
 	comment_state: &mut CommentState,
 ) -> (&'a str, bool) {
 	let mut line_remainder = line;
 	let mut has_code = false;
 	while !line_remainder.is_empty() {
 		if !comment_state.is_in_comment() {
-			if let Some((pos, start_len, pair)) = matchers.find_block_start(line_remainder) {
+			if let Some((pos, start_len, pair)) = block_matchers.find_block_start(line_remainder) {
+				// A block start after a line comment marker is part of that comment (`// see "src/*"`), so leave the line comment for the caller.
+				if find_line_comment(line_remainder, lang, matchers).is_some_and(|line_pos| line_pos < pos) {
+					break;
+				}
 				if pos > 0 && contains_non_whitespace(&line_remainder[..pos]) {
 					has_code = true;
 				}
@@ -107,7 +113,7 @@ fn handle_block_comments<'a>(
 				break;
 			}
 		} else if let Some((pos, len, found_nested_start)) =
-			matchers.find_block_end_or_nested_start(line_remainder, comment_state.pair)
+			block_matchers.find_block_end_or_nested_start(line_remainder, comment_state.pair)
 		{
 			if found_nested_start {
 				comment_state.enter_nested_block();
@@ -120,6 +126,18 @@ fn handle_block_comments<'a>(
 		}
 	}
 	(line_remainder, has_code)
+}
+
+/// Find the position of the first valid line comment marker in `line`.
+#[inline]
+fn find_line_comment(line: &str, lang: &Language, matchers: &LanguageMatchers) -> Option<usize> {
+	let line_comments = matchers.line_comments.as_ref()?;
+	line_comments
+		.find_iter(line)
+		.find(|matched| {
+			is_valid_line_comment_match(line, matched.end(), lang.line_comments[matched.pattern().as_usize()])
+		})
+		.map(|matched| matched.start())
 }
 
 /// Classify a line as code, comment, blank, or shebang.
@@ -160,7 +178,7 @@ pub fn classify_line(
 		reason = "the two branches have different types of side effects (mutating line_remainder) that map_or_else cannot express cleanly"
 	)]
 	let mut has_code = if let Some(block_comments) = matchers.block_comments.as_ref() {
-		let (remainder, found_code) = handle_block_comments(trimmed, block_comments, comment_state);
+		let (remainder, found_code) = handle_block_comments(trimmed, lang, matchers, block_comments, comment_state);
 		line_remainder = remainder;
 		found_code
 	} else {
@@ -169,18 +187,11 @@ pub fn classify_line(
 	if comment_state.is_in_comment() {
 		return if has_code { LineType::Code } else { LineType::Comment };
 	}
-	if let Some(line_comments) = matchers.line_comments.as_ref() {
-		for matched in line_comments.find_iter(line_remainder) {
-			let token = lang.line_comments[matched.pattern().as_usize()];
-			if !is_valid_line_comment_match(line_remainder, matched.end(), token) {
-				continue;
-			}
-			let pos = matched.start();
-			if pos > 0 && contains_non_whitespace(&line_remainder[..pos]) {
-				has_code = true;
-			}
-			return if has_code { LineType::Code } else { LineType::Comment };
+	if let Some(pos) = find_line_comment(line_remainder, lang, matchers) {
+		if pos > 0 && contains_non_whitespace(&line_remainder[..pos]) {
+			has_code = true;
 		}
+		return if has_code { LineType::Code } else { LineType::Comment };
 	}
 	if contains_non_whitespace(line_remainder) {
 		has_code = true;
@@ -334,6 +345,12 @@ mod tests {
 		// `*)` must not close a comment opened with `{`.
 		let types = classify_all("Pascal", &["{ start", "still *) inside", "} x := 1;", "y := 2;"]);
 		assert_eq!(types, [LineType::Comment, LineType::Comment, LineType::Code, LineType::Code]);
+	}
+
+	#[test]
+	fn block_start_inside_line_comment_is_ignored() {
+		let types = classify_all("Go", &["// matches \"/healthz/*\" paths", "x := 1", "y := 2"]);
+		assert_eq!(types, [LineType::Comment, LineType::Code, LineType::Code]);
 	}
 
 	#[rstest]

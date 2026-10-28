@@ -136,7 +136,7 @@
 	},
 	"Assembly": {
 		file_patterns: ["*.asm", "*.s", "*.S"],
-		line_comments: [";", "#", "//"],
+		line_comments: [";", "# ", "#\t", "//"],
 		block_comments: [["/*", "*/"]],
 	},
 	"Astro": {
@@ -2033,7 +2033,6 @@
 	},
 	"reStructuredText": {
 		file_patterns: ["*.rst"],
-		line_comments: [".."],
 	},
 	"REXX": {
 		file_patterns: ["*.rexx", "*.rex"],
