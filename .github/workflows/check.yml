@@ -39,5 +39,3 @@ jobs:
         run: cargo clippy
       - name: Run tests
         run: cargo test
-      - name: Run tests (all features)
-        run: cargo test --all-features

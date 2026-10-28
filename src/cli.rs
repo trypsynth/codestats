@@ -14,13 +14,7 @@ use crate::{
 };
 
 fn output_format_values() -> Vec<&'static str> {
-	#[allow(unused_mut)]
-	let mut values = vec!["human", "json", "json-compact", "csv", "tsv"];
-	#[cfg(feature = "markdown")]
-	values.push("markdown");
-	#[cfg(feature = "html")]
-	values.push("html");
-	values
+	vec!["human", "json", "json-compact", "csv", "tsv", "markdown", "html"]
 }
 
 /// A tool for analyzing code statistics across different programming languages
