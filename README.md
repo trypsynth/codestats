@@ -209,17 +209,29 @@ Codestats uses parallel processing to maximize performance. Each worker thread m
 
 ## Benchmarks
 
-Mean wall time with a warm file cache, measured with `hyperfine -N --warmup 2 --runs 10 '<tool> <repo>'` (5 runs for Linux) on shallow clones of each repository. Every tool runs with its default settings.
+Measured with [hyperfine](https://github.com/sharkdp/hyperfine) on shallow clones of each repository with a warm file cache, every tool running with its default settings: `hyperfine -N --warmup 2 --runs 10 '<tool> <repo>'` (5 runs for Linux; cloc, being much slower, got 1 warmup and 5 runs, or 3 for Linux).
+
+Mean wall time:
 
 | Repository | Files | Lines | codestats | tokei | scc | gocloc | cloc |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| [ripgrep](https://github.com/BurntSushi/ripgrep) | 154 | 65K | **5.8 ms** | 9.1 ms | 8.9 ms | 37.7 ms | 1.30 s |
-| [react](https://github.com/facebook/react) | 6,963 | 1.0M | **34 ms** | 65 ms | 72 ms | 375 ms | 3.93 s |
-| [cpython](https://github.com/python/cpython) | 5,091 | 3.0M | **69 ms** | 140 ms | 126 ms | 665 ms | 11.4 s |
-| [kubernetes](https://github.com/kubernetes/kubernetes) | 27,124 | 7.2M | **180 ms** | 358 ms | 415 ms | 1.98 s | 68.3 s |
-| [linux](https://github.com/torvalds/linux) | 92,952 | 44M | **1.37 s** | 1.55 s | 2.16 s | 10.8 s | — |
+| [ripgrep](https://github.com/BurntSushi/ripgrep) | 154 | 65K | **5.8 ms** | 9.2 ms | 12.1 ms | 38.6 ms | 1.43 s |
+| [react](https://github.com/facebook/react) | 6,963 | 1.0M | **35 ms** | 65 ms | 50 ms | 376 ms | 4.17 s |
+| [cpython](https://github.com/python/cpython) | 5,092 | 3.0M | **68 ms** | 141 ms | 79 ms | 667 ms | 11.7 s |
+| [kubernetes](https://github.com/kubernetes/kubernetes) | 27,124 | 7.2M | **177 ms** | 356 ms | 213 ms | 1.99 s | 68.5 s |
+| [linux](https://github.com/torvalds/linux) | 92,954 | 44M | 1.36 s | 1.55 s | **994 ms** | 10.8 s | 130 s |
 
-Measured with codestats 0.7.0+, tokei 15.0.0, scc 3.7.0, gocloc (latest) and cloc 2.06 on an AMD Ryzen 7 PRO 5850U (8 cores, 16 threads) with 27 GB of RAM. cloc is single-threaded and was skipped for Linux. File and line counts are codestats' own; tools differ slightly in what they count (for example, codestats skips generated and minified files by default).
+Peak memory:
+
+| Repository | codestats | tokei | scc | gocloc | cloc |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| ripgrep | **6.4 MB** | 7.5 MB | 26 MB | 28 MB | 28 MB |
+| react | **8.7 MB** | 20 MB | 47 MB | 40 MB | 40 MB |
+| cpython | **10 MB** | 24 MB | 61 MB | 43 MB | 72 MB |
+| kubernetes | **14 MB** | 52 MB | 99 MB | 49 MB | 115 MB |
+| linux | **58 MB** | 225 MB | 366 MB | 104 MB | 338 MB |
+
+Measured with codestats 0.8.1, tokei 15.0.0, scc 4.1.0, gocloc 0.7.0, cloc 2.10 and hyperfine 2.0.0 on an AMD Ryzen 7 PRO 5850U (8 cores, 16 threads) with 32 GB of RAM. File and line counts are codestats' own; tools differ slightly in what they count (for example, codestats skips generated and minified files by default).
 
 ## License
 
