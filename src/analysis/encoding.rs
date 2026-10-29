@@ -74,50 +74,20 @@ fn detect_utf16_without_bom(samples: &[u8]) -> Option<FileEncoding> {
 	None
 }
 
-pub(super) fn count_utf16_bytes(language: &Language, encoding: FileEncoding, bytes: &[u8]) -> LineCounts {
+/// Count the lines of a UTF-16 file, decoding it a chunk at a time.
+pub(super) fn count_utf16<R: Read>(language: &Language, encoding: FileEncoding, reader: &mut R) -> Result<LineCounts> {
 	let mut line_counts = LineCounts::default();
 	let mut comment_state = CommentState::new();
 	let mut is_first_line = true;
 	let mut decoder = encoding.encoding.new_decoder_without_bom_handling();
 	let mut pending = String::new();
-	let mut output = String::new();
-	let mut slice = bytes;
-	if encoding.bom_len > 0 && slice.len() >= encoding.bom_len {
-		slice = &slice[encoding.bom_len..];
-	}
-	for chunk in slice.chunks(UTF16_DECODE_CHUNK_SIZE) {
-		decode_to_string(&mut decoder, chunk, false, &mut output);
-		pending.push_str(&output);
-		output.clear();
-		drain_lines(&mut pending, language, &mut line_counts, &mut comment_state, &mut is_first_line, false);
-	}
-	decode_to_string(&mut decoder, &[], true, &mut output);
-	pending.push_str(&output);
-	output.clear();
-	drain_lines(&mut pending, language, &mut line_counts, &mut comment_state, &mut is_first_line, true);
-	line_counts
-}
-
-pub(super) fn count_utf16_stream<R: Read>(
-	language: &Language,
-	encoding: FileEncoding,
-	reader: &mut R,
-) -> Result<LineCounts> {
-	let mut line_counts = LineCounts::default();
-	let mut comment_state = CommentState::new();
-	let mut is_first_line = true;
-	let mut decoder = encoding.encoding.new_decoder_without_bom_handling();
-	let mut pending = String::new();
-	let mut output = String::new();
-	let mut buffer = vec![0u8; UTF16_DECODE_CHUNK_SIZE];
+	let mut buffer = [0u8; UTF16_DECODE_CHUNK_SIZE];
 	let mut skip_bom = encoding.bom_len;
 	loop {
 		let read = reader.read(&mut buffer)?;
-		if read == 0 {
-			break;
-		}
+		let last = read == 0;
 		let mut slice = &buffer[..read];
-		if skip_bom > 0 {
+		if skip_bom > 0 && !last {
 			if read <= skip_bom {
 				skip_bom -= read;
 				continue;
@@ -125,16 +95,12 @@ pub(super) fn count_utf16_stream<R: Read>(
 			slice = &slice[skip_bom..];
 			skip_bom = 0;
 		}
-		decode_to_string(&mut decoder, slice, false, &mut output);
-		pending.push_str(&output);
-		output.clear();
-		drain_lines(&mut pending, language, &mut line_counts, &mut comment_state, &mut is_first_line, false);
+		decode_to_string(&mut decoder, slice, last, &mut pending);
+		drain_lines(&mut pending, language, &mut line_counts, &mut comment_state, &mut is_first_line, last);
+		if last {
+			return Ok(line_counts);
+		}
 	}
-	decode_to_string(&mut decoder, &[], true, &mut output);
-	pending.push_str(&output);
-	output.clear();
-	drain_lines(&mut pending, language, &mut line_counts, &mut comment_state, &mut is_first_line, true);
-	Ok(line_counts)
 }
 
 fn decode_to_string(decoder: &mut Decoder, chunk: &[u8], last: bool, output: &mut String) {
@@ -225,6 +191,25 @@ mod tests {
 	#[case::utf8(UTF_8, false)]
 	fn test_is_utf16(#[case] encoding: &'static Encoding, #[case] expected: bool) {
 		assert_eq!(is_utf16(encoding), expected);
+	}
+
+	#[rstest]
+	#[case::le(UTF_16LE, &[0xFF, 0xFE], u16::to_le_bytes as fn(u16) -> [u8; 2])]
+	#[case::be(UTF_16BE, &[0xFE, 0xFF], u16::to_be_bytes as fn(u16) -> [u8; 2])]
+	fn count_utf16_across_chunks(
+		#[case] encoding: &'static Encoding,
+		#[case] bom: &[u8],
+		#[case] to_bytes: fn(u16) -> [u8; 2],
+	) {
+		// Big enough to span several decode chunks, ending in a line with no newline.
+		let text = format!("{}x = 1", "x = 1\n// note\n\n".repeat(1000));
+		let mut bytes = bom.to_vec();
+		bytes.extend(text.encode_utf16().flat_map(to_bytes));
+		assert!(bytes.len() > 3 * UTF16_DECODE_CHUNK_SIZE);
+		let language = crate::langs::LANGUAGES.iter().find(|l| l.name == "Rust").unwrap();
+		let file_encoding = FileEncoding { encoding, bom_len: bom.len() };
+		let counts = count_utf16(language, file_encoding, &mut bytes.as_slice()).unwrap();
+		assert_eq!(counts, LineCounts { total: 3001, code: 1001, comment: 1000, blank: 1000, shebang: 0 });
 	}
 
 	#[test]

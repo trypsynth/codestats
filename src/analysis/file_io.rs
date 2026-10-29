@@ -195,17 +195,18 @@ fn sample_from_slice(file_bytes: &[u8]) -> SampleBuf {
 	buf
 }
 
-fn count_lines_buffered(file: File, language: &Language, encoding: FileEncoding) -> Result<LineCounts> {
-	let mut reader = BufReader::with_capacity(64 * 1024, file);
+fn count_lines_buffered(mut file: File, language: &Language, encoding: FileEncoding) -> Result<LineCounts> {
 	if encoding::is_utf16(encoding.encoding) {
-		return encoding::count_utf16_stream(language, encoding, &mut reader);
+		// The decoder reads in chunks of its own, so a `BufReader` would only add a copy.
+		return encoding::count_utf16(language, encoding, &mut file);
 	}
+	let reader = BufReader::with_capacity(64 * 1024, file);
 	line_counter::count_lines(language, encoding, &mut BufLineSource::new(reader))
 }
 
 fn count_lines_mmap(mmap: &Mmap, language: &Language, encoding: FileEncoding) -> Result<LineCounts> {
 	if encoding::is_utf16(encoding.encoding) {
-		return Ok(encoding::count_utf16_bytes(language, encoding, mmap));
+		return encoding::count_utf16(language, encoding, &mut &mmap[..]);
 	}
 	line_counter::count_lines(language, encoding, &mut MmapLineSource::new(mmap))
 }
