@@ -10,7 +10,7 @@ use memmap2::Mmap;
 use super::{
 	encoding::{self, FileEncoding},
 	line_counter,
-	stats::AnalysisResults,
+	stats::LineCounts,
 };
 use crate::langs::Language;
 
@@ -142,22 +142,10 @@ impl FileSource {
 		}
 	}
 
-	pub(super) fn process(
-		self,
-		display_path: &str,
-		file_size: u64,
-		results: &mut AnalysisResults,
-		collect_details: bool,
-		language: &'static Language,
-		encoding: FileEncoding,
-	) -> Result<()> {
+	pub(super) fn count_lines(self, language: &Language, encoding: FileEncoding) -> Result<LineCounts> {
 		match self {
-			Self::Buffered(file) => {
-				process_file_buffered(display_path, file, file_size, results, collect_details, language, encoding)
-			}
-			Self::Mapped(mmap) => {
-				process_file_mmap(display_path, file_size, results, collect_details, language, encoding, &mmap)
-			}
+			Self::Buffered(file) => count_lines_buffered(file, language, encoding),
+			Self::Mapped(mmap) => count_lines_mmap(&mmap, language, encoding),
 		}
 	}
 }
@@ -207,56 +195,19 @@ fn sample_from_slice(file_bytes: &[u8]) -> SampleBuf {
 	buf
 }
 
-fn process_file_buffered(
-	display_path: &str,
-	file: File,
-	file_size: u64,
-	results: &mut AnalysisResults,
-	collect_details: bool,
-	language: &'static Language,
-	encoding: FileEncoding,
-) -> Result<()> {
+fn count_lines_buffered(file: File, language: &Language, encoding: FileEncoding) -> Result<LineCounts> {
+	let mut reader = BufReader::with_capacity(64 * 1024, file);
 	if encoding::is_utf16(encoding.encoding) {
-		let mut reader = BufReader::with_capacity(64 * 1024, file);
-		return encoding::process_utf16_stream(
-			display_path,
-			file_size,
-			results,
-			collect_details,
-			language,
-			encoding,
-			&mut reader,
-		);
+		return encoding::count_utf16_stream(language, encoding, &mut reader);
 	}
-	let reader = BufReader::with_capacity(64 * 1024, file);
-	let mut source = BufLineSource::new(reader);
-	line_counter::process_lines(display_path, file_size, results, collect_details, language, encoding, &mut source)
+	line_counter::count_lines(language, encoding, &mut BufLineSource::new(reader))
 }
 
-fn process_file_mmap(
-	display_path: &str,
-	file_size: u64,
-	results: &mut AnalysisResults,
-	collect_details: bool,
-	language: &'static Language,
-	encoding: FileEncoding,
-	mmap: &Mmap,
-) -> Result<()> {
-	let file_bytes = mmap.as_ref();
+fn count_lines_mmap(mmap: &Mmap, language: &Language, encoding: FileEncoding) -> Result<LineCounts> {
 	if encoding::is_utf16(encoding.encoding) {
-		encoding::process_utf16_bytes(
-			display_path,
-			file_size,
-			results,
-			collect_details,
-			language,
-			encoding,
-			file_bytes,
-		);
-		return Ok(());
+		return Ok(encoding::count_utf16_bytes(language, encoding, mmap));
 	}
-	let mut source = MmapLineSource::new(file_bytes);
-	line_counter::process_lines(display_path, file_size, results, collect_details, language, encoding, &mut source)
+	line_counter::count_lines(language, encoding, &mut MmapLineSource::new(mmap))
 }
 
 #[cfg(test)]

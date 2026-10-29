@@ -6,9 +6,8 @@ use super::{FormatterContext, OutputFormatter, ReportData, Verbosity, ViewOption
 use crate::{
 	analysis::{AnalysisResults, stats::percentage},
 	display::{
-		formatting::{SortValue, pluralize},
-		options::LanguageSortKey,
-		report::{DirFileRecord, DirRecord, LanguageRecord, Summary},
+		formatting::pluralize,
+		report::{DirRecord, FileRecord, LanguageRecord, Summary, sort_value},
 	},
 };
 
@@ -100,22 +99,14 @@ impl HumanFormatter {
 		apply_sort(
 			&mut langs,
 			view_options.sort_direction,
-			|(lang, stats)| match sort_key {
-				LanguageSortKey::Lines => SortValue::Num(stats.lines()),
-				LanguageSortKey::Code => SortValue::Num(stats.code_lines()),
-				LanguageSortKey::Comments => SortValue::Num(stats.comment_lines()),
-				LanguageSortKey::Blanks => SortValue::Num(stats.blank_lines()),
-				LanguageSortKey::Files => SortValue::Num(stats.files()),
-				LanguageSortKey::Size => SortValue::Num(stats.size()),
-				LanguageSortKey::Name => SortValue::Text(lang.name),
-			},
+			|(lang, stats)| sort_value(sort_key, lang.name, stats.counts(), Some(stats.files()), stats.size()),
 			|a, b| a.0.name.cmp(b.0.name),
 		);
 		if let Some(n) = view_options.top_languages {
 			langs.truncate(n);
 		}
 		if let Some(min) = view_options.min_lines {
-			langs.retain(|(_, stats)| stats.lines() >= min);
+			langs.retain(|(_, stats)| stats.counts().total >= min);
 		}
 		let parts: Vec<String> = langs
 			.iter()
@@ -193,8 +184,8 @@ impl HumanFormatter {
 				ctx.percent(line_type.percentage)
 			)?;
 		}
-		if verbose {
-			Self::write_file_breakdown(language, summary, ctx, writer)?;
+		if verbose && let Some(files) = &language.files_detail {
+			Self::write_file_breakdown(files, summary, ctx, writer)?;
 		}
 		Ok(())
 	}
@@ -249,13 +240,13 @@ impl HumanFormatter {
 			)?;
 		}
 		if let Some(files) = &dir.files_detail {
-			Self::write_dir_file_breakdown(files, summary, ctx, writer)?;
+			Self::write_file_breakdown(files, summary, ctx, writer)?;
 		}
 		Ok(())
 	}
 
-	fn write_dir_file_breakdown(
-		files: &[DirFileRecord],
+	fn write_file_breakdown(
+		files: &[FileRecord],
 		summary: &Summary,
 		ctx: &FormatterContext,
 		writer: &mut dyn Write,
@@ -276,34 +267,6 @@ impl HumanFormatter {
 		}
 		Ok(())
 	}
-
-	fn write_file_breakdown(
-		language: &LanguageRecord,
-		summary: &Summary,
-		ctx: &FormatterContext,
-		writer: &mut dyn Write,
-	) -> Result<()> {
-		let i1 = ctx.indent(1);
-		let i2 = ctx.indent(2);
-		writeln!(writer, "{i1}File breakdown:")?;
-		let Some(files) = &language.files_detail else {
-			return Ok(());
-		};
-		for file_stat in files {
-			let file_pct = percentage(file_stat.total_lines, summary.total_lines);
-			let file_pct_str = ctx.percent(file_pct);
-			let size_human = &file_stat.size_human;
-			writeln!(
-				writer,
-				"{i2}{}: {} lines, {} ({}% of total lines).",
-				file_stat.path,
-				ctx.number(file_stat.total_lines),
-				size_human,
-				file_pct_str
-			)?;
-		}
-		Ok(())
-	}
 }
 
 #[cfg(test)]
@@ -312,7 +275,7 @@ mod tests {
 
 	use super::{HumanFormatter, join_with_commas_and};
 	use crate::{
-		analysis::{AnalysisResults, stats::FileContribution},
+		analysis::{AnalysisResults, LineCounts},
 		display::{OutputFormatter, ViewOptions, options::IndentStyle},
 	};
 
@@ -332,8 +295,7 @@ mod tests {
 	fn human_output_uses_configured_indent() {
 		let mut results = AnalysisResults::default();
 		let lang = crate::langs::LANGUAGES.iter().find(|l| l.name == "Rust").unwrap();
-		let contribution = FileContribution::new(12, 10, 0, 2, 0, 100);
-		results.add_file_stats(lang, contribution, None);
+		results.add_file(lang, &LineCounts { total: 12, code: 10, comment: 0, blank: 2, shebang: 0 }, 100, None);
 		let options = ViewOptions { indent_style: IndentStyle::Spaces(2), ..Default::default() };
 		let formatter = HumanFormatter;
 		let mut buf = Vec::new();

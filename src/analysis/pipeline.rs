@@ -5,7 +5,7 @@ use anyhow::{Context as _, Result};
 use super::{
 	encoding::{decode_bytes, detect_encoding, is_probably_binary},
 	file_io::FileSource,
-	stats::{AnalysisResults, FileContribution, FileStats},
+	stats::{AnalysisResults, LineCounts},
 };
 use crate::langs::{self, Language};
 
@@ -39,7 +39,6 @@ pub fn process_file(
 	include_languages: &[String],
 	exclude_languages: &[String],
 ) -> Result<()> {
-	let display_path = file_path.strip_prefix(display_root).unwrap_or(file_path).display().to_string();
 	let filename_os = file_path.file_name().context("Missing file name")?;
 	let filename_lossy = filename_os.to_string_lossy();
 	let filename: Cow<'_, str> = if filename_lossy.contains('\u{FFFD}') {
@@ -62,9 +61,8 @@ pub fn process_file(
 			if !should_process_language(language, include_languages, exclude_languages) {
 				return Ok(());
 			}
-			let contribution = FileContribution::new(0, 0, 0, 0, 0, file_size);
-			let file_stats = collect_details.then(|| FileStats::new(display_path, 0, 0, 0, 0, 0, file_size));
-			results.add_file_stats(language, contribution, file_stats);
+			let path = collect_details.then(|| display_path(file_path, display_root));
+			results.add_file(language, &LineCounts::default(), 0, path);
 		}
 		return Ok(());
 	}
@@ -86,5 +84,11 @@ pub fn process_file(
 	if !should_process_language(language, include_languages, exclude_languages) {
 		return Ok(());
 	}
-	source.process(&display_path, file_size, results, collect_details, language, encoding)
+	let counts = source.count_lines(language, encoding)?;
+	results.add_file(language, &counts, file_size, collect_details.then(|| display_path(file_path, display_root)));
+	Ok(())
+}
+
+fn display_path(file_path: &Path, display_root: &Path) -> String {
+	file_path.strip_prefix(display_root).unwrap_or(file_path).display().to_string()
 }

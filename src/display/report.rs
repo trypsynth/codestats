@@ -6,7 +6,7 @@ use std::{
 use serde::Serialize;
 
 use crate::{
-	analysis::{AnalysisResults, FileStats, LanguageStats, LineType, stats::percentage},
+	analysis::{AnalysisResults, FileStats, LanguageStats, LineCounts, LineType},
 	display::{
 		apply_sort,
 		formatting::{FormatterContext, SortValue, pluralize as pluralize_fn},
@@ -35,7 +35,7 @@ pub struct ReportData<'a> {
 	pub summary: Summary,
 	pub languages: Vec<LanguageRecord<'a>>,
 	#[serde(skip_serializing_if = "Vec::is_empty")]
-	pub directories: Vec<DirRecord>,
+	pub directories: Vec<DirRecord<'a>>,
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub languages_hidden: Option<usize>,
 	#[serde(skip_serializing_if = "Option::is_none")]
@@ -119,58 +119,41 @@ impl LineTypeStats {
 	}
 }
 
-#[derive(Clone, Copy)]
-struct LineTypeSeries {
-	code: u64,
-	comment: u64,
-	blank: u64,
-	shebang: u64,
-	code_pct: f64,
-	comment_pct: f64,
-	blank_pct: f64,
-	shebang_pct: f64,
-}
-
-fn iter_line_types(series: LineTypeSeries) -> impl Iterator<Item = LineTypeStats> {
-	[
-		LineTypeStats { kind: LineType::Code, count: series.code, percentage: series.code_pct },
-		LineTypeStats { kind: LineType::Comment, count: series.comment, percentage: series.comment_pct },
-		LineTypeStats { kind: LineType::Blank, count: series.blank, percentage: series.blank_pct },
-		LineTypeStats { kind: LineType::Shebang, count: series.shebang, percentage: series.shebang_pct },
-	]
-	.into_iter()
-	.filter(|info| info.count > 0)
+/// The line types present in `counts`, with their share of its total.
+fn line_types(counts: LineCounts) -> impl Iterator<Item = LineTypeStats> {
+	[LineType::Code, LineType::Comment, LineType::Blank, LineType::Shebang]
+		.into_iter()
+		.map(move |kind| LineTypeStats { kind, count: counts.get(kind), percentage: counts.percentage(kind) })
+		.filter(|info| info.count > 0)
 }
 
 impl Summary {
 	#[must_use]
 	fn from_results(results: &AnalysisResults, ctx: &FormatterContext) -> Self {
+		let counts = results.counts();
 		Self {
 			total_files: results.total_files(),
-			total_lines: results.total_lines(),
-			total_code_lines: results.total_code_lines(),
-			total_comment_lines: results.total_comment_lines(),
-			total_blank_lines: results.total_blank_lines(),
-			total_shebang_lines: results.total_shebang_lines(),
+			total_lines: counts.total,
+			total_code_lines: counts.code,
+			total_comment_lines: counts.comment,
+			total_blank_lines: counts.blank,
+			total_shebang_lines: counts.shebang,
 			total_size: results.total_size(),
 			total_size_human: ctx.size(results.total_size()),
-			code_percentage: results.code_percentage(),
-			comment_percentage: results.comment_percentage(),
-			blank_percentage: results.blank_percentage(),
-			shebang_percentage: results.shebang_percentage(),
+			code_percentage: counts.percentage(LineType::Code),
+			comment_percentage: counts.percentage(LineType::Comment),
+			blank_percentage: counts.percentage(LineType::Blank),
+			shebang_percentage: counts.percentage(LineType::Shebang),
 		}
 	}
 
-	fn iter_line_types(&self) -> impl Iterator<Item = LineTypeStats> + '_ {
-		iter_line_types(LineTypeSeries {
+	fn iter_line_types(&self) -> impl Iterator<Item = LineTypeStats> {
+		line_types(LineCounts {
+			total: self.total_lines,
 			code: self.total_code_lines,
 			comment: self.total_comment_lines,
 			blank: self.total_blank_lines,
 			shebang: self.total_shebang_lines,
-			code_pct: self.code_percentage,
-			comment_pct: self.comment_percentage,
-			blank_pct: self.blank_percentage,
-			shebang_pct: self.shebang_percentage,
 		})
 	}
 
@@ -235,32 +218,35 @@ impl Summary {
 	}
 }
 
-fn sort_key_for_file_record(file: &FileStats, key: LanguageSortKey) -> SortValue<'_> {
-	match key {
-		LanguageSortKey::Lines => SortValue::Num(file.total_lines()),
-		LanguageSortKey::Code => SortValue::Num(file.code_lines()),
-		LanguageSortKey::Comments => SortValue::Num(file.comment_lines()),
-		LanguageSortKey::Blanks => SortValue::Num(file.blank_lines()),
-		LanguageSortKey::Size => SortValue::Num(file.size()),
-		// "Files" is a language-level metric, so fall back to a stable per-file key.
-		LanguageSortKey::Files | LanguageSortKey::Name => SortValue::Text(file.path()),
+/// The value to order a row by for `key`. Rows without a file count (single files) sort by name for `Files`.
+pub(super) const fn sort_value<'a>(
+	key: LanguageSortKey,
+	name: &'a str,
+	counts: &LineCounts,
+	files: Option<u64>,
+	size: u64,
+) -> SortValue<'a> {
+	match (key, files) {
+		(LanguageSortKey::Lines, _) => SortValue::Num(counts.total),
+		(LanguageSortKey::Code, _) => SortValue::Num(counts.code),
+		(LanguageSortKey::Comments, _) => SortValue::Num(counts.comment),
+		(LanguageSortKey::Blanks, _) => SortValue::Num(counts.blank),
+		(LanguageSortKey::Size, _) => SortValue::Num(size),
+		(LanguageSortKey::Files, Some(files)) => SortValue::Num(files),
+		(LanguageSortKey::Files, None) | (LanguageSortKey::Name, _) => SortValue::Text(name),
 	}
 }
 
-const fn sort_key_for_language_record<'a>(
-	name: &'a str,
-	stats: &'a LanguageStats,
-	key: LanguageSortKey,
-) -> SortValue<'a> {
-	match key {
-		LanguageSortKey::Lines => SortValue::Num(stats.lines()),
-		LanguageSortKey::Code => SortValue::Num(stats.code_lines()),
-		LanguageSortKey::Comments => SortValue::Num(stats.comment_lines()),
-		LanguageSortKey::Blanks => SortValue::Num(stats.blank_lines()),
-		LanguageSortKey::Files => SortValue::Num(stats.files()),
-		LanguageSortKey::Size => SortValue::Num(stats.size()),
-		LanguageSortKey::Name => SortValue::Text(name),
-	}
+/// Sort a group's files by the configured key and turn them into records.
+fn file_records<'a>(mut files: Vec<&'a FileStats>, ctx: &FormatterContext) -> Vec<FileRecord<'a>> {
+	let sort_key = ctx.options.language_sort_key;
+	apply_sort(
+		&mut files,
+		ctx.options.sort_direction,
+		|file| sort_value(sort_key, file.path(), file.counts(), None, file.size()),
+		|a, b| a.path().cmp(b.path()),
+	);
+	files.into_iter().map(|file| FileRecord::from_stats(file, ctx)).collect()
 }
 
 #[derive(Debug, Serialize)]
@@ -292,14 +278,14 @@ impl<'a> LanguageRecord<'a> {
 		apply_sort(
 			&mut stats_vec,
 			ctx.options.sort_direction,
-			|(name, stats)| sort_key_for_language_record(name, stats, sort_key),
+			|(name, stats)| sort_value(sort_key, name, stats.counts(), Some(stats.files()), stats.size()),
 			|a, b| a.0.cmp(b.0),
 		);
 		if let Some(n) = ctx.options.top_languages {
 			stats_vec.truncate(n);
 		}
 		if let Some(min) = ctx.options.min_lines {
-			stats_vec.retain(|(_, stats)| stats.lines() >= min);
+			stats_vec.retain(|(_, stats)| stats.counts().total >= min);
 		}
 		let hidden = total.saturating_sub(stats_vec.len());
 		let records =
@@ -309,61 +295,35 @@ impl<'a> LanguageRecord<'a> {
 
 	#[must_use]
 	fn from_stats(name: &'a str, stats: &'a LanguageStats, verbosity: Verbosity, ctx: &FormatterContext) -> Self {
-		let files_detail = (verbosity == Verbosity::Verbose).then(|| {
-			let mut files: Vec<_> = stats.files_list().iter().collect();
-			let sort_key = ctx.options.language_sort_key;
-			apply_sort(
-				&mut files,
-				ctx.options.sort_direction,
-				|file| sort_key_for_file_record(file, sort_key),
-				|a, b| a.path().cmp(b.path()),
-			);
-			files
-				.into_iter()
-				.map(|file| {
-					let size_human = ctx.size(file.size());
-					FileRecord {
-						path: file.path(),
-						total_lines: file.total_lines(),
-						code_lines: file.code_lines(),
-						comment_lines: file.comment_lines(),
-						blank_lines: file.blank_lines(),
-						shebang_lines: file.shebang_lines(),
-						size: file.size(),
-						size_human,
-					}
-				})
-				.collect()
-		});
+		let files_detail =
+			(verbosity == Verbosity::Verbose).then(|| file_records(stats.files_list().iter().collect(), ctx));
+		let counts = stats.counts();
 		Self {
 			name,
 			files: stats.files(),
-			lines: stats.lines(),
-			code_lines: stats.code_lines(),
-			comment_lines: stats.comment_lines(),
-			blank_lines: stats.blank_lines(),
-			shebang_lines: stats.shebang_lines(),
+			lines: counts.total,
+			code_lines: counts.code,
+			comment_lines: counts.comment,
+			blank_lines: counts.blank,
+			shebang_lines: counts.shebang,
 			size: stats.size(),
 			size_human: ctx.size(stats.size()),
 			avg_lines_per_file: stats.average_lines_per_file(),
-			code_percentage: stats.code_percentage(),
-			comment_percentage: stats.comment_percentage(),
-			blank_percentage: stats.blank_percentage(),
-			shebang_percentage: stats.shebang_percentage(),
+			code_percentage: counts.percentage(LineType::Code),
+			comment_percentage: counts.percentage(LineType::Comment),
+			blank_percentage: counts.percentage(LineType::Blank),
+			shebang_percentage: counts.percentage(LineType::Shebang),
 			files_detail,
 		}
 	}
 
-	pub fn line_types(&self) -> impl Iterator<Item = LineTypeStats> + '_ {
-		iter_line_types(LineTypeSeries {
+	pub fn line_types(&self) -> impl Iterator<Item = LineTypeStats> {
+		line_types(LineCounts {
+			total: self.lines,
 			code: self.code_lines,
 			comment: self.comment_lines,
 			blank: self.blank_lines,
 			shebang: self.shebang_lines,
-			code_pct: self.code_percentage,
-			comment_pct: self.comment_percentage,
-			blank_pct: self.blank_percentage,
-			shebang_pct: self.shebang_percentage,
 		})
 	}
 }
@@ -394,6 +354,22 @@ pub struct FileRecord<'a> {
 	pub size_human: String,
 }
 
+impl<'a> FileRecord<'a> {
+	fn from_stats(file: &'a FileStats, ctx: &FormatterContext) -> Self {
+		let counts = file.counts();
+		Self {
+			path: file.path(),
+			total_lines: counts.total,
+			code_lines: counts.code,
+			comment_lines: counts.comment,
+			blank_lines: counts.blank,
+			shebang_lines: counts.shebang,
+			size: file.size(),
+			size_human: ctx.size(file.size()),
+		}
+	}
+}
+
 impl_formatters!(FileRecord<'_> {
 	format_total_lines => total_lines : number,
 	format_code_lines => code_lines : number,
@@ -402,18 +378,6 @@ impl_formatters!(FileRecord<'_> {
 	format_shebang_lines => shebang_lines : number,
 	format_size => size : number,
 });
-
-#[derive(Debug, Serialize)]
-pub struct DirFileRecord {
-	pub path: String,
-	pub total_lines: u64,
-	pub code_lines: u64,
-	pub comment_lines: u64,
-	pub blank_lines: u64,
-	pub shebang_lines: u64,
-	pub size: u64,
-	pub size_human: String,
-}
 
 fn dir_key(file_path_str: &str, root: &Path) -> String {
 	let path = Path::new(file_path_str);
@@ -426,19 +390,14 @@ fn dir_key(file_path_str: &str, root: &Path) -> String {
 }
 
 #[derive(Debug, Default)]
-struct DirAccumulator {
-	files: u64,
-	lines: u64,
-	code_lines: u64,
-	comment_lines: u64,
-	blank_lines: u64,
-	shebang_lines: u64,
+struct DirAccumulator<'a> {
+	files: Vec<&'a FileStats>,
+	counts: LineCounts,
 	size: u64,
-	file_stats: Vec<DirFileRecord>,
 }
 
 #[derive(Debug, Serialize)]
-pub struct DirRecord {
+pub struct DirRecord<'a> {
 	pub path: String,
 	pub files: u64,
 	pub lines: u64,
@@ -453,89 +412,49 @@ pub struct DirRecord {
 	pub blank_percentage: f64,
 	pub shebang_percentage: f64,
 	#[serde(skip_serializing_if = "Option::is_none")]
-	pub files_detail: Option<Vec<DirFileRecord>>,
+	pub files_detail: Option<Vec<FileRecord<'a>>>,
 }
 
-impl DirRecord {
-	fn from_results(results: &AnalysisResults, root: &Path, ctx: &FormatterContext) -> (Vec<Self>, usize) {
+impl<'a> DirRecord<'a> {
+	fn from_results(results: &'a AnalysisResults, root: &Path, ctx: &FormatterContext) -> (Vec<Self>, usize) {
 		let verbose = ctx.options.verbosity == Verbosity::Verbose;
-		let mut map: HashMap<String, DirAccumulator> = HashMap::new();
+		let mut map: HashMap<String, DirAccumulator<'a>> = HashMap::new();
 		for (_, stats) in results.languages() {
 			for file in stats.files_list() {
-				let key = dir_key(file.path(), root);
-				let acc = map.entry(key).or_default();
-				acc.files = acc.files.saturating_add(1);
-				acc.lines = acc.lines.saturating_add(file.total_lines());
-				acc.code_lines = acc.code_lines.saturating_add(file.code_lines());
-				acc.comment_lines = acc.comment_lines.saturating_add(file.comment_lines());
-				acc.blank_lines = acc.blank_lines.saturating_add(file.blank_lines());
-				acc.shebang_lines = acc.shebang_lines.saturating_add(file.shebang_lines());
+				let acc = map.entry(dir_key(file.path(), root)).or_default();
+				acc.files.push(file);
+				acc.counts.merge(file.counts());
 				acc.size = acc.size.saturating_add(file.size());
-				if verbose {
-					acc.file_stats.push(DirFileRecord {
-						path: file.path().to_owned(),
-						total_lines: file.total_lines(),
-						code_lines: file.code_lines(),
-						comment_lines: file.comment_lines(),
-						blank_lines: file.blank_lines(),
-						shebang_lines: file.shebang_lines(),
-						size: file.size(),
-						size_human: ctx.size(file.size()),
-					});
-				}
 			}
 		}
 		let total = map.len();
-		let sort_key = ctx.options.language_sort_key;
 		let mut records: Vec<_> = map
 			.into_iter()
 			.map(|(path, acc)| {
-				let files_detail = verbose.then(|| {
-					let mut files = acc.file_stats;
-					apply_sort(
-						&mut files,
-						ctx.options.sort_direction,
-						|file| match sort_key {
-							LanguageSortKey::Lines => SortValue::Num(file.total_lines),
-							LanguageSortKey::Code => SortValue::Num(file.code_lines),
-							LanguageSortKey::Comments => SortValue::Num(file.comment_lines),
-							LanguageSortKey::Blanks => SortValue::Num(file.blank_lines),
-							LanguageSortKey::Size => SortValue::Num(file.size),
-							LanguageSortKey::Files | LanguageSortKey::Name => SortValue::Text(file.path.as_str()),
-						},
-						|a, b| a.path.cmp(&b.path),
-					);
-					files
-				});
+				let counts = acc.counts;
 				Self {
-					size_human: ctx.size(acc.size),
-					code_percentage: percentage(acc.code_lines, acc.lines),
-					comment_percentage: percentage(acc.comment_lines, acc.lines),
-					blank_percentage: percentage(acc.blank_lines, acc.lines),
-					shebang_percentage: percentage(acc.shebang_lines, acc.lines),
-					path,
-					files: acc.files,
-					lines: acc.lines,
-					code_lines: acc.code_lines,
-					comment_lines: acc.comment_lines,
-					blank_lines: acc.blank_lines,
-					shebang_lines: acc.shebang_lines,
+					files: acc.files.len() as u64,
+					lines: counts.total,
+					code_lines: counts.code,
+					comment_lines: counts.comment,
+					blank_lines: counts.blank,
+					shebang_lines: counts.shebang,
 					size: acc.size,
-					files_detail,
+					size_human: ctx.size(acc.size),
+					code_percentage: counts.percentage(LineType::Code),
+					comment_percentage: counts.percentage(LineType::Comment),
+					blank_percentage: counts.percentage(LineType::Blank),
+					shebang_percentage: counts.percentage(LineType::Shebang),
+					files_detail: verbose.then(|| file_records(acc.files, ctx)),
+					path,
 				}
 			})
 			.collect();
+		let sort_key = ctx.options.language_sort_key;
 		apply_sort(
 			&mut records,
 			ctx.options.sort_direction,
-			|r| match sort_key {
-				LanguageSortKey::Lines | LanguageSortKey::Files => SortValue::Num(r.lines),
-				LanguageSortKey::Code => SortValue::Num(r.code_lines),
-				LanguageSortKey::Comments => SortValue::Num(r.comment_lines),
-				LanguageSortKey::Blanks => SortValue::Num(r.blank_lines),
-				LanguageSortKey::Size => SortValue::Num(r.size),
-				LanguageSortKey::Name => SortValue::Text(r.path.as_str()),
-			},
+			|r| sort_value(sort_key, &r.path, &r.line_counts(), Some(r.files), r.size),
 			|a, b| a.path.cmp(&b.path),
 		);
 		if let Some(n) = ctx.options.top_languages {
@@ -548,17 +467,18 @@ impl DirRecord {
 		(records, hidden)
 	}
 
-	pub fn line_types(&self) -> impl Iterator<Item = LineTypeStats> + '_ {
-		iter_line_types(LineTypeSeries {
+	const fn line_counts(&self) -> LineCounts {
+		LineCounts {
+			total: self.lines,
 			code: self.code_lines,
 			comment: self.comment_lines,
 			blank: self.blank_lines,
 			shebang: self.shebang_lines,
-			code_pct: self.code_percentage,
-			comment_pct: self.comment_percentage,
-			blank_pct: self.blank_percentage,
-			shebang_pct: self.shebang_percentage,
-		})
+		}
+	}
+
+	pub fn line_types(&self) -> impl Iterator<Item = LineTypeStats> {
+		line_types(self.line_counts())
 	}
 }
 
@@ -724,7 +644,7 @@ mod tests {
 	fn report_data_summary_verbosity_skips_languages() {
 		let mut results = AnalysisResults::default();
 		let lang = crate::langs::LANGUAGES.iter().find(|l| l.name == "Rust").unwrap();
-		results.add_file_stats(lang, crate::analysis::stats::FileContribution::new(10, 10, 0, 0, 0, 100), None);
+		results.add_file(lang, &LineCounts { total: 10, code: 10, ..LineCounts::default() }, 100, None);
 
 		let ctx = FormatterContext::new(ViewOptions::default());
 		let report = ReportData::from_results(&results, Path::new("."), Verbosity::Summary, &ctx);
@@ -737,7 +657,7 @@ mod tests {
 	fn report_data_regular_verbosity_includes_languages() {
 		let mut results = AnalysisResults::default();
 		let lang = crate::langs::LANGUAGES.iter().find(|l| l.name == "Rust").unwrap();
-		results.add_file_stats(lang, crate::analysis::stats::FileContribution::new(10, 10, 0, 0, 0, 100), None);
+		results.add_file(lang, &LineCounts { total: 10, code: 10, ..LineCounts::default() }, 100, None);
 
 		let ctx = FormatterContext::new(ViewOptions::default());
 		let report = ReportData::from_results(&results, Path::new("."), Verbosity::Regular, &ctx);

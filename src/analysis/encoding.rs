@@ -4,7 +4,10 @@ use anyhow::Result;
 use encoding_rs::{CoderResult, Decoder, Encoding, UTF_8, UTF_16BE, UTF_16LE};
 use memchr::memchr;
 
-use super::{line_classifier::CommentState, line_counter::LineCounts, stats::AnalysisResults};
+use super::{
+	line_classifier::{CommentState, classify_line},
+	stats::LineCounts,
+};
 use crate::langs::Language;
 
 /// Percentage of non-text bytes in a sample that indicates a binary file.
@@ -71,16 +74,7 @@ fn detect_utf16_without_bom(samples: &[u8]) -> Option<FileEncoding> {
 	None
 }
 
-pub(super) fn process_utf16_bytes(
-	display_path: &str,
-	file_size: u64,
-	results: &mut AnalysisResults,
-	collect_details: bool,
-	language: &'static Language,
-	encoding: FileEncoding,
-	bytes: &[u8],
-) {
-	use super::line_counter::finish_file_stats;
+pub(super) fn count_utf16_bytes(language: &Language, encoding: FileEncoding, bytes: &[u8]) -> LineCounts {
 	let mut line_counts = LineCounts::default();
 	let mut comment_state = CommentState::new();
 	let mut is_first_line = true;
@@ -101,19 +95,14 @@ pub(super) fn process_utf16_bytes(
 	pending.push_str(&output);
 	output.clear();
 	drain_lines(&mut pending, language, &mut line_counts, &mut comment_state, &mut is_first_line, true);
-	finish_file_stats(display_path, file_size, results, collect_details, language, &line_counts);
+	line_counts
 }
 
-pub(super) fn process_utf16_stream<R: Read>(
-	display_path: &str,
-	file_size: u64,
-	results: &mut AnalysisResults,
-	collect_details: bool,
-	language: &'static Language,
+pub(super) fn count_utf16_stream<R: Read>(
+	language: &Language,
 	encoding: FileEncoding,
 	reader: &mut R,
-) -> Result<()> {
-	use super::line_counter::finish_file_stats;
+) -> Result<LineCounts> {
 	let mut line_counts = LineCounts::default();
 	let mut comment_state = CommentState::new();
 	let mut is_first_line = true;
@@ -145,8 +134,7 @@ pub(super) fn process_utf16_stream<R: Read>(
 	pending.push_str(&output);
 	output.clear();
 	drain_lines(&mut pending, language, &mut line_counts, &mut comment_state, &mut is_first_line, true);
-	finish_file_stats(display_path, file_size, results, collect_details, language, &line_counts);
-	Ok(())
+	Ok(line_counts)
 }
 
 fn decode_to_string(decoder: &mut Decoder, chunk: &[u8], last: bool, output: &mut String) {
@@ -164,7 +152,7 @@ fn decode_to_string(decoder: &mut Decoder, chunk: &[u8], last: bool, output: &mu
 
 fn drain_lines(
 	pending: &mut String,
-	language: &'static Language,
+	language: &Language,
 	line_counts: &mut LineCounts,
 	comment_state: &mut CommentState,
 	is_first_line: &mut bool,
@@ -175,13 +163,13 @@ fn drain_lines(
 	while let Some(pos) = memchr(b'\n', &bytes[start..]) {
 		let line_end = start + pos + 1;
 		let line = &pending[start..line_end];
-		line_counts.classify_and_count(line, Some(language), comment_state, *is_first_line);
+		line_counts.add(classify_line(line, Some(language), comment_state, *is_first_line));
 		*is_first_line = false;
 		start = line_end;
 	}
 	if flush_final && start < pending.len() {
 		let line = &pending[start..];
-		line_counts.classify_and_count(line, Some(language), comment_state, *is_first_line);
+		line_counts.add(classify_line(line, Some(language), comment_state, *is_first_line));
 		*is_first_line = false;
 		start = pending.len();
 	}
