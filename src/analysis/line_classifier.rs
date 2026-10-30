@@ -1,4 +1,4 @@
-use memchr::{memchr2, memrchr};
+use memchr::memchr2;
 
 use crate::langs::{
 	Language, is_shebang_for,
@@ -392,24 +392,17 @@ pub fn classify_line(line: &str, lang: &Language, comment_state: &mut CommentSta
 	if has_code { LineType::Code } else { LineType::Comment }
 }
 
-/// Fast ASCII-only whitespace trimming with newline handling. This is a performance-critical hot path called for every line of code analyzed.
-///
-/// We use a manual byte-based implementation instead of `str::trim()` because:
-/// 1. We need to handle trailing \r\n properly (from both Unix and Windows line endings).
-/// 2. Byte operations avoid UTF-8 boundary checks since we only trim ASCII whitespace.
-/// 3. This is measurably faster in benchmarks for typical source code.
+/// Trim ASCII whitespace, including a line's trailing `\n` or `\r\n`, from both ends. Bytes rather than `char`s, since only ASCII is trimmed; called for every line.
 #[inline]
 fn trim_ascii(line: &str) -> &str {
 	let bytes = line.as_bytes();
 	let mut start = 0;
 	let mut end = bytes.len();
-	if let Some(pos) = memrchr(b'\n', &bytes[..end])
-		&& pos + 1 == end
+	// Indentation is mostly runs of spaces, so skip eight at a time.
+	while let Some(chunk) = bytes.get(start..start + 8)
+		&& chunk == b"        "
 	{
-		end = pos;
-		if end > 0 && bytes[end - 1] == b'\r' {
-			end -= 1;
-		}
+		start += 8;
 	}
 	while start < end && is_ascii_ws(bytes[start]) {
 		start += 1;
