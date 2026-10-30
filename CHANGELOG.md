@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- `.h` files can now be C++: a header is counted as C++ when it has C++-only constructs such as `namespace`, `template`, `std::`, `virtual` or access specifiers, and as C otherwise. On wxWidgets, about 1,870 headers counted as C are now C++, while the Linux kernel's 27,000 headers stay C
+- Keywords inside comments no longer count when the languages sharing an extension write comments the same way (C, C++ and Objective-C), so a C header discussing "virtual memory" isn't taken for C++; for the same reason, some Objective-C headers whose documentation comments use `@class` are now correctly C++
+- C, C++, Objective-C and LPC keywords now match case-sensitively, so `VIRTUAL` or `TYPEDEF` in an assembly or BASIC include file no longer counts as C++
+- Much faster on code with ambiguous extensions like `.c` and `.h`: about 35% faster on the Linux kernel and 15-27% faster on cpython and kubernetes, making codestats faster than scc and tokei on every repository in the benchmarks
+
 ## 0.8.2
 
 - `--by-dir` now works in CSV, TSV, Markdown and HTML output, which previously ignored it and showed the language breakdown; with `--verbose` they also list each directory's files

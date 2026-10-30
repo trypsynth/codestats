@@ -12,10 +12,14 @@
 //   shebangs             Shebang prefixes that identify the language for files without a known extension.
 //   keywords             Used to choose between languages that share a pattern; every language sharing a pattern needs
 //                        some. Words match whole tokens case-insensitively; anything with punctuation (`@interface`,
-//                        `:=`) matches as text. On a tie, the language with fewer keywords wins, so a language that
-//                        extends another should list the base language's keywords plus its own.
-//   require_keywords     Only pick this language when a keyword matches (used for junk-drawer extensions like `.inc`).
-//                        When nothing matches, the one sharing language without this flag is used as the default.
+//                        `:=`) matches as text. On a tie, a language without `require_keywords` wins, then the one with
+//                        fewer keywords, so a language that extends another should list the base language's keywords
+//                        plus its own. When all the languages sharing a pattern write comments the same way, keywords
+//                        inside comments don't count.
+//   require_keywords     Only pick this language when a keyword matches that not every other language sharing the
+//                        pattern has (used for junk-drawer extensions like `.inc`, and for C++ in `.h`). When nothing
+//                        matches, the one sharing language without this flag is used as the default.
+//   case_sensitive_keywords  Word keywords only match in the case they're written (C: `virtual` but not `VIRTUAL`).
 //   strings              String literals, so comment markers inside them are ignored and their contents count as code.
 //                        `"\""` is a one-line string with a `\` escape. The full form is
 //                        {open, close (defaults to open), escape (`null` for raw strings, or the quote itself for
@@ -331,6 +335,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["#include", "#define", "#ifndef", "#pragma", "int main", "void", "sizeof", "typedef", "struct", "extern", "#ifdef", "#endif", "static", "NULL", "unsigned"],
+		case_sensitive_keywords: true,
 		strings: ["\"", {open: "'", char: true}],
 	},
 	"C Shell": {
@@ -345,10 +350,11 @@
 		strings: ["\"", {open: "'", char: true}, {open: "@\"", close: "\"", escape: "\"", multiline: true}, {open: "\"\"\"", escape: null, multiline: true}],
 	},
 	"C++": {
-		file_patterns: ["*.cpp", "*.hpp", "*.c++", "*.h++", "*.cc", "*.cxx", "*.hxx", "*.ino", "*.ipp", "*.cppm", "*.ixx", "*.c++m", "*.pcc", "*.tpp", "*.hh", "*.inl", "*.inc"],
+		file_patterns: ["*.cpp", "*.h", "*.hpp", "*.c++", "*.h++", "*.cc", "*.cxx", "*.hxx", "*.ino", "*.ipp", "*.cppm", "*.ixx", "*.c++m", "*.pcc", "*.tpp", "*.hh", "*.inl", "*.inc"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
-		keywords: ["#include", "#define", "#ifdef", "#endif", "namespace", "template", "std::", "nullptr", "static", "const char", "unsigned", "struct", "void"],
+		keywords: ["#include", "#define", "#ifndef", "#ifdef", "#endif", "#pragma", "int main", "void", "sizeof", "typedef", "struct", "extern", "static", "NULL", "unsigned", "namespace", "template", "typename", "std::", "nullptr", "constexpr", "virtual", "operator", "public:", "protected:", "private:"],
+		case_sensitive_keywords: true,
 		require_keywords: true,
 		strings: ["\"", {open: "'", char: true}, {open: "R\"(", close: ")\"", escape: null, multiline: true}],
 	},
@@ -1401,6 +1407,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["inherit", "nomask", "varargs", "efun", "([", "::create(", "this_object()", "this_player()"],
+		case_sensitive_keywords: true,
 		require_keywords: true,
 	},
 	"LSL": {
@@ -1714,6 +1721,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["#include", "#define", "#ifndef", "#pragma", "#ifdef", "#endif", "@interface", "@implementation", "@protocol", "@property", "@synthesize", "@end", "@autoreleasepool", "@selector", "@class", "@\"", "NSString", "NSInteger", "#import", "NSObject"],
+		case_sensitive_keywords: true,
 		require_keywords: true,
 		strings: ["\"", {open: "'", char: true}],
 	},
@@ -1722,6 +1730,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["@interface", "@implementation", "@protocol", "@property", "@synthesize", "@end", "#import", "NSString", "class", "template"],
+		case_sensitive_keywords: true,
 		strings: ["\"", {open: "'", char: true}, {open: "R\"(", close: ")\"", escape: null, multiline: true}],
 	},
 	"Objective-J": {

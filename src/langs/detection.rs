@@ -28,7 +28,8 @@ const MAX_KEYWORD_OCCURRENCES: usize = 3;
 /// This weighted scoring ensures comment patterns (strong indicators) outweigh
 /// keywords (weaker indicators that may appear as identifiers in other languages).
 #[inline]
-fn score_language(lang: &Language, content: &str, tokens: &Tokens) -> i32 {
+/// `candidates` are all the languages being weighed, `lang` among them: a keyword every other one shares is no evidence for `lang`. Comment markers are looked for in `content`, keywords in `code`, which may have comments removed so their prose doesn't count as code ("virtual memory" as C++).
+fn score_language(lang: &Language, candidates: &[&Language], content: &str, code: &str, tokens: &Tokens) -> i32 {
 	if lang.line_comments.is_empty() && lang.block_comments.is_empty() && lang.keywords.is_empty() {
 		return 0;
 	}
@@ -52,7 +53,9 @@ fn score_language(lang: &Language, content: &str, tokens: &Tokens) -> i32 {
 				continue;
 			}
 			for &(keyword, index) in &matchers.words {
-				if token.eq_ignore_ascii_case(keyword) {
+				let is_match =
+					if matchers.case_sensitive { *token == keyword } else { token.eq_ignore_ascii_case(keyword) };
+				if is_match {
 					counts[index] += 1;
 				}
 			}
@@ -62,19 +65,25 @@ fn score_language(lang: &Language, content: &str, tokens: &Tokens) -> i32 {
 	let limit = if matchers.symbol_only { usize::MAX } else { MAX_KEYWORD_OCCURRENCES };
 	let mut matched_chars: usize = 0;
 	for substring in &matchers.substrings {
-		let occurrences = substring.count(bytes, limit);
+		let occurrences = substring.count(code.as_bytes(), limit);
 		matched_chars = matched_chars.saturating_add(occurrences.saturating_mul(substring.finder.needle().len()));
 		counts[substring.index] = occurrences;
 	}
-	let mut keyword_hits: usize = 0;
-	for count in counts {
+	// Whether a keyword tells `lang` apart from the other candidates, rather than being one they all have (`#include` for C and C++).
+	let mut others = candidates.iter().filter(|other| !std::ptr::eq(**other, lang)).peekable();
+	let has_others = others.peek().is_some();
+	let distinctive = |keyword: &str| !has_others || others.clone().any(|other| !other.keywords.contains(&keyword));
+	let mut distinctive_hits: usize = 0;
+	for (index, count) in counts.into_iter().enumerate() {
 		let count = count.min(limit);
-		keyword_hits = keyword_hits.saturating_add(count);
+		if count > 0 && distinctive(lang.keywords[index]) {
+			distinctive_hits = distinctive_hits.saturating_add(count);
+		}
 		let capped = i32::try_from(count.min(MAX_KEYWORD_OCCURRENCES)).unwrap_or(0);
 		score = score.saturating_add(capped * KEYWORD_MATCH_SCORE);
 	}
-	// Languages that share junk-drawer extensions (e.g. `.inc`) need real keyword evidence, not just a matching comment marker.
-	if lang.require_keywords && keyword_hits == 0 {
+	// Languages that share junk-drawer extensions (e.g. `.inc`) need real keyword evidence, not just a matching comment marker or keywords every candidate has.
+	if lang.require_keywords && distinctive_hits == 0 {
 		return 0;
 	}
 	// For symbol-only languages (all keywords are symbols), require high density if alphabetic content exists
@@ -101,6 +110,7 @@ struct ScoringMatchers {
 	word_starts: [bool; 256],
 	/// The longest word keyword's length.
 	max_word_len: usize,
+	case_sensitive: bool,
 	/// Keywords containing other characters (`@interface`, `#include`), which tokenizing would split, so they're matched as substrings.
 	substrings: Vec<SubstringKeyword>,
 	block_comments: Vec<(Finder<'static>, Finder<'static>)>,
@@ -145,8 +155,12 @@ fn build_scoring_matchers(lang: &Language) -> ScoringMatchers {
 	for (index, &keyword) in lang.keywords.iter().enumerate() {
 		let bytes = keyword.as_bytes();
 		if !bytes.is_empty() && bytes.iter().all(|&b| is_word_byte(b)) {
-			word_starts[usize::from(bytes[0].to_ascii_lowercase())] = true;
-			word_starts[usize::from(bytes[0].to_ascii_uppercase())] = true;
+			if lang.case_sensitive_keywords {
+				word_starts[usize::from(bytes[0])] = true;
+			} else {
+				word_starts[usize::from(bytes[0].to_ascii_lowercase())] = true;
+				word_starts[usize::from(bytes[0].to_ascii_uppercase())] = true;
+			}
 			words.push((bytes, index));
 		} else {
 			let ends_in_word = bytes.last().is_some_and(|&b| is_word_byte(b));
@@ -160,6 +174,7 @@ fn build_scoring_matchers(lang: &Language) -> ScoringMatchers {
 		words,
 		word_starts,
 		max_word_len,
+		case_sensitive: lang.case_sensitive_keywords,
 		substrings,
 		block_comments,
 		symbol_only: is_symbol_only_language(lang),
@@ -189,6 +204,73 @@ fn is_symbol_only_language(lang: &Language) -> bool {
 }
 
 #[inline]
+fn same_comments(a: &Language, b: &Language) -> bool {
+	a.line_comments == b.line_comments && a.block_comments == b.block_comments
+}
+
+/// `content` with `lang`'s comments replaced by spaces, so their prose isn't counted as keywords. String literals aren't recognized, so a marker inside one (`"http://..."`) cuts the line short, which costs a few keywords at most.
+fn strip_comments<'a>(content: &'a str, lang: &Language) -> Cow<'a, str> {
+	let matchers = scoring::language_matchers(lang);
+	if matchers.line_comments.is_none() && matchers.block_comments.is_none() {
+		return Cow::Borrowed(content);
+	}
+	let bytes = content.as_bytes();
+	let mut code = String::with_capacity(content.len());
+	let mut pos = 0;
+	while pos < content.len() {
+		let rest = &content[pos..];
+		let line = matchers.line_comments.as_ref().and_then(|line_comments| {
+			line_comments.find_iter(rest).map(|m| (m.start(), m.end())).find(|&(start, end)| {
+				// A marker spelled like a word (`REM`) only counts as a whole word.
+				let word_like = rest.as_bytes()[start..end].iter().all(|&b| is_word_byte(b));
+				!word_like
+					|| (!(pos + start).checked_sub(1).is_some_and(|i| is_word_byte(bytes[i]))
+						&& !bytes.get(pos + end).is_some_and(|&b| is_word_byte(b)))
+			})
+		});
+		let block = matchers.block_comments.as_ref().and_then(|block| block.find_block_start(rest));
+		let (start, end) = match (line, block) {
+			(Some((line_start, _)), Some((block_start, _, _))) if block_start < line_start => {
+				block_end(rest, block, matchers)
+			}
+			(Some((line_start, _)), _) => (
+				line_start,
+				memchr::memchr(b'\n', &rest.as_bytes()[line_start..]).map_or(rest.len(), |i| line_start + i),
+			),
+			(None, Some(_)) => block_end(rest, block, matchers),
+			(None, None) => {
+				code.push_str(rest);
+				break;
+			}
+		};
+		code.push_str(&rest[..start]);
+		code.push(' ');
+		pos += end;
+	}
+	Cow::Owned(code)
+}
+
+/// The start of the block comment found in `rest`, and the end of the comment (after its closing marker, or the end of `rest`), following nesting where the pair nests.
+fn block_end(rest: &str, block: Option<(usize, usize, usize)>, matchers: &scoring::LanguageMatchers) -> (usize, usize) {
+	let (start, len, pair) = block.expect("called with a block comment start");
+	let finder = matchers.block_comments.as_ref().expect("a block comment start was found");
+	let mut pos = start + len;
+	let mut depth = 1;
+	while depth > 0 {
+		let Some((found, len, nested)) = finder.find_block_end_or_nested_start(&rest[pos..], pair) else {
+			return (start, rest.len());
+		};
+		depth = if nested { depth + 1 } else { depth - 1 };
+		pos += found + len;
+	}
+	(start, pos)
+}
+
+/// Order for breaking ties between equal scores: lower ranks first.
+const fn tie_rank(lang: &Language) -> (bool, usize) {
+	(lang.require_keywords, lang.keywords.len())
+}
+
 /// Pick the best-scoring candidate, returning it with how far it beat the runner-up.
 fn disambiguate<'a>(candidates: &[&'a Language], content: &str) -> (Option<&'a Language>, i32) {
 	// Only words that could be some candidate's keyword are kept.
@@ -201,14 +283,19 @@ fn disambiguate<'a>(candidates: &[&'a Language], content: &str) -> (Option<&'a L
 		}
 		max_len = max_len.max(matchers.max_word_len);
 	}
-	let tokens = tokenize(content, &starts, max_len);
+	// When every candidate writes comments the same way (C, C++ and Objective-C for a `.h`), what's in them is prose for all of them, so keywords are only looked for outside them. Otherwise one candidate's comment is another's code, so the whole sample counts.
+	let code = match candidates {
+		[first, rest @ ..] if rest.iter().all(|other| same_comments(first, other)) => strip_comments(content, first),
+		_ => Cow::Borrowed(content),
+	};
+	let tokens = tokenize(&code, &starts, max_len);
 	let mut runner_up = 0;
-	// On ties, prefer the candidate with fewer keywords, then the earliest one. A language that extends another (e.g. Bison over Yacc) lists the base language's keywords plus its own, so without extension-specific keywords the base language is the better guess.
+	// On ties, prefer a candidate that doesn't need keyword evidence (C over C++ for a `.h`), then the one with fewer keywords, then the earliest. A language that extends another (e.g. Bison over Yacc) lists the base language's keywords plus its own, so without extension-specific keywords the base language is the better guess.
 	let mut best: Option<(&'a Language, i32)> = None;
 	for lang in candidates {
-		let score = score_language(lang, content, &tokens);
+		let score = score_language(lang, candidates, content, &code, &tokens);
 		let beats_best = best.is_none_or(|(best_lang, best_score)| {
-			score > best_score || (score == best_score && lang.keywords.len() < best_lang.keywords.len())
+			score > best_score || (score == best_score && tie_rank(lang) < tie_rank(best_lang))
 		});
 		if score > 0 && beats_best {
 			runner_up = runner_up.max(best.map_or(0, |(_, best_score)| best_score));
@@ -370,6 +457,7 @@ mod tests {
 		shebangs: &[],
 		keywords: &["alpha", "beta"],
 		require_keywords: false,
+		case_sensitive_keywords: false,
 		c_preprocessor: false,
 		regex_literals: false,
 		strings: &[],
@@ -385,6 +473,7 @@ mod tests {
 		shebangs: &[],
 		keywords: &["winner"],
 		require_keywords: false,
+		case_sensitive_keywords: false,
 		c_preprocessor: false,
 		regex_literals: false,
 		strings: &[],
@@ -393,7 +482,8 @@ mod tests {
 	#[test]
 	fn score_language_combines_comments_and_keywords() {
 		let content = "// comment\nalpha beta alpha";
-		let score = score_language(&TEST_LANGUAGE_ALPHA, content, &tokenize(content, &[true; 256], usize::MAX));
+		let score =
+			score_language(&TEST_LANGUAGE_ALPHA, &[], content, content, &tokenize(content, &[true; 256], usize::MAX));
 		assert_eq!(score, 50 + 3 * 10);
 	}
 
@@ -423,8 +513,8 @@ mod tests {
 		const BASE: Language = Language { name: "Base", keywords: &["alpha"], ..TEST_LANGUAGE_ALPHA };
 		const EXTENDED: Language = Language { name: "Extended", keywords: &["alpha", "omega"], ..TEST_LANGUAGE_ALPHA };
 		let candidates = vec![&EXTENDED, &BASE];
-		assert_eq!(disambiguate(&candidates, "// alpha").0.unwrap().name, "Base");
-		assert_eq!(disambiguate(&candidates, "// alpha omega").0.unwrap().name, "Extended");
+		assert_eq!(disambiguate(&candidates, "// x\nalpha").0.unwrap().name, "Base");
+		assert_eq!(disambiguate(&candidates, "// x\nalpha omega").0.unwrap().name, "Extended");
 	}
 
 	#[test]
@@ -451,6 +541,22 @@ mod tests {
 		"Objective-C"
 	)]
 	#[case::c_header("util.h", "#ifndef UTIL_H\n#define UTIL_H\n\nint add(int a, int b);\n\n#endif\n", "C")]
+	#[case::cpp_header(
+		"widget.h",
+		"#ifndef WIDGET_H\n#define WIDGET_H\n\nnamespace ui {\nclass Widget : public Base {\npublic:\n\tvirtual ~Widget();\n};\n}\n\n#endif\n",
+		"C++"
+	)]
+	#[case::c_header_mentioning_cpp_in_comments(
+		"mm.h",
+		"/* Maps virtual memory into the caller's namespace; see the template above. */\n#ifndef MM_H\n#define MM_H\nstruct page;\nvoid map(struct page *p);\n#endif\n",
+		"C"
+	)]
+	#[case::uppercase_is_not_a_cpp_keyword(
+		"cfg.h",
+		"#define VIRTUAL 1\n#define TEMPLATE 2\ntypedef int OPERATOR;\n",
+		"C"
+	)]
+	#[case::bare_header_defaults_to_c("empty.h", "#pragma once\n", "C")]
 	#[case::c_header_comments_only("util.h", "// helpers\n/* nothing here */\n", "C")]
 	#[case::octave_function("example.m", "# compute\nfunction y = f(x)\n\ty = x;\nendfunction\n", "Octave")]
 	fn detect_m_and_h_files(#[case] filename: &str, #[case] content: &str, #[case] expected: &str) {

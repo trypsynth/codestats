@@ -6,6 +6,7 @@ use serde::{Deserialize, Deserializer, de};
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
+#[expect(clippy::struct_excessive_bools, reason = "independent per-language switches from languages.json5")]
 pub struct LanguageConfig {
 	#[serde(skip)]
 	pub name: String,
@@ -25,6 +26,8 @@ pub struct LanguageConfig {
 	pub keywords: Vec<String>,
 	#[serde(default)]
 	pub require_keywords: bool,
+	#[serde(default)]
+	pub case_sensitive_keywords: bool,
 	#[serde(default)]
 	pub strings: Vec<StringSpec>,
 	#[serde(default)]

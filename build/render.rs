@@ -16,6 +16,7 @@ const LANGUAGE_FIELDS: &[(&str, &str)] = &[
 	("shebangs", "&'static [&'static str]"),
 	("keywords", "&'static [&'static str]"),
 	("require_keywords", "bool"),
+	("case_sensitive_keywords", "bool"),
 	("strings", "&'static [StringDelimiter]"),
 	("c_preprocessor", "bool"),
 	("regex_literals", "bool"),
@@ -39,6 +40,9 @@ pub fn render_languages(languages: &[LanguageConfig]) -> String {
 		"A string literal delimiter; comment markers inside strings are ignored.",
 		"Debug, Clone, Copy, PartialEq, Eq",
 		STRING_DELIMITER_FIELDS,
+	);
+	output.push_str(
+		"#[expect(clippy::struct_excessive_bools, reason = \"independent per-language switches from languages.json5\")]\n",
 	);
 	render_struct(
 		&mut output,
@@ -77,6 +81,7 @@ fn render_language(output: &mut String, index: usize, lang: &LanguageConfig) {
 	write_field(output, "shebangs", quoted_slice(&lang.shebangs));
 	write_field(output, "keywords", quoted_slice(&lang.keywords));
 	write_field(output, "require_keywords", lang.require_keywords);
+	write_field(output, "case_sensitive_keywords", lang.case_sensitive_keywords);
 	write_field(output, "strings", render_slice(&lang.strings, render_string_delimiter));
 	write_field(output, "c_preprocessor", lang.c_preprocessor);
 	write_field(output, "regex_literals", lang.regex_literals);
