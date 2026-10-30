@@ -47,7 +47,11 @@ pub(super) fn is_probably_binary(sample: &[u8], encoding: FileEncoding) -> bool 
 	if memchr(0, sample).is_some() {
 		return true;
 	}
-	let non_text = sample.iter().filter(|b| matches!(**b, 0x01..=0x08 | 0x0B | 0x0C | 0x0E..=0x1F | 0x7F)).count();
+	// Control characters other than tab, line feed and carriage return (NUL was ruled out above), plus DEL. Written as plain comparisons so it vectorizes.
+	let non_text: usize = sample
+		.iter()
+		.map(|&b| usize::from(b < 0x20 && b != b'\t' && b != b'\n' && b != b'\r') + usize::from(b == 0x7F))
+		.sum();
 	non_text * 100 / sample.len() > BINARY_THRESHOLD_PERCENT
 }
 
@@ -56,11 +60,17 @@ pub(super) fn is_utf16(encoding: &'static Encoding) -> bool {
 }
 
 fn detect_utf16_without_bom(samples: &[u8]) -> Option<FileEncoding> {
-	if samples.len() < 4 {
+	// UTF-16 text without a BOM is full of zero bytes, so a sample without any (nearly every text file) can't be it.
+	if samples.len() < 4 || memchr(0, samples).is_none() {
 		return None;
 	}
-	let zero_even = samples.iter().step_by(2).filter(|&&b| b == 0).count();
-	let zero_odd = samples.iter().skip(1).step_by(2).filter(|&&b| b == 0).count();
+	let (pairs, rest) = samples.as_chunks::<2>();
+	let mut zero_even = usize::from(rest == [0]);
+	let mut zero_odd = 0;
+	for &[even, odd] in pairs {
+		zero_even += usize::from(even == 0);
+		zero_odd += usize::from(odd == 0);
+	}
 	// Heuristic: UTF-16 text typically has a strong zero-byte bias on one parity.
 	let total_zeros = zero_even + zero_odd;
 	if total_zeros < samples.len() / 4 {
