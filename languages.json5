@@ -923,7 +923,7 @@
 		strings: ["\"", {open: "'", char: true}, {open: "`", escape: null, multiline: true}],
 	},
 	"Go Template": {
-		file_patterns: ["*.gohtml", "*.gotmpl"],
+		file_patterns: ["*.gohtml", "*.gotmpl", "*.gotxt", "*.tmpl"],
 		block_comments: [["{{/*", "*/}}"], ["{{- /*", "*/ -}}"]],
 	},
 	"Godot Resource": {
@@ -1433,7 +1433,7 @@
 		line_comments: ["%%"],
 	},
 	"M4": {
-		file_patterns: ["*.m4"],
+		file_patterns: ["*.m4", "configure.ac", "configure.in"],
 		line_comments: ["#", "dnl"],
 	},
 	"Madlang": {
@@ -1598,7 +1598,7 @@
 		keywords: ["#property", "CTrade", "CPositionInfo", "input"],
 	},
 	"MSBuild": {
-		file_patterns: ["*.csproj", "*.vbproj", "*.fsproj", "*.props", "*.targets", "*.vcxproj", "*.proj"],
+		file_patterns: ["*.csproj", "*.vbproj", "*.fsproj", "*.props", "*.targets", "*.vcxproj", "*.vcxproj.filters", "*.vcproj", "*.proj"],
 		block_comments: [["<!--", "-->"]],
 	},
 	"MUMPS": {
@@ -2673,6 +2673,10 @@
 		file_patterns: ["*.x10"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+	},
+	"XAML": {
+		file_patterns: ["*.xaml"],
+		block_comments: [["<!--", "-->"]],
 	},
 	"Xcode Config": {
 		file_patterns: ["*.xcconfig"],
