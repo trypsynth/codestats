@@ -28,7 +28,7 @@ const MAX_KEYWORD_OCCURRENCES: usize = 3;
 /// This weighted scoring ensures comment patterns (strong indicators) outweigh
 /// keywords (weaker indicators that may appear as identifiers in other languages).
 #[inline]
-fn score_language(lang: &Language, content: &str, tokens: &[&[u8]]) -> i32 {
+fn score_language(lang: &Language, content: &str, tokens: &Tokens) -> i32 {
 	if lang.line_comments.is_empty() && lang.block_comments.is_empty() && lang.keywords.is_empty() {
 		return 0;
 	}
@@ -47,8 +47,8 @@ fn score_language(lang: &Language, content: &str, tokens: &[&[u8]]) -> i32 {
 	}
 	let mut counts = vec![0usize; lang.keywords.len()];
 	if !matchers.words.is_empty() {
-		for token in tokens {
-			if !matchers.word_starts[usize::from(token[0].to_ascii_lowercase())] {
+		for token in &tokens.words {
+			if !matchers.word_starts[usize::from(token[0])] {
 				continue;
 			}
 			for &(keyword, index) in &matchers.words {
@@ -78,7 +78,7 @@ fn score_language(lang: &Language, content: &str, tokens: &[&[u8]]) -> i32 {
 		return 0;
 	}
 	// For symbol-only languages (all keywords are symbols), require high density if alphabetic content exists
-	if matchers.symbol_only && !tokens.is_empty() {
+	if matchers.symbol_only && tokens.any {
 		// Guard against false positives when a file has a few symbols but mostly alphabetic text.
 		let non_whitespace = content.chars().filter(|c| !c.is_whitespace()).count();
 		if non_whitespace > 0 {
@@ -97,8 +97,10 @@ fn score_language(lang: &Language, content: &str, tokens: &[&[u8]]) -> i32 {
 struct ScoringMatchers {
 	/// Keywords made of identifier characters, matched against whole tokens ignoring case, with their index in the language's keywords.
 	words: Vec<(&'static [u8], usize)>,
-	/// Which (lowercase) bytes start a word keyword, so most tokens are ruled out with one lookup.
+	/// Which bytes (either case) start a word keyword, so most tokens are ruled out with one lookup.
 	word_starts: [bool; 256],
+	/// The longest word keyword's length.
+	max_word_len: usize,
 	/// Keywords containing other characters (`@interface`, `#include`), which tokenizing would split, so they're matched as substrings.
 	substrings: Vec<SubstringKeyword>,
 	block_comments: Vec<(Finder<'static>, Finder<'static>)>,
@@ -144,6 +146,7 @@ fn build_scoring_matchers(lang: &Language) -> ScoringMatchers {
 		let bytes = keyword.as_bytes();
 		if !bytes.is_empty() && bytes.iter().all(|&b| is_word_byte(b)) {
 			word_starts[usize::from(bytes[0].to_ascii_lowercase())] = true;
+			word_starts[usize::from(bytes[0].to_ascii_uppercase())] = true;
 			words.push((bytes, index));
 		} else {
 			let ends_in_word = bytes.last().is_some_and(|&b| is_word_byte(b));
@@ -152,7 +155,15 @@ fn build_scoring_matchers(lang: &Language) -> ScoringMatchers {
 	}
 	let block_comments =
 		lang.block_comments.iter().map(|&(start, end, _)| (Finder::new(start), Finder::new(end))).collect();
-	ScoringMatchers { words, word_starts, substrings, block_comments, symbol_only: is_symbol_only_language(lang) }
+	let max_word_len = words.iter().map(|(word, _)| word.len()).max().unwrap_or(0);
+	ScoringMatchers {
+		words,
+		word_starts,
+		max_word_len,
+		substrings,
+		block_comments,
+		symbol_only: is_symbol_only_language(lang),
+	}
 }
 
 const fn is_word_byte(b: u8) -> bool {
@@ -180,7 +191,17 @@ fn is_symbol_only_language(lang: &Language) -> bool {
 #[inline]
 /// Pick the best-scoring candidate, returning it with how far it beat the runner-up.
 fn disambiguate<'a>(candidates: &[&'a Language], content: &str) -> (Option<&'a Language>, i32) {
-	let tokens: Vec<_> = tokenize(content).collect();
+	// Only words that could be some candidate's keyword are kept.
+	let mut starts = [false; 256];
+	let mut max_len = 0;
+	for lang in candidates {
+		let matchers = scoring_matchers(lang);
+		for (start, &can_start) in starts.iter_mut().zip(&matchers.word_starts) {
+			*start |= can_start;
+		}
+		max_len = max_len.max(matchers.max_word_len);
+	}
+	let tokens = tokenize(content, &starts, max_len);
 	let mut runner_up = 0;
 	// On ties, prefer the candidate with fewer keywords, then the earliest one. A language that extends another (e.g. Bison over Yacc) lists the base language's keywords plus its own, so without extension-specific keywords the base language is the better guess.
 	let mut best: Option<(&'a Language, i32)> = None;
@@ -199,11 +220,47 @@ fn disambiguate<'a>(candidates: &[&'a Language], content: &str) -> (Option<&'a L
 	best.map_or((None, 0), |(lang, score)| (Some(lang), score - runner_up))
 }
 
-/// Split `content` into identifier-like words. Bytes outside ASCII are delimiters, so splitting bytes rather than `char`s gives the same words, faster.
-#[inline]
-fn tokenize(content: &str) -> impl Iterator<Item = &[u8]> {
-	content.as_bytes().split(|&b| !is_word_byte(b)).filter(|token| !token.is_empty())
+/// The identifier-like words of a sample that could be keywords, and whether it had any words at all.
+struct Tokens<'a> {
+	words: Vec<&'a [u8]>,
+	any: bool,
 }
+
+/// Split `content` into identifier-like words (runs of ASCII letters, digits and underscores), keeping only those that begin with a byte in `starts` and are at most `max_len` long.
+fn tokenize<'a>(content: &'a str, starts: &[bool; 256], max_len: usize) -> Tokens<'a> {
+	let bytes = content.as_bytes();
+	let mut tokens = Tokens { words: Vec::new(), any: false };
+	let mut pos = 0;
+	while pos < bytes.len() {
+		while pos < bytes.len() && !WORD_BYTES[usize::from(bytes[pos])] {
+			pos += 1;
+		}
+		let start = pos;
+		while pos < bytes.len() && WORD_BYTES[usize::from(bytes[pos])] {
+			pos += 1;
+		}
+		if pos > start {
+			tokens.any = true;
+			if pos - start <= max_len && starts[usize::from(bytes[start])] {
+				tokens.words.push(&bytes[start..pos]);
+			}
+		}
+	}
+	tokens
+}
+
+/// [`is_word_byte`] as a table, for the tokenizer's inner loops.
+static WORD_BYTES: [bool; 256] = {
+	let mut table = [false; 256];
+	let mut b: u8 = 0;
+	loop {
+		table[b as usize] = is_word_byte(b);
+		if b == u8::MAX {
+			break table;
+		}
+		b += 1;
+	}
+};
 
 /// Normalize a shebang line: drop an optional space after `#!` and env's `-S` flag (`#!/usr/bin/env -S python3 -u`).
 #[inline]
@@ -336,8 +393,7 @@ mod tests {
 	#[test]
 	fn score_language_combines_comments_and_keywords() {
 		let content = "// comment\nalpha beta alpha";
-		let tokens: Vec<_> = tokenize(content).collect();
-		let score = score_language(&TEST_LANGUAGE_ALPHA, content, &tokens);
+		let score = score_language(&TEST_LANGUAGE_ALPHA, content, &tokenize(content, &[true; 256], usize::MAX));
 		assert_eq!(score, 50 + 3 * 10);
 	}
 
@@ -489,9 +545,10 @@ mod tests {
 	#[case::preserves_underscores("__init__ __main__", vec!["__init__", "__main__"])]
 	#[case::non_ascii_delimits("caf\u{e9}_x na\u{ef}ve", vec!["caf", "_x", "na", "ve"])]
 	fn test_tokenize(#[case] input: &str, #[case] expected: Vec<&str>) {
-		let tokens: Vec<_> = tokenize(input).collect();
+		let tokens = tokenize(input, &[true; 256], usize::MAX);
 		let expected: Vec<_> = expected.iter().map(|token| token.as_bytes()).collect();
-		assert_eq!(tokens, expected);
+		assert_eq!(tokens.words, expected);
+		assert_eq!(tokens.any, !expected.is_empty());
 	}
 
 	#[rstest]
