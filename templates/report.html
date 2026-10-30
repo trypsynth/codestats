@@ -42,7 +42,8 @@
 			{% if !totals.is_empty() %}<li>Totals: {{ totals }}</li>{% endif %}
 		</ul>
 	</details>
-	{%- if by_dir %}
+	{%- if !show_breakdown %}
+	{%- else if by_dir %}
 	<details>
 		<summary>
 			<h2>Directories</h2>

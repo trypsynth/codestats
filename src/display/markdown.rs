@@ -34,6 +34,8 @@ struct MarkdownTemplate<'a> {
 	totals: Vec<String>,
 	languages: &'a [LanguageRecord<'a>],
 	directories: &'a [DirRecord<'a>],
+	/// Whether to show the language or directory breakdown at all (`-q` shows only the summary).
+	show_breakdown: bool,
 	by_dir: bool,
 	show_files: bool,
 }
@@ -71,6 +73,7 @@ impl MarkdownFormatter {
 			totals,
 			languages: &report.languages,
 			directories: &report.directories,
+			show_breakdown: verbosity > Verbosity::Summary,
 			by_dir: ctx.options.by_dir,
 			show_files: verbosity == Verbosity::Verbose,
 		};

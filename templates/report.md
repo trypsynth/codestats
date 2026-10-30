@@ -19,7 +19,8 @@
 | {{ file.path | md_escape }} | {{ file.total_lines | fmt_number(ctx) }} | {{ file.code_lines | fmt_number(ctx) }} | {{ file.comment_lines | fmt_number(ctx) }} | {{ file.blank_lines | fmt_number(ctx) }} | {{ file.shebang_lines | fmt_number(ctx) }} | {{ file.size_human | md_escape }} |
 {%- endfor %}
 {%- endmacro %}
-{%- if by_dir %}
+{%- if !show_breakdown %}
+{%- else if by_dir %}
 {%- if directories.is_empty() %}
 
 _No recognized programming languages found._

@@ -166,4 +166,18 @@ mod tests {
 			assert!(output.ends_with("|\n"), "output should end with one newline:\n{output}");
 		}
 	}
+
+	#[test]
+	fn quiet_markdown_and_html_show_only_the_summary() {
+		for format in [OutputFormat::Markdown, OutputFormat::Html] {
+			for by_dir in [false, true] {
+				let options = ViewOptions { by_dir, verbosity: Verbosity::Summary, ..ViewOptions::default() };
+				let output = render_with(format, options);
+				assert!(output.contains("Files: 2"), "{format:?} missing summary:\n{output}");
+				for absent in ["No recognized", "Languages", "Directories"] {
+					assert!(!output.contains(absent), "{format:?} shows {absent:?} with -q:\n{output}");
+				}
+			}
+		}
+	}
 }
