@@ -107,3 +107,42 @@ pub fn write_output(
 		OutputFormat::Html => HtmlFormatter.write_output(results, path, view_options, writer),
 	}
 }
+
+#[cfg(test)]
+mod tests {
+	use std::path::Path;
+
+	use super::{OutputFormat, Verbosity, ViewOptions, write_output};
+	use crate::analysis::{AnalysisResults, LineCounts};
+
+	fn render(format: OutputFormat, verbosity: Verbosity) -> String {
+		let mut results = AnalysisResults::default();
+		let rust = crate::langs::LANGUAGES.iter().find(|l| l.name == "Rust").unwrap();
+		let counts = LineCounts { total: 10, code: 10, ..LineCounts::default() };
+		for path in ["src/main.rs", "tests/smoke.rs"] {
+			results.add_file(rust, &counts, 100, Some(path.to_owned()));
+		}
+		let options = ViewOptions { by_dir: true, verbosity, ..ViewOptions::default() };
+		let mut buf = Vec::new();
+		write_output(format, &results, Path::new("."), options, &mut buf).unwrap();
+		String::from_utf8(buf).unwrap()
+	}
+
+	#[test]
+	fn by_dir_replaces_the_language_breakdown_in_every_format() {
+		for format in [OutputFormat::Csv, OutputFormat::Tsv, OutputFormat::Markdown, OutputFormat::Html] {
+			for verbosity in [Verbosity::Regular, Verbosity::Verbose] {
+				let output = render(format, verbosity);
+				let context = format!("{format:?} {verbosity:?}:\n{output}");
+				assert!(output.to_lowercase().contains("director"), "no directory breakdown in {context}");
+				assert!(output.contains("src") && output.contains("tests"), "directories missing in {context}");
+				assert!(
+					!output.contains("Average Lines") && !output.contains("avg_lines"),
+					"language table in {context}"
+				);
+				let lists_files = output.contains("src/main.rs");
+				assert_eq!(lists_files, verbosity == Verbosity::Verbose, "file listing in {context}");
+			}
+		}
+	}
+}

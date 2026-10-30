@@ -3,7 +3,10 @@ use std::{borrow::Cow, io::Write, path::Path};
 use anyhow::Result;
 
 use super::{FormatterContext, OutputFormatter, ReportData, Verbosity, ViewOptions};
-use crate::{analysis::AnalysisResults, display::report::LanguageRecord};
+use crate::{
+	analysis::AnalysisResults,
+	display::report::{DirRecord, FileRecord, LanguageRecord},
+};
 
 /// Trait for field escaping strategies in separated value formats.
 pub trait FieldEscaper {
@@ -65,10 +68,11 @@ impl<const DELIMITER: u8, E: FieldEscaper> OutputFormatter for SeparatedValuesFo
 		writer: &mut dyn Write,
 	) -> Result<()> {
 		let (ctx, report) = self.prepare_report(results, path, view_options);
-		match view_options.verbosity {
-			Verbosity::Summary => Self::write_summary_section(&report, &ctx, writer),
-			Verbosity::Regular => Self::write_simple(&report.languages, &ctx, writer),
-			Verbosity::Verbose => Self::write_verbose(&report, &ctx, writer),
+		match (view_options.verbosity, view_options.by_dir) {
+			(Verbosity::Summary, _) => Self::write_summary_section(&report, &ctx, writer),
+			(Verbosity::Regular, false) => Self::write_language_table(&report.languages, &ctx, writer),
+			(Verbosity::Regular, true) => Self::write_dir_table(&report.directories, &ctx, writer),
+			(Verbosity::Verbose, _) => Self::write_verbose(&report, &ctx, writer),
 		}
 	}
 }
@@ -77,9 +81,21 @@ impl<const DELIMITER: u8, E: FieldEscaper> SeparatedValuesFormatter<DELIMITER, E
 	fn write_verbose(report: &ReportData, ctx: &FormatterContext, writer: &mut dyn Write) -> Result<()> {
 		Self::write_summary_section(report, ctx, writer)?;
 		writer.write_all(b"\n")?;
-		Self::write_language_section(&report.languages, ctx, writer)?;
-		writer.write_all(b"\n")?;
-		Self::write_files_sections(&report.languages, ctx, writer)?;
+		if ctx.options.by_dir {
+			writer.write_all(b"Directory breakdown:\n")?;
+			Self::write_dir_table(&report.directories, ctx, writer)?;
+			writer.write_all(b"\n\n")?;
+			for dir in &report.directories {
+				Self::write_files_section(&dir.path, dir.files_detail.as_deref(), ctx, writer)?;
+			}
+		} else {
+			writer.write_all(b"Language breakdown:\n")?;
+			Self::write_language_table(&report.languages, ctx, writer)?;
+			writer.write_all(b"\n\n")?;
+			for language in &report.languages {
+				Self::write_files_section(language.name, language.files_detail.as_deref(), ctx, writer)?;
+			}
+		}
 		Ok(())
 	}
 
@@ -96,72 +112,54 @@ impl<const DELIMITER: u8, E: FieldEscaper> SeparatedValuesFormatter<DELIMITER, E
 		Ok(())
 	}
 
-	fn write_language_section(
-		languages: &[LanguageRecord],
+	/// List one language's or directory's files, if per-file details were collected.
+	fn write_files_section(
+		name: &str,
+		files: Option<&[FileRecord]>,
 		ctx: &FormatterContext,
 		output: &mut dyn Write,
 	) -> Result<()> {
-		output.write_all(b"Language breakdown:\n")?;
-		Self::write_language_header(output)?;
-		for lang in languages {
-			Self::write_language_row(lang, ctx, output)?;
+		let Some(files) = files else {
+			return Ok(());
+		};
+		writeln!(output, "{name} files:")?;
+		Self::write_record(
+			output,
+			&[
+				"file_path",
+				"total_lines",
+				"code_lines",
+				"comment_lines",
+				"blank_lines",
+				"shebang_lines",
+				"size",
+				"size_human",
+			],
+		)?;
+		for file_stat in files {
+			Self::write_record(
+				output,
+				&[
+					file_stat.path,
+					&file_stat.format_total_lines(ctx),
+					&file_stat.format_code_lines(ctx),
+					&file_stat.format_comment_lines(ctx),
+					&file_stat.format_blank_lines(ctx),
+					&file_stat.format_shebang_lines(ctx),
+					&file_stat.format_size(ctx),
+					&file_stat.size_human,
+				],
+			)?;
 		}
 		output.write_all(b"\n")?;
 		Ok(())
 	}
 
-	fn write_files_sections(
+	fn write_language_table(
 		languages: &[LanguageRecord],
 		ctx: &FormatterContext,
 		output: &mut dyn Write,
 	) -> Result<()> {
-		for language in languages {
-			let Some(files) = &language.files_detail else {
-				continue;
-			};
-			writeln!(output, "{} files:", language.name)?;
-			Self::write_record(
-				output,
-				&[
-					"file_path",
-					"total_lines",
-					"code_lines",
-					"comment_lines",
-					"blank_lines",
-					"shebang_lines",
-					"size",
-					"size_human",
-				],
-			)?;
-			for file_stat in files {
-				Self::write_record(
-					output,
-					&[
-						file_stat.path,
-						&file_stat.format_total_lines(ctx),
-						&file_stat.format_code_lines(ctx),
-						&file_stat.format_comment_lines(ctx),
-						&file_stat.format_blank_lines(ctx),
-						&file_stat.format_shebang_lines(ctx),
-						&file_stat.format_size(ctx),
-						&file_stat.size_human,
-					],
-				)?;
-			}
-			output.write_all(b"\n")?;
-		}
-		Ok(())
-	}
-
-	fn write_simple(languages: &[LanguageRecord], ctx: &FormatterContext, output: &mut dyn Write) -> Result<()> {
-		Self::write_language_header(output)?;
-		for lang in languages {
-			Self::write_language_row(lang, ctx, output)?;
-		}
-		Ok(())
-	}
-
-	fn write_language_header(output: &mut dyn Write) -> Result<()> {
 		Self::write_record(
 			output,
 			&[
@@ -181,6 +179,51 @@ impl<const DELIMITER: u8, E: FieldEscaper> SeparatedValuesFormatter<DELIMITER, E
 				"shebang_percentage",
 			],
 		)?;
+		for lang in languages {
+			Self::write_language_row(lang, ctx, output)?;
+		}
+		Ok(())
+	}
+
+	fn write_dir_table(dirs: &[DirRecord], ctx: &FormatterContext, output: &mut dyn Write) -> Result<()> {
+		Self::write_record(
+			output,
+			&[
+				"directory",
+				"files",
+				"lines",
+				"code_lines",
+				"comment_lines",
+				"blank_lines",
+				"shebang_lines",
+				"size",
+				"size_human",
+				"code_percentage",
+				"comment_percentage",
+				"blank_percentage",
+				"shebang_percentage",
+			],
+		)?;
+		for dir in dirs {
+			Self::write_record(
+				output,
+				&[
+					&dir.path,
+					&dir.format_files(ctx),
+					&dir.format_lines(ctx),
+					&dir.format_code_lines(ctx),
+					&dir.format_comment_lines(ctx),
+					&dir.format_blank_lines(ctx),
+					&dir.format_shebang_lines(ctx),
+					&dir.format_size(ctx),
+					&dir.size_human,
+					&dir.format_code_percentage(ctx),
+					&dir.format_comment_percentage(ctx),
+					&dir.format_blank_percentage(ctx),
+					&dir.format_shebang_percentage(ctx),
+				],
+			)?;
+		}
 		Ok(())
 	}
 

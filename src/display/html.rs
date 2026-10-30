@@ -6,7 +6,7 @@ use askama::Template;
 use super::{FormatterContext, OutputFormatter, ReportData, Verbosity, ViewOptions};
 use crate::{
 	analysis::AnalysisResults,
-	display::report::{LanguageRecord, Summary},
+	display::report::{DirRecord, LanguageRecord, Summary},
 };
 
 #[derive(Template)]
@@ -16,6 +16,8 @@ struct ReportTemplate<'a> {
 	summary: &'a Summary,
 	totals: String,
 	languages: &'a [LanguageRecord<'a>],
+	directories: &'a [DirRecord<'a>],
+	by_dir: bool,
 	ctx: &'a FormatterContext,
 	show_files: bool,
 }
@@ -53,6 +55,8 @@ impl HtmlFormatter {
 			summary: &report.summary,
 			totals,
 			languages: &report.languages,
+			directories: &report.directories,
+			by_dir: ctx.options.by_dir,
 			ctx,
 			show_files: verbosity == Verbosity::Verbose,
 		};

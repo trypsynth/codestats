@@ -1,3 +1,27 @@
+{% macro file_table(files) -%}
+<table>
+						<tr>
+							<th>Path</th>
+							<th>Lines</th>
+							<th>Code</th>
+							<th>Comments</th>
+							<th>Blanks</th>
+							<th>Shebangs</th>
+							<th>Size</th>
+						</tr>
+						{% for file in files %}
+							<tr>
+								<td>{{ file.path }}</td>
+								<td>{{ file.total_lines | fmt_number(ctx) }}</td>
+								<td>{{ file.code_lines | fmt_number(ctx) }}</td>
+								<td>{{ file.comment_lines | fmt_number(ctx) }}</td>
+								<td>{{ file.blank_lines | fmt_number(ctx) }}</td>
+								<td>{{ file.shebang_lines | fmt_number(ctx) }}</td>
+								<td>{{ file.size_human }}</td>
+							</tr>
+						{% endfor %}
+					</table>
+{%- endmacro -%}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,6 +42,54 @@
 			{% if !totals.is_empty() %}<li>Totals: {{ totals }}</li>{% endif %}
 		</ul>
 	</details>
+	{%- if by_dir %}
+	<details>
+		<summary>
+			<h2>Directories</h2>
+		</summary>
+		{% if directories.is_empty() %}
+			<p>No recognized programming languages found.</p>
+		{% else %}
+			<table>
+				<tr>
+					<th>Directory</th>
+					<th>Files</th>
+					<th>Lines</th>
+					<th>Code %</th>
+					<th>Comment %</th>
+					<th>Blank %</th>
+					<th>Shebang %</th>
+					<th>Size</th>
+				</tr>
+				{% for dir in directories %}
+					<tr>
+						<td>{{ dir.path }}</td>
+						<td>{{ dir.files | fmt_number(ctx) }}</td>
+						<td>{{ dir.lines | fmt_number(ctx) }}</td>
+						<td>{{ dir.code_percentage | fmt_percent(ctx) }}%</td>
+						<td>{{ dir.comment_percentage | fmt_percent(ctx) }}%</td>
+						<td>{{ dir.blank_percentage | fmt_percent(ctx) }}%</td>
+						<td>{{ dir.shebang_percentage | fmt_percent(ctx) }}%</td>
+						<td>{{ dir.size_human }}</td>
+					</tr>
+				{% endfor %}
+			</table>
+		{% endif %}
+	</details>
+	{% if show_files %}
+		<details>
+			<summary>
+				<h2>Files</h2>
+			</summary>
+			{% for dir in directories %}
+				{% if let Some(files) = dir.files_detail %}
+					<h3>{{ dir.path }}</h3>
+					{% call file_table(files) %}{% endcall %}
+				{% endif %}
+			{% endfor %}
+		</details>
+	{% endif %}
+	{%- else %}
 	<details>
 		<summary>
 			<h2>Languages</h2>
@@ -61,31 +133,11 @@
 			{% for lang in languages %}
 				{% if let Some(files) = lang.files_detail %}
 					<h3>{{ lang.name }}</h3>
-					<table>
-						<tr>
-							<th>Path</th>
-							<th>Lines</th>
-							<th>Code</th>
-							<th>Comments</th>
-							<th>Blanks</th>
-							<th>Shebangs</th>
-							<th>Size</th>
-						</tr>
-						{% for file in files %}
-							<tr>
-								<td>{{ file.path }}</td>
-								<td>{{ file.total_lines | fmt_number(ctx) }}</td>
-								<td>{{ file.code_lines | fmt_number(ctx) }}</td>
-								<td>{{ file.comment_lines | fmt_number(ctx) }}</td>
-								<td>{{ file.blank_lines | fmt_number(ctx) }}</td>
-								<td>{{ file.shebang_lines | fmt_number(ctx) }}</td>
-								<td>{{ file.size_human }}</td>
-							</tr>
-						{% endfor %}
-					</table>
+					{% call file_table(files) %}{% endcall %}
 				{% endif %}
 			{% endfor %}
 		</details>
 	{% endif %}
+	{%- endif %}
 </body>
 </html>

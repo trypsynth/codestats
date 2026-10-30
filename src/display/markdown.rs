@@ -10,7 +10,7 @@ use askama::{Result as AskamaResult, Template, Values};
 use super::{FormatterContext, OutputFormatter, ReportData, Verbosity, ViewOptions};
 use crate::{
 	analysis::AnalysisResults,
-	display::report::{LanguageRecord, Summary},
+	display::report::{DirRecord, LanguageRecord, Summary},
 };
 
 /// Escape Markdown table cells by escaping the pipe separator.
@@ -33,6 +33,8 @@ struct MarkdownTemplate<'a> {
 	line_breakdown: Vec<String>,
 	totals: Vec<String>,
 	languages: &'a [LanguageRecord<'a>],
+	directories: &'a [DirRecord<'a>],
+	by_dir: bool,
 	show_files: bool,
 }
 
@@ -68,6 +70,8 @@ impl MarkdownFormatter {
 			line_breakdown,
 			totals,
 			languages: &report.languages,
+			directories: &report.directories,
+			by_dir: ctx.options.by_dir,
 			show_files: verbosity == Verbosity::Verbose,
 		};
 		let rendered = template.render()?;

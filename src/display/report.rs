@@ -365,6 +365,20 @@ impl_formatters!(FileRecord<'_> {
 	format_size => size : number,
 });
 
+impl_formatters!(DirRecord<'_> {
+	format_files => files : number,
+	format_lines => lines : number,
+	format_code_lines => code_lines : number,
+	format_comment_lines => comment_lines : number,
+	format_blank_lines => blank_lines : number,
+	format_shebang_lines => shebang_lines : number,
+	format_size => size : number,
+	format_code_percentage => code_percentage : percent,
+	format_comment_percentage => comment_percentage : percent,
+	format_blank_percentage => blank_percentage : percent,
+	format_shebang_percentage => shebang_percentage : percent,
+});
+
 fn dir_key(file_path_str: &str, root: &Path) -> String {
 	let path = Path::new(file_path_str);
 	let relative = path.strip_prefix(root).unwrap_or(path);
