@@ -364,7 +364,7 @@
 		block_comments: [["/*", "*/"]],
 	},
 	"C3": {
-		file_patterns: ["*.c3"],
+		file_patterns: ["*.c3", "*.c3t"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"], ["<*", "*>"]],
 		nested_blocks: true,
@@ -2004,7 +2004,7 @@
 		block_comments: [["#|", "|#"]],
 	},
 	"Python": {
-		file_patterns: ["*.py", "*.pyi", "*.pyw", "*.py2", "*.py3", "*.pyz", "*.pyzw", ".gclient", "SConscript", "SConstruct", "Snakefile", "requirements.txt", ".pythonrc"],
+		file_patterns: ["*.py", "*.pyi", "*.pyw", "*.py2", "*.py3", "*.pyz", "*.pyzw", ".gclient", "SConscript", "SConstruct", "sconscript", "sconstruct", "Snakefile", "requirements.txt", ".pythonrc"],
 		line_comments: ["#"],
 		shebangs: ["#!/usr/bin/python", "#!/usr/bin/env python", "#!/usr/bin/python3", "#!/usr/bin/env python3"],
 		strings: [{open: "\"\"\"", multiline: true, doc: true}, {open: "'''", multiline: true, doc: true}, "\"", "'"],
@@ -2446,6 +2446,11 @@
 	"TeX/LaTeX": {
 		file_patterns: ["*.tex", "*.sty", "*.bbx", "*.cbx", "*.lbx", ".latexmkrc", "*.dtx", "*.ltx"],
 		line_comments: ["%"],
+	},
+	"Texinfo": {
+		file_patterns: ["*.texi", "*.texinfo", "*.txi"],
+		line_comments: ["@c ", "@comment "],
+		block_comments: [["@ignore", "@end ignore"]],
 	},
 	"Textile": {
 		file_patterns: ["*.textile"],
