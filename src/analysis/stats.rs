@@ -1,9 +1,6 @@
 use super::LineType;
 use crate::langs::{LANGUAGES, Language};
 
-/// Initial capacity for per-language file detail lists in verbose mode. Pre-allocating 256 slots reduces reallocations for most projects while avoiding excessive memory waste for languages with few files.
-const INITIAL_FILE_LIST_CAPACITY: usize = 256;
-
 /// Calculate the percentage that `part` represents of `total`.
 ///
 /// Returns `0.0` when `total` is `0` to avoid division-by-zero panics.
@@ -102,10 +99,6 @@ impl LanguageStats {
 		self.counts.merge(counts);
 		self.size = self.size.saturating_add(size);
 		if let Some(path) = path {
-			// Reserve capacity on first file to reduce reallocations
-			if self.file_list.is_empty() {
-				self.file_list.reserve(INITIAL_FILE_LIST_CAPACITY);
-			}
 			self.file_list.push(FileStats { path, counts: *counts, size });
 		}
 	}

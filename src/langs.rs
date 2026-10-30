@@ -36,29 +36,19 @@ pub fn print_all_languages(writer: &mut dyn Write, terminal_width: usize) -> Res
 		pluralize(lang_count, "language", "languages"),
 		LANGUAGES.len()
 	)?;
-	let mut lines: Vec<String> = Vec::new();
-	let mut current_line = String::new();
-	let mut current_width = 0usize;
+	let mut line_width = 0;
 	for (i, lang) in LANGUAGES.iter().enumerate() {
-		let is_last = i == LANGUAGES.len() - 1;
-		let separator = if is_last { "." } else { ", " };
-		let item = format!("{}{}", lang.name, separator);
-		let item_width = item.chars().count();
-		let would_exceed = !current_line.is_empty() && current_width + item_width > terminal_width;
-		if would_exceed {
-			lines.push(current_line);
-			current_line = item;
-			current_width = item_width;
-		} else {
-			current_line.push_str(&item);
-			current_width += item_width;
+		let separator = if i + 1 == LANGUAGES.len() { "." } else { ", " };
+		let item_width = lang.name.chars().count() + separator.len();
+		if line_width > 0 && line_width + item_width > terminal_width {
+			writeln!(writer)?;
+			line_width = 0;
 		}
+		write!(writer, "{}{separator}", lang.name)?;
+		line_width += item_width;
 	}
-	if !current_line.is_empty() {
-		lines.push(current_line);
-	}
-	for line in lines {
-		writeln!(writer, "{line}")?;
+	if line_width > 0 {
+		writeln!(writer)?;
 	}
 	Ok(())
 }
