@@ -53,9 +53,24 @@ impl FileSource {
 		} else {
 			let mut buffer = READ_BUFFER.take();
 			buffer.clear();
-			file.read_to_end(&mut buffer).with_context(|| format!("Failed to read file {}", file_path.display()))?;
+			// The size is known, so reserve it and read through `Take`, which skips the `fstat` and `lseek` that `File::read_to_end` makes to size its buffer.
+			buffer.reserve(usize::try_from(file_size).unwrap_or(0) + 1);
+			Read::by_ref(&mut file)
+				.take(u64::MAX)
+				.read_to_end(&mut buffer)
+				.with_context(|| format!("Failed to read file {}", file_path.display()))?;
 			Ok(Self::Read(buffer))
 		}
+	}
+
+	/// Read just the start of a file, for files whose name matches no language and that are only worth reading in full if they begin with a shebang.
+	pub(super) fn head(file_path: &Path) -> Result<SampleBuf> {
+		let mut file = File::open(file_path).with_context(|| format!("Failed to open file {}", file_path.display()))?;
+		let mut sample = SampleBuf::new();
+		sample.len = file
+			.read(&mut sample.data[..SAMPLE_SIZE])
+			.with_context(|| format!("Failed to read file {}", file_path.display()))?;
+		Ok(sample)
 	}
 
 	/// The start and middle of the file, for binary and language detection.

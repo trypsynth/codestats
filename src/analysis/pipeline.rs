@@ -67,6 +67,16 @@ pub fn process_file(
 		}
 		return Ok(());
 	}
+	// A file whose name matches no language counts only if it starts with a shebang, so check that before reading it all.
+	if candidates.is_empty() {
+		let head = FileSource::head(file_path)?;
+		let encoding = detect_encoding(&head);
+		if is_probably_binary(&head, encoding)
+			|| langs::detect_language(&[], Some(&decode_bytes(&head, encoding, true))).language.is_none()
+		{
+			return Ok(());
+		}
+	}
 	let source = FileSource::open(file_path, file_size)?;
 	let sample_bytes = source.sample();
 	let encoding = detect_encoding(&sample_bytes);
