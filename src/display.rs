@@ -116,13 +116,16 @@ mod tests {
 	use crate::analysis::{AnalysisResults, LineCounts};
 
 	fn render(format: OutputFormat, verbosity: Verbosity) -> String {
+		render_with(format, ViewOptions { by_dir: true, verbosity, ..ViewOptions::default() })
+	}
+
+	fn render_with(format: OutputFormat, options: ViewOptions) -> String {
 		let mut results = AnalysisResults::default();
 		let rust = crate::langs::LANGUAGES.iter().find(|l| l.name == "Rust").unwrap();
 		let counts = LineCounts { total: 10, code: 10, ..LineCounts::default() };
 		for path in ["src/main.rs", "tests/smoke.rs"] {
 			results.add_file(rust, &counts, 100, Some(path.to_owned()));
 		}
-		let options = ViewOptions { by_dir: true, verbosity, ..ViewOptions::default() };
 		let mut buf = Vec::new();
 		write_output(format, &results, Path::new("."), options, &mut buf).unwrap();
 		String::from_utf8(buf).unwrap()
@@ -143,6 +146,24 @@ mod tests {
 				let lists_files = output.contains("src/main.rs");
 				assert_eq!(lists_files, verbosity == Verbosity::Verbose, "file listing in {context}");
 			}
+		}
+	}
+
+	#[test]
+	fn markdown_tables_are_not_split_by_blank_lines() {
+		for by_dir in [false, true] {
+			let options = ViewOptions { by_dir, verbosity: Verbosity::Verbose, ..ViewOptions::default() };
+			let output = render_with(OutputFormat::Markdown, options);
+			let lines: Vec<_> = output.lines().collect();
+			let separators: Vec<_> = (0..lines.len()).filter(|&i| lines[i].starts_with("| ---")).collect();
+			assert_eq!(separators.len(), if by_dir { 3 } else { 2 }, "{output}");
+			for i in separators {
+				assert!(
+					lines.get(i + 1).is_some_and(|row| row.starts_with('|')),
+					"table split after line {i}:\n{output}"
+				);
+			}
+			assert!(output.ends_with("|\n"), "output should end with one newline:\n{output}");
 		}
 	}
 }

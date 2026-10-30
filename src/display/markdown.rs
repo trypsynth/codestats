@@ -75,7 +75,8 @@ impl MarkdownFormatter {
 			show_files: verbosity == Verbosity::Verbose,
 		};
 		let rendered = template.render()?;
-		writer.write_all(rendered.as_bytes())?;
+		// Askama drops the template's final newline.
+		writeln!(writer, "{rendered}")?;
 		Ok(())
 	}
 }
