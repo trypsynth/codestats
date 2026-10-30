@@ -47,10 +47,15 @@ pub(super) fn is_probably_binary(sample: &[u8], encoding: FileEncoding) -> bool 
 	if memchr(0, sample).is_some() {
 		return true;
 	}
-	// Control characters other than tab, line feed and carriage return (NUL was ruled out above), plus DEL. Written as plain comparisons so it vectorizes.
+	// Control characters other than tab, line feed and carriage return (NUL was ruled out above), plus DEL. Counted in byte-sized sums over chunks short enough not to overflow, which vectorizes many times wider than summing into a usize.
 	let non_text: usize = sample
-		.iter()
-		.map(|&b| usize::from(b < 0x20 && b != b'\t' && b != b'\n' && b != b'\r') + usize::from(b == 0x7F))
+		.chunks(255)
+		.map(|chunk| {
+			let count = chunk.iter().fold(0u8, |count, &b| {
+				count + u8::from(b < 0x20 && b != b'\t' && b != b'\n' && b != b'\r') + u8::from(b == 0x7F)
+			});
+			usize::from(count)
+		})
 		.sum();
 	non_text * 100 / sample.len() > BINARY_THRESHOLD_PERCENT
 }
