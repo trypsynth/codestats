@@ -16,7 +16,7 @@ use analysis::CodeAnalyzer;
 use anyhow::{Result, anyhow, ensure};
 use cli::{Cli, Commands};
 use config::{AnalyzerConfig, Config};
-use display::{ViewOptions, get_formatter};
+use display::ViewOptions;
 use terminal_size::terminal_size;
 
 fn main() -> Result<()> {
@@ -55,9 +55,8 @@ fn main() -> Result<()> {
 	let analyzer = CodeAnalyzer::new(&config.path, analyzer_config);
 	let results = analyzer.analyze()?;
 	let view_options: ViewOptions = (&config).into();
-	let formatter = get_formatter(config.display.output);
 	let mut stdout = io::stdout();
-	formatter.write_output(&results, &config.path, view_options, &mut stdout)?;
+	display::write_output(config.display.output, &results, &config.path, view_options, &mut stdout)?;
 	stdout.flush()?;
 	if config.analysis.fail_on_error && results.skipped_entries() > 0 {
 		return Err(anyhow!("Skipped {} entries due to errors", results.skipped_entries()));

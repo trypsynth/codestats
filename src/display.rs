@@ -85,50 +85,25 @@ pub trait OutputFormatter {
 	}
 }
 
-pub enum Formatter {
-	Human(HumanFormatter),
-	Json(JsonFormatter),
-	JsonCompact(JsonCompactFormatter),
-	Csv(CsvFormatter),
-	Tsv(TsvFormatter),
-	Markdown(MarkdownFormatter),
-	Html(HtmlFormatter),
-}
-
-impl Formatter {
-	/// Format and stream the analysis results to the provided writer.
-	///
-	/// # Errors
-	///
-	/// Returns an error if formatting fails, (e.g. JSON serialization encounters an issue).
-	pub fn write_output(
-		&self,
-		results: &AnalysisResults,
-		path: &Path,
-		view_options: ViewOptions,
-		writer: &mut dyn Write,
-	) -> Result<()> {
-		match self {
-			Self::Human(f) => f.write_output(results, path, view_options, writer),
-			Self::Json(f) => f.write_output(results, path, view_options, writer),
-			Self::JsonCompact(f) => f.write_output(results, path, view_options, writer),
-			Self::Csv(f) => f.write_output(results, path, view_options, writer),
-			Self::Tsv(f) => f.write_output(results, path, view_options, writer),
-			Self::Markdown(f) => f.write_output(results, path, view_options, writer),
-			Self::Html(f) => f.write_output(results, path, view_options, writer),
-		}
-	}
-}
-
-#[must_use]
-pub fn get_formatter(format: OutputFormat) -> Formatter {
+/// Format and stream the analysis results to `writer` in the given format.
+///
+/// # Errors
+///
+/// Returns an error if formatting or writing fails.
+pub fn write_output(
+	format: OutputFormat,
+	results: &AnalysisResults,
+	path: &Path,
+	view_options: ViewOptions,
+	writer: &mut dyn Write,
+) -> Result<()> {
 	match format {
-		OutputFormat::Human => Formatter::Human(HumanFormatter),
-		OutputFormat::Json => Formatter::Json(JsonFormatter),
-		OutputFormat::JsonCompact => Formatter::JsonCompact(JsonCompactFormatter),
-		OutputFormat::Csv => Formatter::Csv(CsvFormatter::default()),
-		OutputFormat::Tsv => Formatter::Tsv(TsvFormatter::default()),
-		OutputFormat::Markdown => Formatter::Markdown(MarkdownFormatter),
-		OutputFormat::Html => Formatter::Html(HtmlFormatter),
+		OutputFormat::Human => HumanFormatter.write_output(results, path, view_options, writer),
+		OutputFormat::Json => JsonFormatter.write_output(results, path, view_options, writer),
+		OutputFormat::JsonCompact => JsonCompactFormatter.write_output(results, path, view_options, writer),
+		OutputFormat::Csv => CsvFormatter::default().write_output(results, path, view_options, writer),
+		OutputFormat::Tsv => TsvFormatter::default().write_output(results, path, view_options, writer),
+		OutputFormat::Markdown => MarkdownFormatter.write_output(results, path, view_options, writer),
+		OutputFormat::Html => HtmlFormatter.write_output(results, path, view_options, writer),
 	}
 }
