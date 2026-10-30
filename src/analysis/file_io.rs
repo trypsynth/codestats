@@ -4,7 +4,7 @@ use anyhow::{Context as _, Result};
 use memmap2::Mmap;
 
 /// Files larger than this threshold are memory-mapped instead of read into memory.
-const MMAP_THRESHOLD: u64 = 256 * 1024;
+const MMAP_THRESHOLD: u64 = 64 * 1024;
 /// Size of sample chunks extracted from files for binary/language detection. For large files, we sample from both the start and middle of the file.
 const SAMPLE_SIZE: usize = 4 * 1024;
 const MAX_SAMPLE: usize = SAMPLE_SIZE * 2;
