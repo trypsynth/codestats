@@ -67,13 +67,22 @@ fn detect_utf16_without_bom(samples: &[u8]) -> Option<FileEncoding> {
 	if total_zeros < samples.len() / 4 {
 		return None;
 	}
-	if zero_odd >= zero_even.saturating_mul(2) {
-		return Some(FileEncoding { encoding: UTF_16LE, bom_len: 0 });
+	let (encoding, text_byte) = if zero_odd >= zero_even.saturating_mul(2) {
+		(UTF_16LE, 0)
+	} else if zero_even >= zero_odd.saturating_mul(2) {
+		(UTF_16BE, 1)
+	} else {
+		return None;
+	};
+	// Binary data such as a table of small little-endian integers has the same zero bias, so also require the byte paired with each zero to be text.
+	let (mut zero_pairs, mut text_pairs) = (0usize, 0usize);
+	for pair in samples.as_chunks::<2>().0 {
+		if pair[1 - text_byte] == 0 {
+			zero_pairs += 1;
+			text_pairs += usize::from(matches!(pair[text_byte], b'\t' | b'\n' | b'\r' | 0x20..=0x7E));
+		}
 	}
-	if zero_even >= zero_odd.saturating_mul(2) {
-		return Some(FileEncoding { encoding: UTF_16BE, bom_len: 0 });
-	}
-	None
+	(text_pairs * 10 >= zero_pairs * 9).then_some(FileEncoding { encoding, bom_len: 0 })
 }
 
 /// Count the lines of a UTF-16 file, decoding it a chunk at a time.
@@ -212,6 +221,24 @@ mod tests {
 		let file_encoding = FileEncoding { encoding, bom_len: bom.len() };
 		let counts = count_utf16(language, file_encoding, &mut bytes.as_slice()).unwrap();
 		assert_eq!(counts, LineCounts { total: 3001, code: 1001, comment: 1000, blank: 1000, shebang: 0 });
+	}
+
+	#[test]
+	fn little_endian_integers_are_binary_not_utf16() {
+		// A table of u16/u32 values has a zero high byte in every pair, just like ASCII text in UTF-16LE.
+		let sample: Vec<u8> = (0u16..2048).flat_map(|n| (n % 200).to_le_bytes()).collect();
+		let encoding = detect_encoding(&sample);
+		assert_eq!(encoding.encoding, UTF_8);
+		assert!(is_probably_binary(&sample, encoding));
+	}
+
+	#[test]
+	fn bomless_utf16_text_is_not_binary() {
+		let sample: Vec<u8> =
+			"fn main() {\n\tprintln!(\"hi\");\r\n}\n".repeat(50).encode_utf16().flat_map(u16::to_le_bytes).collect();
+		let encoding = detect_encoding(&sample);
+		assert_eq!(encoding.encoding, UTF_16LE);
+		assert!(!is_probably_binary(&sample, encoding));
 	}
 
 	#[test]
