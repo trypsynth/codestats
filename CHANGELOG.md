@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.8.3
 
 - `.h` files can now be C++: a header is counted as C++ when it has C++-only constructs such as `namespace`, `template`, `std::`, `virtual` or access specifiers, and as C otherwise. On wxWidgets, about 1,870 headers counted as C are now C++, while the Linux kernel's 27,000 headers stay C
 - Keywords inside comments no longer count when the languages sharing an extension write comments the same way (C, C++ and Objective-C), so a C header discussing "virtual memory" isn't taken for C++; for the same reason, some Objective-C headers whose documentation comments use `@class` are now correctly C++
