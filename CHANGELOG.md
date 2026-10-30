@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.8.2
+
+- `--by-dir` now works in CSV, TSV, Markdown and HTML output, which previously ignored it and showed the language breakdown; with `--verbose` they also list each directory's files
+- Markdown tables now render: a blank line between each table's header and its rows made GitHub-flavored Markdown end the table before its first row
+- `-q` with Markdown or HTML output no longer ends with "No recognized programming languages found."
+- `--by-dir --sort-by files` now sorts directories by file count rather than line count
+- `--min-lines` is now applied before `--top-languages`, so `-t 3` shows three entries whenever three pass the threshold, whatever the sort order
+- Binary files made of small 16-bit values (lookup tables and the like) are no longer mistaken for UTF-16 text and counted as code
+- Piping into a command that stops reading early, like `cs | head`, no longer prints "Error: Broken pipe" or exits with an error
+- Invalid option values now name the option, list the accepted values and suggest the closest one (`-o xml` suggests `html`) instead of "one of the values isn't valid for an argument"
+- Files of a language left out by `--lang` or `--exclude-lang` are skipped without being read when their name alone identifies the language
+
 ## 0.8.1
 
 - JavaScript and TypeScript regex literals are now recognized, so a regex containing a backtick or `/*` (as in jQuery Validation) no longer turns the following lines into code or comments
