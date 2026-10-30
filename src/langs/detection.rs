@@ -3,7 +3,7 @@ pub mod scoring;
 
 use std::borrow::Cow;
 
-use self::patterns::get_candidates;
+pub use self::patterns::get_candidates;
 use super::data::{LANGUAGES, Language};
 
 /// Score awarded for each comment style match when disambiguating languages.
@@ -202,22 +202,22 @@ pub struct Detection {
 /// How far the winning candidate must beat the runner-up (three keyword hits) for a decision from a small sample to stand.
 const DECISIVE_MARGIN: i32 = 3 * KEYWORD_MATCH_SCORE;
 
+/// Pick a language from a filename's candidates (see [`get_candidates`]). Content is only consulted when there isn't exactly one candidate.
 #[must_use]
-pub fn detect_language(filename: &str, content: Option<&str>) -> Detection {
-	let candidates = get_candidates(filename);
+pub fn detect_language(candidates: &[&'static Language], content: Option<&str>) -> Detection {
 	let decided = |language| Detection { language, close_call: false };
 	match candidates.len() {
 		0 => decided(content.and_then(detect_from_shebang)),
 		1 => decided(Some(candidates[0])),
 		_ => {
 			let Some(file_content) = content else {
-				return decided(default_candidate(&candidates));
+				return decided(default_candidate(candidates));
 			};
 			if let Some(language) = detect_from_shebang(file_content) {
 				return decided(Some(language));
 			}
-			let (language, margin) = disambiguate(&candidates, file_content);
-			let default = default_candidate(&candidates);
+			let (language, margin) = disambiguate(candidates, file_content);
+			let default = default_candidate(candidates);
 			// Only a narrow win for something other than the default (LPC or Objective-C over C) is worth a closer look; a narrow win for the default is the expected answer.
 			let surprising = language.is_none() || language.map(|l| l.index) != default.map(|l| l.index);
 			Detection { language: language.or(default), close_call: margin < DECISIVE_MARGIN && surprising }
@@ -225,16 +225,15 @@ pub fn detect_language(filename: &str, content: Option<&str>) -> Detection {
 	}
 }
 
-#[must_use]
-pub fn detect_language_info(filename: &str, content: Option<&str>) -> Option<&'static Language> {
-	detect_language(filename, content).language
-}
-
 #[cfg(test)]
 mod tests {
 	use rstest::rstest;
 
 	use super::*;
+
+	fn detect_language_info(filename: &str, content: Option<&str>) -> Option<&'static Language> {
+		detect_language(&get_candidates(filename), content).language
+	}
 
 	const TEST_LANGUAGE_ALPHA: Language = Language {
 		index: 0,

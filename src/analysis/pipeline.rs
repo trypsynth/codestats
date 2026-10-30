@@ -55,12 +55,16 @@ pub fn process_file(
 	};
 	let metadata = file_path.metadata().with_context(|| read_metadata_context(file_path))?;
 	let file_size = metadata.len();
-	let language_from_name = langs::detect_language_info(filename.as_ref(), None);
+	let candidates = langs::get_candidates(&filename);
+	if let [language] = candidates[..]
+		&& !should_process_language(language, include_languages, exclude_languages)
+	{
+		return Ok(());
+	}
 	if file_size == 0 {
-		if let Some(language) = language_from_name {
-			if !should_process_language(language, include_languages, exclude_languages) {
-				return Ok(());
-			}
+		if let Some(language) = langs::detect_language(&candidates, None).language
+			&& should_process_language(language, include_languages, exclude_languages)
+		{
 			let path = collect_details.then(|| display_path(file_path, display_root));
 			results.add_file(language, &LineCounts::default(), 0, path);
 		}
@@ -72,11 +76,16 @@ pub fn process_file(
 	if is_probably_binary(&sample_bytes, encoding) {
 		return Ok(());
 	}
-	let mut detection = langs::detect_language(filename.as_ref(), Some(&decode_bytes(&sample_bytes, encoding, true)));
+	// A single candidate decides by name alone, so only decode the sample when content has a say.
+	let content_decides = candidates.len() != 1;
+	let mut detection = langs::detect_language(
+		&candidates,
+		content_decides.then(|| decode_bytes(&sample_bytes, encoding, true)).as_deref(),
+	);
 	// When a shared extension was a close call on the small sample, look further: a long license or doc comment at the top of a file can drown out its code.
 	if detection.close_call && file_size > sample_bytes.len() as u64 {
 		let wide_sample = source.head(DETECTION_WINDOW)?;
-		detection = langs::detect_language(filename.as_ref(), Some(&decode_bytes(&wide_sample, encoding, true)));
+		detection = langs::detect_language(&candidates, Some(&decode_bytes(&wide_sample, encoding, true)));
 	}
 	let Some(language) = detection.language else {
 		return Ok(());

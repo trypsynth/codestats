@@ -20,7 +20,7 @@ mod data;
 mod detection;
 
 pub use data::{LANGUAGES, Language};
-pub use detection::{detect_language, detect_language_info, is_shebang_for, scoring};
+pub use detection::{detect_language, get_candidates, is_shebang_for, scoring};
 
 use crate::display::formatting::pluralize;
 
@@ -65,7 +65,7 @@ pub fn print_all_languages(writer: &mut dyn Write, terminal_width: usize) -> Res
 
 #[cfg(test)]
 mod tests {
-	use super::detection::patterns::get_candidates;
+	use super::get_candidates;
 
 	#[test]
 	fn get_candidates_uses_literal_map() {
