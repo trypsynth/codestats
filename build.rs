@@ -25,6 +25,9 @@ fn main() -> Result<()> {
 	let manifest_dir = env::var("CARGO_MANIFEST_DIR")?;
 	let json_path = Path::new(&manifest_dir).join("languages.json5");
 	println!("cargo:rerun-if-changed={}", json_path.display());
+	// Declaring any rerun-if-changed replaces cargo's default of watching the whole package, so the build script's own modules have to be listed too.
+	println!("cargo:rerun-if-changed=build.rs");
+	println!("cargo:rerun-if-changed=build");
 	let json_content = fs::read_to_string(&json_path)?;
 	let language_map: IndexMap<String, LanguageConfig> =
 		json5::from_str(&json_content).map_err(|e| format!("Failed to parse languages.json5: {e}"))?;
