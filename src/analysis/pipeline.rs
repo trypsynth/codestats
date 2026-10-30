@@ -5,6 +5,7 @@ use anyhow::{Context as _, Result};
 use super::{
 	encoding::{decode_bytes, detect_encoding, is_probably_binary},
 	file_io::FileSource,
+	line_counter,
 	stats::{AnalysisResults, LineCounts},
 };
 use crate::langs::{self, Language};
@@ -66,8 +67,8 @@ pub fn process_file(
 		}
 		return Ok(());
 	}
-	let mut source = FileSource::open(file_path, file_size)?;
-	let sample_bytes = source.sample(file_size)?;
+	let source = FileSource::open(file_path, file_size)?;
+	let sample_bytes = source.sample();
 	let encoding = detect_encoding(&sample_bytes);
 	if is_probably_binary(&sample_bytes, encoding) {
 		return Ok(());
@@ -79,9 +80,9 @@ pub fn process_file(
 		content_decides.then(|| decode_bytes(&sample_bytes, encoding, true)).as_deref(),
 	);
 	// When a shared extension was a close call on the small sample, look further: a long license or doc comment at the top of a file can drown out its code.
-	if detection.close_call && file_size > sample_bytes.len() as u64 {
-		let wide_sample = source.head(DETECTION_WINDOW)?;
-		detection = langs::detect_language(&candidates, Some(&decode_bytes(&wide_sample, encoding, true)));
+	if detection.close_call && source.len() > sample_bytes.len() {
+		let wide_sample = &source[..source.len().min(DETECTION_WINDOW)];
+		detection = langs::detect_language(&candidates, Some(&decode_bytes(wide_sample, encoding, true)));
 	}
 	let Some(language) = detection.language else {
 		return Ok(());
@@ -89,7 +90,7 @@ pub fn process_file(
 	if !should_process_language(language, include_languages, exclude_languages) {
 		return Ok(());
 	}
-	let counts = source.count_lines(language, encoding)?;
+	let counts = line_counter::count_lines(language, encoding, &source);
 	results.add_file(language, &counts, file_size, collect_details.then(|| display_path(file_path, display_root)));
 	Ok(())
 }

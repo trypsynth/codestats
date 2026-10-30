@@ -1,6 +1,5 @@
-use std::{borrow::Cow, io::Read};
+use std::borrow::Cow;
 
-use anyhow::Result;
 use encoding_rs::{CoderResult, Decoder, Encoding, UTF_8, UTF_16BE, UTF_16LE};
 use memchr::memchr;
 
@@ -86,32 +85,20 @@ fn detect_utf16_without_bom(samples: &[u8]) -> Option<FileEncoding> {
 }
 
 /// Count the lines of a UTF-16 file, decoding it a chunk at a time.
-pub(super) fn count_utf16<R: Read>(language: &Language, encoding: FileEncoding, reader: &mut R) -> Result<LineCounts> {
+pub(super) fn count_utf16(language: &Language, encoding: FileEncoding, bytes: &[u8]) -> LineCounts {
 	let mut line_counts = LineCounts::default();
 	let mut comment_state = CommentState::new();
 	let mut is_first_line = true;
 	let mut decoder = encoding.encoding.new_decoder_without_bom_handling();
 	let mut pending = String::new();
-	let mut buffer = [0u8; UTF16_DECODE_CHUNK_SIZE];
-	let mut skip_bom = encoding.bom_len;
-	loop {
-		let read = reader.read(&mut buffer)?;
-		let last = read == 0;
-		let mut slice = &buffer[..read];
-		if skip_bom > 0 && !last {
-			if read <= skip_bom {
-				skip_bom -= read;
-				continue;
-			}
-			slice = &slice[skip_bom..];
-			skip_bom = 0;
-		}
-		decode_to_string(&mut decoder, slice, last, &mut pending);
-		drain_lines(&mut pending, language, &mut line_counts, &mut comment_state, &mut is_first_line, last);
-		if last {
-			return Ok(line_counts);
-		}
+	let text = bytes.get(encoding.bom_len..).unwrap_or_default();
+	for chunk in text.chunks(UTF16_DECODE_CHUNK_SIZE) {
+		decode_to_string(&mut decoder, chunk, false, &mut pending);
+		drain_lines(&mut pending, language, &mut line_counts, &mut comment_state, &mut is_first_line, false);
 	}
+	decode_to_string(&mut decoder, &[], true, &mut pending);
+	drain_lines(&mut pending, language, &mut line_counts, &mut comment_state, &mut is_first_line, true);
+	line_counts
 }
 
 fn decode_to_string(decoder: &mut Decoder, chunk: &[u8], last: bool, output: &mut String) {
@@ -219,7 +206,7 @@ mod tests {
 		assert!(bytes.len() > 3 * UTF16_DECODE_CHUNK_SIZE);
 		let language = crate::langs::LANGUAGES.iter().find(|l| l.name == "Rust").unwrap();
 		let file_encoding = FileEncoding { encoding, bom_len: bom.len() };
-		let counts = count_utf16(language, file_encoding, &mut bytes.as_slice()).unwrap();
+		let counts = count_utf16(language, file_encoding, &bytes);
 		assert_eq!(counts, LineCounts { total: 3001, code: 1001, comment: 1000, blank: 1000, shebang: 0 });
 	}
 

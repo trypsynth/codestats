@@ -1,21 +1,9 @@
-use std::{
-	borrow::Cow,
-	fs::File,
-	io::{BufRead, BufReader, Read, Seek, SeekFrom},
-	path::Path,
-};
+use std::{cell::RefCell, fs::File, io::Read, ops::Deref, path::Path};
 
 use anyhow::{Context as _, Result};
 use memmap2::Mmap;
 
-use super::{
-	encoding::{self, FileEncoding},
-	line_counter,
-	stats::LineCounts,
-};
-use crate::langs::Language;
-
-/// Files larger than this threshold are memory-mapped instead of buffered.
+/// Files larger than this threshold are memory-mapped instead of read into memory.
 const MMAP_THRESHOLD: u64 = 256 * 1024;
 /// Size of sample chunks extracted from files for binary/language detection. For large files, we sample from both the start and middle of the file.
 const SAMPLE_SIZE: usize = 4 * 1024;
@@ -33,82 +21,27 @@ impl SampleBuf {
 	}
 }
 
-impl std::ops::Deref for SampleBuf {
+impl Deref for SampleBuf {
 	type Target = [u8];
 	fn deref(&self) -> &[u8] {
 		&self.data[..self.len]
 	}
 }
 
-pub(super) trait LineSource {
-	fn for_each_line<F>(&mut self, f: &mut F) -> Result<()>
-	where
-		F: FnMut(&[u8]);
+thread_local! {
+	/// Each worker reads small files into the same buffer, so they don't cost an allocation apiece.
+	static READ_BUFFER: RefCell<Vec<u8>> = const { RefCell::new(Vec::new()) };
 }
 
-pub(super) struct BufLineSource<R: BufRead> {
-	reader: R,
-	buffer: Vec<u8>,
-}
-
-impl<R: BufRead> BufLineSource<R> {
-	pub(super) fn new(reader: R) -> Self {
-		Self { reader, buffer: Vec::with_capacity(1024) }
-	}
-}
-
-impl<R: BufRead> LineSource for BufLineSource<R> {
-	fn for_each_line<F>(&mut self, f: &mut F) -> Result<()>
-	where
-		F: FnMut(&[u8]),
-	{
-		loop {
-			self.buffer.clear();
-			let bytes_read = self.reader.read_until(b'\n', &mut self.buffer)?;
-			if bytes_read == 0 {
-				break;
-			}
-			f(&self.buffer);
-		}
-		Ok(())
-	}
-}
-
-pub(super) struct MmapLineSource<'a> {
-	bytes: &'a [u8],
-	pos: usize,
-}
-
-impl<'a> MmapLineSource<'a> {
-	pub(super) const fn new(bytes: &'a [u8]) -> Self {
-		Self { bytes, pos: 0 }
-	}
-}
-
-impl LineSource for MmapLineSource<'_> {
-	fn for_each_line<F>(&mut self, f: &mut F) -> Result<()>
-	where
-		F: FnMut(&[u8]),
-	{
-		while self.pos < self.bytes.len() {
-			let line_end =
-				memchr::memchr(b'\n', &self.bytes[self.pos..]).map_or(self.bytes.len(), |offset| self.pos + offset + 1);
-			let line_bytes = &self.bytes[self.pos..line_end];
-			f(line_bytes);
-			self.pos = line_end;
-		}
-		Ok(())
-	}
-}
-
+/// A file's contents: read into memory when small, memory-mapped when large.
 pub(super) enum FileSource {
-	Buffered(File),
+	Read(Vec<u8>),
 	Mapped(Mmap),
 }
 
 impl FileSource {
 	pub(super) fn open(file_path: &Path, file_size: u64) -> Result<Self> {
-		let file = File::open(file_path).with_context(|| format!("Failed to open file {}", file_path.display()))?;
+		let mut file = File::open(file_path).with_context(|| format!("Failed to open file {}", file_path.display()))?;
 		if file_size >= MMAP_THRESHOLD {
 			// SAFETY: Memory-mapping is safe under these conditions:
 			// 1. We only read from the mmap, never write.
@@ -118,35 +51,33 @@ impl FileSource {
 				.with_context(|| format!("Failed to memory-map file {}", file_path.display()))?;
 			Ok(Self::Mapped(mmap))
 		} else {
-			Ok(Self::Buffered(file))
+			let mut buffer = READ_BUFFER.take();
+			buffer.clear();
+			file.read_to_end(&mut buffer).with_context(|| format!("Failed to read file {}", file_path.display()))?;
+			Ok(Self::Read(buffer))
 		}
 	}
 
-	pub(super) fn sample(&mut self, file_size: u64) -> Result<SampleBuf> {
+	/// The start and middle of the file, for binary and language detection.
+	pub(super) fn sample(&self) -> SampleBuf {
+		sample_from_slice(self)
+	}
+}
+
+impl Deref for FileSource {
+	type Target = [u8];
+	fn deref(&self) -> &[u8] {
 		match self {
-			Self::Buffered(file) => sample_file(file, file_size),
-			Self::Mapped(mmap) => Ok(sample_from_slice(mmap)),
+			Self::Read(buffer) => buffer,
+			Self::Mapped(mmap) => mmap,
 		}
 	}
+}
 
-	/// Read up to `max` bytes from the start of the file, for detecting the language of files whose extension is shared.
-	pub(super) fn head(&mut self, max: usize) -> Result<Cow<'_, [u8]>> {
-		match self {
-			Self::Buffered(file) => {
-				let mut buf = Vec::with_capacity(max);
-				file.by_ref().take(max as u64).read_to_end(&mut buf)?;
-				// Reset for actual reading.
-				file.rewind()?;
-				Ok(Cow::Owned(buf))
-			}
-			Self::Mapped(mmap) => Ok(Cow::Borrowed(&mmap[..mmap.len().min(max)])),
-		}
-	}
-
-	pub(super) fn count_lines(self, language: &Language, encoding: FileEncoding) -> Result<LineCounts> {
-		match self {
-			Self::Buffered(file) => count_lines_buffered(file, language, encoding),
-			Self::Mapped(mmap) => count_lines_mmap(&mmap, language, encoding),
+impl Drop for FileSource {
+	fn drop(&mut self) {
+		if let Self::Read(buffer) = self {
+			READ_BUFFER.set(std::mem::take(buffer));
 		}
 	}
 }
@@ -167,21 +98,6 @@ fn sample_ranges(file_len: u64) -> (usize, Option<(u64, usize)>) {
 	(start_len, Some((mid_offset, mid_len)))
 }
 
-fn sample_file(file: &mut File, file_size: u64) -> Result<SampleBuf> {
-	let mut buf = SampleBuf::new();
-	let (start_len, mid_range) = sample_ranges(file_size);
-	let read_start = file.read(&mut buf.data[..start_len])?;
-	buf.len = read_start;
-	if let Some((mid_offset, mid_len)) = mid_range {
-		file.seek(SeekFrom::Start(mid_offset))?;
-		let read_mid = file.read(&mut buf.data[buf.len..buf.len + mid_len])?;
-		buf.len += read_mid;
-	}
-	// Reset for actual reading.
-	file.rewind()?;
-	Ok(buf)
-}
-
 fn sample_from_slice(file_bytes: &[u8]) -> SampleBuf {
 	let mut buf = SampleBuf::new();
 	let (start_len, mid_range) = sample_ranges(file_bytes.len() as u64);
@@ -196,40 +112,11 @@ fn sample_from_slice(file_bytes: &[u8]) -> SampleBuf {
 	buf
 }
 
-fn count_lines_buffered(mut file: File, language: &Language, encoding: FileEncoding) -> Result<LineCounts> {
-	if encoding::is_utf16(encoding.encoding) {
-		// The decoder reads in chunks of its own, so a `BufReader` would only add a copy.
-		return encoding::count_utf16(language, encoding, &mut file);
-	}
-	let reader = BufReader::with_capacity(64 * 1024, file);
-	line_counter::count_lines(language, encoding, &mut BufLineSource::new(reader))
-}
-
-fn count_lines_mmap(mmap: &Mmap, language: &Language, encoding: FileEncoding) -> Result<LineCounts> {
-	if encoding::is_utf16(encoding.encoding) {
-		return encoding::count_utf16(language, encoding, &mut &mmap[..]);
-	}
-	line_counter::count_lines(language, encoding, &mut MmapLineSource::new(mmap))
-}
-
 #[cfg(test)]
 mod tests {
 	use rstest::rstest;
 
 	use super::*;
-
-	#[rstest]
-	#[case::empty(b"" as &[u8], vec![])]
-	#[case::single_no_newline(b"hello" as &[u8], vec![b"hello".to_vec()])]
-	#[case::single_with_newline(b"hello\n" as &[u8], vec![b"hello\n".to_vec()])]
-	#[case::multiple(b"line1\nline2\nline3" as &[u8], vec![b"line1\n".to_vec(), b"line2\n".to_vec(), b"line3".to_vec()])]
-	#[case::crlf(b"line1\r\nline2\r\n" as &[u8], vec![b"line1\r\n".to_vec(), b"line2\r\n".to_vec()])]
-	fn test_mmap_line_source(#[case] data: &[u8], #[case] expected: Vec<Vec<u8>>) {
-		let mut source = MmapLineSource::new(data);
-		let mut lines = Vec::new();
-		source.for_each_line(&mut |line| lines.push(line.to_vec())).unwrap();
-		assert_eq!(lines, expected);
-	}
 
 	#[rstest]
 	#[case::small(100, 100, true)]
@@ -271,19 +158,5 @@ mod tests {
 		assert!(samples.len() <= SAMPLE_SIZE * 2);
 		// First SAMPLE_SIZE bytes should match
 		assert_eq!(&samples[..SAMPLE_SIZE], &data[..SAMPLE_SIZE]);
-	}
-
-	#[test]
-	fn test_buf_line_source_multiple_lines() {
-		use std::io::Cursor;
-		let data = b"line1\nline2\nline3";
-		let reader = std::io::BufReader::new(Cursor::new(data));
-		let mut source = BufLineSource::new(reader);
-		let mut lines = Vec::new();
-		source.for_each_line(&mut |line| lines.push(line.to_vec())).unwrap();
-		assert_eq!(lines.len(), 3);
-		assert_eq!(lines[0], b"line1\n");
-		assert_eq!(lines[1], b"line2\n");
-		assert_eq!(lines[2], b"line3");
 	}
 }
