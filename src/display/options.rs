@@ -1,6 +1,7 @@
+use clap::ValueEnum;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, ValueEnum)]
 #[serde(rename_all = "lowercase")]
 pub enum NumberStyle {
 	Plain,
@@ -9,41 +10,15 @@ pub enum NumberStyle {
 	Space,
 }
 
-impl std::str::FromStr for NumberStyle {
-	type Err = String;
-
-	fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-		match s {
-			"plain" => Ok(Self::Plain),
-			"comma" => Ok(Self::Comma),
-			"underscore" => Ok(Self::Underscore),
-			"space" => Ok(Self::Space),
-			_ => Err(format!("invalid number style '{s}'")),
-		}
-	}
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, ValueEnum)]
 #[serde(rename_all = "lowercase")]
 pub enum SizeStyle {
 	Binary,
 	Decimal,
 }
 
-impl std::str::FromStr for SizeStyle {
-	type Err = String;
-
-	fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-		match s {
-			"binary" => Ok(Self::Binary),
-			"decimal" => Ok(Self::Decimal),
-			_ => Err(format!("invalid size style '{s}'")),
-		}
-	}
-}
-
 /// Field used when ordering languages (and optionally files).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, ValueEnum)]
 #[serde(rename_all = "lowercase")]
 pub enum LanguageSortKey {
 	Lines,
@@ -55,41 +30,12 @@ pub enum LanguageSortKey {
 	Name,
 }
 
-impl std::str::FromStr for LanguageSortKey {
-	type Err = String;
-
-	fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-		match s {
-			"lines" => Ok(Self::Lines),
-			"code" => Ok(Self::Code),
-			"comments" => Ok(Self::Comments),
-			"blanks" => Ok(Self::Blanks),
-			"files" => Ok(Self::Files),
-			"size" => Ok(Self::Size),
-			"name" => Ok(Self::Name),
-			_ => Err(format!("invalid sort key '{s}'")),
-		}
-	}
-}
-
 /// Direction for applying a sort key.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, ValueEnum)]
 #[serde(rename_all = "lowercase")]
 pub enum SortDirection {
 	Asc,
 	Desc,
-}
-
-impl std::str::FromStr for SortDirection {
-	type Err = String;
-
-	fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-		match s {
-			"asc" => Ok(Self::Asc),
-			"desc" => Ok(Self::Desc),
-			_ => Err(format!("invalid sort direction '{s}'")),
-		}
-	}
 }
 
 /// Indentation style for output formatting.

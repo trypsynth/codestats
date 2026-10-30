@@ -30,13 +30,10 @@ mod report;
 mod separated_values;
 pub mod template_filters;
 
-use std::{
-	fmt::{self, Display},
-	io::Write,
-	path::Path,
-};
+use std::{io::Write, path::Path};
 
 use anyhow::Result;
+use clap::ValueEnum;
 pub use formatting::{FormatterContext, apply_sort};
 pub use html::HtmlFormatter;
 pub use human::HumanFormatter;
@@ -49,7 +46,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::analysis::AnalysisResults;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, ValueEnum)]
 #[serde(rename_all = "kebab-case")]
 pub enum OutputFormat {
 	Human,
@@ -59,37 +56,6 @@ pub enum OutputFormat {
 	Tsv,
 	Markdown,
 	Html,
-}
-
-impl Display for OutputFormat {
-	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		match self {
-			Self::Human => write!(f, "human"),
-			Self::Json => write!(f, "json"),
-			Self::JsonCompact => write!(f, "json-compact"),
-			Self::Csv => write!(f, "csv"),
-			Self::Tsv => write!(f, "tsv"),
-			Self::Markdown => write!(f, "markdown"),
-			Self::Html => write!(f, "html"),
-		}
-	}
-}
-
-impl std::str::FromStr for OutputFormat {
-	type Err = String;
-
-	fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-		match s {
-			"human" => Ok(Self::Human),
-			"json" => Ok(Self::Json),
-			"json-compact" => Ok(Self::JsonCompact),
-			"csv" => Ok(Self::Csv),
-			"tsv" => Ok(Self::Tsv),
-			"markdown" => Ok(Self::Markdown),
-			"html" => Ok(Self::Html),
-			_ => Err(format!("invalid output format '{s}'")),
-		}
-	}
 }
 
 /// Trait for formatting analysis results in a desired format.
