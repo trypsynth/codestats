@@ -20,6 +20,24 @@ use display::ViewOptions;
 use terminal_size::terminal_size;
 
 fn main() -> Result<()> {
+	match run() {
+		// The reader went away (`cs | head`); there's no one left to report to.
+		Err(err) if is_broken_pipe(&err) => Ok(()),
+		result => result,
+	}
+}
+
+/// Whether `err` comes from writing to a pipe whose reader has closed it.
+fn is_broken_pipe(err: &anyhow::Error) -> bool {
+	err.chain().any(|cause| {
+		cause.downcast_ref::<io::Error>().is_some_and(|e| e.kind() == io::ErrorKind::BrokenPipe)
+			// serde_json wraps the I/O error without exposing it as a source.
+			|| cause.downcast_ref::<serde_json::Error>().and_then(serde_json::Error::io_error_kind)
+				== Some(io::ErrorKind::BrokenPipe)
+	})
+}
+
+fn run() -> Result<()> {
 	let (cli, matches) = Cli::parse_with_matches();
 	if let Some(command) = cli.command {
 		match command {
@@ -59,4 +77,23 @@ fn main() -> Result<()> {
 		return Err(anyhow!("Skipped {} entries due to errors", results.skipped_entries()));
 	}
 	Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+	use std::io;
+
+	use anyhow::Context as _;
+
+	use super::is_broken_pipe;
+
+	#[test]
+	fn broken_pipe_is_recognized_through_wrapping() {
+		let pipe = || io::Error::from(io::ErrorKind::BrokenPipe);
+		assert!(is_broken_pipe(&pipe().into()));
+		assert!(is_broken_pipe(&Err::<(), _>(pipe()).context("writing report").unwrap_err()));
+		assert!(is_broken_pipe(&serde_json::Error::io(pipe()).into()));
+		assert!(!is_broken_pipe(&io::Error::from(io::ErrorKind::NotFound).into()));
+		assert!(!is_broken_pipe(&anyhow::anyhow!("Skipped 3 entries due to errors")));
+	}
 }
