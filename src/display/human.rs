@@ -2,12 +2,12 @@ use std::{borrow::Cow, io::Write, path::Path};
 
 use anyhow::Result;
 
-use super::{FormatterContext, OutputFormatter, ReportData, Verbosity, ViewOptions, apply_sort};
+use super::{FormatterContext, OutputFormatter, ReportData, Verbosity, ViewOptions};
 use crate::{
 	analysis::{AnalysisResults, stats::percentage},
 	display::{
 		formatting::pluralize,
-		report::{DirRecord, FileRecord, LanguageRecord, Summary, sort_value},
+		report::{DirRecord, FileRecord, LanguageRecord, Summary},
 	},
 };
 
@@ -39,7 +39,7 @@ impl OutputFormatter for HumanFormatter {
 		let (ctx, report) = self.prepare_report(results, path, view_options);
 		Self::write_overview(&report, &ctx, writer)?;
 		if view_options.verbosity == Verbosity::Summary {
-			Self::write_language_summary(results, &report.summary, &ctx, view_options, writer)?;
+			Self::write_language_summary(results, &report.summary, &ctx, writer)?;
 			return Ok(());
 		}
 		if view_options.by_dir {
@@ -88,35 +88,21 @@ impl HumanFormatter {
 		results: &AnalysisResults,
 		summary: &Summary,
 		ctx: &FormatterContext,
-		view_options: ViewOptions,
 		writer: &mut dyn Write,
 	) -> Result<()> {
-		let mut langs: Vec<_> = results.languages().collect();
-		if langs.is_empty() {
+		let (languages, _) = LanguageRecord::from_results(results, Verbosity::Summary, ctx);
+		if languages.is_empty() {
 			return Ok(());
 		}
-		let sort_key = view_options.language_sort_key;
-		apply_sort(
-			&mut langs,
-			view_options.sort_direction,
-			|(lang, stats)| sort_value(sort_key, lang.name, stats.counts(), Some(stats.files()), stats.size()),
-			|a, b| a.0.name.cmp(b.0.name),
-		);
-		if let Some(min) = view_options.min_lines {
-			langs.retain(|(_, stats)| stats.counts().total >= min);
-		}
-		if let Some(n) = view_options.top_languages {
-			langs.truncate(n);
-		}
-		let parts: Vec<String> = langs
+		let parts: Vec<String> = languages
 			.iter()
-			.map(|(lang, stats)| {
-				let pct = percentage(stats.files(), summary.total_files);
+			.map(|lang| {
+				let pct = percentage(lang.files, summary.total_files);
 				format!(
 					"{} {} {} ({}%)",
-					ctx.number(stats.files()),
+					ctx.number(lang.files),
 					lang.name,
-					pluralize(stats.files(), "file", "files"),
+					pluralize(lang.files, "file", "files"),
 					ctx.percent(pct)
 				)
 			})

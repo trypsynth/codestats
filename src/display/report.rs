@@ -205,7 +205,7 @@ impl Summary {
 }
 
 /// The value to order a row by for `key`. Rows without a file count (single files) sort by name for `Files`.
-pub(super) const fn sort_value<'a>(
+const fn sort_value<'a>(
 	key: LanguageSortKey,
 	name: &'a str,
 	counts: &LineCounts,
@@ -257,7 +257,12 @@ pub struct LanguageRecord<'a> {
 
 impl<'a> LanguageRecord<'a> {
 	#[must_use]
-	fn from_results(results: &'a AnalysisResults, verbosity: Verbosity, ctx: &FormatterContext) -> (Vec<Self>, usize) {
+	/// The languages to show, sorted and filtered by the view options, and how many were left out.
+	pub(super) fn from_results(
+		results: &'a AnalysisResults,
+		verbosity: Verbosity,
+		ctx: &FormatterContext,
+	) -> (Vec<Self>, usize) {
 		let mut stats_vec: Vec<_> = results.languages().map(|(lang, stats)| (lang.name, stats)).collect();
 		let total = stats_vec.len();
 		let sort_key = ctx.options.language_sort_key;
