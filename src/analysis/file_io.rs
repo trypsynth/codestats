@@ -40,8 +40,8 @@ pub(super) enum FileSource {
 }
 
 impl FileSource {
-	pub(super) fn open(file_path: &Path, file_size: u64) -> Result<Self> {
-		let mut file = File::open(file_path).with_context(|| format!("Failed to open file {}", file_path.display()))?;
+	/// Read or map an open `file` of `file_size` bytes; `file_path` is for error messages.
+	pub(super) fn open(mut file: File, file_size: u64, file_path: &Path) -> Result<Self> {
 		if file_size >= MMAP_THRESHOLD {
 			// SAFETY: Memory-mapping is safe under these conditions:
 			// 1. We only read from the mmap, never write.
@@ -64,12 +64,9 @@ impl FileSource {
 	}
 
 	/// Read just the start of a file, for files whose name matches no language and that are only worth reading in full if they begin with a shebang.
-	pub(super) fn head(file_path: &Path) -> Result<SampleBuf> {
-		let mut file = File::open(file_path).with_context(|| format!("Failed to open file {}", file_path.display()))?;
+	pub(super) fn head(file: &mut File) -> std::io::Result<SampleBuf> {
 		let mut sample = SampleBuf::new();
-		sample.len = file
-			.read(&mut sample.data[..SAMPLE_SIZE])
-			.with_context(|| format!("Failed to read file {}", file_path.display()))?;
+		sample.len = file.read(&mut sample.data[..SAMPLE_SIZE])?;
 		Ok(sample)
 	}
 

@@ -1,4 +1,4 @@
-use std::{borrow::Cow, path::Path};
+use std::{borrow::Cow, fs::File, io::Seek as _, path::Path};
 
 use anyhow::{Context as _, Result};
 
@@ -49,15 +49,16 @@ pub fn process_file(
 	} else {
 		Cow::Borrowed(filename_lossy.as_ref())
 	};
-	let metadata =
-		file_path.metadata().with_context(|| format!("Failed to read metadata for {}", file_path.display()))?;
-	let file_size = metadata.len();
 	let candidates = langs::get_candidates(&filename);
 	if let [language] = candidates[..]
 		&& !should_process_language(language, include_languages, exclude_languages)
 	{
 		return Ok(());
 	}
+	let mut file = File::open(file_path).with_context(|| format!("Failed to open file {}", file_path.display()))?;
+	// `fstat` on the open file rather than `stat` on its path, so the path is only looked up once.
+	let file_size =
+		file.metadata().with_context(|| format!("Failed to read metadata for {}", file_path.display()))?.len();
 	if file_size == 0 {
 		if let Some(language) = langs::detect_language(&candidates, None).language
 			&& should_process_language(language, include_languages, exclude_languages)
@@ -69,15 +70,17 @@ pub fn process_file(
 	}
 	// A file whose name matches no language counts only if it starts with a shebang, so check that before reading it all.
 	if candidates.is_empty() {
-		let head = FileSource::head(file_path)?;
+		let head =
+			FileSource::head(&mut file).with_context(|| format!("Failed to read file {}", file_path.display()))?;
 		let encoding = detect_encoding(&head);
 		if is_probably_binary(&head, encoding)
 			|| langs::detect_language(&[], Some(&decode_bytes(&head, encoding, true))).language.is_none()
 		{
 			return Ok(());
 		}
+		file.rewind()?;
 	}
-	let source = FileSource::open(file_path, file_size)?;
+	let source = FileSource::open(file, file_size, file_path)?;
 	let sample_bytes = source.sample();
 	let encoding = detect_encoding(&sample_bytes);
 	if is_probably_binary(&sample_bytes, encoding) {
