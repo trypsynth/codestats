@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-- Added Texinfo (`.texi`, `.texinfo`, `.txi`) and XAML (`.xaml`)
+- Added Texinfo (`.texi`, `.texinfo`, `.txi`), XAML (`.xaml`), and braille tables: liblouis (`.ctb`, `.cti`, `.utb`, `.uti`, `.dis`) and BRLTTY (`.ktb`, `.kti`, `.ttb`, `.tti`, `.atb`, `.ati`)
+- 6502 assembly (`.s65`, `.a65`) counts as Assembly
+- Dependency files that compilers write for Make (`.d`) are no longer counted as D; D files are recognized by their keywords and doc comments
 - `.tmpl` and `.gotxt` files count as Go Template, `.vcproj` and `.vcxproj.filters` as MSBuild, and Autoconf's `configure.ac` and `configure.in` as M4
 - C3 test files (`.c3t`) count as C3, and lowercase `sconscript`/`sconstruct` files as Python, as NVDA's build uses
 - Faster on large trees with many small files: the binary-file check and line trimming do less work per file and per line (about 9% fewer cycles on a 923K-file directory)

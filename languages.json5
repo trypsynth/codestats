@@ -168,7 +168,7 @@
 		block_comments: [["/*", "*/"]],
 	},
 	"Assembly": {
-		file_patterns: ["*.asm", "*.s", "*.S", "*.inc"],
+		file_patterns: ["*.asm", "*.s", "*.S", "*.inc", "*.s65", "*.a65"],
 		line_comments: [";", "# ", "#\t", "//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["%macro", "%endmacro", "%define", "%include", "%ifdef", "section ."],
@@ -325,6 +325,10 @@
 	"BrightScript": {
 		file_patterns: ["*.brs"],
 		line_comments: ["'", "rem", "REM", "Rem"],
+	},
+	"BRLTTY Table": {
+		file_patterns: ["*.atb", "*.ati", "*.ktb", "*.kti", "*.ttb", "*.tti"],
+		line_comments: ["#"],
 	},
 	"Buck": {
 		file_patterns: ["BUCK"],
@@ -578,6 +582,9 @@
 		block_comments: [["/*", "*/"], ["/+", "+/"]],
 		nested_blocks: ["/+"],
 		shebangs: ["#!/usr/bin/env rdmd", "#!/usr/bin/rdmd"],
+		// `.d` is also the dependency files compilers write for Make, which are lists of paths, so these keywords carry punctuation that paths don't. Doc comments count, since some modules open with pages of them.
+		keywords: ["module ", "import ", "void ", "return ", "auto ", "struct ", "class ", "enum ", "alias ", "immutable ", "writeln(", ");", "@safe", "@nogc", "/**", "/++", "///"],
+		require_keywords: true,
 	},
 	"D2": {
 		file_patterns: ["*.d2"],
@@ -1344,6 +1351,10 @@
 		line_comments: [";"],
 		shebangs: ["#!/usr/bin/env lfe"],
 	},
+	"liblouis Table": {
+		file_patterns: ["*.ctb", "*.cti", "*.dis", "*.utb", "*.uti"],
+		line_comments: ["#"],
+	},
 	"LIGO": {
 		file_patterns: ["*.ligo", "*.mligo", "*.jsligo", "*.religo"],
 		line_comments: ["//"],
@@ -1442,7 +1453,7 @@
 		block_comments: [["{#", "#}"]],
 	},
 	"Makefile": {
-		file_patterns: ["*.mak", "*.make", "*.mk", "*.mkfile", "BSDmakefile", "GNUmakefile", "Kbuild", "Makefile", "Makefile.boot", "Makefile.frag", "Makefile.in", "Makefile.inc", "Makefile.wat", "makefile", "makefile.sco", "mkfile", "*.inc"],
+		file_patterns: ["*.mak", "*.make", "*.mk", "*.mkfile", "BSDmakefile", "GNUmakefile", "Kbuild", "Makefile", "Makefile.boot", "Makefile.frag", "Makefile.in", "Makefile.inc", "Makefile.wat", "makefile", "makefile.sco", "mkfile", "*.inc", "*.d"],
 		line_comments: ["#"],
 		shebangs: ["#!/usr/bin/make", "#!/usr/bin/env make"],
 		keywords: [":=", "$(", "ifeq", "ifneq", ".PHONY", "$@"],
