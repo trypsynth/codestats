@@ -1,7 +1,12 @@
 pub(super) mod patterns;
 pub mod scoring;
 
-use std::borrow::Cow;
+use std::{
+	borrow::Cow,
+	sync::{LazyLock, OnceLock},
+};
+
+use memchr::memmem::Finder;
 
 pub use self::patterns::get_candidates;
 use super::data::{LANGUAGES, Language};
@@ -23,34 +28,47 @@ const MAX_KEYWORD_OCCURRENCES: usize = 3;
 /// This weighted scoring ensures comment patterns (strong indicators) outweigh
 /// keywords (weaker indicators that may appear as identifiers in other languages).
 #[inline]
-fn score_language(lang: &Language, content: &str, tokens: &[&str]) -> i32 {
+fn score_language(lang: &Language, content: &str, tokens: &[&[u8]]) -> i32 {
 	if lang.line_comments.is_empty() && lang.block_comments.is_empty() && lang.keywords.is_empty() {
 		return 0;
 	}
+	let matchers = scoring_matchers(lang);
+	let bytes = content.as_bytes();
 	let mut score: i32 = 0;
 	for comment in lang.line_comments {
 		if has_line_comment(content, comment) {
 			score = score.saturating_add(COMMENT_MATCH_SCORE);
 		}
 	}
-	for &(start, end, _) in lang.block_comments {
-		if content.contains(start) && content.contains(end) {
+	for (start, end) in &matchers.block_comments {
+		if start.find(bytes).is_some() && end.find(bytes).is_some() {
 			score = score.saturating_add(COMMENT_MATCH_SCORE);
 		}
 	}
-	let mut matched_chars: usize = 0;
-	let mut keyword_hits: usize = 0;
+	let mut counts = vec![0usize; lang.keywords.len()];
+	if !matchers.words.is_empty() {
+		for token in tokens {
+			if !matchers.word_starts[usize::from(token[0].to_ascii_lowercase())] {
+				continue;
+			}
+			for &(keyword, index) in &matchers.words {
+				if token.eq_ignore_ascii_case(keyword) {
+					counts[index] += 1;
+				}
+			}
+		}
+	}
 	// Only the capped count matters, so stop counting early; symbol-only languages need every match for their density check.
-	let limit = if is_symbol_only_language(lang) { usize::MAX } else { MAX_KEYWORD_OCCURRENCES };
-	for keyword in lang.keywords {
-		// If keyword contains special characters, use substring matching to handle cases like "@interface" in Objective-C, which wouldn't match via tokenization since @ is a delimiter.
-		let count = if keyword.chars().any(|c| !c.is_ascii_alphanumeric() && c != '_') {
-			let occurrences = count_substring_keyword(content, keyword, limit);
-			matched_chars = matched_chars.saturating_add(occurrences.saturating_mul(keyword.len()));
-			occurrences
-		} else {
-			tokens.iter().filter(|token| token.eq_ignore_ascii_case(keyword)).take(limit).count()
-		};
+	let limit = if matchers.symbol_only { usize::MAX } else { MAX_KEYWORD_OCCURRENCES };
+	let mut matched_chars: usize = 0;
+	for substring in &matchers.substrings {
+		let occurrences = substring.count(bytes, limit);
+		matched_chars = matched_chars.saturating_add(occurrences.saturating_mul(substring.finder.needle().len()));
+		counts[substring.index] = occurrences;
+	}
+	let mut keyword_hits: usize = 0;
+	for count in counts {
+		let count = count.min(limit);
 		keyword_hits = keyword_hits.saturating_add(count);
 		let capped = i32::try_from(count.min(MAX_KEYWORD_OCCURRENCES)).unwrap_or(0);
 		score = score.saturating_add(capped * KEYWORD_MATCH_SCORE);
@@ -60,7 +78,7 @@ fn score_language(lang: &Language, content: &str, tokens: &[&str]) -> i32 {
 		return 0;
 	}
 	// For symbol-only languages (all keywords are symbols), require high density if alphabetic content exists
-	if is_symbol_only_language(lang) && !tokens.is_empty() {
+	if matchers.symbol_only && !tokens.is_empty() {
 		// Guard against false positives when a file has a few symbols but mostly alphabetic text.
 		let non_whitespace = content.chars().filter(|c| !c.is_whitespace()).count();
 		if non_whitespace > 0 {
@@ -75,21 +93,70 @@ fn score_language(lang: &Language, content: &str, tokens: &[&str]) -> i32 {
 	score
 }
 
-/// Count occurrences of a punctuation-containing keyword.
-///
-/// A keyword ending in an identifier character must not be followed by one, so `@end` doesn't match inside Doxygen's `@endcode`.
-fn count_substring_keyword(content: &str, keyword: &str, limit: usize) -> usize {
-	let ends_in_word = keyword.bytes().last().is_some_and(|b| b.is_ascii_alphanumeric() || b == b'_');
-	if !ends_in_word {
-		return content.matches(keyword).take(limit).count();
+/// What scoring looks for in a sample, prepared the first time a language is a candidate.
+struct ScoringMatchers {
+	/// Keywords made of identifier characters, matched against whole tokens ignoring case, with their index in the language's keywords.
+	words: Vec<(&'static [u8], usize)>,
+	/// Which (lowercase) bytes start a word keyword, so most tokens are ruled out with one lookup.
+	word_starts: [bool; 256],
+	/// Keywords containing other characters (`@interface`, `#include`), which tokenizing would split, so they're matched as substrings.
+	substrings: Vec<SubstringKeyword>,
+	block_comments: Vec<(Finder<'static>, Finder<'static>)>,
+	symbol_only: bool,
+}
+
+struct SubstringKeyword {
+	finder: Finder<'static>,
+	index: usize,
+	/// A keyword ending in an identifier character must not be followed by one, so `@end` doesn't match inside Doxygen's `@endcode`.
+	ends_in_word: bool,
+}
+
+impl SubstringKeyword {
+	/// Count occurrences in `content`, up to `limit`.
+	fn count(&self, content: &[u8], limit: usize) -> usize {
+		let len = self.finder.needle().len();
+		self.finder
+			.find_iter(content)
+			.filter(|&pos| !self.ends_in_word || content.get(pos + len).is_none_or(|&b| !is_word_byte(b)))
+			.take(limit)
+			.count()
 	}
-	content
-		.match_indices(keyword)
-		.filter(|(pos, _)| {
-			content.as_bytes().get(pos + keyword.len()).is_none_or(|&b| !b.is_ascii_alphanumeric() && b != b'_')
-		})
-		.take(limit)
-		.count()
+}
+
+static SCORING_MATCHERS: LazyLock<Vec<OnceLock<ScoringMatchers>>> =
+	LazyLock::new(|| LANGUAGES.iter().map(|_| OnceLock::new()).collect());
+
+fn scoring_matchers(lang: &Language) -> &'static ScoringMatchers {
+	// Tests score made-up languages that reuse real indices, so they can't share the cache.
+	#[cfg(test)]
+	if LANGUAGES.get(lang.index).is_none_or(|real| !std::ptr::eq(lang, real)) {
+		return Box::leak(Box::new(build_scoring_matchers(lang)));
+	}
+	SCORING_MATCHERS[lang.index].get_or_init(|| build_scoring_matchers(lang))
+}
+
+fn build_scoring_matchers(lang: &Language) -> ScoringMatchers {
+	let mut words = Vec::new();
+	let mut word_starts = [false; 256];
+	let mut substrings = Vec::new();
+	for (index, &keyword) in lang.keywords.iter().enumerate() {
+		let bytes = keyword.as_bytes();
+		if !bytes.is_empty() && bytes.iter().all(|&b| is_word_byte(b)) {
+			word_starts[usize::from(bytes[0].to_ascii_lowercase())] = true;
+			words.push((bytes, index));
+		} else {
+			let ends_in_word = bytes.last().is_some_and(|&b| is_word_byte(b));
+			substrings.push(SubstringKeyword { finder: Finder::new(keyword), index, ends_in_word });
+		}
+	}
+	let block_comments =
+		lang.block_comments.iter().map(|&(start, end, _)| (Finder::new(start), Finder::new(end))).collect();
+	ScoringMatchers { words, word_starts, substrings, block_comments, symbol_only: is_symbol_only_language(lang) }
+}
+
+const fn is_word_byte(b: u8) -> bool {
+	b.is_ascii_alphanumeric() || b == b'_'
 }
 
 /// Check whether any line starts with `marker` as a comment.
@@ -132,9 +199,10 @@ fn disambiguate<'a>(candidates: &[&'a Language], content: &str) -> (Option<&'a L
 	best.map_or((None, 0), |(lang, score)| (Some(lang), score - runner_up))
 }
 
+/// Split `content` into identifier-like words. Bytes outside ASCII are delimiters, so splitting bytes rather than `char`s gives the same words, faster.
 #[inline]
-fn tokenize(content: &str) -> impl Iterator<Item = &str> {
-	content.split(|c: char| !c.is_ascii_alphanumeric() && c != '_').filter(|token| !token.is_empty())
+fn tokenize(content: &str) -> impl Iterator<Item = &[u8]> {
+	content.as_bytes().split(|&b| !is_word_byte(b)).filter(|token| !token.is_empty())
 }
 
 /// Normalize a shebang line: drop an optional space after `#!` and env's `-S` flag (`#!/usr/bin/env -S python3 -u`).
@@ -338,8 +406,10 @@ mod tests {
 	#[case::doxygen_command("/** @endcode */", "@end", 0)]
 	#[case::followed_by_punctuation("@end;", "@end", 1)]
 	#[case::symbol_keyword("a -> b -> c", "->", 2)]
-	fn test_count_substring_keyword(#[case] content: &str, #[case] keyword: &str, #[case] expected: usize) {
-		assert_eq!(count_substring_keyword(content, keyword, usize::MAX), expected);
+	fn test_count_substring_keyword(#[case] content: &str, #[case] keyword: &'static str, #[case] expected: usize) {
+		let ends_in_word = keyword.bytes().last().is_some_and(is_word_byte);
+		let substring = SubstringKeyword { finder: Finder::new(keyword), index: 0, ends_in_word };
+		assert_eq!(substring.count(content.as_bytes(), usize::MAX), expected);
 	}
 
 	#[rstest]
@@ -417,8 +487,10 @@ mod tests {
 	#[case::empty("", vec![])]
 	#[case::only_delimiters("!@#$%^&*()", vec![])]
 	#[case::preserves_underscores("__init__ __main__", vec!["__init__", "__main__"])]
+	#[case::non_ascii_delimits("caf\u{e9}_x na\u{ef}ve", vec!["caf", "_x", "na", "ve"])]
 	fn test_tokenize(#[case] input: &str, #[case] expected: Vec<&str>) {
 		let tokens: Vec<_> = tokenize(input).collect();
+		let expected: Vec<_> = expected.iter().map(|token| token.as_bytes()).collect();
 		assert_eq!(tokens, expected);
 	}
 
