@@ -179,7 +179,7 @@ impl HumanFormatter {
 			writeln!(
 				writer,
 				"{i2}{}: {} lines ({}%).",
-				line_type.title_label(),
+				line_type.kind.title_label(),
 				ctx.number(line_type.count),
 				ctx.percent(line_type.percentage)
 			)?;
@@ -234,7 +234,7 @@ impl HumanFormatter {
 			writeln!(
 				writer,
 				"{i2}{}: {} lines ({}%).",
-				line_type.title_label(),
+				line_type.kind.title_label(),
 				ctx.number(line_type.count),
 				ctx.percent(line_type.percentage)
 			)?;

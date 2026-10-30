@@ -45,9 +45,11 @@ pub(super) fn is_probably_binary(sample: &[u8], encoding: FileEncoding) -> bool 
 	if is_utf16(encoding.encoding) {
 		return false;
 	}
-	let non_text = sample.iter().filter(|b| matches!(**b, 0x00..=0x08 | 0x0B | 0x0C | 0x0E..=0x1F | 0x7F)).count();
-	let non_text_pct = non_text * 100 / sample.len();
-	non_text_pct > BINARY_THRESHOLD_PERCENT || sample.contains(&0)
+	if memchr(0, sample).is_some() {
+		return true;
+	}
+	let non_text = sample.iter().filter(|b| matches!(**b, 0x01..=0x08 | 0x0B | 0x0C | 0x0E..=0x1F | 0x7F)).count();
+	non_text * 100 / sample.len() > BINARY_THRESHOLD_PERCENT
 }
 
 pub(super) fn is_utf16(encoding: &'static Encoding) -> bool {
@@ -129,13 +131,13 @@ fn drain_lines(
 	while let Some(pos) = memchr(b'\n', &bytes[start..]) {
 		let line_end = start + pos + 1;
 		let line = &pending[start..line_end];
-		line_counts.add(classify_line(line, Some(language), comment_state, *is_first_line));
+		line_counts.add(classify_line(line, language, comment_state, *is_first_line));
 		*is_first_line = false;
 		start = line_end;
 	}
 	if flush_final && start < pending.len() {
 		let line = &pending[start..];
-		line_counts.add(classify_line(line, Some(language), comment_state, *is_first_line));
+		line_counts.add(classify_line(line, language, comment_state, *is_first_line));
 		*is_first_line = false;
 		start = pending.len();
 	}

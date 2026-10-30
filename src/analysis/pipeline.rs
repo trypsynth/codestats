@@ -9,10 +9,10 @@ use super::{
 };
 use crate::langs::{self, Language};
 
-/// Check if a language should be processed based on include/exclude filters.
 /// How much of a file to read when its extension is shared by several languages and its content decides.
 const DETECTION_WINDOW: usize = 64 * 1024;
 
+/// Check if a language should be processed based on include/exclude filters.
 fn should_process_language(language: &Language, include_languages: &[String], exclude_languages: &[String]) -> bool {
 	if !include_languages.is_empty() {
 		return include_languages.iter().any(|filter| filter.eq_ignore_ascii_case(language.name));
@@ -21,11 +21,6 @@ fn should_process_language(language: &Language, include_languages: &[String], ex
 		return !exclude_languages.iter().any(|filter| filter.eq_ignore_ascii_case(language.name));
 	}
 	true
-}
-
-/// Helper to create error context for metadata reading operations.
-fn read_metadata_context(path: &Path) -> String {
-	format!("Failed to read metadata for {}", path.display())
 }
 
 /// Analyze a single file and merge its statistics into `results`.
@@ -53,7 +48,8 @@ pub fn process_file(
 	} else {
 		Cow::Borrowed(filename_lossy.as_ref())
 	};
-	let metadata = file_path.metadata().with_context(|| read_metadata_context(file_path))?;
+	let metadata =
+		file_path.metadata().with_context(|| format!("Failed to read metadata for {}", file_path.display()))?;
 	let file_size = metadata.len();
 	let candidates = langs::get_candidates(&filename);
 	if let [language] = candidates[..]

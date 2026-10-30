@@ -48,9 +48,6 @@ fn main() -> Result<()> {
 	};
 	let config = cli::merge_config(config, analyze, &matches)?;
 	ensure!(config.path.exists(), "Path `{}` not found", config.path.display());
-	if config.path.is_file() {
-		ensure!(config.path.metadata().is_ok(), "Cannot read file metadata for `{}`", config.path.display());
-	}
 	let analyzer_config: AnalyzerConfig = (&config).into();
 	let analyzer = CodeAnalyzer::new(&config.path, analyzer_config);
 	let results = analyzer.analyze()?;

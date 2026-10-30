@@ -105,20 +105,6 @@ pub struct LineTypeStats {
 	pub percentage: f64,
 }
 
-impl LineTypeStats {
-	pub const fn singular_label(self) -> &'static str {
-		self.kind.singular_label()
-	}
-
-	pub const fn plural_label(self) -> &'static str {
-		self.kind.plural_label()
-	}
-
-	pub const fn title_label(self) -> &'static str {
-		self.kind.title_label()
-	}
-}
-
 /// The line types present in `counts`, with their share of its total.
 fn line_types(counts: LineCounts) -> impl Iterator<Item = LineTypeStats> {
 	[LineType::Code, LineType::Comment, LineType::Blank, LineType::Shebang]
@@ -160,7 +146,7 @@ impl Summary {
 	#[must_use]
 	pub fn percentage_parts(&self, ctx: &FormatterContext) -> Vec<String> {
 		self.iter_line_types()
-			.map(|info| format!("{}% {}", ctx.percent(info.percentage), info.plural_label()))
+			.map(|info| format!("{}% {}", ctx.percent(info.percentage), info.kind.plural_label()))
 			.collect()
 	}
 
@@ -170,9 +156,9 @@ impl Summary {
 			.map(|info| {
 				let formatted = ctx.number(info.count);
 				if pluralize {
-					format!("{formatted} {} {}", info.singular_label(), pluralize_fn(info.count, "line", "lines"))
+					format!("{formatted} {} {}", info.kind.singular_label(), pluralize_fn(info.count, "line", "lines"))
 				} else {
-					format!("{formatted} {}", info.plural_label())
+					format!("{formatted} {}", info.kind.plural_label())
 				}
 			})
 			.collect()
@@ -615,29 +601,6 @@ mod tests {
 		let parts = summary.line_breakdown_parts(false, &ctx);
 		// When pluralize=false, should use plural labels without "line"/"lines" suffix
 		assert_eq!(parts, vec!["10 code", "15 comments", "10 blanks", "5 shebangs"]);
-	}
-
-	#[test]
-	fn line_type_stats_labels() {
-		let code = LineTypeStats { kind: LineType::Code, count: 10, percentage: 50.0 };
-		assert_eq!(code.singular_label(), "code");
-		assert_eq!(code.plural_label(), "code");
-		assert_eq!(code.title_label(), "Code");
-
-		let comment = LineTypeStats { kind: LineType::Comment, count: 5, percentage: 25.0 };
-		assert_eq!(comment.singular_label(), "comment");
-		assert_eq!(comment.plural_label(), "comments");
-		assert_eq!(comment.title_label(), "Comments");
-
-		let blank = LineTypeStats { kind: LineType::Blank, count: 3, percentage: 15.0 };
-		assert_eq!(blank.singular_label(), "blank");
-		assert_eq!(blank.plural_label(), "blanks");
-		assert_eq!(blank.title_label(), "Blanks");
-
-		let shebang = LineTypeStats { kind: LineType::Shebang, count: 2, percentage: 10.0 };
-		assert_eq!(shebang.singular_label(), "shebang");
-		assert_eq!(shebang.plural_label(), "shebangs");
-		assert_eq!(shebang.title_label(), "Shebangs");
 	}
 
 	#[test]

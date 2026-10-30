@@ -13,14 +13,7 @@ use ignore::{WalkBuilder, overrides::OverrideBuilder};
 use super::{pipeline, stats::AnalysisResults};
 use crate::{config::AnalyzerConfig, display::Verbosity};
 
-/// Thread-local accumulator for parallel file analysis.
-///
-/// This struct implements a clever pattern to reduce lock contention during parallel processing:
-/// - Each worker thread maintains its own local `AnalysisResults` instance.
-/// - Workers accumulate statistics without any synchronization overhead.
-/// - On `Drop`, the local results are merged into the shared sink in one batch.
-///
-/// This dramatically reduces mutex contention compared to locking on every file processed, while ensuring all results are properly collected even if a worker panics.
+/// A worker thread's own results, handed to the shared sink once when the worker finishes, so threads don't contend on a lock per file.
 struct LocalAggregator {
 	sink: Arc<Mutex<Vec<AnalysisResults>>>,
 	local: AnalysisResults,
@@ -55,11 +48,6 @@ impl CodeAnalyzer {
 	/// - The path cannot be accessed
 	/// - File I/O operations fail during analysis
 	/// - UTF-8 decoding fails for file contents
-	///
-	/// # Panics
-	///
-	/// May panic if the internal Arc or Mutex operations fail unexpectedly,
-	/// which should hopefully never happen.
 	pub fn analyze(&self) -> Result<AnalysisResults> {
 		let error_counter = Arc::new(AtomicU64::new(0));
 		let verbosity = self.config.analysis.verbosity;

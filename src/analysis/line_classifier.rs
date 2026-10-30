@@ -337,22 +337,14 @@ fn find_line_comment(line: &str, lang: &Language, matchers: &LanguageMatchers) -
 
 /// Classify a line as code, comment, blank, or shebang.
 #[inline]
-pub fn classify_line(
-	line: &str,
-	lang_info: Option<&Language>,
-	comment_state: &mut CommentState,
-	is_first_line: bool,
-) -> LineType {
+pub fn classify_line(line: &str, lang: &Language, comment_state: &mut CommentState, is_first_line: bool) -> LineType {
 	let trimmed = trim_ascii(line);
 	if trimmed.is_empty() {
 		return LineType::Blank;
 	}
-	if is_first_line && lang_info.is_some_and(|lang| is_shebang_for(trimmed, lang)) {
+	if is_first_line && is_shebang_for(trimmed, lang) {
 		return LineType::Shebang;
 	}
-	let Some(lang) = lang_info else {
-		return LineType::Code;
-	};
 	// Markers like fixed-form Fortran's `C` only count in the first column, so check the untrimmed line.
 	if !comment_state.is_in_comment()
 		&& !comment_state.is_in_string()
@@ -509,16 +501,7 @@ mod tests {
 	#[case::spaces("   ")]
 	#[case::tabs("\t\t")]
 	fn test_classify_blank_lines(#[case] line: &str) {
-		let mut state = CommentState::new();
-		assert_eq!(classify_line(line, None, &mut state, false), LineType::Blank);
-	}
-
-	#[rstest]
-	#[case("some code")]
-	#[case("  more code  ")]
-	fn test_classify_code_without_language(#[case] line: &str) {
-		let mut state = CommentState::new();
-		assert_eq!(classify_line(line, None, &mut state, false), LineType::Code);
+		assert_eq!(classify_all("Rust", &[line]), [LineType::Blank]);
 	}
 
 	#[test]
@@ -538,7 +521,7 @@ mod tests {
 	fn classify_all(lang_name: &str, lines: &[&str]) -> Vec<LineType> {
 		let lang = crate::langs::LANGUAGES.iter().find(|l| l.name == lang_name).unwrap();
 		let mut state = CommentState::new();
-		lines.iter().enumerate().map(|(i, line)| classify_line(line, Some(lang), &mut state, i == 0)).collect()
+		lines.iter().enumerate().map(|(i, line)| classify_line(line, lang, &mut state, i == 0)).collect()
 	}
 
 	#[test]
@@ -697,12 +680,19 @@ mod tests {
 		assert_eq!(is_word_char(byte), expected);
 	}
 
-	#[test]
-	fn test_line_type_labels() {
-		assert_eq!(LineType::Code.singular_label(), "code");
-		assert_eq!(LineType::Code.plural_label(), "code");
-		assert_eq!(LineType::Comment.plural_label(), "comments");
-		assert_eq!(LineType::Blank.title_label(), "Blanks");
-		assert_eq!(LineType::Shebang.singular_label(), "shebang");
+	#[rstest]
+	#[case(LineType::Code, "code", "code", "Code")]
+	#[case(LineType::Comment, "comment", "comments", "Comments")]
+	#[case(LineType::Blank, "blank", "blanks", "Blanks")]
+	#[case(LineType::Shebang, "shebang", "shebangs", "Shebangs")]
+	fn test_line_type_labels(
+		#[case] kind: LineType,
+		#[case] singular: &str,
+		#[case] plural: &str,
+		#[case] title: &str,
+	) {
+		assert_eq!(kind.singular_label(), singular);
+		assert_eq!(kind.plural_label(), plural);
+		assert_eq!(kind.title_label(), title);
 	}
 }
