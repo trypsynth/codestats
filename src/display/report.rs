@@ -267,11 +267,11 @@ impl<'a> LanguageRecord<'a> {
 			|(name, stats)| sort_value(sort_key, name, stats.counts(), Some(stats.files()), stats.size()),
 			|a, b| a.0.cmp(b.0),
 		);
-		if let Some(n) = ctx.options.top_languages {
-			stats_vec.truncate(n);
-		}
 		if let Some(min) = ctx.options.min_lines {
 			stats_vec.retain(|(_, stats)| stats.counts().total >= min);
+		}
+		if let Some(n) = ctx.options.top_languages {
+			stats_vec.truncate(n);
 		}
 		let hidden = total.saturating_sub(stats_vec.len());
 		let records =
@@ -443,11 +443,11 @@ impl<'a> DirRecord<'a> {
 			|r| sort_value(sort_key, &r.path, &r.line_counts(), Some(r.files), r.size),
 			|a, b| a.path.cmp(&b.path),
 		);
-		if let Some(n) = ctx.options.top_languages {
-			records.truncate(n);
-		}
 		if let Some(min) = ctx.options.min_lines {
 			records.retain(|r| r.lines >= min);
+		}
+		if let Some(n) = ctx.options.top_languages {
+			records.truncate(n);
 		}
 		let hidden = total.saturating_sub(records.len());
 		(records, hidden)
@@ -614,6 +614,28 @@ mod tests {
 
 		assert_eq!(report.summary.total_files, 1);
 		assert!(report.languages.is_empty());
+	}
+
+	#[test]
+	fn min_lines_applies_before_top_languages() {
+		let mut results = AnalysisResults::default();
+		// Alphabetically, the two smallest languages come first.
+		for (name, lines) in [("Ada", 1), ("C", 2), ("Go", 100), ("Python", 100), ("Rust", 100), ("Zig", 100)] {
+			let lang = crate::langs::LANGUAGES.iter().find(|l| l.name == name).unwrap();
+			results.add_file(lang, &LineCounts { total: lines, code: lines, ..LineCounts::default() }, 10, None);
+		}
+		let options = ViewOptions {
+			language_sort_key: LanguageSortKey::Name,
+			sort_direction: crate::display::SortDirection::Asc,
+			min_lines: Some(50),
+			top_languages: Some(3),
+			..ViewOptions::default()
+		};
+		let ctx = FormatterContext::new(options);
+		let report = ReportData::from_results(&results, Path::new("."), Verbosity::Regular, &ctx);
+		let names: Vec<_> = report.languages.iter().map(|l| l.name).collect();
+		assert_eq!(names, ["Go", "Python", "Rust"]);
+		assert_eq!(report.languages_hidden, Some(3));
 	}
 
 	#[test]

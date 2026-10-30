@@ -102,11 +102,11 @@ impl HumanFormatter {
 			|(lang, stats)| sort_value(sort_key, lang.name, stats.counts(), Some(stats.files()), stats.size()),
 			|a, b| a.0.name.cmp(b.0.name),
 		);
-		if let Some(n) = view_options.top_languages {
-			langs.truncate(n);
-		}
 		if let Some(min) = view_options.min_lines {
 			langs.retain(|(_, stats)| stats.counts().total >= min);
+		}
+		if let Some(n) = view_options.top_languages {
+			langs.truncate(n);
 		}
 		let parts: Vec<String> = langs
 			.iter()
