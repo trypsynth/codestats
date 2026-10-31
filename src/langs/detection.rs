@@ -1,5 +1,4 @@
 pub(super) mod patterns;
-pub mod scoring;
 
 use std::{
 	borrow::Cow,
@@ -211,7 +210,7 @@ fn same_comments(a: &Language, b: &Language) -> bool {
 
 /// `content` with `lang`'s comments replaced by spaces, so their prose isn't counted as keywords. String literals aren't recognized, so a marker inside one (`"http://..."`) cuts the line short, which costs a few keywords at most.
 fn strip_comments<'a>(content: &'a str, lang: &Language) -> Cow<'a, str> {
-	let matchers = scoring::language_matchers(lang);
+	let matchers = super::matchers::language_matchers(lang);
 	if matchers.line_comments.is_none() && matchers.block_comments.is_none() {
 		return Cow::Borrowed(content);
 	}
@@ -252,7 +251,11 @@ fn strip_comments<'a>(content: &'a str, lang: &Language) -> Cow<'a, str> {
 }
 
 /// The start of the block comment found in `rest`, and the end of the comment (after its closing marker, or the end of `rest`), following nesting where the pair nests.
-fn block_end(rest: &str, block: Option<(usize, usize, usize)>, matchers: &scoring::LanguageMatchers) -> (usize, usize) {
+fn block_end(
+	rest: &str,
+	block: Option<(usize, usize, usize)>,
+	matchers: &super::matchers::LanguageMatchers,
+) -> (usize, usize) {
 	let (start, len, pair) = block.expect("called with a block comment start");
 	let finder = matchers.block_comments.as_ref().expect("a block comment start was found");
 	let mut pos = start + len;

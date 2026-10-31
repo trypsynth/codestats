@@ -18,9 +18,10 @@ use anyhow::Result;
 
 mod data;
 mod detection;
+pub mod matchers;
 
 pub use data::{LANGUAGES, Language};
-pub use detection::{detect_language, get_candidates, is_shebang_for, scoring};
+pub use detection::{detect_language, get_candidates, is_shebang_for};
 
 use crate::display::formatting::pluralize;
 

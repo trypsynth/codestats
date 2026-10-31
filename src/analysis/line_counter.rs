@@ -5,7 +5,7 @@ use super::{
 	line_classifier::{CommentState, LineType, classify_line, is_blank},
 	stats::LineCounts,
 };
-use crate::langs::{Language, scoring::language_matchers};
+use crate::langs::{Language, matchers::language_matchers};
 
 /// Count the lines of a file's contents.
 pub(super) fn count_lines(language: &Language, encoding: FileEncoding, bytes: &[u8]) -> LineCounts {

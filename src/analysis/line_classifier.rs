@@ -2,7 +2,7 @@ use memchr::memchr2;
 
 use crate::langs::{
 	Language, is_shebang_for,
-	scoring::{BlockCommentMatchers, LanguageMatchers, StringMatchers, Token, language_matchers},
+	matchers::{BlockCommentMatchers, LanguageMatchers, StringMatchers, Token, language_matchers},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -527,7 +527,7 @@ mod tests {
 	/// For every language, random lines built from its own markers: whenever the opener-byte fast path would call a line code, the full classification agrees and leaves the comment and string state alone.
 	#[test]
 	fn opener_fast_path_matches_full_classification() {
-		use crate::langs::{LANGUAGES, scoring::language_matchers};
+		use crate::langs::{LANGUAGES, matchers::language_matchers};
 		let mut seed: u64 = 0x9E37_79B9_7F4A_7C15;
 		let mut next = move |bound: usize| {
 			seed ^= seed << 13;

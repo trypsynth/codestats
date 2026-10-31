@@ -1,9 +1,11 @@
+//! Per-language matchers the line classifier uses to find comment markers, string literals and regexes, built the first time a language is counted.
+
 use std::sync::{LazyLock, OnceLock};
 
 use aho_corasick::{AhoCorasick, AhoCorasickBuilder, Input, MatchKind};
 use memchr::{memchr, memchr2, memchr3, memmem::Finder};
 
-use super::super::data::{LANGUAGES, Language};
+use super::data::{LANGUAGES, Language};
 
 #[derive(Debug)]
 pub struct LanguageMatchers {
