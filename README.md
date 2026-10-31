@@ -209,29 +209,35 @@ Codestats uses parallel processing to maximize performance. Each worker thread m
 
 ## Benchmarks
 
-Measured with [hyperfine](https://github.com/sharkdp/hyperfine) on shallow clones of each repository with a warm file cache, every tool running with its default settings: `hyperfine -N --warmup 2 --runs 10 '<tool> <repo>'` (5 runs for Linux; cloc, being much slower, got 1 warmup and 5 runs, or 3 for Linux).
+Measured with [hyperfine](https://github.com/sharkdp/hyperfine) on the repositories below at the commits pinned in [`scripts/bench.sh`](scripts/bench.sh), which reproduces these tables: `hyperfine -N --warmup 2 --runs 10` per tool (5 runs for rust and linux), with a warm file cache and every tool on its default settings.
 
 Mean wall time:
 
-| Repository | Files | Lines | codestats | tokei | scc | gocloc | cloc |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| [ripgrep](https://github.com/BurntSushi/ripgrep) | 154 | 65K | **5.5 ms** | 9.9 ms | 12.4 ms | 42.0 ms | 1.43 s |
-| [react](https://github.com/facebook/react) | 6,965 | 1.0M | **30 ms** | 71 ms | 58 ms | 403 ms | 4.17 s |
-| [cpython](https://github.com/python/cpython) | 5,113 | 3.0M | **50 ms** | 151 ms | 84 ms | 699 ms | 11.7 s |
-| [kubernetes](https://github.com/kubernetes/kubernetes) | 27,168 | 7.3M | **142 ms** | 370 ms | 236 ms | 2.07 s | 68.5 s |
-| [linux](https://github.com/torvalds/linux) | 92,865 | 44M | **846 ms** | 1.58 s | 1.03 s | 12.2 s | 130 s |
+| Repository | Files | Lines | codestats | tokei | scc | gocloc |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| [ripgrep](https://github.com/BurntSushi/ripgrep) | 154 | 65K | **5.8 ms** | 10 ms | 12 ms | 37 ms |
+| [cli](https://github.com/cli/cli) | 1,125 | 321K | **9.3 ms** | 22 ms | 19 ms | 110 ms |
+| [nvda](https://github.com/nvaccess/nvda) | 1,158 | 1.6M | **16 ms** | 48 ms | 22 ms | 133 ms |
+| [wxWidgets](https://github.com/wxWidgets/wxWidgets) | 4,582 | 2.3M | **41 ms** | 147 ms | 102 ms | 445 ms |
+| [cpython](https://github.com/python/cpython) | 5,165 | 3.0M | **35 ms** | 140 ms | 81 ms | 665 ms |
+| [kubernetes](https://github.com/kubernetes/kubernetes) | 27,174 | 7.3M | **99 ms** | 360 ms | 220 ms | 2.04 s |
+| [rust](https://github.com/rust-lang/rust) | 42,485 | 5.3M | **122 ms** | 452 ms | 228 ms | 2.39 s |
+| [linux](https://github.com/torvalds/linux) | 92,866 | 44M | **498 ms** | 1.54 s | 993 ms | 11.2 s |
 
 Peak memory:
 
-| Repository | codestats | tokei | scc | gocloc | cloc |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| ripgrep | **6.7 MB** | 7.8 MB | 26 MB | 29 MB | 28 MB |
-| react | **8.9 MB** | 21 MB | 47 MB | 41 MB | 40 MB |
-| cpython | **12 MB** | 23 MB | 65 MB | 45 MB | 72 MB |
-| kubernetes | **17 MB** | 64 MB | 99 MB | 51 MB | 115 MB |
-| linux | **79 MB** | 257 MB | 385 MB | 109 MB | 338 MB |
+| Repository | codestats | tokei | scc | gocloc |
+| --- | ---: | ---: | ---: | ---: |
+| [ripgrep](https://github.com/BurntSushi/ripgrep) | **6.9 MB** | 7.8 MB | 27 MB | 29 MB |
+| [cli](https://github.com/cli/cli) | **7.2 MB** | 8.1 MB | 32 MB | 36 MB |
+| [nvda](https://github.com/nvaccess/nvda) | **17 MB** | 32 MB | 38 MB | 38 MB |
+| [wxWidgets](https://github.com/wxWidgets/wxWidgets) | **16 MB** | 127 MB | 75 MB | 40 MB |
+| [cpython](https://github.com/python/cpython) | **12 MB** | 24 MB | 65 MB | 45 MB |
+| [kubernetes](https://github.com/kubernetes/kubernetes) | **17 MB** | 65 MB | 97 MB | 52 MB |
+| [rust](https://github.com/rust-lang/rust) | **27 MB** | 88 MB | 128 MB | 65 MB |
+| [linux](https://github.com/torvalds/linux) | **78 MB** | 246 MB | 380 MB | 111 MB |
 
-Measured with codestats 0.8.3, tokei 15.0.0, scc 4.1.0, gocloc 0.7.0 and hyperfine 2.0.0 on an AMD Ryzen 7 PRO 5850U (8 cores, 16 threads) with 32 GB of RAM. The cloc figures (cloc 2.10) are from an earlier run on slightly older clones, on the same machine. File and line counts are codestats' own; tools differ slightly in what they count (for example, codestats skips generated and minified files by default).
+Measured with codestats 0.8.4, tokei 15.0.0, scc 4.1.0, gocloc 0.7.0 and hyperfine 2.0.0 on an AMD Ryzen 7 PRO 5850U (8 cores, 16 threads) with 32 GB of RAM. File and line counts are codestats' own; tools differ slightly in what they count (for example, codestats skips generated and minified files by default).
 
 ## License
 
