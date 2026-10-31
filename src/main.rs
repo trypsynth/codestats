@@ -9,6 +9,7 @@ mod config_discovery;
 mod display;
 mod init;
 mod langs;
+mod swar;
 
 use std::io::{self, Write as _};
 

@@ -10,6 +10,7 @@ use memchr::memmem::Finder;
 
 pub use self::patterns::get_candidates;
 use super::data::{LANGUAGES, Language};
+use crate::swar;
 
 /// Score awarded for each comment style match when disambiguating languages.
 const COMMENT_MATCH_SCORE: i32 = 50;
@@ -350,35 +351,10 @@ fn tokenize<'a>(content: &'a str, starts: &[bool; 256], max_len: usize) -> Token
 /// A mask of `block`'s word bytes, bit `i` for byte `i`.
 #[inline]
 fn word_mask(block: &[u8]) -> u64 {
-	let mut mask = 0;
-	for (i, chunk) in block.chunks(8).enumerate() {
-		let mut word = [0u8; 8];
-		word[..chunk.len()].copy_from_slice(chunk);
-		mask |= word_bits(u64::from_le_bytes(word)) << (i * 8);
-	}
-	mask
-}
-
-/// For eight bytes packed little-endian into `x`, a bit per word byte (ASCII letter, digit or `_`), found with arithmetic on all eight at once rather than a branch each.
-#[inline]
-const fn word_bits(x: u64) -> u64 {
-	const ONES: u64 = 0x0101_0101_0101_0101;
-	const HIGH: u64 = 0x8080_8080_8080_8080;
-	// Each byte's high bit is set where `low <= byte < high`, for bytes under 0x80; `x & !HIGH` keeps the sums from carrying between bytes.
-	const fn in_range(seven: u64, low: u64, high: u64) -> u64 {
-		let at_least_low = seven + (128 - low) * ONES;
-		let below_high = seven + (128 - high) * ONES;
-		at_least_low & !below_high & HIGH
-	}
-	let seven = x & !HIGH;
-	let folded = (x | 0x2020_2020_2020_2020) & !HIGH;
-	let digits = in_range(seven, b'0' as u64, b'9' as u64 + 1);
-	let letters = in_range(folded, b'a' as u64, b'z' as u64 + 1);
-	let underscore = !((seven ^ (b'_' as u64 * ONES)) + !HIGH) & HIGH;
-	// Bytes of 0x80 and above (UTF-8) are never word bytes.
-	let set = (digits | letters | underscore) & !x & HIGH;
-	// Gather the eight high bits into the low byte.
-	(set >> 7).wrapping_mul(0x0102_0408_1020_4080) >> 56
+	block
+		.chunks(8)
+		.enumerate()
+		.fold(0, |mask, (i, chunk)| mask | (swar::bits(swar::word(swar::load(chunk))) << (i * 8)))
 }
 
 /// Normalize a shebang line: drop an optional space after `#!` and env's `-S` flag (`#!/usr/bin/env -S python3 -u`).
@@ -674,16 +650,6 @@ mod tests {
 		let content = "main $(\n   auto ch;\n   if (ch > 0100 & ch < 0133) ch = ch + 040;\n   if (ch > 500 & ch < 600) goto loop;\n$)";
 		let language = detect_language_info("example.b", Some(content)).unwrap();
 		assert_eq!(language.name, "B");
-	}
-
-	#[test]
-	fn word_bits_matches_is_word_byte_for_every_byte() {
-		for b in 0..=255u8 {
-			for position in 0..8 {
-				let x = u64::from(b) << (position * 8);
-				assert_eq!(word_bits(x) >> position & 1 == 1, is_word_byte(b), "byte {b:#04x} at {position}");
-			}
-		}
 	}
 
 	/// The block tokenizer must find the same words as a plain byte-by-byte scan, including words that cross 64-byte blocks or end the text.
