@@ -16,7 +16,7 @@ use std::io::{self, Write as _};
 use analysis::{CodeAnalyzer, Snapshot, count_snapshot};
 use anyhow::{Context as _, Result, anyhow, ensure};
 use clap::ArgMatches;
-use cli::{AnalyzeArgs, Cli, Commands, DiffArgs};
+use cli::{Cli, Commands, DiffArgs, SourceArgs};
 use config::{AnalyzerConfig, Config};
 use display::{Versions, ViewOptions};
 use terminal_size::terminal_size;
@@ -64,7 +64,8 @@ fn run() -> Result<()> {
 			}
 		}
 	}
-	let config = load_config(&cli.analyze, &matches)?;
+	let config = cli::merge_config(base_config(&cli.analyze.source)?, &cli.analyze, &matches)?;
+	ensure_path(&config)?;
 	let analyzer_config: AnalyzerConfig = (&config).into();
 	let analyzer = CodeAnalyzer::new(&config.path, analyzer_config);
 	let results = analyzer.analyze()?;
@@ -78,20 +79,19 @@ fn run() -> Result<()> {
 	Ok(())
 }
 
-/// The config file (given or discovered) with the command line's options on top.
-fn load_config(args: &AnalyzeArgs, matches: &ArgMatches) -> Result<Config> {
-	let config = if let Some(ref config_path) = args.config {
-		Config::from_file(config_path)?
-	} else {
-		config_discovery::load_default()?
-	};
-	let config = cli::merge_config(config, args, matches)?;
+/// The config file given with `-c`, or else the one discovered.
+fn base_config(source: &SourceArgs) -> Result<Config> {
+	source.config.as_ref().map_or_else(config_discovery::load_default, Config::from_file)
+}
+
+fn ensure_path(config: &Config) -> Result<()> {
 	ensure!(config.path.exists(), "Path `{}` not found", config.path.display());
-	Ok(config)
+	Ok(())
 }
 
 fn run_diff(args: &DiffArgs, matches: &ArgMatches) -> Result<()> {
-	let config = load_config(&args.analyze, matches)?;
+	let config = cli::merge_diff_config(base_config(&args.source)?, args, matches)?;
+	ensure_path(&config)?;
 	let from = count_snapshot(&config.path, &Snapshot::Revision(&args.from), &config.analysis, false)
 		.with_context(|| format!("couldn't read revision `{}`", args.from))?;
 	let to = match &args.to {
