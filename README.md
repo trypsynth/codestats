@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/crates/l/codestats.svg)](LICENSE)
 [![MSRV](https://img.shields.io/badge/MSRV-1.88+-blue)](#)
 
-A small CLI tool that summarizes codebases at blazing speed. Built for quick audits, comparisons, scripts, or randomly being curious how much source code is in your home directory.
+The fastest code counter we know of. codestats counts the code, comments and blank lines in a codebase by language, faster than tokei, scc and gocloc on every repository we've [benchmarked](#benchmarks), from ripgrep to the Linux kernel, usually by two to four times. Built for quick audits, comparisons, scripts, or randomly being curious how much source code is in your home directory.
 
 ## Highlights
 
