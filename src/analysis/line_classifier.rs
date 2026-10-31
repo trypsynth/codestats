@@ -360,6 +360,20 @@ pub fn classify_line(line: &str, lang: &Language, comment_state: &mut CommentSta
 		return LineType::Code;
 	}
 	let matchers = language_matchers(lang);
+	// Outside a comment or string, a line with no byte that could start one is code: every search below would come up empty.
+	if !comment_state.is_in_comment() && !comment_state.is_in_string() && !matchers.openers.any_in(trimmed.as_bytes()) {
+		return LineType::Code;
+	}
+	classify_markers(trimmed, lang, matchers, comment_state)
+}
+
+/// Classify a trimmed, non-blank line by the comment markers and string literals in it.
+fn classify_markers(
+	trimmed: &str,
+	lang: &Language,
+	matchers: &LanguageMatchers,
+	comment_state: &mut CommentState,
+) -> LineType {
 	if let Some(strings) = matchers.strings.as_ref()
 		&& (comment_state.is_in_string() || strings.may_contain_string(trimmed.as_bytes()))
 	{
@@ -495,6 +509,57 @@ mod tests {
 	#[case::tabs("\t\t")]
 	fn test_classify_blank_lines(#[case] line: &str) {
 		assert_eq!(classify_all("Rust", &[line]), [LineType::Blank]);
+	}
+
+	/// For every language, random lines built from its own markers: whenever the opener-byte fast path would call a line code, the full classification agrees and leaves the comment and string state alone.
+	#[test]
+	fn opener_fast_path_matches_full_classification() {
+		use crate::langs::{LANGUAGES, scoring::language_matchers};
+		let mut seed: u64 = 0x9E37_79B9_7F4A_7C15;
+		let mut next = move |bound: usize| {
+			seed ^= seed << 13;
+			seed ^= seed >> 7;
+			seed ^= seed << 17;
+			usize::try_from(seed % bound as u64).unwrap()
+		};
+		let mut fast_lines = 0;
+		for lang in LANGUAGES {
+			let matchers = language_matchers(lang);
+			let mut pieces: Vec<&str> = vec![
+				"a", "x", "1", " ", "\t", "(", ")", ";", "=", "_", "*", "+", "-", "\\", "#", "/", "\"", "'", "`", "{",
+				"}", "<", ">", "!", "%", "$", "@", ":", "[", "]", "é",
+			];
+			pieces.extend(lang.line_comments);
+			pieces.extend(lang.block_comments.iter().flat_map(|&(start, end, _)| [start, end]));
+			pieces.extend(lang.strings.iter().flat_map(|delimiter| [delimiter.open, delimiter.close]));
+			let mut state = CommentState::new();
+			for _ in 0..400 {
+				let mut line = String::new();
+				for _ in 0..=next(12) {
+					line.push_str(pieces[next(pieces.len())]);
+				}
+				let trimmed = trim_ascii(&line);
+				if trimmed.is_empty() {
+					continue;
+				}
+				let fast =
+					!state.is_in_comment() && !state.is_in_string() && !matchers.openers.any_in(trimmed.as_bytes());
+				if fast {
+					fast_lines += 1;
+					let before = state.clone();
+					assert_eq!(
+						classify_markers(trimmed, lang, matchers, &mut state),
+						LineType::Code,
+						"{}: {line:?}",
+						lang.name
+					);
+					assert_eq!(state, before, "{}: {line:?} changed the state", lang.name);
+				} else {
+					classify_markers(trimmed, lang, matchers, &mut state);
+				}
+			}
+		}
+		assert!(fast_lines > 10_000, "only {fast_lines} lines took the fast path");
 	}
 
 	#[test]

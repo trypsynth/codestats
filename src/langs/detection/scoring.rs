@@ -10,6 +10,40 @@ pub struct LanguageMatchers {
 	pub(crate) line_comments: Option<AhoCorasick>,
 	pub(crate) block_comments: Option<BlockCommentMatchers>,
 	pub(crate) strings: Option<StringMatchers>,
+	/// Every byte that can begin a comment marker, string or regex literal: a line with none of them, outside a comment or string, is plain code.
+	pub(crate) openers: ByteSet,
+}
+
+/// A small set of bytes, searched with memchr when it has three or fewer.
+#[derive(Debug)]
+pub struct ByteSet {
+	bytes: Vec<u8>,
+	table: [bool; 256],
+}
+
+impl ByteSet {
+	fn new(bytes: impl IntoIterator<Item = u8>) -> Self {
+		let mut bytes: Vec<u8> = bytes.into_iter().collect();
+		bytes.sort_unstable();
+		bytes.dedup();
+		let mut table = [false; 256];
+		for &b in &bytes {
+			table[usize::from(b)] = true;
+		}
+		Self { bytes, table }
+	}
+
+	/// Whether `haystack` contains any byte of the set.
+	#[inline]
+	pub(crate) fn any_in(&self, haystack: &[u8]) -> bool {
+		match *self.bytes.as_slice() {
+			[] => false,
+			[a] => memchr(a, haystack).is_some(),
+			[a, b] => memchr2(a, b, haystack).is_some(),
+			[a, b, c] => memchr3(a, b, c, haystack).is_some(),
+			_ => haystack.iter().any(|&b| self.table[usize::from(b)]),
+		}
+	}
 }
 
 /// What a token found by [`StringMatchers::find_token`] starts.
@@ -28,22 +62,15 @@ pub struct StringMatchers {
 	tokens: AhoCorasick,
 	kinds: Vec<Token>,
 	closes: Vec<Finder<'static>>,
-	/// Distinct first bytes of string openers, for a fast check that a line can't contain a string.
-	open_bytes: Vec<u8>,
-	/// Lookup table over `open_bytes`, used when there are more than memchr3 can search for.
-	open_table: [bool; 256],
+	/// First bytes of string openers, for a fast check that a line can't contain a string.
+	open_bytes: ByteSet,
 }
 
 impl StringMatchers {
 	/// Whether `line` contains any byte that could open a string.
 	#[inline]
 	pub(crate) fn may_contain_string(&self, line: &[u8]) -> bool {
-		match *self.open_bytes.as_slice() {
-			[a] => memchr(a, line).is_some(),
-			[a, b] => memchr2(a, b, line).is_some(),
-			[a, b, c] => memchr3(a, b, c, line).is_some(),
-			_ => line.iter().any(|&b| self.open_table[usize::from(b)]),
-		}
+		self.open_bytes.any_in(line)
 	}
 
 	/// Find the first comment marker or string opener at or after `from`, preferring the longest at a position (`"""` over `"`).
@@ -154,7 +181,16 @@ fn build_language_matchers(lang: &Language) -> LanguageMatchers {
 		Some(BlockCommentMatchers { start_automaton, pairs })
 	};
 	let strings = (!lang.strings.is_empty()).then(|| build_string_matchers(lang));
-	LanguageMatchers { line_comments, block_comments, strings }
+	let openers = ByteSet::new(
+		lang.line_comments
+			.iter()
+			.copied()
+			.chain(lang.block_comments.iter().map(|&(start, _, _)| start))
+			.chain(lang.strings.iter().map(|delimiter| delimiter.open))
+			.filter_map(|marker| marker.as_bytes().first().copied())
+			.chain(lang.regex_literals.then_some(b'/')),
+	);
+	LanguageMatchers { line_comments, block_comments, strings, openers }
 }
 
 fn build_string_matchers(lang: &Language) -> StringMatchers {
@@ -182,15 +218,8 @@ fn build_string_matchers(lang: &Language) -> StringMatchers {
 		.build(&patterns)
 		.expect("AhoCorasick should never fail to build with valid comment and string patterns");
 	let closes = lang.strings.iter().map(|delimiter| Finder::new(delimiter.close)).collect();
-	let mut open_bytes: Vec<u8> = lang.strings.iter().map(|delimiter| delimiter.open.as_bytes()[0]).collect();
-	if lang.regex_literals {
-		open_bytes.push(b'/');
-	}
-	open_bytes.sort_unstable();
-	open_bytes.dedup();
-	let mut open_table = [false; 256];
-	for &b in &open_bytes {
-		open_table[usize::from(b)] = true;
-	}
-	StringMatchers { tokens, kinds, closes, open_bytes, open_table }
+	let open_bytes = ByteSet::new(
+		lang.strings.iter().map(|delimiter| delimiter.open.as_bytes()[0]).chain(lang.regex_literals.then_some(b'/')),
+	);
+	StringMatchers { tokens, kinds, closes, open_bytes }
 }
