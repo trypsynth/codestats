@@ -32,6 +32,9 @@
 //                        files), so directives like `# define` or `# if defined(X)` count as code.
 //   regex_literals       `/.../` regex literals (JavaScript), so quotes or `/*` inside them are ignored. A `/` starts a
 //                        regex after an operator, opening bracket or keyword like `return`; otherwise it's division.
+//   embedding            Regions written in other languages, counted by those languages' rules: "html" (`<script>`
+//                        and `<style>` elements), "astro" (those plus a TypeScript frontmatter) or "markdown" (fenced
+//                        code blocks, and YAML or TOML frontmatter).
 {
 	"8th": {
 		file_patterns: ["*.8th"],
@@ -179,8 +182,8 @@
 	},
 	"Astro": {
 		file_patterns: ["*.astro"],
-		line_comments: ["//"],
 		block_comments: [["/*", "*/"], ["<!--", "-->"]],
+		embedding: "astro",
 	},
 	"Ats": {
 		file_patterns: ["*.dats", "*.hats", "*.sats", "*.atxt"],
@@ -1061,6 +1064,7 @@
 	"HTML": {
 		file_patterns: ["*.html", "*.htm", "*.xht", "*.xhtml"],
 		block_comments: [["<!--", "-->"]],
+		embedding: "html",
 	},
 	"HTTP": {
 		file_patterns: ["*.http"],
@@ -1478,6 +1482,7 @@
 	"Markdown": {
 		file_patterns: ["*.md", "*.markdown", "*.mdx", "*.mdown", "*.mdwn", "*.mkd", "*.mkdn", "*.mkdown", "*.ronn", "*.rmd", "*.qmd"],
 		block_comments: [["<!--", "-->"]],
+		embedding: "markdown",
 	},
 	"Marko": {
 		file_patterns: ["*.marko"],
@@ -2374,6 +2379,7 @@
 	"Svelte": {
 		file_patterns: ["*.svelte"],
 		block_comments: [["<!--", "-->"]],
+		embedding: "html",
 	},
 	"SVG": {
 		file_patterns: ["*.svg"],
@@ -2617,8 +2623,8 @@
 	},
 	"Vue": {
 		file_patterns: ["*.vue"],
-		line_comments: ["//"],
-		block_comments: [["<!--", "-->"], ["/*", "*/"]],
+		block_comments: [["<!--", "-->"]],
+		embedding: "html",
 	},
 	"Vyper": {
 		file_patterns: ["*.vy"],

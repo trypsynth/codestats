@@ -8,6 +8,7 @@
 //! 6. Statistics Aggregation ([`stats`]): accumulation of code stats themselves, respecting the verbose setting.
 
 mod analyzer;
+mod embedded;
 mod encoding;
 mod file_io;
 pub mod generated;

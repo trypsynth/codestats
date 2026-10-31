@@ -36,6 +36,17 @@ pub struct LanguageConfig {
 	pub c_preprocessor: bool,
 	#[serde(default)]
 	pub regex_literals: bool,
+	#[serde(default)]
+	pub embedding: Option<Embedding>,
+}
+
+/// How a language embeds others; mirrors `Embedding` in `src/langs/data.rs`.
+#[derive(Debug, Clone, Copy, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Embedding {
+	Html,
+	Astro,
+	Markdown,
 }
 
 /// Which block comment pairs nest: `true` for all of them, or a list of the start delimiters that do.

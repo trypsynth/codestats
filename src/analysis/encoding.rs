@@ -3,10 +3,7 @@ use std::borrow::Cow;
 use encoding_rs::{CoderResult, Decoder, Encoding, UTF_8, UTF_16BE, UTF_16LE};
 use memchr::memchr;
 
-use super::{
-	line_classifier::{CommentState, classify_line},
-	stats::LineCounts,
-};
+use super::{embedded::Classifier, stats::LineCounts};
 use crate::langs::Language;
 
 /// Percentage of non-text bytes in a sample that indicates a binary file.
@@ -102,17 +99,17 @@ fn detect_utf16_without_bom(samples: &[u8]) -> Option<FileEncoding> {
 /// Count the lines of a UTF-16 file, decoding it a chunk at a time.
 pub(super) fn count_utf16(language: &Language, encoding: FileEncoding, bytes: &[u8]) -> LineCounts {
 	let mut line_counts = LineCounts::default();
-	let mut comment_state = CommentState::new();
+	let mut classifier = Classifier::new(language);
 	let mut is_first_line = true;
 	let mut decoder = encoding.encoding.new_decoder_without_bom_handling();
 	let mut pending = String::new();
 	let text = bytes.get(encoding.bom_len..).unwrap_or_default();
 	for chunk in text.chunks(UTF16_DECODE_CHUNK_SIZE) {
 		decode_to_string(&mut decoder, chunk, false, &mut pending);
-		drain_lines(&mut pending, language, &mut line_counts, &mut comment_state, &mut is_first_line, false);
+		drain_lines(&mut pending, &mut line_counts, &mut classifier, &mut is_first_line, false);
 	}
 	decode_to_string(&mut decoder, &[], true, &mut pending);
-	drain_lines(&mut pending, language, &mut line_counts, &mut comment_state, &mut is_first_line, true);
+	drain_lines(&mut pending, &mut line_counts, &mut classifier, &mut is_first_line, true);
 	line_counts
 }
 
@@ -131,9 +128,8 @@ fn decode_to_string(decoder: &mut Decoder, chunk: &[u8], last: bool, output: &mu
 
 fn drain_lines(
 	pending: &mut String,
-	language: &Language,
 	line_counts: &mut LineCounts,
-	comment_state: &mut CommentState,
+	classifier: &mut Classifier,
 	is_first_line: &mut bool,
 	flush_final: bool,
 ) {
@@ -142,13 +138,13 @@ fn drain_lines(
 	while let Some(pos) = memchr(b'\n', &bytes[start..]) {
 		let line_end = start + pos + 1;
 		let line = &pending[start..line_end];
-		line_counts.add(classify_line(line, language, comment_state, *is_first_line));
+		line_counts.add(classifier.classify(line, *is_first_line));
 		*is_first_line = false;
 		start = line_end;
 	}
 	if flush_final && start < pending.len() {
 		let line = &pending[start..];
-		line_counts.add(classify_line(line, language, comment_state, *is_first_line));
+		line_counts.add(classifier.classify(line, *is_first_line));
 		*is_first_line = false;
 		start = pending.len();
 	}

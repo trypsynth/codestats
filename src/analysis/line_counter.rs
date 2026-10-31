@@ -1,8 +1,9 @@
 use memchr::memchr;
 
 use super::{
+	embedded::Classifier,
 	encoding::{self, FileEncoding, decode_bytes},
-	line_classifier::{CommentState, LineType, classify_line, is_blank},
+	line_classifier::{LineType, is_blank},
 	stats::LineCounts,
 };
 use crate::langs::{Language, matchers::language_matchers};
@@ -13,32 +14,32 @@ pub(super) fn count_lines(language: &Language, encoding: FileEncoding, bytes: &[
 		return encoding::count_utf16(language, encoding, bytes);
 	}
 	let mut counts = LineCounts::default();
-	let mut comment_state = CommentState::new();
+	let mut classifier = Classifier::new(language);
 	// Validating the whole file once is much cheaper than decoding it line by line.
 	if let Ok(text) = std::str::from_utf8(bytes.get(encoding.bom_len..).unwrap_or_default()) {
-		count_text(text, language, &mut counts, &mut comment_state);
+		count_text(text, language, &mut counts, &mut classifier);
 	} else {
 		// Invalid UTF-8 is replaced line by line, keeping one bad byte from affecting the rest of the file.
 		for (i, line) in lines(bytes).enumerate() {
 			let line = decode_bytes(&bytes[line], encoding, i == 0);
-			counts.add(classify_line(&line, language, &mut comment_state, i == 0));
+			counts.add(classifier.classify(&line, i == 0));
 		}
 	}
 	counts
 }
 
-/// Count the lines of valid UTF-8 text, as classifying each with [`classify_line`] would.
+/// Count the lines of valid UTF-8 text, as classifying each with `classifier` would.
 ///
 /// Outside comments and strings, the lines before the next byte that could open one can only be code or blank, so they're swept without classifying each; only lines that might hold a marker go through the classifier.
-fn count_text(text: &str, language: &Language, counts: &mut LineCounts, comment_state: &mut CommentState) {
+fn count_text(text: &str, language: &Language, counts: &mut LineCounts, classifier: &mut Classifier) {
 	let bytes = text.as_bytes();
 	let openers = &language_matchers(language).openers;
-	// Markers that only count in the first column aren't among the openers, so those languages classify every line.
-	let can_sweep = language.column_one_comments.is_empty();
+	// Markers that only count in the first column aren't among the openers, and neither are the starts of embedded regions, so those languages classify every line.
+	let can_sweep = language.column_one_comments.is_empty() && language.embedding.is_none();
 	let mut pos = 0;
 	while pos < bytes.len() {
 		// The first line goes through the classifier, which checks it for a shebang.
-		if can_sweep && pos > 0 && comment_state.is_clear() {
+		if can_sweep && pos > 0 && classifier.is_clear() {
 			let stop = openers.find(&bytes[pos..]).map_or(bytes.len(), |i| pos + i);
 			while pos < stop {
 				let end = line_end(bytes, pos);
@@ -54,7 +55,7 @@ fn count_text(text: &str, language: &Language, counts: &mut LineCounts, comment_
 		}
 		let end = line_end(bytes, pos);
 		// Lines end at a `\n`, which is never inside a multi-byte character, so each is valid UTF-8 on its own.
-		counts.add(classify_line(&text[pos..end], language, comment_state, pos == 0));
+		counts.add(classifier.classify(&text[pos..end], pos == 0));
 		pos = end;
 	}
 }
@@ -121,12 +122,12 @@ mod tests {
 					text.push_str(pieces[next(pieces.len())]);
 				}
 				let mut expected = LineCounts::default();
-				let mut state = CommentState::new();
+				let mut classifier = Classifier::new(language);
 				for (i, line) in lines(text.as_bytes()).enumerate() {
-					expected.add(classify_line(&text[line], language, &mut state, i == 0));
+					expected.add(classifier.classify(&text[line], i == 0));
 				}
 				let mut got = LineCounts::default();
-				count_text(&text, language, &mut got, &mut CommentState::new());
+				count_text(&text, language, &mut got, &mut Classifier::new(language));
 				assert_eq!(got, expected, "{}: {text:?}", language.name);
 			}
 		}

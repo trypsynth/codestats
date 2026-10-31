@@ -382,6 +382,7 @@ mod tests {
 		c_preprocessor: false,
 		regex_literals: false,
 		strings: &[],
+		embedding: None,
 	};
 
 	const TEST_LANGUAGE_BETA: Language = Language {
@@ -399,6 +400,7 @@ mod tests {
 		c_preprocessor: false,
 		regex_literals: false,
 		strings: &[],
+		embedding: None,
 	};
 
 	#[test]

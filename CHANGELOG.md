@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Code embedded in another language is counted by its own language's rules, while its lines still belong to the file's language: `<script>` and `<style>` elements in HTML, Vue, Svelte and Astro (following `lang` and `type`, so `lang="ts"` is TypeScript and `lang="scss"` SCSS), Astro's TypeScript frontmatter, and fenced code blocks and YAML or TOML frontmatter in Markdown. A `// comment` in a Svelte script or a Markdown Rust block now counts as a comment rather than code, and a stylesheet wrapped in old-style `<!-- -->` hiding counts as CSS rather than one long comment
 - Xcode prefix headers (`.pch`) are counted, as C, C++ or Objective-C like `.h` files
 - A file of a format that can be a program, like a BRLTTY contraction table (`.ctb`), is counted as the language of its shebang when it starts with one; the new `shebang_overrides` field in `languages.json5` marks such formats
 - Added `cs diff <FROM> [PATH]`, which compares each language's files and code, comment and blank lines between a git revision and the working tree (or another revision with `--to`), in every output format. Revisions are read straight from git's object store, with nothing checked out; on the Linux kernel a diff against `HEAD` takes about 2 seconds
