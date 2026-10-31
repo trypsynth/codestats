@@ -36,12 +36,18 @@ impl ByteSet {
 	/// Whether `haystack` contains any byte of the set.
 	#[inline]
 	pub(crate) fn any_in(&self, haystack: &[u8]) -> bool {
+		self.find(haystack).is_some()
+	}
+
+	/// The position of the first byte of the set in `haystack`.
+	#[inline]
+	pub(crate) fn find(&self, haystack: &[u8]) -> Option<usize> {
 		match *self.bytes.as_slice() {
-			[] => false,
-			[a] => memchr(a, haystack).is_some(),
-			[a, b] => memchr2(a, b, haystack).is_some(),
-			[a, b, c] => memchr3(a, b, c, haystack).is_some(),
-			_ => haystack.iter().any(|&b| self.table[usize::from(b)]),
+			[] => None,
+			[a] => memchr(a, haystack),
+			[a, b] => memchr2(a, b, haystack),
+			[a, b, c] => memchr3(a, b, c, haystack),
+			_ => haystack.iter().position(|&b| self.table[usize::from(b)]),
 		}
 	}
 }

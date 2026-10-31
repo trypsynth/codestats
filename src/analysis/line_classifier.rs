@@ -91,6 +91,13 @@ impl CommentState {
 	const fn is_in_string(&self) -> bool {
 		self.string.is_some()
 	}
+
+	/// Whether the next line starts outside any comment or string.
+	#[must_use]
+	#[inline]
+	pub(crate) const fn is_clear(&self) -> bool {
+		!self.is_in_comment() && !self.is_in_string()
+	}
 }
 
 /// Process block comments on a line, updating state and detecting code.
@@ -448,6 +455,12 @@ fn contains_non_whitespace(s: &str) -> bool {
 		}
 	}
 	false
+}
+
+/// Whether a line is only whitespace, so [`classify_line`] would call it blank.
+#[inline]
+pub fn is_blank(line: &[u8]) -> bool {
+	line.iter().all(|&b| is_ascii_ws(b))
 }
 
 #[inline]
