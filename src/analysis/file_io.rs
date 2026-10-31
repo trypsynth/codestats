@@ -69,11 +69,6 @@ impl FileSource {
 		sample.len = file.read(&mut sample.data[..SAMPLE_SIZE])?;
 		Ok(sample)
 	}
-
-	/// The start and middle of the file, for binary and language detection.
-	pub(super) fn sample(&self) -> SampleBuf {
-		sample_from_slice(self)
-	}
 }
 
 impl Deref for FileSource {
@@ -110,7 +105,8 @@ fn sample_ranges(file_len: u64) -> (usize, Option<(u64, usize)>) {
 	(start_len, Some((mid_offset, mid_len)))
 }
 
-fn sample_from_slice(file_bytes: &[u8]) -> SampleBuf {
+/// The start and middle of a file's contents, for binary and language detection.
+pub(super) fn sample(file_bytes: &[u8]) -> SampleBuf {
 	let mut buf = SampleBuf::new();
 	let (start_len, mid_range) = sample_ranges(file_bytes.len() as u64);
 	buf.data[..start_len].copy_from_slice(&file_bytes[..start_len]);
@@ -156,7 +152,7 @@ mod tests {
 	#[test]
 	fn test_sample_from_slice_small() {
 		let data: Vec<u8> = (0..100).collect();
-		let samples = sample_from_slice(&data);
+		let samples = sample(&data);
 		assert_eq!(samples.len(), 100);
 		assert_eq!(&samples[..], &data[..]);
 	}
@@ -164,7 +160,7 @@ mod tests {
 	#[test]
 	fn test_sample_from_slice_large() {
 		let data: Vec<u8> = (0u8..=255).cycle().take(10_000).collect();
-		let samples = sample_from_slice(&data);
+		let samples = sample(&data);
 		// Should have start sample + mid sample
 		assert!(samples.len() > SAMPLE_SIZE);
 		assert!(samples.len() <= SAMPLE_SIZE * 2);

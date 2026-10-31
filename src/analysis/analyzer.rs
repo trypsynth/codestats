@@ -12,7 +12,10 @@ use std::{
 use anyhow::{Context as _, Result, ensure};
 use ignore::{WalkBuilder, overrides::OverrideBuilder};
 
-use super::{pipeline, stats::AnalysisResults};
+use super::{
+	pipeline::{self, LanguageFilter},
+	stats::AnalysisResults,
+};
 use crate::{config::AnalyzerConfig, display::Verbosity};
 
 /// A worker thread's own results, handed to the shared sink once when the worker finishes, so threads don't contend on a lock per file.
@@ -171,8 +174,7 @@ impl CodeAnalyzer {
 							&root,
 							&mut aggregator.local,
 							collect_details,
-							&include_languages,
-							&exclude_languages,
+							LanguageFilter { include: &include_languages, exclude: &exclude_languages },
 						) {
 							if verbosity == Verbosity::Verbose {
 								eprintln!("Failed to process {}: {err}", entry.path().display());
