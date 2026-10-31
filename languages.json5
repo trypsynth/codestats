@@ -337,7 +337,7 @@
 		line_comments: ["#"],
 	},
 	"C": {
-		file_patterns: ["*.c", "*.h", "*.ec", "*.pgc"],
+		file_patterns: ["*.c", "*.h", "*.ec", "*.pch", "*.pgc"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["#include", "#define", "#ifndef", "#pragma", "int main", "void", "sizeof", "typedef", "struct", "extern", "#ifdef", "#endif", "static", "NULL", "unsigned"],
@@ -356,7 +356,7 @@
 		strings: ["\"", {open: "'", char: true}, {open: "@\"", close: "\"", escape: "\"", multiline: true}, {open: "\"\"\"", escape: null, multiline: true}],
 	},
 	"C++": {
-		file_patterns: ["*.cpp", "*.h", "*.hpp", "*.c++", "*.h++", "*.cc", "*.cxx", "*.hxx", "*.ino", "*.ipp", "*.cppm", "*.ixx", "*.c++m", "*.pcc", "*.tpp", "*.hh", "*.inl", "*.inc"],
+		file_patterns: ["*.cpp", "*.h", "*.hpp", "*.pch", "*.c++", "*.h++", "*.cc", "*.cxx", "*.hxx", "*.ino", "*.ipp", "*.cppm", "*.ixx", "*.c++m", "*.pcc", "*.tpp", "*.hh", "*.inl", "*.inc"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["#include", "#define", "#ifndef", "#ifdef", "#endif", "#pragma", "int main", "void", "sizeof", "typedef", "struct", "extern", "static", "NULL", "unsigned", "namespace", "template", "typename", "std::", "nullptr", "constexpr", "virtual", "operator", "public:", "protected:", "private:"],
@@ -1731,7 +1731,7 @@
 		nested_blocks: true,
 	},
 	"Objective-C": {
-		file_patterns: ["*.m", "*.h"],
+		file_patterns: ["*.m", "*.h", "*.pch"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["#include", "#define", "#ifndef", "#pragma", "#ifdef", "#endif", "@interface", "@implementation", "@protocol", "@property", "@synthesize", "@end", "@autoreleasepool", "@selector", "@class", "@\"", "NSString", "NSInteger", "#import", "NSObject"],

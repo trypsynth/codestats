@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Xcode prefix headers (`.pch`) are counted, as C, C++ or Objective-C like `.h` files
 - A file of a format that can be a program, like a BRLTTY contraction table (`.ctb`), is counted as the language of its shebang when it starts with one; the new `shebang_overrides` field in `languages.json5` marks such formats
 - Added `cs diff <FROM> [PATH]`, which compares each language's files and code, comment and blank lines between a git revision and the working tree (or another revision with `--to`), in every output format. Revisions are read straight from git's object store, with nothing checked out; on the Linux kernel a diff against `HEAD` takes about 2 seconds
 - Added `--git` (`git_tracked_only` in config files) to count only the files git tracks, including in submodules, read from git's index instead of walking the directory; hidden, excluded and generated files are still left out, and `.gitignore` doesn't apply to tracked files
