@@ -314,40 +314,72 @@ struct Tokens<'a> {
 }
 
 /// Split `content` into identifier-like words (runs of ASCII letters, digits and underscores), keeping only those that begin with a byte in `starts` and are at most `max_len` long.
+///
+/// Works 64 bytes at a time: each block becomes a mask with a bit per word byte, and words begin and end wherever a bit differs from the one before it, so finding the next is a `trailing_zeros` rather than a branch per byte.
 fn tokenize<'a>(content: &'a str, starts: &[bool; 256], max_len: usize) -> Tokens<'a> {
 	let bytes = content.as_bytes();
 	let mut tokens = Tokens { words: Vec::new(), any: false };
-	let mut pos = 0;
-	while pos < bytes.len() {
-		while pos < bytes.len() && !WORD_BYTES[usize::from(bytes[pos])] {
-			pos += 1;
+	let mut keep = |start: usize, end: usize| {
+		tokens.any = true;
+		if end - start <= max_len && starts[usize::from(bytes[start])] {
+			tokens.words.push(&bytes[start..end]);
 		}
-		let start = pos;
-		while pos < bytes.len() && WORD_BYTES[usize::from(bytes[pos])] {
-			pos += 1;
-		}
-		if pos > start {
-			tokens.any = true;
-			if pos - start <= max_len && starts[usize::from(bytes[start])] {
-				tokens.words.push(&bytes[start..pos]);
+	};
+	// Where the word running into the current block began, if one is.
+	let mut word_start: Option<usize> = None;
+	for (block_index, block) in bytes.chunks(64).enumerate() {
+		let base = block_index * 64;
+		let mask = word_mask(block);
+		// Bits past the end of a short last block are clear, so a word running to the end of `content` ends there too.
+		let mut changes = mask ^ ((mask << 1) | u64::from(word_start.is_some()));
+		while changes != 0 {
+			let pos = base + changes.trailing_zeros() as usize;
+			match word_start.take() {
+				Some(start) => keep(start, pos),
+				None => word_start = Some(pos),
 			}
+			changes &= changes - 1;
 		}
+	}
+	if let Some(start) = word_start {
+		keep(start, bytes.len());
 	}
 	tokens
 }
 
-/// [`is_word_byte`] as a table, for the tokenizer's inner loops.
-static WORD_BYTES: [bool; 256] = {
-	let mut table = [false; 256];
-	let mut b: u8 = 0;
-	loop {
-		table[b as usize] = is_word_byte(b);
-		if b == u8::MAX {
-			break table;
-		}
-		b += 1;
+/// A mask of `block`'s word bytes, bit `i` for byte `i`.
+#[inline]
+fn word_mask(block: &[u8]) -> u64 {
+	let mut mask = 0;
+	for (i, chunk) in block.chunks(8).enumerate() {
+		let mut word = [0u8; 8];
+		word[..chunk.len()].copy_from_slice(chunk);
+		mask |= word_bits(u64::from_le_bytes(word)) << (i * 8);
 	}
-};
+	mask
+}
+
+/// For eight bytes packed little-endian into `x`, a bit per word byte (ASCII letter, digit or `_`), found with arithmetic on all eight at once rather than a branch each.
+#[inline]
+const fn word_bits(x: u64) -> u64 {
+	const ONES: u64 = 0x0101_0101_0101_0101;
+	const HIGH: u64 = 0x8080_8080_8080_8080;
+	// Each byte's high bit is set where `low <= byte < high`, for bytes under 0x80; `x & !HIGH` keeps the sums from carrying between bytes.
+	const fn in_range(seven: u64, low: u64, high: u64) -> u64 {
+		let at_least_low = seven + (128 - low) * ONES;
+		let below_high = seven + (128 - high) * ONES;
+		at_least_low & !below_high & HIGH
+	}
+	let seven = x & !HIGH;
+	let folded = (x | 0x2020_2020_2020_2020) & !HIGH;
+	let digits = in_range(seven, b'0' as u64, b'9' as u64 + 1);
+	let letters = in_range(folded, b'a' as u64, b'z' as u64 + 1);
+	let underscore = !((seven ^ (b'_' as u64 * ONES)) + !HIGH) & HIGH;
+	// Bytes of 0x80 and above (UTF-8) are never word bytes.
+	let set = (digits | letters | underscore) & !x & HIGH;
+	// Gather the eight high bits into the low byte.
+	(set >> 7).wrapping_mul(0x0102_0408_1020_4080) >> 56
+}
 
 /// Normalize a shebang line: drop an optional space after `#!` and env's `-S` flag (`#!/usr/bin/env -S python3 -u`).
 #[inline]
@@ -642,6 +674,49 @@ mod tests {
 		let content = "main $(\n   auto ch;\n   if (ch > 0100 & ch < 0133) ch = ch + 040;\n   if (ch > 500 & ch < 600) goto loop;\n$)";
 		let language = detect_language_info("example.b", Some(content)).unwrap();
 		assert_eq!(language.name, "B");
+	}
+
+	#[test]
+	fn word_bits_matches_is_word_byte_for_every_byte() {
+		for b in 0..=255u8 {
+			for position in 0..8 {
+				let x = u64::from(b) << (position * 8);
+				assert_eq!(word_bits(x) >> position & 1 == 1, is_word_byte(b), "byte {b:#04x} at {position}");
+			}
+		}
+	}
+
+	/// The block tokenizer must find the same words as a plain byte-by-byte scan, including words that cross 64-byte blocks or end the text.
+	#[test]
+	fn block_tokenizer_matches_byte_scan() {
+		fn reference(content: &str) -> Vec<&[u8]> {
+			content.as_bytes().split(|&b| !is_word_byte(b)).filter(|word| !word.is_empty()).collect()
+		}
+		let mut seed: u64 = 0x1234_5678_9ABC_DEF1;
+		let mut next = move |bound: usize| {
+			seed ^= seed << 13;
+			seed ^= seed >> 7;
+			seed ^= seed << 17;
+			usize::try_from(seed % bound as u64).unwrap()
+		};
+		let pieces = ["a", "Z", "_", "9", "word", " ", "\n", "(", "é", "--", "x_1"];
+		for _ in 0..3000 {
+			let mut content = String::new();
+			for _ in 0..next(90) {
+				content.push_str(pieces[next(pieces.len())]);
+			}
+			let tokens = tokenize(&content, &[true; 256], usize::MAX);
+			let expected = reference(&content);
+			assert_eq!(tokens.words, expected, "{content:?}");
+			assert_eq!(tokens.any, !expected.is_empty());
+			// And the filters: words starting with `a` or `w`, at most 3 long.
+			let mut starts = [false; 256];
+			starts[usize::from(b'a')] = true;
+			starts[usize::from(b'w')] = true;
+			let filtered: Vec<_> =
+				expected.iter().copied().filter(|w| w.len() <= 3 && starts[usize::from(w[0])]).collect();
+			assert_eq!(tokenize(&content, &starts, 3).words, filtered, "{content:?}");
+		}
 	}
 
 	#[rstest]
