@@ -1,13 +1,14 @@
 # Changelog
 
-## Unreleased
+## 0.8.4
 
 - Added Texinfo (`.texi`, `.texinfo`, `.txi`), XAML (`.xaml`), and braille tables: liblouis (`.ctb`, `.cti`, `.utb`, `.uti`, `.dis`) and BRLTTY (`.ktb`, `.kti`, `.ttb`, `.tti`, `.atb`, `.ati`)
 - 6502 assembly (`.s65`, `.a65`) counts as Assembly
 - Dependency files that compilers write for Make (`.d`) are no longer counted as D; D files are recognized by their keywords and doc comments
 - `.tmpl` and `.gotxt` files count as Go Template, `.vcproj` and `.vcxproj.filters` as MSBuild, and Autoconf's `configure.ac` and `configure.in` as M4
 - C3 test files (`.c3t`) count as C3, and lowercase `sconscript`/`sconstruct` files as Python, as NVDA's build uses
-- Faster on large trees with many small files: the binary-file check and line trimming do less work per file and per line (about 9% fewer cycles on a 923K-file directory)
+- 20-40% faster than 0.8.3 (37% on the Linux kernel), with identical counts: lines that can't contain a comment or string are counted without running the classifier, detection samples are tokenized 64 bytes at a time, and each file's path is looked up once
+- The README benchmarks now cover eight repositories, including nvda, wxWidgets and rust-lang/rust, at commits pinned in `scripts/bench.sh`, which reproduces them; cloc is no longer included
 
 ## 0.8.3
 
