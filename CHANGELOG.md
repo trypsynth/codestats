@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added `--git` (`git_tracked_only` in config files) to count only files tracked by git, including in submodules; other filters still apply. It asks git for the list once, adding about 30 ms on the Linux kernel
 - **Breaking:** JSON output has a new, consistent shape with a `schema_version` (1). Line counts are a `lines` object (`total`, `code`, `comment`, `blank`, `shebang`) at every level, sizes are `bytes`, file counts are `file_count`, and per-file details are `files`. `summary` is now `totals`, `analysis_path` is `path`, a directory's `path` is its `name`, and `languages_hidden`/`dirs_hidden` are `hidden_languages`/`hidden_directories`. Percentages, averages and `*_human` sizes are gone from JSON, as they're derived from the counts; the other formats still show them
 
 ## 0.8.4

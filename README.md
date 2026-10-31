@@ -164,6 +164,7 @@ Usage: `cs [OPTIONS] [PATH]` (defaults to the current directory)
 - `-v, --verbose` Show per-file details in addition to the language breakdown
 - `--no-gitignore` Do not respect `.gitignore`
 - `--include-generated` Count generated files (lockfiles, minified assets) which are excluded by default
+- `--git` Only count files tracked by git, including in submodules, so untracked scratch files and downloads are left out
 - `--max-depth <N>` Limit directory traversal to N levels deep
 - `--min-lines <N>` Hide languages with fewer than N total lines
 - `-H, --hidden` Search hidden files and directories
@@ -205,6 +206,7 @@ Codestats can read settings from TOML while keeping full CLI compatibility. Sear
 [analysis]
 verbosity = "verbose"
 respect_gitignore = true
+git_tracked_only = false  # true counts only files git tracks
 include_hidden = true
 follow_symlinks = false
 exclude_patterns = ["languages.json5", "*.tmp", "node_modules/*"]  # filenames or globs

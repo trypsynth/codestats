@@ -62,6 +62,8 @@ pub struct AnalysisConfig {
 	pub include_hidden: bool,
 	pub follow_symlinks: bool,
 	pub include_generated: bool,
+	/// Only count files git tracks.
+	pub git_tracked_only: bool,
 	pub max_depth: Option<usize>,
 	pub exclude_patterns: Vec<String>,
 	pub include_languages: Vec<String>,
@@ -77,6 +79,7 @@ impl Default for AnalysisConfig {
 			include_hidden: false,
 			follow_symlinks: false,
 			include_generated: false,
+			git_tracked_only: false,
 			max_depth: None,
 			exclude_patterns: Vec::new(),
 			include_languages: Vec::new(),

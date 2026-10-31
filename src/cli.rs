@@ -67,6 +67,9 @@ pub struct AnalyzeArgs {
 	/// Count generated files (lockfiles, minified assets) which are excluded by default
 	#[arg(long)]
 	pub include_generated: bool,
+	/// Only count files tracked by git, including in submodules
+	#[arg(long)]
+	pub git: bool,
 	/// Limit directory traversal to N levels deep
 	#[arg(long, value_name = "N")]
 	pub max_depth: Option<usize>,
@@ -156,6 +159,7 @@ pub fn merge_config(mut config: Config, args: &AnalyzeArgs, matches: &ArgMatches
 	apply!("no_gitignore", config.analysis.respect_gitignore = !args.no_gitignore);
 	apply!("hidden", config.analysis.include_hidden = args.hidden);
 	apply!("include_generated", config.analysis.include_generated = args.include_generated);
+	apply!("git", config.analysis.git_tracked_only = args.git);
 	apply!("max_depth", config.analysis.max_depth = args.max_depth);
 	apply!("symlinks", config.analysis.follow_symlinks = args.symlinks);
 	apply!("fail_on_error", config.analysis.fail_on_error = args.fail_on_error);

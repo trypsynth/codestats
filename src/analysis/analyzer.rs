@@ -1,13 +1,15 @@
 use std::{
 	borrow::Cow,
+	ops::Range,
 	path::{Path, PathBuf},
+	process::Command,
 	sync::{
 		Arc, Mutex, PoisonError,
 		atomic::{AtomicU64, Ordering},
 	},
 };
 
-use anyhow::Result;
+use anyhow::{Context as _, Result, ensure};
 use ignore::{WalkBuilder, overrides::OverrideBuilder};
 
 use super::{pipeline, stats::AnalysisResults};
@@ -25,6 +27,66 @@ impl Drop for LocalAggregator {
 		let mut sink = self.sink.lock().unwrap_or_else(PoisonError::into_inner);
 		sink.push(local);
 	}
+}
+
+/// The files git tracks under an analysis root, for `--git`.
+struct TrackedFiles {
+	/// The directory git was asked about: the root, or a file root's directory.
+	base: PathBuf,
+	/// `git ls-files -z` output: paths relative to `base`, `/`-separated.
+	listing: Vec<u8>,
+	/// Where each path lies in `listing`, sorted by path so lookups are a binary search with no allocation per path.
+	paths: Vec<Range<usize>>,
+}
+
+impl TrackedFiles {
+	fn list(root: &Path) -> Result<Self> {
+		let base = if root.is_file() {
+			root.parent().unwrap_or_else(|| Path::new("")).to_path_buf()
+		} else {
+			root.to_path_buf()
+		};
+		let dir = if base.as_os_str().is_empty() { Path::new(".") } else { &base };
+		let output = Command::new("git")
+			.arg("-C")
+			.arg(dir)
+			.args(["ls-files", "-z", "--recurse-submodules"])
+			.output()
+			.context("--git needs git installed")?;
+		ensure!(
+			output.status.success(),
+			"--git: {}",
+			String::from_utf8_lossy(&output.stderr).trim().trim_start_matches("fatal: ")
+		);
+		let listing = output.stdout;
+		let mut paths = Vec::new();
+		let mut start = 0;
+		for end in memchr::memchr_iter(0, &listing) {
+			paths.push(start..end);
+			start = end + 1;
+		}
+		paths.sort_unstable_by(|a, b| listing[a.clone()].cmp(&listing[b.clone()]));
+		Ok(Self { base, listing, paths })
+	}
+
+	fn contains(&self, path: &Path) -> bool {
+		let Ok(relative) = path.strip_prefix(&self.base) else {
+			return false;
+		};
+		let relative = git_path(relative);
+		self.paths.binary_search_by(|range| self.listing[range.clone()].cmp(relative.as_ref())).is_ok()
+	}
+}
+
+/// A relative path spelled as git prints it.
+#[cfg(not(windows))]
+fn git_path(path: &Path) -> Cow<'_, [u8]> {
+	Cow::Borrowed(path.as_os_str().as_encoded_bytes())
+}
+
+#[cfg(windows)]
+fn git_path(path: &Path) -> Cow<'_, [u8]> {
+	Cow::Owned(path.to_string_lossy().replace('\\', "/").into_bytes())
 }
 
 /// Walks source files within a directory tree and produces aggregated statistics.
@@ -55,6 +117,8 @@ impl CodeAnalyzer {
 		let include_languages = self.config.analysis.include_languages.clone();
 		let exclude_languages = self.config.analysis.exclude_languages.clone();
 		let root = self.root.clone();
+		let tracked =
+			if self.config.analysis.git_tracked_only { Some(Arc::new(TrackedFiles::list(&self.root)?)) } else { None };
 		let aggregates = Arc::new(Mutex::new(Vec::new()));
 		let aggregates_for_walk = Arc::clone(&aggregates);
 		let error_counter_for_walk = Arc::clone(&error_counter);
@@ -95,9 +159,13 @@ impl CodeAnalyzer {
 			let include_languages = include_languages.clone();
 			let exclude_languages = exclude_languages.clone();
 			let root = root.clone();
+			let tracked = tracked.clone();
 			Box::new(move |entry_result| {
 				match entry_result {
-					Ok(entry) if entry.file_type().is_some_and(|ft| ft.is_file()) => {
+					Ok(entry)
+						if entry.file_type().is_some_and(|ft| ft.is_file())
+							&& tracked.as_ref().is_none_or(|tracked| tracked.contains(entry.path())) =>
+					{
 						if let Err(err) = pipeline::process_file(
 							entry.path(),
 							&root,

@@ -57,3 +57,46 @@ fn invalid_value_names_the_option_and_suggests_one() {
 	assert!(stderr.contains("possible values: human, json"), "{stderr}");
 	assert!(stderr.contains("'html'"), "{stderr}");
 }
+
+#[test]
+fn git_counts_only_tracked_files() {
+	let root = scratch_dir("git_counts_only_tracked_files");
+	let git =
+		|args: &[&str]| assert!(Command::new("git").arg("-C").arg(&root).args(args).output().unwrap().status.success());
+	git(&["init", "-q"]);
+	fs::create_dir(root.join("src")).unwrap();
+	fs::write(root.join("src").join("tracked.rs"), "fn main() {}\n").unwrap();
+	fs::write(root.join("top.py"), "x = 1\n").unwrap();
+	git(&["add", "src/tracked.rs", "top.py"]);
+	fs::write(root.join("src").join("untracked.rs"), "fn f() {}\n").unwrap();
+	let files = |args: &[&str]| {
+		let output = cs().args(args).args(["-v", "-o", "json"]).output().unwrap();
+		assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+		let report: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+		let mut paths: Vec<String> = report["languages"]
+			.as_array()
+			.unwrap()
+			.iter()
+			.flat_map(|lang| {
+				lang["files"].as_array().unwrap().iter().map(|file| file["path"].as_str().unwrap().to_owned())
+			})
+			.collect();
+		paths.sort();
+		paths
+	};
+	let root_arg = root.to_str().unwrap();
+	assert_eq!(files(&[root_arg]), ["src/tracked.rs", "src/untracked.rs", "top.py"]);
+	assert_eq!(files(&[root_arg, "--git"]), ["src/tracked.rs", "top.py"]);
+	// A subdirectory or single file as the root is resolved against the same repository.
+	assert_eq!(files(&[root.join("src").to_str().unwrap(), "--git"]), ["tracked.rs"]);
+	assert_eq!(files(&[root.join("src").join("untracked.rs").to_str().unwrap(), "--git"]), Vec::<String>::new());
+}
+
+#[test]
+fn git_outside_a_repository_is_an_error() {
+	let root = scratch_dir("git_outside_a_repository_is_an_error");
+	fs::write(root.join("a.rs"), "fn main() {}\n").unwrap();
+	let output = cs().arg(&root).arg("--git").env("GIT_CEILING_DIRECTORIES", root.parent().unwrap()).output().unwrap();
+	assert!(!output.status.success());
+	assert!(String::from_utf8(output.stderr).unwrap().contains("--git: not a git repository"));
+}

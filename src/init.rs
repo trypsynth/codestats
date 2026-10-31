@@ -27,6 +27,9 @@ const DEFAULT_CONFIG_TEMPLATE: &str = "\
 # Count generated files (lockfiles, minified assets) excluded by default
 # include_generated = false
 
+# Only count files tracked by git, including in submodules
+# git_tracked_only = false
+
 # Limit directory traversal depth
 # max_depth = 5
 
