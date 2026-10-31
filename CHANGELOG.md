@@ -4,10 +4,10 @@
 
 - Code embedded in another language is counted by its own language's rules, while its lines still belong to the file's language: `<script>` and `<style>` elements in HTML, Vue, Svelte and Astro (following `lang` and `type`, so `lang="ts"` is TypeScript and `lang="scss"` SCSS), Astro's TypeScript frontmatter, and fenced code blocks and YAML or TOML frontmatter in Markdown. A `// comment` in a Svelte script or a Markdown Rust block now counts as a comment rather than code, and a stylesheet wrapped in old-style `<!-- -->` hiding counts as CSS rather than one long comment
 - Xcode prefix headers (`.pch`) are counted, as C, C++ or Objective-C like `.h` files
-- A file of a format that can be a program, like a BRLTTY contraction table (`.ctb`), is counted as the language of its shebang when it starts with one; the new `shebang_overrides` field in `languages.json5` marks such formats
-- Added `cs diff <FROM> [PATH]`, which compares each language's files and code, comment and blank lines between a git revision and the working tree (or another revision with `--to`), in every output format. Revisions are read straight from git's object store, with nothing checked out; on the Linux kernel a diff against `HEAD` takes about 2 seconds
-- Added `--git` (`git_tracked_only` in config files) to count only the files git tracks, including in submodules, read from git's index instead of walking the directory; hidden, excluded and generated files are still left out, and `.gitignore` doesn't apply to tracked files
-- **Breaking:** JSON output has a new, consistent shape with a `schema_version` (1). Line counts are a `lines` object (`total`, `code`, `comment`, `blank`, `shebang`) at every level, sizes are `bytes`, file counts are `file_count`, and per-file details are `files`. `summary` is now `totals`, `analysis_path` is `path`, a directory's `path` is its `name`, and `languages_hidden`/`dirs_hidden` are `hidden_languages`/`hidden_directories`. Percentages, averages and `*_human` sizes are gone from JSON, as they're derived from the counts; the other formats still show them
+- A file of a format that can be a program, like a BRLTTY contraction table (`.ctb`), is counted as the language of its shebang when it starts with one
+- Added `cs diff <FROM> [PATH]`, which compares each language's files and code, comment and blank lines between a git revision and the working tree (or another revision with `--to`), in every output format. On the Linux kernel a diff against `HEAD` takes about 2 seconds
+- Added `--git` (`git_tracked_only` in config files) to count only the files git tracks, including in submodules; hidden, excluded and generated files are still left out, and `.gitignore` doesn't apply to tracked files
+- Breaking: JSON output has a new, consistent shape with a `schema_version` (1). Line counts are a `lines` object (`total`, `code`, `comment`, `blank`, `shebang`) at every level, sizes are `bytes`, file counts are `file_count`, and per-file details are `files`. `summary` is now `totals`, `analysis_path` is `path`, a directory's `path` is its `name`, and `languages_hidden`/`dirs_hidden` are `hidden_languages`/`hidden_directories`. Percentages, averages and `*_human` sizes are gone from JSON; the other formats still show them
 
 ## 0.8.4
 
@@ -16,7 +16,7 @@
 - Dependency files that compilers write for Make (`.d`) are no longer counted as D; D files are recognized by their keywords and doc comments
 - `.tmpl` and `.gotxt` files count as Go Template, `.vcproj` and `.vcxproj.filters` as MSBuild, and Autoconf's `configure.ac` and `configure.in` as M4
 - C3 test files (`.c3t`) count as C3, and lowercase `sconscript`/`sconstruct` files as Python, as NVDA's build uses
-- 20-40% faster than 0.8.3 (37% on the Linux kernel), with identical counts: lines that can't contain a comment or string are counted without running the classifier, detection samples are tokenized 64 bytes at a time, and each file's path is looked up once
+- 20-40% faster than 0.8.3 (37% on the Linux kernel), with identical counts
 - The README benchmarks now cover eight repositories, including nvda, wxWidgets and rust-lang/rust, at commits pinned in `scripts/bench.sh`, which reproduces them; cloc is no longer included
 
 ## 0.8.3
@@ -103,9 +103,7 @@
 ## 0.4.0
 
 - Added HTML and Markdown output formats
-- Added more language fixtures and detection tests
 - Improved documentation and CLI help text
-- Removed the git dependency for gitignore handling
 - Reworked display formatting to support sorting and custom output styles
 
 ## 0.3.1
@@ -113,8 +111,7 @@
 - Added memory-mapped I/O for large files
 - Added more languages and improved language data
 - Improved comment parsing
-- Sped up core routines and reduced allocations
-- Switched pattern matching to globset and simplified language lookups
+- Sped up core routines
 
 ## 0.3.0
 
