@@ -20,6 +20,8 @@
 //                        pattern has (used for junk-drawer extensions like `.inc`, and for C++ in `.h`). When nothing
 //                        matches, the one sharing language without this flag is used as the default.
 //   case_sensitive_keywords  Word keywords only match in the case they're written (C: `virtual` but not `VIRTUAL`).
+//   shebang_overrides    A file with this language's extension that starts with a shebang is the shebang's language
+//                        (BRLTTY runs contraction tables that are programs, like a `.ctb` Python script).
 //   strings              String literals, so comment markers inside them are ignored and their contents count as code.
 //                        `"\""` is a one-line string with a `\` escape. The full form is
 //                        {open, close (defaults to open), escape (`null` for raw strings, or the quote itself for
@@ -1354,6 +1356,7 @@
 	"liblouis Table": {
 		file_patterns: ["*.ctb", "*.cti", "*.dis", "*.utb", "*.uti"],
 		line_comments: ["#"],
+		shebang_overrides: true,
 	},
 	"LIGO": {
 		file_patterns: ["*.ligo", "*.mligo", "*.jsligo", "*.religo"],

@@ -43,12 +43,17 @@ pub fn count_bytes(path: &Path, bytes: &[u8], languages: LanguageFilter) -> Opti
 	count_contents(&langs::get_candidates(&detection_name(path)?), bytes, languages)
 }
 
-/// Whether a file named `path` could be counted, judging by its name alone: false when its only possible language is filtered out, so its contents needn't be read.
+/// Whether a file named `path` could be counted, judging by its name alone: false when its only possible language is filtered out and a shebang couldn't claim it, so its contents needn't be read.
 pub fn could_count(path: &Path, languages: LanguageFilter) -> bool {
 	detection_name(path).is_some_and(|name| match langs::get_candidates(&name)[..] {
-		[language] => languages.allows(language),
+		[language] => languages.allows(language) || language.shebang_overrides,
 		_ => true,
 	})
+}
+
+/// Whether a file whose name says `language` might be a script its shebang claims instead: only where the language allows it, and only if it starts with `#!`.
+fn may_be_script(language: &Language, bytes: &[u8]) -> bool {
+	language.shebang_overrides && bytes.trim_ascii_start().starts_with(b"#!")
 }
 
 fn count_contents(
@@ -65,8 +70,11 @@ fn count_contents(
 	if is_probably_binary(&sample_bytes, encoding) {
 		return None;
 	}
-	// A single candidate decides by name alone, so only decode the sample when content has a say.
-	let content_decides = candidates.len() != 1;
+	// A single candidate decides by name alone, unless the file might be a script claimed by its shebang, so only decode the sample when content has a say.
+	let content_decides = match candidates {
+		[language] => may_be_script(language, &sample_bytes[encoding.bom_len.min(sample_bytes.len())..]),
+		_ => true,
+	};
 	let mut detection = langs::detect_language(
 		candidates,
 		content_decides.then(|| decode_bytes(&sample_bytes, encoding, true)).as_deref(),
@@ -94,6 +102,7 @@ pub fn process_file(
 	let candidates = langs::get_candidates(&filename);
 	if let [language] = candidates[..]
 		&& !languages.allows(language)
+		&& !language.shebang_overrides
 	{
 		return Ok(());
 	}
@@ -101,8 +110,13 @@ pub fn process_file(
 	// `fstat` on the open file rather than `stat` on its path, so the path is only looked up once.
 	let file_size =
 		file.metadata().with_context(|| format!("Failed to read metadata for {}", file_path.display()))?.len();
-	// A file whose name matches no language counts only if it starts with a shebang, so check that before reading it all.
-	if candidates.is_empty() && file_size > 0 {
+	// A file whose name matches no language, or only one that's filtered out, counts only if it starts with a shebang, so check that before reading it all.
+	let needs_shebang = match candidates[..] {
+		[] => true,
+		[language] => !languages.allows(language),
+		_ => false,
+	};
+	if needs_shebang && file_size > 0 {
 		let head =
 			FileSource::head(&mut file).with_context(|| format!("Failed to read file {}", file_path.display()))?;
 		let encoding = detect_encoding(&head);

@@ -428,6 +428,8 @@ pub fn detect_language(candidates: &[&'static Language], content: Option<&str>) 
 	let decided = |language| Detection { language, close_call: false };
 	match candidates.len() {
 		0 => decided(content.and_then(detect_from_shebang)),
+		// A shebang claims a file only where the extension's language says it may (BRLTTY's `latex-access.ctb` is Python); elsewhere a shebang atop, say, a `.cxx` lexer test or a dpatch `.patch` doesn't change what the file is.
+		1 if candidates[0].shebang_overrides => decided(content.and_then(detect_from_shebang).or(Some(candidates[0]))),
 		1 => decided(Some(candidates[0])),
 		_ => {
 			let Some(file_content) = content else {
@@ -466,6 +468,7 @@ mod tests {
 		keywords: &["alpha", "beta"],
 		require_keywords: false,
 		case_sensitive_keywords: false,
+		shebang_overrides: false,
 		c_preprocessor: false,
 		regex_literals: false,
 		strings: &[],
@@ -482,6 +485,7 @@ mod tests {
 		keywords: &["winner"],
 		require_keywords: false,
 		case_sensitive_keywords: false,
+		shebang_overrides: false,
 		c_preprocessor: false,
 		regex_literals: false,
 		strings: &[],
@@ -565,6 +569,9 @@ mod tests {
 		"C"
 	)]
 	#[case::bare_header_defaults_to_c("empty.h", "#pragma once\n", "C")]
+	#[case::executable_contraction_table("latex-access.ctb", "#!/usr/bin/python3\nimport sys\n", "Python")]
+	#[case::shebang_atop_a_lexer_test("x.cxx", "#!/usr/bin/env node\nint main() {}\n", "C++")]
+	#[case::dpatch("01-fix.patch", "#! /bin/sh /usr/share/dpatch/dpatch-run\n--- a/x\n+++ b/x\n", "Diff")]
 	#[case::c_header_comments_only("util.h", "// helpers\n/* nothing here */\n", "C")]
 	#[case::octave_function("example.m", "# compute\nfunction y = f(x)\n\ty = x;\nendfunction\n", "Octave")]
 	fn detect_m_and_h_files(#[case] filename: &str, #[case] content: &str, #[case] expected: &str) {

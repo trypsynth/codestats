@@ -29,6 +29,8 @@ pub struct LanguageConfig {
 	#[serde(default)]
 	pub case_sensitive_keywords: bool,
 	#[serde(default)]
+	pub shebang_overrides: bool,
+	#[serde(default)]
 	pub strings: Vec<StringSpec>,
 	#[serde(default)]
 	pub c_preprocessor: bool,

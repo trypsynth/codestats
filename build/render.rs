@@ -17,6 +17,7 @@ const LANGUAGE_FIELDS: &[(&str, &str)] = &[
 	("keywords", "&'static [&'static str]"),
 	("require_keywords", "bool"),
 	("case_sensitive_keywords", "bool"),
+	("shebang_overrides", "bool"),
 	("strings", "&'static [StringDelimiter]"),
 	("c_preprocessor", "bool"),
 	("regex_literals", "bool"),
@@ -82,6 +83,7 @@ fn render_language(output: &mut String, index: usize, lang: &LanguageConfig) {
 	write_field(output, "keywords", quoted_slice(&lang.keywords));
 	write_field(output, "require_keywords", lang.require_keywords);
 	write_field(output, "case_sensitive_keywords", lang.case_sensitive_keywords);
+	write_field(output, "shebang_overrides", lang.shebang_overrides);
 	write_field(output, "strings", render_slice(&lang.strings, render_string_delimiter));
 	write_field(output, "c_preprocessor", lang.c_preprocessor);
 	write_field(output, "regex_literals", lang.regex_literals);

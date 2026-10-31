@@ -2,8 +2,9 @@
 
 ## Unreleased
 
+- A file of a format that can be a program, like a BRLTTY contraction table (`.ctb`), is counted as the language of its shebang when it starts with one; the new `shebang_overrides` field in `languages.json5` marks such formats
 - Added `cs diff <FROM> [PATH]`, which compares each language's files and code, comment and blank lines between a git revision and the working tree (or another revision with `--to`), in every output format. Revisions are read straight from git's object store, with nothing checked out; on the Linux kernel a diff against `HEAD` takes about 2 seconds
-- Added `--git` (`git_tracked_only` in config files) to count only the files git tracks, including in submodules, read from git's index instead of walking the directory; hidden, excluded and generated files are still left out, and `.gitignore` doesn't apply to tracked files. It's as fast as a normal run
+- Added `--git` (`git_tracked_only` in config files) to count only the files git tracks, including in submodules, read from git's index instead of walking the directory; hidden, excluded and generated files are still left out, and `.gitignore` doesn't apply to tracked files
 - **Breaking:** JSON output has a new, consistent shape with a `schema_version` (1). Line counts are a `lines` object (`total`, `code`, `comment`, `blank`, `shebang`) at every level, sizes are `bytes`, file counts are `file_count`, and per-file details are `files`. `summary` is now `totals`, `analysis_path` is `path`, a directory's `path` is its `name`, and `languages_hidden`/`dirs_hidden` are `hidden_languages`/`hidden_directories`. Percentages, averages and `*_human` sizes are gone from JSON, as they're derived from the counts; the other formats still show them
 
 ## 0.8.4
