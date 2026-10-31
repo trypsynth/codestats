@@ -20,6 +20,7 @@
 //! - Sort direction: ascending or descending.
 //! - Indentation style: tab or 1-8 spaces.
 
+mod diff;
 pub mod formatting;
 mod html;
 mod human;
@@ -34,6 +35,7 @@ use std::{io::Write, path::Path};
 
 use anyhow::Result;
 use clap::ValueEnum;
+pub use diff::{Versions, write_diff};
 pub use formatting::{FormatterContext, apply_sort};
 pub use html::HtmlFormatter;
 pub use human::HumanFormatter;

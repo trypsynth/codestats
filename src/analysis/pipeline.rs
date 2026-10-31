@@ -39,9 +39,16 @@ fn detection_name(path: &Path) -> Option<Cow<'_, str>> {
 }
 
 /// The language and line counts of a file named `path` with contents `bytes`, or `None` if it isn't counted: unrecognized, binary, or filtered out.
-#[allow(dead_code, reason = "temporary until cs diff uses it")]
 pub fn count_bytes(path: &Path, bytes: &[u8], languages: LanguageFilter) -> Option<(&'static Language, LineCounts)> {
 	count_contents(&langs::get_candidates(&detection_name(path)?), bytes, languages)
+}
+
+/// Whether a file named `path` could be counted, judging by its name alone: false when its only possible language is filtered out, so its contents needn't be read.
+pub fn could_count(path: &Path, languages: LanguageFilter) -> bool {
+	detection_name(path).is_some_and(|name| match langs::get_candidates(&name)[..] {
+		[language] => languages.allows(language),
+		_ => true,
+	})
 }
 
 fn count_contents(

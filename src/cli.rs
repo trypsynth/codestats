@@ -21,6 +21,7 @@ pub struct Cli {
 
 /// Available subcommands
 #[derive(Subcommand)]
+#[expect(clippy::large_enum_variant, reason = "parsed once per run, so its size doesn't matter")]
 pub enum Commands {
 	/// Generate shell completion scripts
 	Completions {
@@ -30,6 +31,8 @@ pub enum Commands {
 	},
 	/// List all supported programming languages
 	Langs,
+	/// Compare line counts between two versions of a git repository, by language
+	Diff(DiffArgs),
 	/// Generate a default configuration file
 	Init {
 		/// Output path for the configuration file [default: .codestats.toml]
@@ -39,6 +42,19 @@ pub enum Commands {
 		#[arg(short, long)]
 		force: bool,
 	},
+}
+
+/// Arguments for `cs diff`
+#[derive(clap::Args)]
+pub struct DiffArgs {
+	/// The revision to compare from: a commit, tag or branch
+	#[arg(value_name = "FROM")]
+	pub from: String,
+	/// The revision to compare to [default: the working tree]
+	#[arg(long, value_name = "REV")]
+	pub to: Option<String>,
+	#[command(flatten)]
+	pub analyze: AnalyzeArgs,
 }
 
 /// Arguments for the main code analysis functionality

@@ -102,7 +102,16 @@ fn write_json(
 	pretty: bool,
 ) -> Result<()> {
 	let (_ctx, report) = formatter.prepare_report(results, path, view_options);
-	let report = Report::new(&report, view_options.by_dir);
+	write_value(&Report::new(&report, view_options.by_dir), view_options, writer, pretty)
+}
+
+/// Write `value` as JSON, pretty-printed with the configured indent or on one line, ending with a newline.
+pub(super) fn write_value(
+	value: &impl Serialize,
+	view_options: ViewOptions,
+	writer: &mut dyn Write,
+	pretty: bool,
+) -> Result<()> {
 	if pretty {
 		let indent_bytes: Vec<u8> = match view_options.indent_style {
 			IndentStyle::Tab => b"\t".to_vec(),
@@ -110,9 +119,9 @@ fn write_json(
 		};
 		let formatter = PrettyFormatter::with_indent(&indent_bytes);
 		let mut ser = Serializer::with_formatter(&mut *writer, formatter);
-		report.serialize(&mut ser)?;
+		value.serialize(&mut ser)?;
 	} else {
-		serde_json::to_writer(&mut *writer, &report)?;
+		serde_json::to_writer(&mut *writer, value)?;
 	}
 	writeln!(writer)?;
 	Ok(())

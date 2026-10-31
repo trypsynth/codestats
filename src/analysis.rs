@@ -11,11 +11,13 @@ mod analyzer;
 mod encoding;
 mod file_io;
 pub mod generated;
+mod git;
 mod line_classifier;
 mod line_counter;
 mod pipeline;
 pub mod stats;
 
 pub use analyzer::CodeAnalyzer;
+pub use git::{Snapshot, count_snapshot};
 pub use line_classifier::LineType;
 pub use stats::{AnalysisResults, FileStats, LanguageStats, LineCounts};

@@ -69,6 +69,15 @@ cs
 cs -v src -o json
 ```
 
+### Compare with an earlier release
+
+```bash
+cs diff v1.0.0               # v1.0.0 against the working tree
+cs diff v1.0.0 --to v2.0.0   # between two revisions
+```
+
+Each language's files, lines and code, comment and blank lines in both versions, with the change. Both sides count the files git tracks, with the same filters, so only real changes show.
+
 ### Show only the top 10 languages
 
 ```bash
@@ -164,7 +173,7 @@ Usage: `cs [OPTIONS] [PATH]` (defaults to the current directory)
 - `-v, --verbose` Show per-file details in addition to the language breakdown
 - `--no-gitignore` Do not respect `.gitignore`
 - `--include-generated` Count generated files (lockfiles, minified assets) which are excluded by default
-- `--git` Only count files tracked by git, including in submodules, so untracked scratch files and downloads are left out
+- `--git` Only count files tracked by git, including in submodules, so untracked scratch files and downloads are left out. `.gitignore` doesn't apply to what git tracks
 - `--max-depth <N>` Limit directory traversal to N levels deep
 - `--min-lines <N>` Hide languages with fewer than N total lines
 - `-H, --hidden` Search hidden files and directories
@@ -187,6 +196,7 @@ Usage: `cs [OPTIONS] [PATH]` (defaults to the current directory)
 
 ## Subcommands
 
+- `diff <FROM> [PATH]` Compare line counts by language between a git revision and the working tree, or another revision with `--to <REV>`
 - `langs` List all supported languages
 - `completions <shell>` Generate shell completions (e.g. `bash`, `zsh`, `fish`)
 

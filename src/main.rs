@@ -13,11 +13,12 @@ mod swar;
 
 use std::io::{self, Write as _};
 
-use analysis::CodeAnalyzer;
-use anyhow::{Result, anyhow, ensure};
-use cli::{Cli, Commands};
+use analysis::{CodeAnalyzer, Snapshot, count_snapshot};
+use anyhow::{Context as _, Result, anyhow, ensure};
+use clap::ArgMatches;
+use cli::{AnalyzeArgs, Cli, Commands, DiffArgs};
 use config::{AnalyzerConfig, Config};
-use display::ViewOptions;
+use display::{Versions, ViewOptions};
 use terminal_size::terminal_size;
 
 fn main() -> Result<()> {
@@ -57,16 +58,13 @@ fn run() -> Result<()> {
 				init::run_init(output, force)?;
 				return Ok(());
 			}
+			Commands::Diff(args) => {
+				let matches = matches.subcommand_matches("diff").expect("clap matched the diff subcommand");
+				return run_diff(&args, matches);
+			}
 		}
 	}
-	let analyze = &cli.analyze;
-	let config = if let Some(ref config_path) = analyze.config {
-		Config::from_file(config_path)?
-	} else {
-		config_discovery::load_default()?
-	};
-	let config = cli::merge_config(config, analyze, &matches)?;
-	ensure!(config.path.exists(), "Path `{}` not found", config.path.display());
+	let config = load_config(&cli.analyze, &matches)?;
 	let analyzer_config: AnalyzerConfig = (&config).into();
 	let analyzer = CodeAnalyzer::new(&config.path, analyzer_config);
 	let results = analyzer.analyze()?;
@@ -76,6 +74,39 @@ fn run() -> Result<()> {
 	stdout.flush()?;
 	if config.analysis.fail_on_error && results.skipped_entries() > 0 {
 		return Err(anyhow!("Skipped {} entries due to errors", results.skipped_entries()));
+	}
+	Ok(())
+}
+
+/// The config file (given or discovered) with the command line's options on top.
+fn load_config(args: &AnalyzeArgs, matches: &ArgMatches) -> Result<Config> {
+	let config = if let Some(ref config_path) = args.config {
+		Config::from_file(config_path)?
+	} else {
+		config_discovery::load_default()?
+	};
+	let config = cli::merge_config(config, args, matches)?;
+	ensure!(config.path.exists(), "Path `{}` not found", config.path.display());
+	Ok(config)
+}
+
+fn run_diff(args: &DiffArgs, matches: &ArgMatches) -> Result<()> {
+	let config = load_config(&args.analyze, matches)?;
+	let from = count_snapshot(&config.path, &Snapshot::Revision(&args.from), &config.analysis, false)
+		.with_context(|| format!("couldn't read revision `{}`", args.from))?;
+	let to = match &args.to {
+		Some(revision) => count_snapshot(&config.path, &Snapshot::Revision(revision), &config.analysis, false)
+			.with_context(|| format!("couldn't read revision `{revision}`"))?,
+		// The working tree's submodules are left out, as a revision's can't be read.
+		None => count_snapshot(&config.path, &Snapshot::WorkingTree { submodules: false }, &config.analysis, false)?,
+	};
+	let versions = Versions { from_name: &args.from, to_name: args.to.as_deref(), from: &from, to: &to };
+	let mut stdout = io::stdout();
+	display::write_diff(config.display.output, &versions, &config.path, (&config).into(), &mut stdout)?;
+	stdout.flush()?;
+	let skipped = from.skipped_entries() + to.skipped_entries();
+	if config.analysis.fail_on_error && skipped > 0 {
+		return Err(anyhow!("Skipped {skipped} entries due to errors"));
 	}
 	Ok(())
 }
