@@ -130,6 +130,32 @@ cs completions <shell>
 - `csv` or `tsv` for spreadsheets
 - `markdown` or `html` for docs and dashboards
 
+### JSON
+
+Every level of a JSON report counts lines the same way. `files` appears with `--verbose`, and `directories` with `--by-dir`; `schema_version` changes whenever a field is renamed, removed or changes meaning.
+
+```json
+{
+	"schema_version": 1,
+	"path": "src",
+	"totals": {
+		"file_count": 30,
+		"lines": { "total": 5956, "code": 5083, "comment": 331, "blank": 542, "shebang": 0 },
+		"bytes": 195221
+	},
+	"languages": [
+		{
+			"name": "Rust",
+			"file_count": 30,
+			"lines": { "total": 5956, "code": 5083, "comment": 331, "blank": 542, "shebang": 0 },
+			"bytes": 195221,
+			"files": [{ "path": "cli.rs", "lines": { "total": 328, "code": 264, "comment": 39, "blank": 25, "shebang": 0 }, "bytes": 12873 }]
+		}
+	],
+	"hidden_languages": 0
+}
+```
+
 ## Common flags
 
 Usage: `cs [OPTIONS] [PATH]` (defaults to the current directory)

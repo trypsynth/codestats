@@ -1,3 +1,5 @@
+use serde::Serialize;
+
 use super::LineType;
 use crate::langs::{LANGUAGES, Language};
 
@@ -15,7 +17,7 @@ pub fn percentage(part: u64, total: u64) -> f64 {
 }
 
 /// Line totals for a file or group of files. `total` is the sum of the other four.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize)]
 pub struct LineCounts {
 	pub total: u64,
 	pub code: u64,

@@ -13,7 +13,7 @@ struct Expectation {
 	counts: LineCounts,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
 struct LineCounts {
 	total: u64,
 	code: u64,
@@ -30,17 +30,13 @@ struct AnalysisOutput {
 #[derive(Debug, Deserialize)]
 struct LanguageOutput {
 	name: String,
-	files_detail: Option<Vec<FileOutput>>,
+	files: Option<Vec<FileOutput>>,
 }
 
 #[derive(Debug, Deserialize)]
 struct FileOutput {
 	path: String,
-	total_lines: u64,
-	code_lines: u64,
-	comment_lines: u64,
-	blank_lines: u64,
-	shebang_lines: u64,
+	lines: LineCounts,
 }
 
 #[test]
@@ -108,22 +104,9 @@ fn collect_fixtures(root: &Path) -> Vec<PathBuf> {
 fn build_file_map(analysis: &AnalysisOutput, fixtures_root: &Path) -> HashMap<PathBuf, (String, LineCounts)> {
 	let mut map = HashMap::new();
 	for language in &analysis.languages {
-		let Some(files) = &language.files_detail else { continue };
+		let Some(files) = &language.files else { continue };
 		for file in files {
-			let path = normalize_path(fixtures_root.join(&file.path));
-			map.insert(
-				path,
-				(
-					language.name.clone(),
-					LineCounts {
-						total: file.total_lines,
-						code: file.code_lines,
-						comment: file.comment_lines,
-						blank: file.blank_lines,
-						shebang: file.shebang_lines,
-					},
-				),
-			);
+			map.insert(normalize_path(fixtures_root.join(&file.path)), (language.name.clone(), file.lines));
 		}
 	}
 	map

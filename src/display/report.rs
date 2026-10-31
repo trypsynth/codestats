@@ -3,8 +3,6 @@ use std::{
 	path::{Component, Path},
 };
 
-use serde::Serialize;
-
 use crate::{
 	analysis::{AnalysisResults, FileStats, LanguageStats, LineCounts, LineType},
 	display::{
@@ -16,29 +14,26 @@ use crate::{
 
 macro_rules! impl_formatters {
 	($type:ty {
-		$($method_name:ident => $field:ident : $formatter:ident),* $(,)?
+		$($method_name:ident => $($field:ident).+ : $formatter:ident),* $(,)?
 	}) => {
 		impl $type {
 			$(
 				#[must_use]
 				pub fn $method_name(&self, ctx: &FormatterContext) -> String {
-					ctx.$formatter(self.$field)
+					ctx.$formatter(self.$($field).+)
 				}
 			)*
 		}
 	};
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug)]
 pub struct ReportData<'a> {
 	pub analysis_path: String,
 	pub summary: Summary,
 	pub languages: Vec<LanguageRecord<'a>>,
-	#[serde(skip_serializing_if = "Vec::is_empty")]
 	pub directories: Vec<DirRecord<'a>>,
-	#[serde(skip_serializing_if = "Option::is_none")]
 	pub languages_hidden: Option<usize>,
-	#[serde(skip_serializing_if = "Option::is_none")]
 	pub dirs_hidden: Option<usize>,
 }
 
@@ -74,20 +69,12 @@ impl<'a> ReportData<'a> {
 	}
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug)]
 pub struct Summary {
 	pub total_files: u64,
-	pub total_lines: u64,
-	pub total_code_lines: u64,
-	pub total_comment_lines: u64,
-	pub total_blank_lines: u64,
-	pub total_shebang_lines: u64,
+	pub counts: LineCounts,
 	pub total_size: u64,
 	pub total_size_human: String,
-	pub code_percentage: f64,
-	pub comment_percentage: f64,
-	pub blank_percentage: f64,
-	pub shebang_percentage: f64,
 }
 
 #[derive(Debug)]
@@ -116,31 +103,16 @@ fn line_types(counts: LineCounts) -> impl Iterator<Item = LineTypeStats> {
 impl Summary {
 	#[must_use]
 	fn from_results(results: &AnalysisResults, ctx: &FormatterContext) -> Self {
-		let counts = results.counts();
 		Self {
 			total_files: results.total_files(),
-			total_lines: counts.total,
-			total_code_lines: counts.code,
-			total_comment_lines: counts.comment,
-			total_blank_lines: counts.blank,
-			total_shebang_lines: counts.shebang,
+			counts: *results.counts(),
 			total_size: results.total_size(),
 			total_size_human: ctx.size(results.total_size()),
-			code_percentage: counts.percentage(LineType::Code),
-			comment_percentage: counts.percentage(LineType::Comment),
-			blank_percentage: counts.percentage(LineType::Blank),
-			shebang_percentage: counts.percentage(LineType::Shebang),
 		}
 	}
 
 	fn iter_line_types(&self) -> impl Iterator<Item = LineTypeStats> {
-		line_types(LineCounts {
-			total: self.total_lines,
-			code: self.total_code_lines,
-			comment: self.total_comment_lines,
-			blank: self.total_blank_lines,
-			shebang: self.total_shebang_lines,
-		})
+		line_types(self.counts)
 	}
 
 	#[must_use]
@@ -165,39 +137,24 @@ impl Summary {
 	}
 
 	pub fn metrics(&self) -> impl Iterator<Item = SummaryMetric<'_>> {
-		let size_human = self.total_size_human.as_str();
+		let line_metric = |label, kind| SummaryMetric {
+			label,
+			value: self.counts.get(kind),
+			percentage: Some(self.counts.percentage(kind)),
+			human_readable: None,
+		};
 		[
 			SummaryMetric { label: "Total Files", value: self.total_files, percentage: None, human_readable: None },
-			SummaryMetric { label: "Total Lines", value: self.total_lines, percentage: None, human_readable: None },
-			SummaryMetric {
-				label: "Code Lines",
-				value: self.total_code_lines,
-				percentage: Some(self.code_percentage),
-				human_readable: None,
-			},
-			SummaryMetric {
-				label: "Comment Lines",
-				value: self.total_comment_lines,
-				percentage: Some(self.comment_percentage),
-				human_readable: None,
-			},
-			SummaryMetric {
-				label: "Blank Lines",
-				value: self.total_blank_lines,
-				percentage: Some(self.blank_percentage),
-				human_readable: None,
-			},
-			SummaryMetric {
-				label: "Shebang Lines",
-				value: self.total_shebang_lines,
-				percentage: Some(self.shebang_percentage),
-				human_readable: None,
-			},
+			SummaryMetric { label: "Total Lines", value: self.counts.total, percentage: None, human_readable: None },
+			line_metric("Code Lines", LineType::Code),
+			line_metric("Comment Lines", LineType::Comment),
+			line_metric("Blank Lines", LineType::Blank),
+			line_metric("Shebang Lines", LineType::Shebang),
 			SummaryMetric {
 				label: "Total Size",
 				value: self.total_size,
 				percentage: None,
-				human_readable: Some(size_human),
+				human_readable: Some(self.total_size_human.as_str()),
 			},
 		]
 		.into_iter()
@@ -235,15 +192,11 @@ fn file_records<'a>(mut files: Vec<&'a FileStats>, ctx: &FormatterContext) -> Ve
 	files.into_iter().map(|file| FileRecord::from_stats(file, ctx)).collect()
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug)]
 pub struct LanguageRecord<'a> {
 	pub name: &'a str,
 	pub files: u64,
-	pub lines: u64,
-	pub code_lines: u64,
-	pub comment_lines: u64,
-	pub blank_lines: u64,
-	pub shebang_lines: u64,
+	pub counts: LineCounts,
 	pub size: u64,
 	pub size_human: String,
 	pub avg_lines_per_file: f64,
@@ -251,7 +204,6 @@ pub struct LanguageRecord<'a> {
 	pub comment_percentage: f64,
 	pub blank_percentage: f64,
 	pub shebang_percentage: f64,
-	#[serde(skip_serializing_if = "Option::is_none")]
 	pub files_detail: Option<Vec<FileRecord<'a>>>,
 }
 
@@ -292,11 +244,7 @@ impl<'a> LanguageRecord<'a> {
 		Self {
 			name,
 			files: stats.files(),
-			lines: counts.total,
-			code_lines: counts.code,
-			comment_lines: counts.comment,
-			blank_lines: counts.blank,
-			shebang_lines: counts.shebang,
+			counts: *counts,
 			size: stats.size(),
 			size_human: ctx.size(stats.size()),
 			avg_lines_per_file: stats.average_lines_per_file(),
@@ -309,23 +257,17 @@ impl<'a> LanguageRecord<'a> {
 	}
 
 	pub fn line_types(&self) -> impl Iterator<Item = LineTypeStats> {
-		line_types(LineCounts {
-			total: self.lines,
-			code: self.code_lines,
-			comment: self.comment_lines,
-			blank: self.blank_lines,
-			shebang: self.shebang_lines,
-		})
+		line_types(self.counts)
 	}
 }
 
 impl_formatters!(LanguageRecord<'_> {
 	format_files => files : number,
-	format_lines => lines : number,
-	format_code_lines => code_lines : number,
-	format_comment_lines => comment_lines : number,
-	format_blank_lines => blank_lines : number,
-	format_shebang_lines => shebang_lines : number,
+	format_lines => counts.total : number,
+	format_code_lines => counts.code : number,
+	format_comment_lines => counts.comment : number,
+	format_blank_lines => counts.blank : number,
+	format_shebang_lines => counts.shebang : number,
 	format_size => size : number,
 	format_code_percentage => code_percentage : percent,
 	format_comment_percentage => comment_percentage : percent,
@@ -333,50 +275,36 @@ impl_formatters!(LanguageRecord<'_> {
 	format_shebang_percentage => shebang_percentage : percent,
 });
 
-#[derive(Debug, Serialize)]
+#[derive(Debug)]
 pub struct FileRecord<'a> {
 	pub path: &'a str,
-	pub total_lines: u64,
-	pub code_lines: u64,
-	pub comment_lines: u64,
-	pub blank_lines: u64,
-	pub shebang_lines: u64,
+	pub counts: LineCounts,
 	pub size: u64,
 	pub size_human: String,
 }
 
 impl<'a> FileRecord<'a> {
 	fn from_stats(file: &'a FileStats, ctx: &FormatterContext) -> Self {
-		let counts = file.counts();
-		Self {
-			path: file.path(),
-			total_lines: counts.total,
-			code_lines: counts.code,
-			comment_lines: counts.comment,
-			blank_lines: counts.blank,
-			shebang_lines: counts.shebang,
-			size: file.size(),
-			size_human: ctx.size(file.size()),
-		}
+		Self { path: file.path(), counts: *file.counts(), size: file.size(), size_human: ctx.size(file.size()) }
 	}
 }
 
 impl_formatters!(FileRecord<'_> {
-	format_total_lines => total_lines : number,
-	format_code_lines => code_lines : number,
-	format_comment_lines => comment_lines : number,
-	format_blank_lines => blank_lines : number,
-	format_shebang_lines => shebang_lines : number,
+	format_total_lines => counts.total : number,
+	format_code_lines => counts.code : number,
+	format_comment_lines => counts.comment : number,
+	format_blank_lines => counts.blank : number,
+	format_shebang_lines => counts.shebang : number,
 	format_size => size : number,
 });
 
 impl_formatters!(DirRecord<'_> {
 	format_files => files : number,
-	format_lines => lines : number,
-	format_code_lines => code_lines : number,
-	format_comment_lines => comment_lines : number,
-	format_blank_lines => blank_lines : number,
-	format_shebang_lines => shebang_lines : number,
+	format_lines => counts.total : number,
+	format_code_lines => counts.code : number,
+	format_comment_lines => counts.comment : number,
+	format_blank_lines => counts.blank : number,
+	format_shebang_lines => counts.shebang : number,
 	format_size => size : number,
 	format_code_percentage => code_percentage : percent,
 	format_comment_percentage => comment_percentage : percent,
@@ -401,22 +329,17 @@ struct DirAccumulator<'a> {
 	size: u64,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug)]
 pub struct DirRecord<'a> {
 	pub path: String,
 	pub files: u64,
-	pub lines: u64,
-	pub code_lines: u64,
-	pub comment_lines: u64,
-	pub blank_lines: u64,
-	pub shebang_lines: u64,
+	pub counts: LineCounts,
 	pub size: u64,
 	pub size_human: String,
 	pub code_percentage: f64,
 	pub comment_percentage: f64,
 	pub blank_percentage: f64,
 	pub shebang_percentage: f64,
-	#[serde(skip_serializing_if = "Option::is_none")]
 	pub files_detail: Option<Vec<FileRecord<'a>>>,
 }
 
@@ -439,11 +362,7 @@ impl<'a> DirRecord<'a> {
 				let counts = acc.counts;
 				Self {
 					files: acc.files.len() as u64,
-					lines: counts.total,
-					code_lines: counts.code,
-					comment_lines: counts.comment,
-					blank_lines: counts.blank,
-					shebang_lines: counts.shebang,
+					counts,
 					size: acc.size,
 					size_human: ctx.size(acc.size),
 					code_percentage: counts.percentage(LineType::Code),
@@ -459,11 +378,11 @@ impl<'a> DirRecord<'a> {
 		apply_sort(
 			&mut records,
 			ctx.options.sort_direction,
-			|r| sort_value(sort_key, &r.path, &r.line_counts(), Some(r.files), r.size),
+			|r| sort_value(sort_key, &r.path, &r.counts, Some(r.files), r.size),
 			|a, b| a.path.cmp(&b.path),
 		);
 		if let Some(min) = ctx.options.min_lines {
-			records.retain(|r| r.lines >= min);
+			records.retain(|r| r.counts.total >= min);
 		}
 		if let Some(n) = ctx.options.top_languages {
 			records.truncate(n);
@@ -472,18 +391,8 @@ impl<'a> DirRecord<'a> {
 		(records, hidden)
 	}
 
-	const fn line_counts(&self) -> LineCounts {
-		LineCounts {
-			total: self.lines,
-			code: self.code_lines,
-			comment: self.comment_lines,
-			blank: self.blank_lines,
-			shebang: self.shebang_lines,
-		}
-	}
-
 	pub fn line_types(&self) -> impl Iterator<Item = LineTypeStats> {
-		line_types(self.line_counts())
+		line_types(self.counts)
 	}
 }
 
@@ -492,22 +401,18 @@ mod tests {
 	use super::*;
 	use crate::display::{formatting::FormatterContext, options::ViewOptions};
 
+	fn summary(files: u64, [total, code, comment, blank, shebang]: [u64; 5], size: u64, size_human: &str) -> Summary {
+		Summary {
+			total_files: files,
+			counts: LineCounts { total, code, comment, blank, shebang },
+			total_size: size,
+			total_size_human: size_human.to_owned(),
+		}
+	}
+
 	#[test]
 	fn summary_line_breakdown_parts_skip_zero() {
-		let summary = Summary {
-			total_files: 1,
-			total_lines: 10,
-			total_code_lines: 5,
-			total_comment_lines: 2,
-			total_blank_lines: 3,
-			total_shebang_lines: 0,
-			total_size: 0,
-			total_size_human: "0 B".to_string(),
-			code_percentage: 50.0,
-			comment_percentage: 20.0,
-			blank_percentage: 30.0,
-			shebang_percentage: 0.0,
-		};
+		let summary = summary(1, [10, 5, 2, 3, 0], 0, "0 B");
 		let ctx = FormatterContext::new(ViewOptions::default());
 		let parts = summary.line_breakdown_parts(true, &ctx);
 		assert_eq!(parts, vec!["5 code lines", "2 comment lines", "3 blank lines"]);
@@ -515,20 +420,7 @@ mod tests {
 
 	#[test]
 	fn summary_percentage_parts_skip_zero() {
-		let summary = Summary {
-			total_files: 1,
-			total_lines: 10,
-			total_code_lines: 5,
-			total_comment_lines: 2,
-			total_blank_lines: 3,
-			total_shebang_lines: 0,
-			total_size: 0,
-			total_size_human: "0 B".to_string(),
-			code_percentage: 50.0,
-			comment_percentage: 20.0,
-			blank_percentage: 30.0,
-			shebang_percentage: 0.0,
-		};
+		let summary = summary(1, [10, 5, 2, 3, 0], 0, "0 B");
 		let ctx = FormatterContext::new(ViewOptions::default());
 		let parts = summary.percentage_parts(&ctx);
 		assert_eq!(parts, vec!["50.0% code", "20.0% comments", "30.0% blanks"]);
@@ -536,20 +428,7 @@ mod tests {
 
 	#[test]
 	fn summary_metrics_returns_all_fields() {
-		let summary = Summary {
-			total_files: 10,
-			total_lines: 100,
-			total_code_lines: 60,
-			total_comment_lines: 20,
-			total_blank_lines: 15,
-			total_shebang_lines: 5,
-			total_size: 4096,
-			total_size_human: "4.0 KiB".to_string(),
-			code_percentage: 60.0,
-			comment_percentage: 20.0,
-			blank_percentage: 15.0,
-			shebang_percentage: 5.0,
-		};
+		let summary = summary(10, [100, 60, 20, 15, 5], 4096, "4.0 KiB");
 		let metrics: Vec<_> = summary.metrics().collect();
 		assert_eq!(metrics.len(), 7);
 		let labels: Vec<&str> = metrics.iter().map(|m| m.label).collect();
@@ -580,20 +459,7 @@ mod tests {
 
 	#[test]
 	fn summary_line_breakdown_pluralize() {
-		let summary = Summary {
-			total_files: 1,
-			total_lines: 4,
-			total_code_lines: 1,
-			total_comment_lines: 1,
-			total_blank_lines: 1,
-			total_shebang_lines: 1,
-			total_size: 0,
-			total_size_human: "0 B".to_string(),
-			code_percentage: 25.0,
-			comment_percentage: 25.0,
-			blank_percentage: 25.0,
-			shebang_percentage: 25.0,
-		};
+		let summary = summary(1, [4, 1, 1, 1, 1], 0, "0 B");
 		let ctx = FormatterContext::new(ViewOptions::default());
 		let parts = summary.line_breakdown_parts(true, &ctx);
 		// When count is 1 and pluralize=true, should use singular "line"
@@ -602,20 +468,7 @@ mod tests {
 
 	#[test]
 	fn summary_line_breakdown_no_pluralize() {
-		let summary = Summary {
-			total_files: 1,
-			total_lines: 40,
-			total_code_lines: 10,
-			total_comment_lines: 15,
-			total_blank_lines: 10,
-			total_shebang_lines: 5,
-			total_size: 0,
-			total_size_human: "0 B".to_string(),
-			code_percentage: 25.0,
-			comment_percentage: 37.5,
-			blank_percentage: 25.0,
-			shebang_percentage: 12.5,
-		};
+		let summary = summary(1, [40, 10, 15, 10, 5], 0, "0 B");
 		let ctx = FormatterContext::new(ViewOptions::default());
 		let parts = summary.line_breakdown_parts(false, &ctx);
 		// When pluralize=false, should use plural labels without "line"/"lines" suffix

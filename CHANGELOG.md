@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- **Breaking:** JSON output has a new, consistent shape with a `schema_version` (1). Line counts are a `lines` object (`total`, `code`, `comment`, `blank`, `shebang`) at every level, sizes are `bytes`, file counts are `file_count`, and per-file details are `files`. `summary` is now `totals`, `analysis_path` is `path`, a directory's `path` is its `name`, and `languages_hidden`/`dirs_hidden` are `hidden_languages`/`hidden_directories`. Percentages, averages and `*_human` sizes are gone from JSON, as they're derived from the counts; the other formats still show them
+
 ## 0.8.4
 
 - Added Texinfo (`.texi`, `.texinfo`, `.txi`), XAML (`.xaml`), and braille tables: liblouis (`.ctb`, `.cti`, `.utb`, `.uti`, `.dis`) and BRLTTY (`.ktb`, `.kti`, `.ttb`, `.tti`, `.atb`, `.ati`)

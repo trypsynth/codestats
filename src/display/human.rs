@@ -69,8 +69,8 @@ impl HumanFormatter {
 			report.analysis_path,
 			ctx.number(summary.total_files),
 			pluralize(summary.total_files, "file", "files"),
-			ctx.number(summary.total_lines),
-			pluralize(summary.total_lines, "line", "lines"),
+			ctx.number(summary.counts.total),
+			pluralize(summary.counts.total, "line", "lines"),
 			total_size_human
 		)?;
 		let line_breakdown_parts = summary.line_breakdown_parts(true, ctx);
@@ -137,7 +137,7 @@ impl HumanFormatter {
 		let i1 = ctx.indent(1);
 		let i2 = ctx.indent(2);
 		let file_pct = percentage(language.files, summary.total_files);
-		let line_pct = percentage(language.lines, summary.total_lines);
+		let line_pct = percentage(language.counts.total, summary.counts.total);
 		let size_pct = percentage(language.size, summary.total_size);
 		let size_human = &language.size_human;
 		let file_pct_str = ctx.percent(file_pct);
@@ -154,8 +154,8 @@ impl HumanFormatter {
 		writeln!(
 			writer,
 			"{i1}Lines: {} {} ({}% of total).",
-			ctx.number(language.lines),
-			pluralize(language.lines, "line", "lines"),
+			ctx.number(language.counts.total),
+			pluralize(language.counts.total, "line", "lines"),
 			line_pct_str
 		)?;
 		writeln!(writer, "{i1}Average lines per file: {:.1}.", language.avg_lines_per_file)?;
@@ -196,7 +196,7 @@ impl HumanFormatter {
 		let i1 = ctx.indent(1);
 		let i2 = ctx.indent(2);
 		let file_pct = percentage(dir.files, summary.total_files);
-		let line_pct = percentage(dir.lines, summary.total_lines);
+		let line_pct = percentage(dir.counts.total, summary.counts.total);
 		let size_pct = percentage(dir.size, summary.total_size);
 		let size_human = &dir.size_human;
 		writeln!(writer, "{}:", dir.path)?;
@@ -210,8 +210,8 @@ impl HumanFormatter {
 		writeln!(
 			writer,
 			"{i1}Lines: {} {} ({}% of total).",
-			ctx.number(dir.lines),
-			pluralize(dir.lines, "line", "lines"),
+			ctx.number(dir.counts.total),
+			pluralize(dir.counts.total, "line", "lines"),
 			ctx.percent(line_pct)
 		)?;
 		writeln!(writer, "{i1}Size: {size_human} ({}% of total).", ctx.percent(size_pct))?;
@@ -241,12 +241,12 @@ impl HumanFormatter {
 		let i2 = ctx.indent(2);
 		writeln!(writer, "{i1}File breakdown:")?;
 		for file in files {
-			let file_pct = percentage(file.total_lines, summary.total_lines);
+			let file_pct = percentage(file.counts.total, summary.counts.total);
 			writeln!(
 				writer,
 				"{i2}{}: {} lines, {} ({}% of total lines).",
 				file.path,
-				ctx.number(file.total_lines),
+				ctx.number(file.counts.total),
 				file.size_human,
 				ctx.percent(file_pct)
 			)?;
