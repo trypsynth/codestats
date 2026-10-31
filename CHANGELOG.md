@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.9.0
 
 - Code embedded in another language is counted by its own language's rules, while its lines still belong to the file's language: `<script>` and `<style>` elements in HTML, Vue, Svelte and Astro (following `lang` and `type`, so `lang="ts"` is TypeScript and `lang="scss"` SCSS), Astro's TypeScript frontmatter, and fenced code blocks and YAML or TOML frontmatter in Markdown. A `// comment` in a Svelte script or a Markdown Rust block now counts as a comment rather than code, and a stylesheet wrapped in old-style `<!-- -->` hiding counts as CSS rather than one long comment
 - Xcode prefix headers (`.pch`) are counted, as C, C++ or Objective-C like `.h` files
