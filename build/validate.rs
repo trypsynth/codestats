@@ -123,6 +123,11 @@ impl Validator {
 		if lang.require_keywords && lang.keywords.is_empty() {
 			self.error(lang, "require_keywords needs keywords");
 		}
+		for (i, keyword) in lang.keywords.iter().enumerate() {
+			if lang.keywords[..i].contains(keyword) {
+				self.error(lang, format!("duplicate keyword {keyword:?}"));
+			}
+		}
 	}
 
 	fn record_patterns(&mut self, lang: &LanguageConfig) {
