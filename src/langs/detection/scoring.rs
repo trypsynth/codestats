@@ -383,6 +383,7 @@ mod tests {
 		regex_literals: false,
 		strings: &[],
 		embedding: None,
+		heredoc: None,
 	};
 
 	const TEST_LANGUAGE_BETA: Language = Language {
@@ -401,6 +402,7 @@ mod tests {
 		regex_literals: false,
 		strings: &[],
 		embedding: None,
+		heredoc: None,
 	};
 
 	#[test]

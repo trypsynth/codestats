@@ -22,6 +22,7 @@ const LANGUAGE_FIELDS: &[(&str, &str)] = &[
 	("c_preprocessor", "bool"),
 	("regex_literals", "bool"),
 	("embedding", "Option<Embedding>"),
+	("heredoc", "Option<Heredoc>"),
 ];
 
 /// Fields of the generated `StringDelimiter` struct, in order.
@@ -92,6 +93,11 @@ fn render_language(output: &mut String, index: usize, lang: &LanguageConfig) {
 		output,
 		"embedding",
 		lang.embedding.map_or_else(|| "None".to_string(), |e| format!("Some(Embedding::{e:?})")),
+	);
+	write_field(
+		output,
+		"heredoc",
+		lang.heredoc.map_or_else(|| "None".to_string(), |h| format!("Some(Heredoc::{h:?})")),
 	);
 	output.push_str("\t},\n");
 }

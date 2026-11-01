@@ -38,6 +38,18 @@ pub struct LanguageConfig {
 	pub regex_literals: bool,
 	#[serde(default)]
 	pub embedding: Option<Embedding>,
+	#[serde(default)]
+	pub heredoc: Option<Heredoc>,
+}
+
+/// Which heredoc syntax a language has; mirrors `Heredoc` in `src/langs/data.rs`.
+#[derive(Debug, Clone, Copy, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Heredoc {
+	Shell,
+	Perl,
+	Ruby,
+	Php,
 }
 
 /// How a language embeds others; mirrors `Embedding` in `src/langs/data.rs`.

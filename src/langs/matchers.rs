@@ -5,7 +5,7 @@ use std::sync::{LazyLock, OnceLock};
 use aho_corasick::{AhoCorasick, AhoCorasickBuilder, Input, MatchKind};
 use memchr::{memchr, memchr2, memchr3, memmem::Finder};
 
-use super::data::{LANGUAGES, Language};
+use super::data::{Heredoc, LANGUAGES, Language};
 
 #[derive(Debug)]
 pub struct LanguageMatchers {
@@ -62,6 +62,8 @@ pub enum Token {
 	String(usize),
 	/// A `/` that may start a regex literal (or be division).
 	Regex,
+	/// A heredoc's opener (`<<`), whose body starts on the next line, if it's followed by a terminator.
+	Heredoc,
 }
 
 /// Matchers for languages with string literals: one automaton finds whichever comment marker or string opener comes first, so markers inside strings are skipped.
@@ -188,13 +190,14 @@ fn build_language_matchers(lang: &Language) -> LanguageMatchers {
 			.collect();
 		Some(BlockCommentMatchers { start_automaton, pairs })
 	};
-	let strings = (!lang.strings.is_empty()).then(|| build_string_matchers(lang));
+	let strings = (!lang.strings.is_empty() || lang.heredoc.is_some()).then(|| build_string_matchers(lang));
 	let openers = ByteSet::new(
 		lang.line_comments
 			.iter()
 			.copied()
 			.chain(lang.block_comments.iter().map(|&(start, _, _)| start))
 			.chain(lang.strings.iter().map(|delimiter| delimiter.open))
+			.chain(lang.heredoc.map(Heredoc::opener))
 			.filter_map(|marker| marker.as_bytes().first().copied())
 			.chain(lang.regex_literals.then_some(b'/')),
 	);
@@ -221,13 +224,22 @@ fn build_string_matchers(lang: &Language) -> StringMatchers {
 		patterns.push("/");
 		kinds.push(Token::Regex);
 	}
+	if let Some(heredoc) = lang.heredoc {
+		patterns.push(heredoc.opener());
+		kinds.push(Token::Heredoc);
+	}
 	let tokens = AhoCorasickBuilder::new()
 		.match_kind(MatchKind::LeftmostLongest)
 		.build(&patterns)
 		.expect("AhoCorasick should never fail to build with valid comment and string patterns");
 	let closes = lang.strings.iter().map(|delimiter| Finder::new(delimiter.close)).collect();
 	let open_bytes = ByteSet::new(
-		lang.strings.iter().map(|delimiter| delimiter.open.as_bytes()[0]).chain(lang.regex_literals.then_some(b'/')),
+		lang.strings
+			.iter()
+			.map(|delimiter| delimiter.open)
+			.chain(lang.heredoc.map(Heredoc::opener))
+			.map(|open| open.as_bytes()[0])
+			.chain(lang.regex_literals.then_some(b'/')),
 	);
 	StringMatchers { tokens, kinds, closes, open_bytes }
 }

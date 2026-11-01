@@ -118,8 +118,26 @@ mod tests {
 			usize::try_from(seed % bound as u64).unwrap()
 		};
 		for language in crate::langs::LANGUAGES {
-			let mut pieces: Vec<&str> =
-				vec!["a", "x = 1", " ", "\t", "\n", "\n", "\n", "\r\n", "  \n", "#!/bin/sh", ";", "é", "(", "\\"];
+			let mut pieces: Vec<&str> = vec![
+				"a",
+				"x = 1",
+				" ",
+				"\t",
+				"\n",
+				"\n",
+				"\n",
+				"\r\n",
+				"  \n",
+				"#!/bin/sh",
+				";",
+				"é",
+				"(",
+				"\\",
+				"<<EOF",
+				"EOF",
+				"<<<EOT",
+				"EOT",
+			];
 			pieces.extend(language.line_comments);
 			pieces.extend(language.block_comments.iter().flat_map(|&(start, end, _)| [start, end]));
 			pieces.extend(language.strings.iter().flat_map(|delimiter| [delimiter.open, delimiter.close]));

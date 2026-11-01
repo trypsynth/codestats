@@ -5,6 +5,8 @@
 - Embedded code is now broken down by language. Each language lists the languages embedded in its files and their lines, such as the JavaScript in Markdown files, in every output format: an `embedded` list on languages and files in JSON, an "Embedded code" list in human output, and an embedded code table in CSV and TSV (with `--verbose`), Markdown and HTML. Embedded lines still count toward their file's language
 - Code blocks in AsciiDoc (`[source,python]` listings and fenced blocks), Org (`#+BEGIN_SRC`) and reStructuredText (`.. code-block::` and similar directives) are counted by their own language's rules, like those in Markdown
 - HTML-based templates count their `<script>` and `<style>` elements by those elements' languages, as HTML files do. This covers ASP.NET, Blade, EEx, EJS, ERB, FreeMarker, Go Template, Hamlet, Handlebars, Java Server Pages, Jinja2, Liquid, Marko, Mustache, Nunjucks, Razor, Smarty, Twig and SVG
+- Heredocs are recognized in Bash, Zsh, C Shell, Perl, Ruby, Crystal and PHP, so their bodies count as code: a `#include` or `#define` written out by `cat <<EOF`, or the assembly a Perl script generates, is no longer counted as comments. Shifts and appends like `x << y` and `class << self` aren't mistaken for heredocs
+- Bash and Zsh strings, TOML's multi-line strings and CMake's quoted and bracket arguments are recognized, so a `#` inside them is no longer counted as a comment
 - More code block names are recognized, such as `shell`, `golang`, `elisp`, `csharp` and `latex`
 - Counting a single file with `--verbose` shows its name instead of an empty path
 

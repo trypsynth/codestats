@@ -32,6 +32,9 @@
 //                        files), so directives like `# define` or `# if defined(X)` count as code.
 //   regex_literals       `/.../` regex literals (JavaScript), so quotes or `/*` inside them are ignored. A `/` starts a
 //                        regex after an operator, opening bracket or keyword like `return`; otherwise it's division.
+//   heredoc              The language's heredocs, whose body runs from the next line to the line holding just the
+//                        terminator named after the opener: "shell" (`<<EOF`, `<< 'EOF'`), "perl" (`<<EOF`, `<< "EOF"`),
+//                        "ruby" (`<<~EOF`, with no space, as `x << y` appends) or "php" (`<<<EOT`).
 //   embedding            Regions written in other languages, counted by those languages' rules: "html" (`<script>`
 //                        and `<style>` elements), "astro" (those plus a TypeScript frontmatter), "markdown" (fenced
 //                        code blocks, and YAML or TOML frontmatter), "asciidoc" (`[source,python]` blocks and fenced
@@ -240,6 +243,8 @@
 		file_patterns: ["*.bash", "*.sh", ".profile", ".bash_logout", ".bash_profile", ".bashrc", ".bash_aliases"],
 		line_comments: ["#"],
 		shebangs: ["#!/bin/bash", "#!/usr/bin/env bash", "#!/bin/sh", "#!/usr/bin/env sh", "#!/bin/dash", "#!/usr/bin/env dash"],
+		strings: [{open: "\"", multiline: true}, {open: "'", escape: null, multiline: true}],
+		heredoc: "shell",
 	},
 	"Batch": {
 		file_patterns: ["*.bat", "*.cmd"],
@@ -356,6 +361,7 @@
 		file_patterns: ["*.csh", ".cshrc", ".login"],
 		line_comments: ["#"],
 		shebangs: ["#!/bin/csh", "#!/usr/bin/env csh"],
+		heredoc: "shell",
 	},
 	"C#": {
 		file_patterns: ["*.cs", "*.csx", "*.cake", "*.cshtml.cs", "*.razor.cs"],
@@ -489,6 +495,7 @@
 		file_patterns: ["*.cmake", "*.cmake.in", "*.cmake.rule", "CMakeLists.txt", "cmakelists.txt"],
 		line_comments: ["#"],
 		block_comments: [["#[[", "]]"]],
+		strings: [{open: "\"", multiline: true}, {open: "[[", close: "]]", escape: null, multiline: true}, {open: "[=[", close: "]=]", escape: null, multiline: true}],
 	},
 	"COBOL": {
 		file_patterns: ["*.cob", "*.cbl", "*.ccp", "*.cobol", "*.cpy"],
@@ -541,6 +548,7 @@
 		file_patterns: ["*.cr"],
 		line_comments: ["#"],
 		shebangs: ["#!/usr/bin/crystal"],
+		heredoc: "ruby",
 	},
 	"CSON": {
 		file_patterns: ["*.cson"],
@@ -1887,6 +1895,7 @@
 		block_comments: [["=pod", "=cut"], ["=head1", "=cut"], ["=head2", "=cut"], ["=head3", "=cut"], ["=head4", "=cut"], ["=begin", "=cut"], ["=over", "=cut"], ["=for", "=cut"], ["=encoding", "=cut"]],
 		shebangs: ["#!/usr/bin/perl", "#!/usr/bin/env perl"],
 		keywords: ["use strict", "use warnings", "my", "sub", "Test::More", "done_testing"],
+		heredoc: "perl",
 	},
 	"Pest": {
 		file_patterns: ["*.pest"],
@@ -1900,6 +1909,7 @@
 		keywords: ["<?php", "$this->", "?>", "array(", "public function", "private function"],
 		require_keywords: true,
 		strings: ["\"", "'"],
+		heredoc: "php",
 	},
 	"Pico": {
 		file_patterns: ["*.pico"],
@@ -2196,6 +2206,7 @@
 		block_comments: [["=begin", "=end"]],
 		shebangs: ["#!/usr/bin/ruby", "#!/usr/bin/env ruby"],
 		strings: ["\"", "'"],
+		heredoc: "ruby",
 	},
 	"Rust": {
 		file_patterns: ["*.rs", "*.rs.in"],
@@ -2516,6 +2527,7 @@
 	"TOML": {
 		file_patterns: ["*.toml", "Cargo.lock", "poetry.lock", "Pipfile.lock", "uv.lock", "Pipfile"],
 		line_comments: ["#"],
+		strings: [{open: "\"\"\"", multiline: true}, {open: "'''", escape: null, multiline: true}, "\"", {open: "'", escape: null}],
 	},
 	"Turing": {
 		file_patterns: ["*.t", "*.tu"],
@@ -2812,5 +2824,7 @@
 		file_patterns: ["*.zsh", ".zlogin", ".zlogout", ".zprofile", ".zshenv", ".zshrc"],
 		line_comments: ["#"],
 		shebangs: ["#!/bin/zsh", "#!/usr/bin/env zsh", "#!/usr/bin/zsh"],
+		strings: [{open: "\"", multiline: true}, {open: "'", escape: null, multiline: true}],
+		heredoc: "shell",
 	}
 }

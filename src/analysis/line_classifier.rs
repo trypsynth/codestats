@@ -57,6 +57,8 @@ pub struct CommentState {
 	string: Option<usize>,
 	/// Whether the open string is a docstring, whose contents count as comment.
 	doc_string: bool,
+	/// The terminator of the heredoc whose body the next line is in, which counts as being in a string.
+	heredoc: Option<Box<str>>,
 }
 
 impl CommentState {
@@ -92,7 +94,7 @@ impl CommentState {
 	#[must_use]
 	#[inline]
 	const fn is_in_string(&self) -> bool {
-		self.string.is_some()
+		self.string.is_some() || self.heredoc.is_some()
 	}
 
 	/// Whether the next line starts outside any comment or string.
@@ -483,6 +485,33 @@ mod tests {
 	#[case::comment("# save the frame pointer", false)]
 	fn test_is_preprocessor_directive(#[case] line: &str, #[case] expected: bool) {
 		assert_eq!(is_preprocessor_directive(line), expected);
+	}
+
+	#[rstest]
+	#[case::toml_multiline("TOML", &["s = \"\"\"", "# not a comment", "\"\"\"", "# c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
+	#[case::toml_literal("TOML", &["p = '''", "# not a comment", "'''"], &[LineType::Code, LineType::Code, LineType::Code])]
+	#[case::cmake_quoted("CMake", &["check_cxx_source_compiles(\"", "#include <x>", "int main() {}\" HAVE_X)", "# c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
+	#[case::cmake_bracket("CMake", &["set(s [=[", "# not a comment", "]=])", "#[[ c ]]"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
+	fn config_strings(#[case] language: &str, #[case] lines: &[&str], #[case] expected: &[LineType]) {
+		assert_eq!(classify_all(language, lines), expected);
+	}
+
+	#[rstest]
+	#[case::shell("Bash", &["cat <<EOF > x.c", "#include <stdio.h>", "", "EOF", "# c"], &[LineType::Code, LineType::Code, LineType::Blank, LineType::Code, LineType::Comment])]
+	#[case::shell_indented_quoted("Bash", &["\tcat <<- 'END' # c", "\t# not a comment", "\tEND", "# c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
+	#[case::shell_spaced_lowercase_quoted("Bash", &["cat << 'eof'", "# x", "eof"], &[LineType::Code, LineType::Code, LineType::Code])]
+	#[case::shell_here_string("Bash", &["grep x <<< \"$s\"", "# c"], &[LineType::Code, LineType::Comment])]
+	#[case::shell_shift("Bash", &["echo $(( 1 << n ))", "# c"], &[LineType::Code, LineType::Comment])]
+	#[case::perl("Perl", &["$code .= <<___;", "# asm comment", "___", "# c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
+	#[case::perl_spaced_bare_word("Perl", &["$x = $y << SHIFT;", "# c"], &[LineType::Code, LineType::Comment])]
+	#[case::ruby_squiggly("Ruby", &["sql = <<~SQL.strip", "  # not a comment", "  SQL", "# c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
+	#[case::ruby_append("Ruby", &["out << \"EOF\"", "# c"], &[LineType::Code, LineType::Comment])]
+	#[case::ruby_singleton_class("Ruby", &["class << self", "# c"], &[LineType::Code, LineType::Comment])]
+	#[case::crystal_append_constant("Crystal", &["types << FFI::Type.pointer", "# c"], &[LineType::Code, LineType::Comment])]
+	#[case::php("PHP", &["$s = <<<EOT", "# not a comment", "EOT;", "# c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
+	#[case::in_comment("Bash", &["# cat <<EOF", "# c"], &[LineType::Comment, LineType::Comment])]
+	fn heredocs(#[case] language: &str, #[case] lines: &[&str], #[case] expected: &[LineType]) {
+		assert_eq!(classify_all(language, lines), expected);
 	}
 
 	#[rstest]
