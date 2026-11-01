@@ -4,7 +4,7 @@ use std::{
 };
 
 use crate::{
-	analysis::{AnalysisResults, FileStats, LanguageStats, LineCounts, LineType},
+	analysis::{AnalysisResults, Embedded, FileStats, LanguageStats, LineCounts, LineType},
 	display::{
 		apply_sort,
 		formatting::{FormatterContext, SortValue, pluralize as pluralize_fn},
@@ -67,6 +67,46 @@ impl<'a> ReportData<'a> {
 			dirs_hidden,
 		}
 	}
+
+	/// Each shown language's embedded code, one row per language embedded in it.
+	#[must_use]
+	pub fn embedded_rows(&self) -> Vec<EmbeddedRow<'_>> {
+		self.languages
+			.iter()
+			.flat_map(|language| {
+				language.embedded.iter().map(|embedded| EmbeddedRow {
+					name: embedded.name,
+					host: language.name,
+					counts: embedded.counts,
+				})
+			})
+			.collect()
+	}
+}
+
+/// Lines of language `name` embedded in files of language `host`.
+#[derive(Debug)]
+pub struct EmbeddedRow<'a> {
+	pub name: &'static str,
+	pub host: &'a str,
+	pub counts: LineCounts,
+}
+
+/// Lines of one language embedded in a language's or file's code.
+#[derive(Debug)]
+pub struct EmbeddedRecord {
+	pub name: &'static str,
+	pub counts: LineCounts,
+}
+
+impl EmbeddedRecord {
+	pub fn line_types(&self) -> impl Iterator<Item = LineTypeStats> {
+		line_types(self.counts)
+	}
+}
+
+fn embedded_records(embedded: &Embedded) -> Vec<EmbeddedRecord> {
+	embedded.languages().into_iter().map(|(language, counts)| EmbeddedRecord { name: language.name, counts }).collect()
 }
 
 #[derive(Debug)]
@@ -204,6 +244,7 @@ pub struct LanguageRecord<'a> {
 	pub comment_percentage: f64,
 	pub blank_percentage: f64,
 	pub shebang_percentage: f64,
+	pub embedded: Vec<EmbeddedRecord>,
 	pub files_detail: Option<Vec<FileRecord<'a>>>,
 }
 
@@ -252,6 +293,7 @@ impl<'a> LanguageRecord<'a> {
 			comment_percentage: counts.percentage(LineType::Comment),
 			blank_percentage: counts.percentage(LineType::Blank),
 			shebang_percentage: counts.percentage(LineType::Shebang),
+			embedded: embedded_records(stats.embedded()),
 			files_detail,
 		}
 	}
@@ -281,11 +323,18 @@ pub struct FileRecord<'a> {
 	pub counts: LineCounts,
 	pub size: u64,
 	pub size_human: String,
+	pub embedded: Vec<EmbeddedRecord>,
 }
 
 impl<'a> FileRecord<'a> {
 	fn from_stats(file: &'a FileStats, ctx: &FormatterContext) -> Self {
-		Self { path: file.path(), counts: *file.counts(), size: file.size(), size_human: ctx.size(file.size()) }
+		Self {
+			path: file.path(),
+			counts: *file.counts(),
+			size: file.size(),
+			size_human: ctx.size(file.size()),
+			embedded: embedded_records(file.embedded()),
+		}
 	}
 }
 
@@ -479,7 +528,7 @@ mod tests {
 	fn report_data_summary_verbosity_skips_languages() {
 		let mut results = AnalysisResults::default();
 		let lang = crate::langs::LANGUAGES.iter().find(|l| l.name == "Rust").unwrap();
-		results.add_file(lang, &LineCounts { total: 10, code: 10, ..LineCounts::default() }, 100, None);
+		results.add_file(lang, LineCounts { total: 10, code: 10, ..LineCounts::default() }.into(), 100, None);
 
 		let ctx = FormatterContext::new(ViewOptions::default());
 		let report = ReportData::from_results(&results, Path::new("."), Verbosity::Summary, &ctx);
@@ -494,7 +543,7 @@ mod tests {
 		// Alphabetically, the two smallest languages come first.
 		for (name, lines) in [("Ada", 1), ("C", 2), ("Go", 100), ("Python", 100), ("Rust", 100), ("Zig", 100)] {
 			let lang = crate::langs::LANGUAGES.iter().find(|l| l.name == name).unwrap();
-			results.add_file(lang, &LineCounts { total: lines, code: lines, ..LineCounts::default() }, 10, None);
+			results.add_file(lang, LineCounts { total: lines, code: lines, ..LineCounts::default() }.into(), 10, None);
 		}
 		let options = ViewOptions {
 			language_sort_key: LanguageSortKey::Name,
@@ -514,7 +563,7 @@ mod tests {
 	fn report_data_regular_verbosity_includes_languages() {
 		let mut results = AnalysisResults::default();
 		let lang = crate::langs::LANGUAGES.iter().find(|l| l.name == "Rust").unwrap();
-		results.add_file(lang, &LineCounts { total: 10, code: 10, ..LineCounts::default() }, 100, None);
+		results.add_file(lang, LineCounts { total: 10, code: 10, ..LineCounts::default() }.into(), 100, None);
 
 		let ctx = FormatterContext::new(ViewOptions::default());
 		let report = ReportData::from_results(&results, Path::new("."), Verbosity::Regular, &ctx);

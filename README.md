@@ -11,7 +11,7 @@ codestats counts the code, comments and blank lines in a codebase by language. B
 ## Highlights
 
 - Counts files, lines, and bytes by language
-- Counts code embedded in other files by its own rules: scripts and styles in HTML, Vue, Svelte, Astro and HTML templates, and fenced code blocks in Markdown
+- Counts code embedded in other files by its own rules, and shows how much of each language is there: scripts and styles in HTML, Vue, Svelte, Astro and HTML templates, and code blocks in Markdown, AsciiDoc, Org and reStructuredText
 - Respects `.gitignore` and `.ignore` when you want it to
 - Can follow symlinks and scan hidden files
 - Filter by language: include only specific languages or exclude unwanted ones
@@ -145,6 +145,12 @@ cs completions <shell>
 ### JSON
 
 Every level of a JSON report counts lines the same way. `files` appears with `--verbose`, and `directories` with `--by-dir`; `schema_version` changes whenever a field is renamed, removed or changes meaning.
+
+A language or file with code embedded in it, like the Rust in a Markdown file, has an `embedded` list of those languages and their lines, which are also counted in its own `lines`:
+
+```json
+"embedded": [{ "name": "Rust", "lines": { "total": 120, "code": 96, "comment": 14, "blank": 10, "shebang": 0 } }]
+```
 
 ```json
 {

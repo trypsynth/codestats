@@ -21,4 +21,4 @@ pub mod stats;
 pub use analyzer::CodeAnalyzer;
 pub use git::{Snapshot, count_snapshot};
 pub use line_classifier::LineType;
-pub use stats::{AnalysisResults, FileStats, LanguageStats, LineCounts};
+pub use stats::{AnalysisResults, Embedded, FileStats, LanguageStats, LineCounts};

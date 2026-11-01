@@ -170,6 +170,26 @@ impl HumanFormatter {
 				ctx.percent(line_type.percentage)
 			)?;
 		}
+		if !language.embedded.is_empty() {
+			writeln!(writer, "{i1}Embedded code:")?;
+			for embedded in &language.embedded {
+				let parts: Vec<String> = embedded
+					.line_types()
+					.map(|info| {
+						let count = ctx.number(info.count);
+						format!("{count} {} {}", info.kind.singular_label(), pluralize(info.count, "line", "lines"))
+					})
+					.collect();
+				writeln!(
+					writer,
+					"{i2}{}: {} {} ({}).",
+					embedded.name,
+					ctx.number(embedded.counts.total),
+					pluralize(embedded.counts.total, "line", "lines"),
+					join_with_commas_and(&parts).unwrap_or_default()
+				)?;
+			}
+		}
 		if verbose && let Some(files) = &language.files_detail {
 			Self::write_file_breakdown(files, summary, ctx, writer)?;
 		}
@@ -281,7 +301,7 @@ mod tests {
 	fn human_output_uses_configured_indent() {
 		let mut results = AnalysisResults::default();
 		let lang = crate::langs::LANGUAGES.iter().find(|l| l.name == "Rust").unwrap();
-		results.add_file(lang, &LineCounts { total: 12, code: 10, comment: 0, blank: 2, shebang: 0 }, 100, None);
+		results.add_file(lang, LineCounts { total: 12, code: 10, comment: 0, blank: 2, shebang: 0 }.into(), 100, None);
 		let options = ViewOptions { indent_style: IndentStyle::Spaces(2), ..Default::default() };
 		let formatter = HumanFormatter;
 		let mut buf = Vec::new();

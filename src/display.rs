@@ -126,7 +126,7 @@ mod tests {
 		let rust = crate::langs::LANGUAGES.iter().find(|l| l.name == "Rust").unwrap();
 		let counts = LineCounts { total: 10, code: 10, ..LineCounts::default() };
 		for path in ["src/main.rs", "tests/smoke.rs"] {
-			results.add_file(rust, &counts, 100, Some(path.to_owned()));
+			results.add_file(rust, counts.into(), 100, Some(path.to_owned()));
 		}
 		let mut buf = Vec::new();
 		write_output(format, &results, Path::new("."), options, &mut buf).unwrap();

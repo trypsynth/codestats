@@ -5,7 +5,7 @@ use anyhow::Result;
 use super::{FormatterContext, OutputFormatter, ReportData, Verbosity, ViewOptions};
 use crate::{
 	analysis::AnalysisResults,
-	display::report::{DirRecord, FileRecord, LanguageRecord},
+	display::report::{DirRecord, EmbeddedRow, FileRecord, LanguageRecord},
 };
 
 /// Trait for field escaping strategies in separated value formats.
@@ -92,6 +92,12 @@ impl<const DELIMITER: u8, E: FieldEscaper> SeparatedValuesFormatter<DELIMITER, E
 			writer.write_all(b"Language breakdown:\n")?;
 			Self::write_language_table(&report.languages, ctx, writer)?;
 			writer.write_all(b"\n\n")?;
+			let embedded = report.embedded_rows();
+			if !embedded.is_empty() {
+				writer.write_all(b"Embedded code:\n")?;
+				Self::write_embedded_table(&embedded, ctx, writer)?;
+				writer.write_all(b"\n\n")?;
+			}
 			for language in &report.languages {
 				Self::write_files_section(language.name, language.files_detail.as_deref(), ctx, writer)?;
 			}
@@ -181,6 +187,29 @@ impl<const DELIMITER: u8, E: FieldEscaper> SeparatedValuesFormatter<DELIMITER, E
 		)?;
 		for lang in languages {
 			Self::write_language_row(lang, ctx, output)?;
+		}
+		Ok(())
+	}
+
+	/// The lines of each language embedded in each language's files, which are also counted in that language's lines.
+	fn write_embedded_table(rows: &[EmbeddedRow], ctx: &FormatterContext, output: &mut dyn Write) -> Result<()> {
+		Self::write_record(
+			output,
+			&["language", "embedded_in", "lines", "code_lines", "comment_lines", "blank_lines"],
+		)?;
+		for row in rows {
+			let counts = row.counts;
+			Self::write_record(
+				output,
+				&[
+					row.name,
+					row.host,
+					&ctx.number(counts.total),
+					&ctx.number(counts.code),
+					&ctx.number(counts.comment),
+					&ctx.number(counts.blank),
+				],
+			)?;
 		}
 		Ok(())
 	}

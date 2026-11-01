@@ -47,6 +47,9 @@ pub enum Embedding {
 	Html,
 	Astro,
 	Markdown,
+	AsciiDoc,
+	Org,
+	ReStructuredText,
 }
 
 /// Which block comment pairs nest: `true` for all of them, or a list of the start delimiters that do.

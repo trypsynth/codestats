@@ -256,7 +256,7 @@ impl<'a> Counter<'a> {
 					if let Some((language, counts)) = pipeline::count_bytes(&entry.path, contents, *languages) {
 						results.add_file(
 							language,
-							&counts,
+							counts,
 							size,
 							collect_details.then(|| entry.path.display().to_string()),
 						);

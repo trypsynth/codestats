@@ -10,7 +10,7 @@ use askama::{Result as AskamaResult, Template, Values};
 use super::{FormatterContext, OutputFormatter, ReportData, Verbosity, ViewOptions};
 use crate::{
 	analysis::AnalysisResults,
-	display::report::{DirRecord, LanguageRecord, Summary},
+	display::report::{DirRecord, EmbeddedRow, LanguageRecord, Summary},
 };
 
 /// Escape Markdown table cells by escaping the pipe separator.
@@ -37,6 +37,7 @@ struct MarkdownTemplate<'a> {
 	/// Whether to show the language or directory breakdown at all (`-q` shows only the summary).
 	show_breakdown: bool,
 	by_dir: bool,
+	embedded: Vec<EmbeddedRow<'a>>,
 	show_files: bool,
 }
 
@@ -75,6 +76,7 @@ impl MarkdownFormatter {
 			directories: &report.directories,
 			show_breakdown: verbosity > Verbosity::Summary,
 			by_dir: ctx.options.by_dir,
+			embedded: report.embedded_rows(),
 			show_files: verbosity == Verbosity::Verbose,
 		};
 		let rendered = template.render()?;

@@ -61,12 +61,59 @@ impl LineCounts {
 	}
 }
 
+/// Lines of code embedded in other languages' files (the Rust in a Markdown file, the TypeScript in a Vue component), by the language they're written in. They're also counted in their files' own language.
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct Embedded(Vec<(&'static Language, LineCounts)>);
+
+impl Embedded {
+	fn counts_mut(&mut self, language: &'static Language) -> &mut LineCounts {
+		let index = self.0.iter().position(|(found, _)| found.index == language.index).unwrap_or_else(|| {
+			self.0.push((language, LineCounts::default()));
+			self.0.len() - 1
+		});
+		&mut self.0[index].1
+	}
+
+	pub(crate) fn add(&mut self, language: &'static Language, line_type: LineType) {
+		self.counts_mut(language).add(line_type);
+	}
+
+	pub(crate) fn merge(&mut self, other: &Self) {
+		for (language, counts) in &other.0 {
+			self.counts_mut(language).merge(counts);
+		}
+	}
+
+	/// Each embedded language with its lines, most lines first.
+	#[must_use]
+	pub fn languages(&self) -> Vec<(&'static Language, LineCounts)> {
+		let mut languages = self.0.clone();
+		languages.sort_by(|(a, a_counts), (b, b_counts)| b_counts.total.cmp(&a_counts.total).then(a.name.cmp(b.name)));
+		languages
+	}
+}
+
+/// What counting a file found: its lines, and those of the code embedded in it.
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct FileCounts {
+	pub lines: LineCounts,
+	pub embedded: Embedded,
+}
+
+#[cfg(test)]
+impl From<LineCounts> for FileCounts {
+	fn from(lines: LineCounts) -> Self {
+		Self { lines, embedded: Embedded::default() }
+	}
+}
+
 /// Statistics for a single file
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FileStats {
 	path: String,
 	counts: LineCounts,
 	size: u64,
+	embedded: Embedded,
 }
 
 impl FileStats {
@@ -84,6 +131,11 @@ impl FileStats {
 	pub const fn size(&self) -> u64 {
 		self.size
 	}
+
+	#[must_use]
+	pub const fn embedded(&self) -> &Embedded {
+		&self.embedded
+	}
 }
 
 /// Holds statistics about a programming language's usage throughout a project.
@@ -92,16 +144,18 @@ pub struct LanguageStats {
 	files: u64,
 	counts: LineCounts,
 	size: u64,
+	embedded: Embedded,
 	file_list: Vec<FileStats>,
 }
 
 impl LanguageStats {
-	fn add_file(&mut self, counts: &LineCounts, size: u64, path: Option<String>) {
+	fn add_file(&mut self, counts: FileCounts, size: u64, path: Option<String>) {
 		self.files = self.files.saturating_add(1);
-		self.counts.merge(counts);
+		self.counts.merge(&counts.lines);
 		self.size = self.size.saturating_add(size);
+		self.embedded.merge(&counts.embedded);
 		if let Some(path) = path {
-			self.file_list.push(FileStats { path, counts: *counts, size });
+			self.file_list.push(FileStats { path, counts: counts.lines, size, embedded: counts.embedded });
 		}
 	}
 
@@ -109,6 +163,7 @@ impl LanguageStats {
 		self.files = self.files.saturating_add(other.files);
 		self.counts.merge(&other.counts);
 		self.size = self.size.saturating_add(other.size);
+		self.embedded.merge(&other.embedded);
 		self.file_list.append(&mut other.file_list);
 	}
 
@@ -125,6 +180,11 @@ impl LanguageStats {
 	#[must_use]
 	pub const fn size(&self) -> u64 {
 		self.size
+	}
+
+	#[must_use]
+	pub const fn embedded(&self) -> &Embedded {
+		&self.embedded
 	}
 
 	/// Get the list of individual file statistics for this language
@@ -161,12 +221,12 @@ impl AnalysisResults {
 	}
 
 	/// Record one file. `path` is kept only when per-file details are wanted.
-	pub(crate) fn add_file(&mut self, language: &Language, counts: &LineCounts, size: u64, path: Option<String>) {
+	pub(crate) fn add_file(&mut self, language: &Language, counts: FileCounts, size: u64, path: Option<String>) {
 		if self.language_stats.len() <= language.index {
 			self.language_stats.resize_with(language.index + 1, LanguageStats::default);
 		}
 		self.total_files = self.total_files.saturating_add(1);
-		self.counts.merge(counts);
+		self.counts.merge(&counts.lines);
 		self.total_size = self.total_size.saturating_add(size);
 		self.language_stats[language.index].add_file(counts, size, path);
 	}
@@ -280,7 +340,7 @@ mod tests {
 	#[test]
 	fn test_language_stats_add_file() {
 		let mut ls = LanguageStats::default();
-		ls.add_file(&counts(50, 30, 10, 8, 2), 512, None);
+		ls.add_file(counts(50, 30, 10, 8, 2).into(), 512, None);
 		assert_eq!(ls.files(), 1);
 		assert_eq!(*ls.counts(), counts(50, 30, 10, 8, 2));
 		assert_eq!(ls.size(), 512);
@@ -290,7 +350,7 @@ mod tests {
 	#[test]
 	fn test_language_stats_add_file_with_details() {
 		let mut ls = LanguageStats::default();
-		ls.add_file(&counts(50, 30, 10, 8, 2), 512, Some("foo.rs".to_owned()));
+		ls.add_file(counts(50, 30, 10, 8, 2).into(), 512, Some("foo.rs".to_owned()));
 		assert_eq!(ls.files_list().len(), 1);
 		let file = &ls.files_list()[0];
 		assert_eq!(file.path(), "foo.rs");
@@ -301,9 +361,9 @@ mod tests {
 	#[test]
 	fn test_language_stats_merge() {
 		let mut a = LanguageStats::default();
-		a.add_file(&counts(50, 30, 10, 8, 2), 512, None);
+		a.add_file(counts(50, 30, 10, 8, 2).into(), 512, None);
 		let mut b = LanguageStats::default();
-		b.add_file(&counts(100, 60, 20, 16, 4), 1024, None);
+		b.add_file(counts(100, 60, 20, 16, 4).into(), 1024, None);
 		a.merge(b);
 		assert_eq!(a.files(), 2);
 		assert_eq!(a.counts().total, 150);
@@ -315,16 +375,16 @@ mod tests {
 	fn test_language_stats_average_lines_per_file() {
 		let mut ls = LanguageStats::default();
 		assert!(ls.average_lines_per_file().abs() < f64::EPSILON);
-		ls.add_file(&counts(100, 50, 25, 20, 5), 1000, None);
-		ls.add_file(&counts(200, 100, 50, 40, 10), 2000, None);
+		ls.add_file(counts(100, 50, 25, 20, 5).into(), 1000, None);
+		ls.add_file(counts(200, 100, 50, 40, 10).into(), 2000, None);
 		assert!((ls.average_lines_per_file() - 150.0).abs() < f64::EPSILON);
 	}
 
 	#[test]
 	fn test_analysis_results_add_file() {
 		let mut results = AnalysisResults::default();
-		results.add_file(rust(), &counts(10, 8, 1, 1, 0), 100, None);
-		results.add_file(rust(), &counts(5, 5, 0, 0, 0), 50, None);
+		results.add_file(rust(), counts(10, 8, 1, 1, 0).into(), 100, None);
+		results.add_file(rust(), counts(5, 5, 0, 0, 0).into(), 50, None);
 		assert_eq!(results.total_files(), 2);
 		assert_eq!(*results.counts(), counts(15, 13, 1, 1, 0));
 		assert_eq!(results.total_size(), 150);
@@ -339,7 +399,7 @@ mod tests {
 		let mut b = AnalysisResults::with_language_capacity();
 		a.set_skipped_entries(2);
 		b.set_skipped_entries(3);
-		b.add_file(rust(), &counts(10, 10, 0, 0, 0), 100, None);
+		b.add_file(rust(), counts(10, 10, 0, 0, 0).into(), 100, None);
 		a.merge(b);
 		assert_eq!(a.skipped_entries(), 5);
 		assert_eq!(a.total_files(), 1);

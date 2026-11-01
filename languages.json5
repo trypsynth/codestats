@@ -33,8 +33,10 @@
 //   regex_literals       `/.../` regex literals (JavaScript), so quotes or `/*` inside them are ignored. A `/` starts a
 //                        regex after an operator, opening bracket or keyword like `return`; otherwise it's division.
 //   embedding            Regions written in other languages, counted by those languages' rules: "html" (`<script>`
-//                        and `<style>` elements), "astro" (those plus a TypeScript frontmatter) or "markdown" (fenced
-//                        code blocks, and YAML or TOML frontmatter).
+//                        and `<style>` elements), "astro" (those plus a TypeScript frontmatter), "markdown" (fenced
+//                        code blocks, and YAML or TOML frontmatter), "asciidoc" (`[source,python]` blocks and fenced
+//                        code blocks), "org" (`#+BEGIN_SRC python` blocks) or "restructuredtext" (`.. code-block::`
+//                        directives).
 {
 	"8th": {
 		file_patterns: ["*.8th"],
@@ -153,6 +155,7 @@
 		file_patterns: ["*.adoc", "*.asciidoc"],
 		line_comments: ["//"],
 		block_comments: [["////", "////"]],
+		embedding: "asciidoc",
 	},
 	"ASN.1": {
 		file_patterns: ["*.asn1", "*.asn"],
@@ -1834,6 +1837,7 @@
 		file_patterns: ["*.org"],
 		line_comments: ["# "],
 		block_comments: [["#+BEGIN_COMMENT", "#+END_COMMENT"], ["#+begin_comment", "#+end_comment"]],
+		embedding: "org",
 	},
 	"Oxygene": {
 		file_patterns: ["*.oxygene"],
@@ -2141,6 +2145,7 @@
 	},
 	"reStructuredText": {
 		file_patterns: ["*.rst"],
+		embedding: "restructuredtext",
 	},
 	"REXX": {
 		file_patterns: ["*.rexx", "*.rex"],

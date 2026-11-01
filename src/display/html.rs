@@ -6,7 +6,7 @@ use askama::Template;
 use super::{FormatterContext, OutputFormatter, ReportData, Verbosity, ViewOptions};
 use crate::{
 	analysis::AnalysisResults,
-	display::report::{DirRecord, LanguageRecord, Summary},
+	display::report::{DirRecord, EmbeddedRow, LanguageRecord, Summary},
 };
 
 #[derive(Template)]
@@ -20,6 +20,7 @@ struct ReportTemplate<'a> {
 	/// Whether to show the language or directory breakdown at all (`-q` shows only the summary).
 	show_breakdown: bool,
 	by_dir: bool,
+	embedded: Vec<EmbeddedRow<'a>>,
 	ctx: &'a FormatterContext,
 	show_files: bool,
 }
@@ -60,6 +61,7 @@ impl HtmlFormatter {
 			directories: &report.directories,
 			show_breakdown: verbosity > Verbosity::Summary,
 			by_dir: ctx.options.by_dir,
+			embedded: report.embedded_rows(),
 			ctx,
 			show_files: verbosity == Verbosity::Verbose,
 		};

@@ -3,7 +3,10 @@ use std::borrow::Cow;
 use encoding_rs::{CoderResult, Decoder, Encoding, UTF_8, UTF_16BE, UTF_16LE};
 use memchr::memchr;
 
-use super::{embedded::Classifier, stats::LineCounts};
+use super::{
+	embedded::Classifier,
+	stats::{FileCounts, LineCounts},
+};
 use crate::langs::Language;
 
 /// Percentage of non-text bytes in a sample that indicates a binary file.
@@ -97,7 +100,7 @@ fn detect_utf16_without_bom(samples: &[u8]) -> Option<FileEncoding> {
 }
 
 /// Count the lines of a UTF-16 file, decoding it a chunk at a time.
-pub(super) fn count_utf16(language: &Language, encoding: FileEncoding, bytes: &[u8]) -> LineCounts {
+pub(super) fn count_utf16(language: &Language, encoding: FileEncoding, bytes: &[u8]) -> FileCounts {
 	let mut line_counts = LineCounts::default();
 	let mut classifier = Classifier::new(language);
 	let mut is_first_line = true;
@@ -110,7 +113,7 @@ pub(super) fn count_utf16(language: &Language, encoding: FileEncoding, bytes: &[
 	}
 	decode_to_string(&mut decoder, &[], true, &mut pending);
 	drain_lines(&mut pending, &mut line_counts, &mut classifier, &mut is_first_line, true);
-	line_counts
+	FileCounts { lines: line_counts, embedded: classifier.into_embedded() }
 }
 
 fn decode_to_string(decoder: &mut Decoder, chunk: &[u8], last: bool, output: &mut String) {
@@ -217,7 +220,7 @@ mod tests {
 		assert!(bytes.len() > 3 * UTF16_DECODE_CHUNK_SIZE);
 		let language = crate::langs::LANGUAGES.iter().find(|l| l.name == "Rust").unwrap();
 		let file_encoding = FileEncoding { encoding, bom_len: bom.len() };
-		let counts = count_utf16(language, file_encoding, &bytes);
+		let counts = count_utf16(language, file_encoding, &bytes).lines;
 		assert_eq!(counts, LineCounts { total: 3001, code: 1001, comment: 1000, blank: 1000, shebang: 0 });
 	}
 

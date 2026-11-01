@@ -6,7 +6,7 @@ use super::{
 	encoding::{decode_bytes, detect_encoding, is_probably_binary},
 	file_io::{self, FileSource},
 	line_counter,
-	stats::{AnalysisResults, LineCounts},
+	stats::{AnalysisResults, FileCounts},
 };
 use crate::langs::{self, Language};
 
@@ -39,7 +39,7 @@ fn detection_name(path: &Path) -> Option<Cow<'_, str>> {
 }
 
 /// The language and line counts of a file named `path` with contents `bytes`, or `None` if it isn't counted: unrecognized, binary, or filtered out.
-pub fn count_bytes(path: &Path, bytes: &[u8], languages: LanguageFilter) -> Option<(&'static Language, LineCounts)> {
+pub fn count_bytes(path: &Path, bytes: &[u8], languages: LanguageFilter) -> Option<(&'static Language, FileCounts)> {
 	count_contents(&langs::get_candidates(&detection_name(path)?), bytes, languages)
 }
 
@@ -60,10 +60,10 @@ fn count_contents(
 	candidates: &[&'static Language],
 	bytes: &[u8],
 	languages: LanguageFilter,
-) -> Option<(&'static Language, LineCounts)> {
+) -> Option<(&'static Language, FileCounts)> {
 	if bytes.is_empty() {
 		let language = langs::detect_language(candidates, None).language?;
-		return languages.allows(language).then(|| (language, LineCounts::default()));
+		return languages.allows(language).then(|| (language, FileCounts::default()));
 	}
 	let sample_bytes = file_io::sample(bytes);
 	let encoding = detect_encoding(&sample_bytes);
@@ -129,13 +129,20 @@ pub fn process_file(
 	}
 	let source = FileSource::open(file, file_size, file_path)?;
 	if let Some((language, counts)) = count_contents(&candidates, &source, languages) {
-		results.add_file(language, &counts, file_size, collect_details.then(|| display_path(file_path, display_root)));
+		results.add_file(language, counts, file_size, collect_details.then(|| display_path(file_path, display_root)));
 	}
 	Ok(())
 }
 
 fn display_path(file_path: &Path, display_root: &Path) -> String {
-	file_path.strip_prefix(display_root).unwrap_or(file_path).display().to_string()
+	// `--git` joins a lone file to `.`, so leading `./`s are left out of the comparison.
+	let without_dot = |path: &Path| path.strip_prefix(".").map_or_else(|_| path.to_path_buf(), Path::to_path_buf);
+	let file = without_dot(file_path);
+	let relative = file.strip_prefix(without_dot(display_root)).unwrap_or(file_path);
+	// Counting a single file makes it the root, which would leave nothing of its path.
+	let relative =
+		if relative.as_os_str().is_empty() { file_path.file_name().map_or(file_path, Path::new) } else { relative };
+	relative.display().to_string()
 }
 
 #[cfg(test)]
@@ -158,10 +165,12 @@ mod tests {
 				let languages = LanguageFilter { include: &[], exclude: &[] };
 				let mut results = AnalysisResults::default();
 				process_file(&path, &root, &mut results, true, languages).unwrap();
-				let from_disk =
-					results.languages().next().map(|(lang, stats)| (lang.name, *stats.files_list()[0].counts()));
+				let from_disk = results.languages().next().map(|(lang, stats)| {
+					let file = &stats.files_list()[0];
+					(lang.name, *file.counts(), file.embedded().clone())
+				});
 				let from_bytes = count_bytes(&path, &std::fs::read(&path).unwrap(), languages)
-					.map(|(lang, counts)| (lang.name, counts));
+					.map(|(lang, counts)| (lang.name, counts.lines, counts.embedded));
 				assert_eq!(from_bytes, from_disk, "{}", path.display());
 				checked += 1;
 			}

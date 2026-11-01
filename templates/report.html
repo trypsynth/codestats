@@ -126,6 +126,33 @@
 			</table>
 		{% endif %}
 	</details>
+	{%- if !embedded.is_empty() %}
+		<details>
+			<summary>
+				<h2>Embedded Code</h2>
+			</summary>
+			<table>
+				<tr>
+					<th>Language</th>
+					<th>Embedded In</th>
+					<th>Lines</th>
+					<th>Code</th>
+					<th>Comments</th>
+					<th>Blanks</th>
+				</tr>
+				{% for row in embedded %}
+					<tr>
+						<td>{{ row.name }}</td>
+						<td>{{ row.host }}</td>
+						<td>{{ row.counts.total | fmt_number(ctx) }}</td>
+						<td>{{ row.counts.code | fmt_number(ctx) }}</td>
+						<td>{{ row.counts.comment | fmt_number(ctx) }}</td>
+						<td>{{ row.counts.blank | fmt_number(ctx) }}</td>
+					</tr>
+				{% endfor %}
+			</table>
+		</details>
+	{% endif %}
 	{% if show_files %}
 		<details>
 			<summary>

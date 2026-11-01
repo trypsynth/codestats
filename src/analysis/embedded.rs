@@ -4,7 +4,10 @@ use std::mem;
 
 use memchr::memchr_iter;
 
-use super::line_classifier::{CommentState, LineType, classify_line, is_blank};
+use super::{
+	line_classifier::{CommentState, LineType, classify_line, is_blank},
+	stats::Embedded,
+};
 use crate::langs::{Embedding, LANGUAGES, Language, detect_language, get_candidates};
 
 /// Classifies a file's lines in order, following the regions its language embeds others in.
@@ -12,6 +15,7 @@ pub(super) struct Classifier<'a> {
 	language: &'a Language,
 	state: CommentState,
 	region: Region,
+	embedded: Embedded,
 }
 
 enum Region {
@@ -21,6 +25,8 @@ enum Region {
 		tag: Tag,
 		attributes: String,
 	},
+	/// After an `AsciiDoc` `[source,python]` line, which says what the listing block it's followed by is written in.
+	SourceAttribute(Option<&'static Language>),
 	/// Inside an embedded region. Its lines are classified as the host's when its language isn't known.
 	Embedded {
 		language: Option<&'static Language>,
@@ -52,6 +58,12 @@ enum End {
 	Tag(Tag),
 	/// A fence of at least `len` `marker`s and nothing else.
 	Fence { marker: u8, len: usize },
+	/// A line of exactly `len` `marker`s, like the `----` that opened an `AsciiDoc` listing.
+	Delimiter { marker: u8, len: usize },
+	/// Org's `#+END_SRC`.
+	OrgSource,
+	/// A line indented no deeper than a reStructuredText directive, which isn't part of the region but follows it. Until the code starts, `preamble` is set: the directive's options (`:linenos:`) and the blank line after them are the host's. `blanks` counts the blank lines since the last line of code, which only belong to the region if more code follows.
+	Dedent { indent: usize, preamble: bool, blanks: u64 },
 }
 
 impl End {
@@ -65,13 +77,19 @@ impl End {
 			}),
 			Self::Fence { marker, len } => fence(line)
 				.is_some_and(|(found, found_len, info)| found == marker && found_len >= len && info.is_empty()),
+			Self::Delimiter { marker, len } => {
+				let line = line.trim_end();
+				line.len() == len && line.bytes().all(|b| b == marker)
+			}
+			Self::OrgSource => starts_with_ignore_case(line.trim_start().as_bytes(), b"#+end_src"),
+			Self::Dedent { indent, .. } => !is_blank(line.as_bytes()) && indentation(line) <= indent,
 		}
 	}
 }
 
 impl<'a> Classifier<'a> {
 	pub(super) fn new(language: &'a Language) -> Self {
-		Self { language, state: CommentState::new(), region: Region::Host }
+		Self { language, state: CommentState::new(), region: Region::Host, embedded: Embedded::default() }
 	}
 
 	/// Whether the next line starts in the file's own language, outside any comment or string.
@@ -91,66 +109,103 @@ impl<'a> Classifier<'a> {
 					return if is_blank(line.as_bytes()) { LineType::Blank } else { LineType::Code };
 				};
 				attributes.push_str(&line[..end]);
-				let (tag, attributes) = (*tag, mem::take(attributes));
-				self.enter_element(tag, &attributes, &line[end + 1..]);
+				self.region = element_region(*tag, &mem::take(attributes), &line[end + 1..]);
 				return LineType::Code;
+			}
+			Region::SourceAttribute(language) => {
+				let language = *language;
+				self.region = Region::Host;
+				if let Some(end) = listing_delimiter(line) {
+					self.region = Region::Embedded { language, state: CommentState::new(), end };
+					return LineType::Code;
+				}
 			}
 			Region::Embedded { language, state, end } => {
 				if end.closes(line) {
+					let follows = matches!(end, End::Dedent { .. });
 					self.region = Region::Host;
-					return LineType::Code;
+					if !follows {
+						return LineType::Code;
+					}
+				} else {
+					if let End::Dedent { preamble: preamble @ true, .. } = end {
+						if is_blank(line.as_bytes()) {
+							return LineType::Blank;
+						}
+						if line.trim_start().starts_with(':') {
+							return LineType::Code;
+						}
+						*preamble = false;
+					}
+					let Some(language) = *language else {
+						return classify_line(line, self.language, &mut self.state, false);
+					};
+					let line_type = classify_line(line, language, state, false);
+					if let End::Dedent { blanks, .. } = end {
+						if line_type == LineType::Blank {
+							*blanks += 1;
+							return line_type;
+						}
+						for _ in 0..mem::take(blanks) {
+							self.embedded.add(language, LineType::Blank);
+						}
+					}
+					self.embedded.add(language, line_type);
+					return line_type;
 				}
-				return match language {
-					Some(language) => classify_line(line, language, state, false),
-					None => classify_line(line, self.language, &mut self.state, false),
-				};
 			}
 		}
 		if is_first_line && let Some((marker, language)) = frontmatter(embedding, line) {
 			self.region = Region::Embedded { language, state: CommentState::new(), end: End::Frontmatter(marker) };
 			return LineType::Code;
 		}
-		if self.state.is_clear() {
-			match embedding {
-				Embedding::Markdown => {
-					if let Some((marker, len, info)) = fence(line) {
-						self.region = Region::Embedded {
-							language: info_language(info),
-							state: CommentState::new(),
-							end: End::Fence { marker, len },
-						};
-						return LineType::Code;
-					}
-				}
-				Embedding::Html | Embedding::Astro => {
-					if let Some((tag, name_end)) = self.find_element(line) {
-						let rest = &line[name_end..];
-						let Some(end) = rest.find('>') else {
-							self.region = Region::OpeningTag { tag, attributes: rest.to_string() };
-							return LineType::Code;
-						};
-						// A self-closing or one-line element (`<script src="app.js"></script>`) is just markup.
-						if !rest[..end].ends_with('/') && !End::Tag(tag).closes(&rest[end + 1..]) {
-							self.enter_element(tag, &rest[..end], &rest[end + 1..]);
-							return LineType::Code;
-						}
-					}
-				}
-			}
+		if self.state.is_clear()
+			&& let Some(region) = self.region_start(embedding, line)
+		{
+			self.region = region;
+			return LineType::Code;
 		}
 		classify_line(line, self.language, &mut self.state, is_first_line)
 	}
 
-	/// Start an element's region after its opening tag, carrying on with whatever follows the tag on its line.
-	fn enter_element(&mut self, tag: Tag, attributes: &str, rest: &str) {
-		let language = element_language(tag, attributes);
-		let mut state = CommentState::new();
-		if let Some(language) = language
-			&& !is_blank(rest.as_bytes())
-		{
-			classify_line(rest, language, &mut state, false);
+	/// The lines classified so far that were in a region of a known language.
+	pub(super) fn into_embedded(self) -> Embedded {
+		self.embedded
+	}
+
+	/// The region a line of the file's own language starts, if it starts one.
+	fn region_start(&self, embedding: Embedding, line: &str) -> Option<Region> {
+		let trimmed = line.trim_start();
+		let embedded = |language, end| Region::Embedded { language, state: CommentState::new(), end };
+		match embedding {
+			Embedding::Markdown | Embedding::AsciiDoc => {
+				if let Some((marker, len, info)) = fence(line) {
+					return Some(embedded(info_language(info), End::Fence { marker, len }));
+				}
+				(embedding == Embedding::AsciiDoc).then(|| source_attribute(line)).flatten()
+			}
+			Embedding::Org => starts_with_ignore_case(trimmed.as_bytes(), b"#+begin_src")
+				.then(|| embedded(info_language(trimmed["#+begin_src".len()..].trim()), End::OrgSource)),
+			Embedding::ReStructuredText => [".. code-block::", ".. code::", ".. sourcecode::"]
+				.into_iter()
+				.find_map(|directive| trimmed.strip_prefix(directive))
+				.map(|info| {
+					embedded(
+						info_language(info.trim()),
+						End::Dedent { indent: indentation(line), preamble: true, blanks: 0 },
+					)
+				}),
+			Embedding::Html | Embedding::Astro => {
+				let (tag, name_end) = self.find_element(line)?;
+				let rest = &line[name_end..];
+				let Some(end) = rest.find('>') else {
+					return Some(Region::OpeningTag { tag, attributes: rest.to_string() });
+				};
+				// A self-closing or one-line element (`<script src="app.js"></script>`) is just markup.
+				(!rest[..end].ends_with('/') && !End::Tag(tag).closes(&rest[end + 1..]))
+					.then(|| element_region(tag, &rest[..end], &rest[end + 1..]))
+			}
 		}
-		self.region = Region::Embedded { language, state, end: End::Tag(tag) };
 	}
 
 	/// The first `<script` or `<style` opening tag on `line` that isn't in a comment, and where its name ends.
@@ -174,6 +229,29 @@ impl<'a> Classifier<'a> {
 	}
 }
 
+/// The bytes that can begin a line starting a region in `embedding`'s files (after indentation), where regions can only start that way; other lines of the file's own language can be swept like any language's.
+pub(super) const fn region_start_bytes(embedding: Embedding) -> Option<&'static [u8]> {
+	match embedding {
+		Embedding::Html | Embedding::Astro => None,
+		Embedding::Markdown => Some(b"`~"),
+		Embedding::AsciiDoc => Some(b"`~["),
+		Embedding::Org => Some(b"#"),
+		Embedding::ReStructuredText => Some(b"."),
+	}
+}
+
+/// An element's region, starting after its opening tag and carrying on with whatever follows the tag on its line.
+fn element_region(tag: Tag, attributes: &str, rest: &str) -> Region {
+	let language = element_language(tag, attributes);
+	let mut state = CommentState::new();
+	if let Some(language) = language
+		&& !is_blank(rest.as_bytes())
+	{
+		classify_line(rest, language, &mut state, false);
+	}
+	Region::Embedded { language, state, end: End::Tag(tag) }
+}
+
 /// The frontmatter a file's first line opens, as its closing marker and language.
 fn frontmatter(embedding: Embedding, line: &str) -> Option<(&'static str, Option<&'static Language>)> {
 	let (marker, name) = match (embedding, line.trim_end()) {
@@ -183,6 +261,28 @@ fn frontmatter(embedding: Embedding, line: &str) -> Option<(&'static str, Option
 		_ => return None,
 	};
 	Some((marker, language_named(name)))
+}
+
+/// The region an `AsciiDoc` block attribute line naming source code (`[source,python]`, or `[,python]` for short) starts, which waits to see if a listing block follows.
+fn source_attribute(line: &str) -> Option<Region> {
+	let attributes = line.trim().strip_prefix('[')?.strip_suffix(']')?;
+	let mut attributes = attributes.split(',').map(str::trim);
+	let style = attributes.next()?;
+	(style == "source" || style.is_empty()).then(|| Region::SourceAttribute(attributes.next().and_then(info_language)))
+}
+
+/// What ends an `AsciiDoc` listing block opened by `line`, if it opens one: `----` (or a longer run), or a fence.
+fn listing_delimiter(line: &str) -> Option<End> {
+	let trimmed = line.trim_end();
+	if trimmed.len() >= 4 && trimmed.bytes().all(|b| b == b'-') {
+		return Some(End::Delimiter { marker: b'-', len: trimmed.len() });
+	}
+	fence(line).map(|(marker, len, _)| End::Fence { marker, len })
+}
+
+/// How many spaces and tabs `line` starts with.
+fn indentation(line: &str) -> usize {
+	line.bytes().take_while(|&b| b == b' ' || b == b'\t').count()
 }
 
 /// A Markdown code fence: its marker, how many there are, and the info string after them.
@@ -208,6 +308,20 @@ fn info_language(info: &str) -> Option<&'static Language> {
 	if name.is_empty() {
 		return None;
 	}
+	// Names in common use that are neither a language's name nor its extension.
+	let lowercase = name.to_ascii_lowercase();
+	let name = match lowercase.as_str() {
+		"shell" => "bash",
+		"python3" | "py3" => "python",
+		"elisp" | "emacs-lisp" => "emacs lisp",
+		"golang" => "go",
+		"objc" | "objectivec" => "objective-c",
+		"csharp" => "c#",
+		"fsharp" => "f#",
+		"latex" => "tex",
+		"protobuf" => "proto",
+		_ => name,
+	};
 	language_named(name).or_else(|| {
 		// Only plain names make a filename; anything else could be read as a glob or path.
 		name.bytes()
@@ -261,8 +375,11 @@ fn attribute<'a>(attributes: &'a str, name: &str) -> Option<&'a str> {
 	})
 }
 
+/// The language called `name`, ignoring case, found by binary search as `languages.json5` keeps them in order.
 fn language_named(name: &str) -> Option<&'static Language> {
-	LANGUAGES.iter().find(|language| language.name.eq_ignore_ascii_case(name))
+	let key = |text: &str| -> Vec<u8> { text.bytes().map(|b| b.to_ascii_lowercase()).collect() };
+	let name = key(name);
+	LANGUAGES.binary_search_by(|language| key(language.name).cmp(&name)).ok().map(|index| &LANGUAGES[index])
 }
 
 fn starts_with_ignore_case(bytes: &[u8], prefix: &[u8]) -> bool {
@@ -310,6 +427,14 @@ mod tests {
 	#[case::markdown_longer_fence("Markdown", "````md\n```rust\n// x\n```\n````\n# heading", &[Code, Code, Code, Code, Code, Code])]
 	#[case::markdown_frontmatter("Markdown", "---\ntitle: x # note\n# note\n---\n# heading", &[Code, Code, Comment, Code, Code])]
 	#[case::rmarkdown_chunk("Markdown", "```{r setup, include=FALSE}\n# note\n```", &[Code, Comment, Code])]
+	#[case::asciidoc_listing("AsciiDoc", "[source,python]\n----\n# note\nx = 1\n----\n// c", &[Code, Code, Comment, Code, Code, Comment])]
+	#[case::asciidoc_attribute_without_block("AsciiDoc", "[source,python]\nx # y", &[Code, Code])]
+	#[case::org_source("Org", "#+begin_src python :results output\n# note\n#+END_SRC\n# c", &[Code, Comment, Code, Comment])]
+	#[case::rst_directive(
+		"reStructuredText",
+		".. code-block:: python\n   :linenos:\n\n   # note\n   x = 1\nText",
+		&[Code, Code, Blank, Comment, Code, Code]
+	)]
 	fn embedded_regions(#[case] language: &str, #[case] text: &str, #[case] expected: &[LineType]) {
 		assert_eq!(classify_all(language, text), expected);
 	}
@@ -330,26 +455,56 @@ mod tests {
 	}
 
 	/// A region of random text in `language`, appended to `lines` with the line types it should get.
+	/// How a region is written: the lines that open it, the one that closes it (none where the next line of the host does), what the classifier must take as its end, and the indentation its lines need.
+	struct Syntax {
+		opening: Vec<String>,
+		closing: Option<&'static str>,
+		end: End,
+		indent: &'static str,
+	}
+
+	/// A region of random text in `language`, appended to `lines` with the line types it should get.
 	fn push_region(
 		lines: &mut Vec<String>,
 		expected: &mut Vec<LineType>,
-		(opening, closing, end): (&[&str], &str, End),
-		language: &Language,
+		embedded: &mut Embedded,
+		syntax: Syntax,
+		language: &'static Language,
 		next: &mut impl FnMut(usize) -> usize,
 	) {
-		for line in opening {
-			lines.push((*line).to_string());
+		for line in syntax.opening {
+			lines.push(line);
 			expected.push(Code);
 		}
 		let mut state = CommentState::new();
+		// Blank lines at the start or end of an indented region belong to the host.
+		let deferred = matches!(syntax.end, End::Dedent { .. });
+		let mut started = !deferred;
+		let mut blanks = 0;
 		for line in random_lines(&markers(language), next) {
+			let line = format!("{}{line}", syntax.indent);
 			// A line that would end the region early isn't part of one.
-			let line = if end.closes(&line) || fence(&line).is_some() { "x".to_string() } else { line };
-			expected.push(classify_line(&line, language, &mut state, false));
+			let line =
+				if syntax.end.closes(&line) || fence(&line).is_some() { format!("{}x", syntax.indent) } else { line };
+			let line_type = classify_line(&line, language, &mut state, false);
+			expected.push(line_type);
 			lines.push(line);
+			if deferred && line_type == Blank {
+				blanks += 1;
+				continue;
+			}
+			for _ in 0..mem::take(&mut blanks) {
+				if started {
+					embedded.add(language, Blank);
+				}
+			}
+			started = true;
+			embedded.add(language, line_type);
 		}
-		lines.push(closing.to_string());
-		expected.push(Code);
+		if let Some(closing) = syntax.closing {
+			lines.push(closing.to_string());
+			expected.push(Code);
+		}
 	}
 
 	fn markers(language: &Language) -> Vec<&'static str> {
@@ -361,69 +516,109 @@ mod tests {
 		pieces
 	}
 
+	/// How a random region of a random language is written in `embedding`'s files.
+	fn random_syntax(
+		embedding: Embedding,
+		next: &mut impl FnMut(usize) -> usize,
+		named: &[&'static Language],
+	) -> (Syntax, &'static Language) {
+		let language = named[next(named.len())];
+		let name = language.name;
+		let syntax = match embedding {
+			Embedding::Html | Embedding::Astro => {
+				let (opening, closing, tag, name): (&[&str], _, _, _) = [
+					(&["<script>"][..], "</script>", Tag::Script, "JavaScript"),
+					(&["<script setup lang=\"ts\">"], "</script>", Tag::Script, "TypeScript"),
+					(&["<script", "\ttype=\"module\"", ">"], "</SCRIPT>", Tag::Script, "JavaScript"),
+					(&["<style>"], "</style>", Tag::Style, "CSS"),
+					(&["<style scoped lang=\"scss\">"], "</style>", Tag::Style, "SCSS"),
+				][next(5)];
+				let opening = opening.iter().map(ToString::to_string).collect();
+				let syntax = Syntax { opening, closing: Some(closing), end: End::Tag(tag), indent: "" };
+				return (syntax, language_named(name).unwrap());
+			}
+			Embedding::Markdown => Syntax {
+				opening: vec![format!("```{name}")],
+				closing: Some("```"),
+				end: End::Fence { marker: b'`', len: 3 },
+				indent: "",
+			},
+			Embedding::AsciiDoc => Syntax {
+				opening: vec![format!("[source,{name}]"), "----".to_string()],
+				closing: Some("----"),
+				end: End::Delimiter { marker: b'-', len: 4 },
+				indent: "",
+			},
+			Embedding::Org => Syntax {
+				opening: vec![format!("#+BEGIN_SRC {name} :results output")],
+				closing: Some("#+end_src"),
+				end: End::OrgSource,
+				indent: "",
+			},
+			Embedding::ReStructuredText => Syntax {
+				opening: vec![format!(".. code-block:: {name}"), "   :linenos:".to_string()],
+				closing: None,
+				end: End::Dedent { indent: 0, preamble: false, blanks: 0 },
+				indent: "   ",
+			},
+		};
+		(syntax, language)
+	}
+
 	/// The lines of an embedded region must count exactly as they would in a file of their own language, whatever comments or strings they leave open, and the host's lines as they would without the regions.
 	#[test]
 	fn regions_count_as_their_language_would_alone() {
 		let mut next = rng(0x5EED_CAFE_F00D_0001);
-		let fence_languages: Vec<&Language> = LANGUAGES
+		// Languages whose names can be written after a fence or in a directive.
+		let named: Vec<&Language> = LANGUAGES
 			.iter()
 			.filter(|language| language.embedding.is_none() && info_language(language.name) == Some(*language))
 			.collect();
-		let elements: &[(&[&str], &str, Tag, &str)] = &[
-			(&["<script>"], "</script>", Tag::Script, "JavaScript"),
-			(&["<script setup lang=\"ts\">"], "</script>", Tag::Script, "TypeScript"),
-			(&["<script", "\ttype=\"module\"", ">"], "</SCRIPT>", Tag::Script, "JavaScript"),
-			(&["<style>"], "</style>", Tag::Style, "CSS"),
-			(&["<style scoped lang=\"scss\">"], "</style>", Tag::Style, "SCSS"),
-		];
-		for host in ["Markdown", "HTML", "Vue", "Svelte", "Astro"] {
-			let host = language_named(host).unwrap();
-			let host_lines: &[&str] = if host.embedding == Some(Embedding::Markdown) {
-				&["Some text", "# Heading", "<!-- note -->", "", "  - item", "<script>"]
-			} else {
-				&["<p>text</p>", "<!-- note -->", "", "  <div>", "<script src=\"a.js\"></script>", "<br/>"]
+		for host in LANGUAGES.iter().filter(|language| language.embedding.is_some()) {
+			let embedding = host.embedding.unwrap();
+			// Lines complete on their own, so they classify the same anywhere outside a region, and that can't be taken for one's start or end.
+			let host_lines: &[&str] = match embedding {
+				Embedding::Html | Embedding::Astro => {
+					&["<p>text</p>", "<!-- note -->", "", "  <div>", "<script src=\"a.js\"></script>", "<br/>"]
+				}
+				Embedding::ReStructuredText => &["Some text", "Title", "=====", "- item"],
+				_ => &["Some text", "<!-- note -->", "", "  - item", "<script>", "[NOTE]"],
 			};
-			for _ in 0..300 {
+			for _ in 0..200 {
 				let mut lines: Vec<String> = Vec::new();
 				let mut expected = Vec::new();
-				let frontmatter = match host.embedding {
-					Some(Embedding::Markdown) => Some("YAML"),
-					Some(Embedding::Astro) => Some("TypeScript"),
+				let mut embedded = Embedded::default();
+				let frontmatter = match embedding {
+					Embedding::Markdown => Some("YAML"),
+					Embedding::Astro => Some("TypeScript"),
 					_ => None,
 				};
 				if let Some(name) = frontmatter
 					&& next(2) == 0
 				{
-					push_region(
-						&mut lines,
-						&mut expected,
-						(&["---"], "---", End::Frontmatter("---")),
-						language_named(name).unwrap(),
-						&mut next,
-					);
+					let syntax = Syntax {
+						opening: vec!["---".to_string()],
+						closing: Some("---"),
+						end: End::Frontmatter("---"),
+						indent: "",
+					};
+					let language = language_named(name).unwrap();
+					push_region(&mut lines, &mut expected, &mut embedded, syntax, language, &mut next);
 				}
 				for _ in 0..next(6) {
 					for _ in 0..next(3) {
 						let line = host_lines[next(host_lines.len())];
-						// Each host line is complete on its own, so it classifies the same anywhere outside a region.
 						expected.push(classify_line(line, host, &mut CommentState::new(), false));
 						lines.push(line.to_string());
 					}
-					if host.embedding == Some(Embedding::Markdown) {
-						let language = fence_languages[next(fence_languages.len())];
-						let opening = format!("```{}", language.name);
-						let end = End::Fence { marker: b'`', len: 3 };
-						push_region(&mut lines, &mut expected, (&[&opening], "```", end), language, &mut next);
-					} else {
-						let (opening, closing, tag, name) = elements[next(elements.len())];
-						let language = language_named(name).unwrap();
-						push_region(&mut lines, &mut expected, (opening, closing, End::Tag(tag)), language, &mut next);
-					}
+					let (syntax, language) = random_syntax(embedding, &mut next, &named);
+					push_region(&mut lines, &mut expected, &mut embedded, syntax, language, &mut next);
 				}
 				let mut classifier = Classifier::new(host);
 				let got: Vec<LineType> =
 					lines.iter().enumerate().map(|(i, line)| classifier.classify(line, i == 0)).collect();
 				assert_eq!(got, expected, "{}: {lines:#?}", host.name);
+				assert_eq!(classifier.into_embedded().languages(), embedded.languages(), "{}: {lines:#?}", host.name);
 			}
 		}
 	}
@@ -449,6 +644,15 @@ mod tests {
 			"```rust",
 			"```{r}",
 			"````",
+			"[source,python]",
+			"[,c]",
+			"----",
+			"#+BEGIN_SRC python",
+			"#+end_src",
+			".. code-block:: c",
+			"   ",
+			"\u{b}",
+			"\u{a0}",
 			"---",
 			"+++",
 			"<!--",
@@ -477,8 +681,26 @@ mod tests {
 					expected.add(classifier.classify(line, i == 0));
 				}
 				let utf8 = FileEncoding { encoding: encoding_rs::UTF_8, bom_len: 0 };
-				assert_eq!(count_lines(language, utf8, text.as_bytes()), expected, "{}: {text:?}", language.name);
+				assert_eq!(count_lines(language, utf8, text.as_bytes()).lines, expected, "{}: {text:?}", language.name);
 			}
+		}
+	}
+
+	#[rstest]
+	#[case::name("Rust", Some("Rust"))]
+	#[case::extension("py", Some("Python"))]
+	#[case::alias("golang", Some("Go"))]
+	#[case::alias_to_extension("latex", Some("TeX/LaTeX"))]
+	#[case::attributes("rust,ignore", Some("Rust"))]
+	#[case::transcript("console", None)]
+	fn info_strings(#[case] info: &str, #[case] expected: Option<&str>) {
+		assert_eq!(info_language(info).map(|language| language.name), expected);
+	}
+
+	#[test]
+	fn every_language_is_found_by_name() {
+		for language in LANGUAGES {
+			assert_eq!(language_named(&language.name.to_ascii_uppercase()), Some(language), "{}", language.name);
 		}
 	}
 

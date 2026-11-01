@@ -7,7 +7,10 @@ use serde_json::ser::{PrettyFormatter, Serializer};
 use super::{OutputFormatter, ReportData, ViewOptions};
 use crate::{
 	analysis::{AnalysisResults, LineCounts},
-	display::{options::IndentStyle, report::FileRecord},
+	display::{
+		options::IndentStyle,
+		report::{EmbeddedRecord, FileRecord},
+	},
 };
 
 /// Version of the JSON output's shape, raised whenever a field is renamed, removed or changes meaning.
@@ -40,6 +43,8 @@ struct Group<'a> {
 	file_count: u64,
 	lines: LineCounts,
 	bytes: u64,
+	#[serde(skip_serializing_if = "Vec::is_empty")]
+	embedded: Vec<EmbeddedLanguage<'a>>,
 	#[serde(skip_serializing_if = "Option::is_none")]
 	files: Option<Vec<File<'a>>>,
 }
@@ -49,13 +54,34 @@ struct File<'a> {
 	path: &'a str,
 	lines: LineCounts,
 	bytes: u64,
+	#[serde(skip_serializing_if = "Vec::is_empty")]
+	embedded: Vec<EmbeddedLanguage<'a>>,
+}
+
+/// Lines of code in another language within a language's or file's lines, which they're also counted in.
+#[derive(Serialize)]
+struct EmbeddedLanguage<'a> {
+	name: &'a str,
+	lines: LineCounts,
+}
+
+fn embedded(records: &[EmbeddedRecord]) -> Vec<EmbeddedLanguage<'_>> {
+	records.iter().map(|record| EmbeddedLanguage { name: record.name, lines: record.counts }).collect()
 }
 
 impl<'a> Report<'a> {
 	fn new(report: &'a ReportData, by_dir: bool) -> Self {
 		let files = |records: &'a Option<Vec<FileRecord>>| {
 			records.as_ref().map(|records| {
-				records.iter().map(|file| File { path: file.path, lines: file.counts, bytes: file.size }).collect()
+				records
+					.iter()
+					.map(|file| File {
+						path: file.path,
+						lines: file.counts,
+						bytes: file.size,
+						embedded: embedded(&file.embedded),
+					})
+					.collect()
 			})
 		};
 		let summary = &report.summary;
@@ -71,6 +97,7 @@ impl<'a> Report<'a> {
 					file_count: lang.files,
 					lines: lang.counts,
 					bytes: lang.size,
+					embedded: embedded(&lang.embedded),
 					files: files(&lang.files_detail),
 				})
 				.collect(),
@@ -84,6 +111,7 @@ impl<'a> Report<'a> {
 						file_count: dir.files,
 						lines: dir.counts,
 						bytes: dir.size,
+						embedded: Vec::new(),
 						files: files(&dir.files_detail),
 					})
 					.collect()
@@ -169,7 +197,7 @@ mod tests {
 		let mut results = AnalysisResults::default();
 		let rust = crate::langs::LANGUAGES.iter().find(|l| l.name == "Rust").unwrap();
 		let counts = LineCounts { total: 10, code: 7, comment: 2, blank: 1, shebang: 0 };
-		results.add_file(rust, &counts, 100, Some("src/main.rs".to_owned()));
+		results.add_file(rust, counts.into(), 100, Some("src/main.rs".to_owned()));
 		let options = ViewOptions { verbosity, by_dir, ..ViewOptions::default() };
 		let mut buf = Vec::new();
 		JsonCompactFormatter.write_output(&results, Path::new("."), options, &mut buf).unwrap();

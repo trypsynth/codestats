@@ -7,6 +7,12 @@ pub enum Embedding {
 	Astro,
 	/// Fenced code blocks, and YAML (`---`) or TOML (`+++`) frontmatter.
 	Markdown,
+	/// `[source,python]` listing blocks, and fenced code blocks.
+	AsciiDoc,
+	/// `#+BEGIN_SRC python` blocks.
+	Org,
+	/// `.. code-block:: python` directives.
+	ReStructuredText,
 }
 
 include!(concat!(env!("OUT_DIR"), "/languages.rs"));

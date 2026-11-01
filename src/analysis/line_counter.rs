@@ -1,15 +1,15 @@
 use memchr::memchr;
 
 use super::{
-	embedded::Classifier,
+	embedded::{Classifier, region_start_bytes},
 	encoding::{self, FileEncoding, decode_bytes},
 	line_classifier::{LineType, is_blank},
-	stats::LineCounts,
+	stats::{FileCounts, LineCounts},
 };
 use crate::langs::{Language, matchers::language_matchers};
 
 /// Count the lines of a file's contents.
-pub(super) fn count_lines(language: &Language, encoding: FileEncoding, bytes: &[u8]) -> LineCounts {
+pub(super) fn count_lines(language: &Language, encoding: FileEncoding, bytes: &[u8]) -> FileCounts {
 	if encoding::is_utf16(encoding.encoding) {
 		return encoding::count_utf16(language, encoding, bytes);
 	}
@@ -25,7 +25,7 @@ pub(super) fn count_lines(language: &Language, encoding: FileEncoding, bytes: &[
 			counts.add(classifier.classify(&line, i == 0));
 		}
 	}
-	counts
+	FileCounts { lines: counts, embedded: classifier.into_embedded() }
 }
 
 /// Count the lines of valid UTF-8 text, as classifying each with `classifier` would.
@@ -34,8 +34,11 @@ pub(super) fn count_lines(language: &Language, encoding: FileEncoding, bytes: &[
 fn count_text(text: &str, language: &Language, counts: &mut LineCounts, classifier: &mut Classifier) {
 	let bytes = text.as_bytes();
 	let openers = &language_matchers(language).openers;
-	// Markers that only count in the first column aren't among the openers, and neither are the starts of embedded regions, so those languages classify every line.
-	let can_sweep = language.column_one_comments.is_empty() && language.embedding.is_none();
+	// Neither markers that only count in the first column nor the starts of embedded regions are among the openers. Regions that start a line are checked for line by line; languages with other kinds classify every line.
+	let (can_sweep, region_starts) = language.embedding.map_or((true, None), |embedding| {
+		region_start_bytes(embedding).map_or((false, None), |starts| (true, Some(starts)))
+	});
+	let can_sweep = can_sweep && language.column_one_comments.is_empty();
 	let mut pos = 0;
 	while pos < bytes.len() {
 		// The first line goes through the classifier, which checks it for a shebang.
@@ -43,7 +46,7 @@ fn count_text(text: &str, language: &Language, counts: &mut LineCounts, classifi
 			let stop = openers.find(&bytes[pos..]).map_or(bytes.len(), |i| pos + i);
 			while pos < stop {
 				let end = line_end(bytes, pos);
-				if end > stop {
+				if end > stop || region_starts.is_some_and(|starts| may_start_region(&bytes[pos..end], starts)) {
 					break;
 				}
 				counts.add(if is_blank(&bytes[pos..end]) { LineType::Blank } else { LineType::Code });
@@ -58,6 +61,12 @@ fn count_text(text: &str, language: &Language, counts: &mut LineCounts, classifi
 		counts.add(classifier.classify(&text[pos..end], pos == 0));
 		pos = end;
 	}
+}
+
+/// Whether `line` might start an embedded region: its first byte after whitespace is one that can, or isn't ASCII and so might be Unicode whitespace hiding one, which the classifier sorts out.
+fn may_start_region(line: &[u8], starts: &[u8]) -> bool {
+	// The whitespace `str::trim_start` skips, as far as ASCII goes.
+	line.iter().find(|&&b| !matches!(b, b'\t'..=b'\r' | b' ')).is_some_and(|&b| !b.is_ascii() || starts.contains(&b))
 }
 
 /// Where the line starting at `start` ends, just past its `\n` or at the end of `bytes`.
@@ -133,12 +142,33 @@ mod tests {
 		}
 	}
 
+	/// A region's opening line must stop the sweep whatever whitespace it's indented with, as `str::trim_start` would skip it.
+	#[test]
+	fn sweeping_stops_at_indented_region_starts() {
+		let openings = ["```rust", "~~~py", "[source,c]\n----", "#+BEGIN_SRC python", ".. code-block:: c"];
+		for language in crate::langs::LANGUAGES.iter().filter(|language| language.embedding.is_some()) {
+			for indent in ["", " \t", "\u{b}", "\u{c}", "\u{a0}"] {
+				for opening in openings {
+					let text = format!("x\ny\n{indent}{opening}\n  // c\n  # c\n----\n```\n#+end_src\nz\n");
+					let mut expected = LineCounts::default();
+					let mut classifier = Classifier::new(language);
+					for (i, line) in lines(text.as_bytes()).enumerate() {
+						expected.add(classifier.classify(&text[line], i == 0));
+					}
+					let mut got = LineCounts::default();
+					count_text(&text, language, &mut got, &mut Classifier::new(language));
+					assert_eq!(got, expected, "{}: {text:?}", language.name);
+				}
+			}
+		}
+	}
+
 	#[test]
 	fn invalid_utf8_counts_like_valid_text() {
 		let rust = crate::langs::LANGUAGES.iter().find(|l| l.name == "Rust").unwrap();
 		let utf8 = FileEncoding { encoding: encoding_rs::UTF_8, bom_len: 0 };
-		let valid = count_lines(rust, utf8, b"// note\nlet x = 1;\n\n");
-		let invalid = count_lines(rust, utf8, b"// not\xFFe\nlet x = 1;\n\n");
+		let valid = count_lines(rust, utf8, b"// note\nlet x = 1;\n\n").lines;
+		let invalid = count_lines(rust, utf8, b"// not\xFFe\nlet x = 1;\n\n").lines;
 		assert_eq!(valid, invalid);
 		assert_eq!(valid, LineCounts { total: 3, code: 1, comment: 1, blank: 1, shebang: 0 });
 	}
@@ -147,7 +177,7 @@ mod tests {
 	fn bom_is_not_part_of_the_first_line() {
 		let python = crate::langs::LANGUAGES.iter().find(|l| l.name == "Python").unwrap();
 		let with_bom = FileEncoding { encoding: encoding_rs::UTF_8, bom_len: 3 };
-		let counts = count_lines(python, with_bom, b"\xEF\xBB\xBF#!/usr/bin/env python\nx = 1\n");
+		let counts = count_lines(python, with_bom, b"\xEF\xBB\xBF#!/usr/bin/env python\nx = 1\n").lines;
 		assert_eq!(counts.shebang, 1);
 		assert_eq!(counts.code, 1);
 	}

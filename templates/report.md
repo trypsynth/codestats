@@ -58,6 +58,16 @@ _No recognized programming languages found._
 {%- for lang in languages %}
 | {{ lang.name | md_escape }} | {{ lang.files | fmt_number(ctx) }} | {{ lang.counts.total | fmt_number(ctx) }} | {{ lang.avg_lines_per_file | fmt_float(1) }} | {{ lang.code_percentage | fmt_percent(ctx) }}% | {{ lang.comment_percentage | fmt_percent(ctx) }}% | {{ lang.blank_percentage | fmt_percent(ctx) }}% | {{ lang.shebang_percentage | fmt_percent(ctx) }}% | {{ lang.size_human | md_escape }} |
 {%- endfor %}
+{%- if !embedded.is_empty() %}
+
+## Embedded Code
+
+| Language | Embedded In | Lines | Code | Comments | Blanks |
+| --- | --- | ---: | ---: | ---: | ---: |
+{%- for row in embedded %}
+| {{ row.name | md_escape }} | {{ row.host | md_escape }} | {{ row.counts.total | fmt_number(ctx) }} | {{ row.counts.code | fmt_number(ctx) }} | {{ row.counts.comment | fmt_number(ctx) }} | {{ row.counts.blank | fmt_number(ctx) }} |
+{%- endfor %}
+{%- endif %}
 {%- if show_files %}
 
 ## Files
