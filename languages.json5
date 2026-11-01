@@ -639,7 +639,7 @@
 		block_comments: [["(*", "*)"], ["{", "}"]],
 	},
 	"Device Tree": {
-		file_patterns: ["*.dts", "*.dtsi"],
+		file_patterns: ["*.dts", "*.dtsi", "*.dtso"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
@@ -1483,7 +1483,7 @@
 		block_comments: [["{#", "#}"]],
 	},
 	"Makefile": {
-		file_patterns: ["*.mak", "*.make", "*.mk", "*.mkfile", "BSDmakefile", "GNUmakefile", "Kbuild", "Makefile", "Makefile.boot", "Makefile.frag", "Makefile.in", "Makefile.inc", "Makefile.wat", "makefile", "makefile.sco", "mkfile", "*.inc", "*.d"],
+		file_patterns: ["*.mak", "*.make", "*.mk", "*.mkfile", "BSDmakefile", "GNUmakefile", "Kbuild", "Makefile", "Makefile.boot", "Makefile.frag", "Makefile.in", "Makefile.inc", "Makefile.wat", "makefile", "makefile.bcc", "makefile.gcc", "makefile.sco", "makefile.unx", "makefile.vc", "mkfile", "*.inc", "*.d"],
 		line_comments: ["#"],
 		shebangs: ["#!/usr/bin/make", "#!/usr/bin/env make"],
 		keywords: [":=", "$(", "ifeq", "ifneq", ".PHONY", "$@"],
@@ -2739,7 +2739,7 @@
 		line_comments: ["//"],
 	},
 	"XML": {
-		file_patterns: ["*.xml", "*.xsl", "*.xslt", "*.xsd", "*.ps1xml", "*.cdxml"],
+		file_patterns: ["*.xml", "*.xsl", "*.xslt", "*.xsd", "*.ps1xml", "*.cdxml", "*.plist"],
 		block_comments: [["<!--", "-->"]],
 	},
 	"Xonsh": {
