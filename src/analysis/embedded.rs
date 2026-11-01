@@ -274,7 +274,12 @@ mod tests {
 	use rstest::rstest;
 
 	use super::*;
-	use crate::analysis::LineType::{Blank, Code, Comment};
+	use crate::analysis::{
+		LineType::{Blank, Code, Comment},
+		encoding::FileEncoding,
+		line_counter::count_lines,
+		stats::LineCounts,
+	};
 
 	fn classify_all(language: &str, text: &str) -> Vec<LineType> {
 		let language = language_named(language).unwrap();
@@ -307,6 +312,174 @@ mod tests {
 	#[case::rmarkdown_chunk("Markdown", "```{r setup, include=FALSE}\n# note\n```", &[Code, Comment, Code])]
 	fn embedded_regions(#[case] language: &str, #[case] text: &str, #[case] expected: &[LineType]) {
 		assert_eq!(classify_all(language, text), expected);
+	}
+
+	/// A xorshift generator of numbers below a bound, so a failure reproduces.
+	fn rng(mut seed: u64) -> impl FnMut(usize) -> usize {
+		move |bound| {
+			seed ^= seed << 13;
+			seed ^= seed >> 7;
+			seed ^= seed << 17;
+			usize::try_from(seed % bound as u64).unwrap()
+		}
+	}
+
+	fn random_lines(pieces: &[&str], next: &mut impl FnMut(usize) -> usize) -> Vec<String> {
+		let text: String = (0..next(40)).map(|_| pieces[next(pieces.len())]).collect();
+		text.split('\n').map(str::to_string).collect()
+	}
+
+	/// A region of random text in `language`, appended to `lines` with the line types it should get.
+	fn push_region(
+		lines: &mut Vec<String>,
+		expected: &mut Vec<LineType>,
+		(opening, closing, end): (&[&str], &str, End),
+		language: &Language,
+		next: &mut impl FnMut(usize) -> usize,
+	) {
+		for line in opening {
+			lines.push((*line).to_string());
+			expected.push(Code);
+		}
+		let mut state = CommentState::new();
+		for line in random_lines(&markers(language), next) {
+			// A line that would end the region early isn't part of one.
+			let line = if end.closes(&line) || fence(&line).is_some() { "x".to_string() } else { line };
+			expected.push(classify_line(&line, language, &mut state, false));
+			lines.push(line);
+		}
+		lines.push(closing.to_string());
+		expected.push(Code);
+	}
+
+	fn markers(language: &Language) -> Vec<&'static str> {
+		let mut pieces = vec!["a", "x = 1", " ", "\t", "\n", "\n", "\n", ";", "é", "(", "\\"];
+		pieces.extend(language.line_comments);
+		pieces.extend(language.block_comments.iter().flat_map(|&(start, end, _)| [start, end]));
+		pieces.extend(language.strings.iter().flat_map(|delimiter| [delimiter.open, delimiter.close]));
+		pieces.extend(language.column_one_comments);
+		pieces
+	}
+
+	/// The lines of an embedded region must count exactly as they would in a file of their own language, whatever comments or strings they leave open, and the host's lines as they would without the regions.
+	#[test]
+	fn regions_count_as_their_language_would_alone() {
+		let mut next = rng(0x5EED_CAFE_F00D_0001);
+		let fence_languages: Vec<&Language> = LANGUAGES
+			.iter()
+			.filter(|language| language.embedding.is_none() && info_language(language.name) == Some(*language))
+			.collect();
+		let elements: &[(&[&str], &str, Tag, &str)] = &[
+			(&["<script>"], "</script>", Tag::Script, "JavaScript"),
+			(&["<script setup lang=\"ts\">"], "</script>", Tag::Script, "TypeScript"),
+			(&["<script", "\ttype=\"module\"", ">"], "</SCRIPT>", Tag::Script, "JavaScript"),
+			(&["<style>"], "</style>", Tag::Style, "CSS"),
+			(&["<style scoped lang=\"scss\">"], "</style>", Tag::Style, "SCSS"),
+		];
+		for host in ["Markdown", "HTML", "Vue", "Svelte", "Astro"] {
+			let host = language_named(host).unwrap();
+			let host_lines: &[&str] = if host.embedding == Some(Embedding::Markdown) {
+				&["Some text", "# Heading", "<!-- note -->", "", "  - item", "<script>"]
+			} else {
+				&["<p>text</p>", "<!-- note -->", "", "  <div>", "<script src=\"a.js\"></script>", "<br/>"]
+			};
+			for _ in 0..300 {
+				let mut lines: Vec<String> = Vec::new();
+				let mut expected = Vec::new();
+				let frontmatter = match host.embedding {
+					Some(Embedding::Markdown) => Some("YAML"),
+					Some(Embedding::Astro) => Some("TypeScript"),
+					_ => None,
+				};
+				if let Some(name) = frontmatter
+					&& next(2) == 0
+				{
+					push_region(
+						&mut lines,
+						&mut expected,
+						(&["---"], "---", End::Frontmatter("---")),
+						language_named(name).unwrap(),
+						&mut next,
+					);
+				}
+				for _ in 0..next(6) {
+					for _ in 0..next(3) {
+						let line = host_lines[next(host_lines.len())];
+						// Each host line is complete on its own, so it classifies the same anywhere outside a region.
+						expected.push(classify_line(line, host, &mut CommentState::new(), false));
+						lines.push(line.to_string());
+					}
+					if host.embedding == Some(Embedding::Markdown) {
+						let language = fence_languages[next(fence_languages.len())];
+						let opening = format!("```{}", language.name);
+						let end = End::Fence { marker: b'`', len: 3 };
+						push_region(&mut lines, &mut expected, (&[&opening], "```", end), language, &mut next);
+					} else {
+						let (opening, closing, tag, name) = elements[next(elements.len())];
+						let language = language_named(name).unwrap();
+						push_region(&mut lines, &mut expected, (opening, closing, End::Tag(tag)), language, &mut next);
+					}
+				}
+				let mut classifier = Classifier::new(host);
+				let got: Vec<LineType> =
+					lines.iter().enumerate().map(|(i, line)| classifier.classify(line, i == 0)).collect();
+				assert_eq!(got, expected, "{}: {lines:#?}", host.name);
+			}
+		}
+	}
+
+	/// Arbitrary fragments of markup and code mustn't panic, and counting a whole file must agree with classifying it line by line.
+	#[test]
+	fn fragments_dont_panic() {
+		let mut next = rng(0x0BAD_F00D_1234_0002);
+		let pieces = [
+			"<script",
+			"<style",
+			"<SCRIPT",
+			">",
+			"/>",
+			"</script>",
+			"</STYLE>",
+			" lang=\"ts\"",
+			" lang=",
+			" type='module'",
+			" type=\"text/x-template\"",
+			"```",
+			"~~~",
+			"```rust",
+			"```{r}",
+			"````",
+			"---",
+			"+++",
+			"<!--",
+			"-->",
+			"/*",
+			"*/",
+			"//",
+			"#",
+			"\"",
+			"'",
+			"`",
+			"é",
+			"x",
+			" ",
+			"\n",
+			"\n",
+			"\t",
+			"\r\n",
+		];
+		for language in LANGUAGES.iter().filter(|language| language.embedding.is_some()) {
+			for _ in 0..500 {
+				let text: String = (0..next(80)).map(|_| pieces[next(pieces.len())]).collect();
+				let mut classifier = Classifier::new(language);
+				let mut expected = LineCounts::default();
+				for (i, line) in text.split_inclusive('\n').enumerate() {
+					expected.add(classifier.classify(line, i == 0));
+				}
+				let utf8 = FileEncoding { encoding: encoding_rs::UTF_8, bom_len: 0 };
+				assert_eq!(count_lines(language, utf8, text.as_bytes()), expected, "{}: {text:?}", language.name);
+			}
+		}
 	}
 
 	#[test]
