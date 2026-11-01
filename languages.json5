@@ -166,6 +166,7 @@
 	"ASP.NET": {
 		file_patterns: ["*.asax", "*.ascx", "*.asmx", "*.aspx", "*.master", "*.sitemap", "*.webinfo"],
 		block_comments: [["<!--", "-->"], ["<%--", "--%>"]],
+		embedding: "html",
 	},
 	"AspectJ": {
 		file_patterns: ["*.aj"],
@@ -297,6 +298,7 @@
 	"Blade": {
 		file_patterns: ["*.blade.php"],
 		block_comments: [["{{--", "--}}"], ["<!--", "-->"]],
+		embedding: "html",
 	},
 	"BlitzBasic": {
 		file_patterns: ["*.bb", "*.decls", "*.bb2"],
@@ -706,6 +708,7 @@
 	"EEx": {
 		file_patterns: ["*.eex", "*.leex", "*.heex"],
 		block_comments: [["<!--", "-->"], ["<%#", "%>"], ["<%!--", "--%>"]],
+		embedding: "html",
 	},
 	"Effekt": {
 		file_patterns: ["*.effekt"],
@@ -720,6 +723,7 @@
 	"EJS": {
 		file_patterns: ["*.ejs"],
 		block_comments: [["/*", "*/"], ["<!--", "-->"], ["<%#", "%>"]],
+		embedding: "html",
 	},
 	"Elixir": {
 		file_patterns: ["*.ex", "*.exs", "mix.lock"],
@@ -760,6 +764,7 @@
 	"ERB": {
 		file_patterns: ["*.erb", "*.html.erb", "*.erb.html"],
 		block_comments: [["<!--", "-->"], ["<%#", "%>"]],
+		embedding: "html",
 	},
 	"Erlang": {
 		file_patterns: ["*.erl", "*.hrl", "*.app.src", "*.yrl", "*.xrl"],
@@ -849,6 +854,7 @@
 	"FreeMarker": {
 		file_patterns: ["*.ftl", "*.ftlh", "*.ftlx"],
 		block_comments: [["<#--", "-->"]],
+		embedding: "html",
 	},
 	"Frege": {
 		file_patterns: ["*.fr"],
@@ -937,6 +943,7 @@
 	"Go Template": {
 		file_patterns: ["*.gohtml", "*.gotmpl", "*.gotxt", "*.tmpl"],
 		block_comments: [["{{/*", "*/}}"], ["{{- /*", "*/ -}}"]],
+		embedding: "html",
 	},
 	"Godot Resource": {
 		file_patterns: ["*.tscn", "*.tres", "project.godot"],
@@ -1002,10 +1009,12 @@
 		file_patterns: ["*.hamlet"],
 		line_comments: ["$#"],
 		block_comments: [["<!--", "-->"]],
+		embedding: "html",
 	},
 	"Handlebars": {
 		file_patterns: ["*.hbs", "*.handlebars"],
 		block_comments: [["{{!--", "--}}"], ["{{!", "}}"]],
+		embedding: "html",
 	},
 	"Happy": {
 		file_patterns: ["*.y"],
@@ -1186,6 +1195,7 @@
 		file_patterns: ["*.jsp"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"], ["<!--", "-->"], ["<%--", "--%>"]],
+		embedding: "html",
 	},
 	"JavaScript": {
 		file_patterns: ["*.js", "*.cjs", "*.jsx", "*.jscad", "*.jsfl", "*.mjs", "*.njs", "*.sjs", "*.ssjs", "*.xsjs", "*.xsjslib", "*.es", "*.es6", "*.jake"],
@@ -1203,6 +1213,7 @@
 	"Jinja2": {
 		file_patterns: ["*.j2", "*.jinja", "*.jinja2"],
 		block_comments: [["{#", "#}"]],
+		embedding: "html",
 	},
 	"Jolie": {
 		file_patterns: ["*.ol", "*.iol"],
@@ -1386,6 +1397,7 @@
 	"Liquid Templates": {
 		file_patterns: ["*.liquid"],
 		block_comments: [["<!--", "-->"], ["{% comment %}", "{% endcomment %}"]],
+		embedding: "html",
 	},
 	"LiveScript": {
 		file_patterns: ["*.ls"],
@@ -1488,6 +1500,7 @@
 		file_patterns: ["*.marko"],
 		line_comments: ["//"],
 		block_comments: [["<!--", "-->"]],
+		embedding: "html",
 	},
 	"Mathematica/Wolfram": {
 		file_patterns: ["*.wl", "*.wls"],
@@ -1633,6 +1646,7 @@
 	"Mustache": {
 		file_patterns: ["*.mustache"],
 		block_comments: [["{{!", "}}"]],
+		embedding: "html",
 	},
 	"MyST": {
 		file_patterns: ["*.myst"],
@@ -1713,6 +1727,7 @@
 	"Nunjucks Templates": {
 		file_patterns: ["*.njk"],
 		block_comments: [["{#", "#}"]],
+		embedding: "html",
 	},
 	"Nushell": {
 		file_patterns: ["*.nu"],
@@ -2097,6 +2112,7 @@
 		file_patterns: ["*.cshtml", "*.razor"],
 		block_comments: [["<!--", "-->"], ["@*", "*@"]],
 		keywords: ["@page", "@model", "@inject", "@code", "@functions"],
+		embedding: "html",
 	},
 	"ReasonML": {
 		file_patterns: ["*.re", "*.rei"],
@@ -2286,6 +2302,7 @@
 	"Smarty": {
 		file_patterns: ["*.tpl"],
 		block_comments: [["{*", "*}"]],
+		embedding: "html",
 	},
 	"Smithy": {
 		file_patterns: ["*.smithy"],
@@ -2384,6 +2401,7 @@
 	"SVG": {
 		file_patterns: ["*.svg"],
 		block_comments: [["<!--", "-->"]],
+		embedding: "html",
 	},
 	"Sway": {
 		file_patterns: ["*.sw"],
@@ -2507,6 +2525,7 @@
 	"Twig": {
 		file_patterns: ["*.twig"],
 		block_comments: [["{#", "#}"]],
+		embedding: "html",
 	},
 	"txt2tags": {
 		file_patterns: ["*.t2t"],
