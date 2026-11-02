@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The summary's list of languages ends with "and" before the last one, like the other lists in human output
 - A plain heredoc (`<<EOF`) only ends at its word at the start of a line, while `<<~EOF` and `<<-EOF` (and any heredoc in PHP) may end at an indented one, and Ruby's `class <<self` is no longer taken for a heredoc
 - In C, C++, Objective-C and CUDA, a line comment ending in a backslash carries on onto the next line, as the compiler reads it
 - In shells and PowerShell, a quote escaped outside a string (`don\'t`, ``don`'t``) no longer opens one

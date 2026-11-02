@@ -107,7 +107,9 @@ impl HumanFormatter {
 				)
 			})
 			.collect();
-		writeln!(writer, "Languages: {}.", parts.join(", "))?;
+		if let Some(list) = join_with_commas_and(&parts) {
+			writeln!(writer, "Languages: {list}.")?;
+		}
 		Ok(())
 	}
 
