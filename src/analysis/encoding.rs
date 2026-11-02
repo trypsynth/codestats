@@ -77,8 +77,9 @@ fn detect_utf16_without_bom(samples: &[u8]) -> Option<FileEncoding> {
 		zero_odd += usize::from(odd == 0);
 	}
 	// Heuristic: UTF-16 text typically has a strong zero-byte bias on one parity.
+	// At least a quarter of the bytes, compared without rounding down so that one zero in a tiny file isn't enough.
 	let total_zeros = zero_even + zero_odd;
-	if total_zeros < samples.len() / 4 {
+	if total_zeros * 4 < samples.len() {
 		return None;
 	}
 	let (encoding, text_byte) = if zero_odd >= zero_even.saturating_mul(2) {
@@ -118,13 +119,15 @@ pub(super) fn count_utf16(language: &Language, encoding: FileEncoding, bytes: &[
 
 fn decode_to_string(decoder: &mut Decoder, chunk: &[u8], last: bool, output: &mut String) {
 	let mut offset = 0;
-	while offset < chunk.len() || (last && offset == 0 && chunk.is_empty()) {
-		output.reserve(chunk.len().saturating_sub(offset).max(1));
+	loop {
+		// Room for the worst case, which includes bytes held back from the previous chunk, such as a trailing odd byte that becomes a three-byte U+FFFD. With any less, the decoder can report a full output without consuming anything, forever.
+		output.reserve(
+			decoder.max_utf8_buffer_length(chunk.len() - offset).expect("a chunk's decoded length fits in memory"),
+		);
 		let (result, read, _) = decoder.decode_to_string(&chunk[offset..], output, last);
 		offset += read;
-		match result {
-			CoderResult::InputEmpty => break,
-			CoderResult::OutputFull => {}
+		if result == CoderResult::InputEmpty {
+			break;
 		}
 	}
 }
@@ -222,6 +225,26 @@ mod tests {
 		let file_encoding = FileEncoding { encoding, bom_len: bom.len() };
 		let counts = count_utf16(language, file_encoding, &bytes).lines;
 		assert_eq!(counts, LineCounts { total: 3001, code: 1001, comment: 1000, blank: 1000, shebang: 0 });
+	}
+
+	#[test]
+	fn one_zero_in_a_tiny_file_is_not_utf16() {
+		// A JSON test case with an unescaped NUL in a string.
+		let sample = b"[\"a\0a\"]";
+		let encoding = detect_encoding(sample);
+		assert_eq!(encoding.encoding, UTF_8);
+		assert!(is_probably_binary(sample, encoding));
+	}
+
+	#[rstest]
+	#[case::odd_length(b"a\0b\0\n\0c".as_slice(), 2)]
+	#[case::single_byte(b"a".as_slice(), 1)]
+	// Seven bytes of output fill all but one byte of the first allocation, too little for the U+FFFD the odd byte becomes.
+	#[case::nearly_full_output(b"[\"a\0a\"]".as_slice(), 1)]
+	fn utf16_with_a_trailing_odd_byte_finishes(#[case] bytes: &[u8], #[case] lines: u64) {
+		let language = crate::langs::LANGUAGES.iter().find(|l| l.name == "Rust").unwrap();
+		let counts = count_utf16(language, FileEncoding { encoding: UTF_16LE, bom_len: 0 }, bytes).lines;
+		assert_eq!(counts.total, lines);
 	}
 
 	#[test]

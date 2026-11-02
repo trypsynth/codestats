@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Fixed counting hanging forever on some tiny files with a zero byte, such as a JSON test case with a NUL in a string. They were mistaken for UTF-16, and decoding a UTF-16 file with an odd number of bytes could get stuck at its end. A single zero in a tiny file is no longer taken for UTF-16
+
 ## 0.9.1
 
 - Embedded code is now broken down by language. Each language lists the languages embedded in its files and their lines, such as the JavaScript in Markdown files, in every output format: an `embedded` list on languages and files in JSON, an "Embedded code" list in human output, and an embedded code table in CSV and TSV (with `--verbose`), Markdown and HTML. Embedded lines still count toward their file's language
