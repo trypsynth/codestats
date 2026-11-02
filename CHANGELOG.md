@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Faster at telling apart languages that share an extension, such as C, C++ and Objective-C headers: linux is counted about 8% faster. With `--lang` or `--exclude-lang`, files whose possible languages are all filtered out are skipped without being read, unless they start with a shebang
 - Faster on languages whose strings or comments start with a letter, like Rust's raw strings (`r"`), and on languages with four or more kinds of comment and string markers, like Go: the rust repository is counted about 20% faster and kubernetes about 9%
 - Fixed counting hanging forever on some tiny files with a zero byte, such as a JSON test case with a NUL in a string. They were mistaken for UTF-16, and decoding a UTF-16 file with an odd number of bytes could get stuck at its end. A single zero in a tiny file is no longer taken for UTF-16
 

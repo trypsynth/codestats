@@ -30,7 +30,14 @@ const MAX_KEYWORD_OCCURRENCES: usize = 3;
 /// keywords (weaker indicators that may appear as identifiers in other languages).
 #[inline]
 /// `candidates` are all the languages being weighed, `lang` among them: a keyword every other one shares is no evidence for `lang`. Comment markers are looked for in `content`, keywords in `code`, which may have comments removed so their prose doesn't count as code ("virtual memory" as C++).
-fn score_language(lang: &Language, candidates: &[&Language], content: &str, code: &str, tokens: &Tokens) -> i32 {
+fn score_language(
+	lang: &Language,
+	candidates: &[&Language],
+	content: &str,
+	code: &str,
+	tokens: &Tokens,
+	seen: &mut Seen,
+) -> i32 {
 	if lang.line_comments.is_empty() && lang.block_comments.is_empty() && lang.keywords.is_empty() {
 		return 0;
 	}
@@ -38,7 +45,7 @@ fn score_language(lang: &Language, candidates: &[&Language], content: &str, code
 	let bytes = content.as_bytes();
 	let mut score: i32 = 0;
 	for comment in lang.line_comments {
-		if has_line_comment(content, comment) {
+		if seen.line_comment(content, comment) {
 			score = score.saturating_add(COMMENT_MATCH_SCORE);
 		}
 	}
@@ -50,12 +57,9 @@ fn score_language(lang: &Language, candidates: &[&Language], content: &str, code
 	let mut counts = vec![0usize; lang.keywords.len()];
 	if !matchers.words.is_empty() {
 		for token in &tokens.words {
-			if !matchers.word_starts[usize::from(token[0])] {
-				continue;
-			}
-			for &(keyword, index) in &matchers.words {
-				let is_match =
-					if matchers.case_sensitive { *token == keyword } else { token.eq_ignore_ascii_case(keyword) };
+			for &(keyword, index) in &matchers.words_by_start[usize::from(token[0])] {
+				let is_match = keyword.len() == token.len()
+					&& if matchers.case_sensitive { *token == keyword } else { token.eq_ignore_ascii_case(keyword) };
 				if is_match {
 					counts[index] += 1;
 				}
@@ -66,7 +70,7 @@ fn score_language(lang: &Language, candidates: &[&Language], content: &str, code
 	let limit = if matchers.symbol_only { usize::MAX } else { MAX_KEYWORD_OCCURRENCES };
 	let mut matched_chars: usize = 0;
 	for substring in &matchers.substrings {
-		let occurrences = substring.count(code.as_bytes(), limit);
+		let occurrences = seen.count(substring, code.as_bytes(), limit);
 		matched_chars = matched_chars.saturating_add(occurrences.saturating_mul(substring.finder.needle().len()));
 		counts[substring.index] = occurrences;
 	}
@@ -107,6 +111,8 @@ fn score_language(lang: &Language, candidates: &[&Language], content: &str, code
 struct ScoringMatchers {
 	/// Keywords made of identifier characters, matched against whole tokens ignoring case, with their index in the language's keywords.
 	words: Vec<(&'static [u8], usize)>,
+	/// The word keywords by first byte (both cases when case doesn't matter), so a token is only compared with the few that could match it.
+	words_by_start: Vec<Vec<(&'static [u8], usize)>>,
 	/// Which bytes (either case) start a word keyword, so most tokens are ruled out with one lookup.
 	word_starts: [bool; 256],
 	/// The longest word keyword's length.
@@ -134,6 +140,37 @@ impl SubstringKeyword {
 			.filter(|&pos| !self.ends_in_word || content.get(pos + len).is_none_or(|&b| !is_word_byte(b)))
 			.take(limit)
 			.count()
+	}
+}
+
+/// What's already been looked for in a sample, since candidates share keywords and comment markers (`#include` and `//` for C, C++ and Objective-C).
+#[derive(Default)]
+struct Seen {
+	substrings: Vec<(&'static [u8], bool, usize, usize)>,
+	line_comments: Vec<(&'static str, bool)>,
+}
+
+impl Seen {
+	fn count(&mut self, keyword: &'static SubstringKeyword, content: &[u8], limit: usize) -> usize {
+		let needle = keyword.finder.needle();
+		let same = |&&(other, ends_in_word, other_limit, _): &&(&[u8], bool, usize, usize)| {
+			other == needle && ends_in_word == keyword.ends_in_word && other_limit == limit
+		};
+		if let Some(&(.., count)) = self.substrings.iter().find(same) {
+			return count;
+		}
+		let count = keyword.count(content, limit);
+		self.substrings.push((needle, keyword.ends_in_word, limit, count));
+		count
+	}
+
+	fn line_comment(&mut self, content: &str, marker: &'static str) -> bool {
+		if let Some(&(_, seen)) = self.line_comments.iter().find(|&&(other, _)| other == marker) {
+			return seen;
+		}
+		let seen = has_line_comment(content, marker);
+		self.line_comments.push((marker, seen));
+		seen
 	}
 }
 
@@ -171,8 +208,20 @@ fn build_scoring_matchers(lang: &Language) -> ScoringMatchers {
 	let block_comments =
 		lang.block_comments.iter().map(|&(start, end, _)| (Finder::new(start), Finder::new(end))).collect();
 	let max_word_len = words.iter().map(|(word, _)| word.len()).max().unwrap_or(0);
+	let mut words_by_start = vec![Vec::new(); 256];
+	for &(word, index) in &words {
+		if lang.case_sensitive_keywords {
+			words_by_start[usize::from(word[0])].push((word, index));
+		} else {
+			words_by_start[usize::from(word[0].to_ascii_lowercase())].push((word, index));
+			if word[0].is_ascii_alphabetic() {
+				words_by_start[usize::from(word[0].to_ascii_uppercase())].push((word, index));
+			}
+		}
+	}
 	ScoringMatchers {
 		words,
+		words_by_start,
 		word_starts,
 		max_word_len,
 		case_sensitive: lang.case_sensitive_keywords,
@@ -294,11 +343,12 @@ pub(super) fn disambiguate<'a>(candidates: &[&'a Language], content: &str) -> (O
 		_ => Cow::Borrowed(content),
 	};
 	let tokens = tokenize(&code, &starts, max_len);
+	let mut seen = Seen::default();
 	let mut runner_up = 0;
 	// On ties, prefer a candidate that doesn't need keyword evidence (C over C++ for a `.h`), then the one with fewer keywords, then the earliest. A language that extends another (e.g. Bison over Yacc) lists the base language's keywords plus its own, so without extension-specific keywords the base language is the better guess.
 	let mut best: Option<(&'a Language, i32)> = None;
 	for lang in candidates {
-		let score = score_language(lang, candidates, content, &code, &tokens);
+		let score = score_language(lang, candidates, content, &code, &tokens, &mut seen);
 		let beats_best = best.is_none_or(|(best_lang, best_score)| {
 			score > best_score || (score == best_score && tie_rank(lang) < tie_rank(best_lang))
 		});
@@ -408,8 +458,14 @@ mod tests {
 	#[test]
 	fn score_language_combines_comments_and_keywords() {
 		let content = "// comment\nalpha beta alpha";
-		let score =
-			score_language(&TEST_LANGUAGE_ALPHA, &[], content, content, &tokenize(content, &[true; 256], usize::MAX));
+		let score = score_language(
+			&TEST_LANGUAGE_ALPHA,
+			&[],
+			content,
+			content,
+			&tokenize(content, &[true; 256], usize::MAX),
+			&mut Seen::default(),
+		);
 		assert_eq!(score, 50 + 3 * 10);
 	}
 

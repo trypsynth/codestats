@@ -110,12 +110,8 @@ pub fn process_file(
 	// `fstat` on the open file rather than `stat` on its path, so the path is only looked up once.
 	let file_size =
 		file.metadata().with_context(|| format!("Failed to read metadata for {}", file_path.display()))?.len();
-	// A file whose name matches no language, or only one that's filtered out, counts only if it starts with a shebang, so check that before reading it all.
-	let needs_shebang = match candidates[..] {
-		[] => true,
-		[language] => !languages.allows(language),
-		_ => false,
-	};
+	// A file whose name matches no language, or only ones that are filtered out, counts only if it starts with a shebang, so check that before reading it all, or weighing its content between candidates that can't count anyway.
+	let needs_shebang = !candidates.iter().any(|&language| languages.allows(language));
 	if needs_shebang && file_size > 0 {
 		let head =
 			FileSource::head(&mut file).with_context(|| format!("Failed to read file {}", file_path.display()))?;
