@@ -835,6 +835,7 @@
 		file_patterns: ["*.fish"],
 		line_comments: ["#"],
 		shebangs: ["#!/bin/fish", "#!/usr/bin/env fish", "#!/usr/bin/fish"],
+		strings: [{open: "\"", multiline: true}, {open: "'", multiline: true}],
 	},
 	"FlatBuffers Schema": {
 		file_patterns: ["*.fbs"],
@@ -1275,6 +1276,7 @@
 		block_comments: [["#=", "=#"]],
 		nested_blocks: true,
 		shebangs: ["#!/usr/bin/env julia", "#!/usr/local/bin/julia"],
+		strings: [{open: "\"\"\"", multiline: true}, {open: "\"", multiline: true}, {open: "'", char: true}],
 	},
 	"Just": {
 		file_patterns: ["justfile", ".justfile", "*.just", "Justfile"],
@@ -1714,6 +1716,7 @@
 		file_patterns: ["*.nix"],
 		line_comments: ["#"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "\"", multiline: true}, {open: "''", close: "''", escape: null, multiline: true}],
 	},
 	"Noir": {
 		file_patterns: ["*.nr"],
@@ -1787,6 +1790,7 @@
 		file_patterns: ["*.ml", "*.mli", "*.mll", "*.mly"],
 		block_comments: [["(*", "*)"]],
 		nested_blocks: true,
+		strings: [{open: "\"", multiline: true}, {open: "'", char: true}, {open: "{|", close: "|}", escape: null, multiline: true}],
 	},
 	"Occam": {
 		file_patterns: ["*.occ"],
@@ -1991,6 +1995,7 @@
 		line_comments: ["#"],
 		block_comments: [["<#", "#>"]],
 		shebangs: ["#!/usr/bin/env pwsh", "#!/usr/bin/pwsh"],
+		strings: [{open: "\"", escape: "`", multiline: true}, {open: "'", escape: null, multiline: true}],
 	},
 	"Prisma": {
 		file_patterns: ["*.prisma"],
@@ -2021,6 +2026,7 @@
 		file_patterns: ["*.proto"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", "'"],
 	},
 	"PRQL": {
 		file_patterns: ["*.prql"],
@@ -2099,6 +2105,7 @@
 		line_comments: ["#"],
 		shebangs: ["#!/usr/bin/env Rscript", "#!/usr/bin/Rscript"],
 		keywords: ["<-", "function", "library", "data.frame", "ggplot", "lm"],
+		strings: [{open: "\"", multiline: true}, {open: "'", multiline: true}],
 	},
 	"Racket": {
 		file_patterns: ["*.rkt", "*.rktd", "*.rktl", "*.rktm"],
@@ -2651,6 +2658,7 @@
 		file_patterns: ["*.vb", "*.cls", "*.frm", "*.vba", "*.vbhtml", "*.vbs"],
 		line_comments: ["'", "REM", "Rem", "rem"],
 		keywords: ["Dim", "Sub", "Function", "End Sub", "End Function", "Private", "Public", "As", "For Each"],
+		strings: [{open: "\"", escape: null}],
 	},
 	"Visual FoxPro": {
 		file_patterns: ["*.prg"],
