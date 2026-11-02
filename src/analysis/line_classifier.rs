@@ -66,6 +66,8 @@ pub struct CommentState {
 	string: Option<usize>,
 	/// Whether the open string is a docstring, whose contents count as comment.
 	doc_string: bool,
+	/// What closes the open string when its writer chose it (`)xy"` for C++'s `R"xy(`), rather than the language.
+	string_close: Option<Box<[u8]>>,
 	/// The heredoc whose body the next line is in, which counts as being in a string.
 	heredoc: Option<HeredocEnd>,
 	/// A comment the next line is in that's decided line by line, rather than by markers anywhere in it.
@@ -569,6 +571,11 @@ mod tests {
 	#[case::kotlin_raw_string_ending_in_a_quote("Kotlin", &["val s = \"\"\"a \"\"\"\" // c", "// c"], &[LineType::Code, LineType::Comment])]
 	#[case::c_spliced_line_comment("C", &["int x; // c \\", "still c \\", "and this", "int y;"], &[LineType::Code, LineType::Comment, LineType::Comment, LineType::Code])]
 	#[case::c_string_splice_ends_at_blank("C", &["char *s = \"abc \\", "", "// c\";", "int x;"], &[LineType::Code, LineType::Blank, LineType::Comment, LineType::Code])]
+	#[case::cpp_raw_string("C++", &["auto s = R\"(", "/* not a comment", ")\";", "// c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
+	#[case::cpp_raw_string_with_delimiter("C++", &["auto s = R\"xy(a \")\" b", "/* not a comment", ")xy\"; /* c */"], &[LineType::Code, LineType::Code, LineType::Code])]
+	#[case::cpp_raw_string_with_prefix("C++", &["auto s = u8R\"--(", "// not a comment", ")--\";", "// c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
+	#[case::cpp_macro_pasted_to_string("C++", &["f(DIR\"/*.txt\");", "// c"], &[LineType::Code, LineType::Comment])]
+	#[case::cpp_r_quote_without_paren("C++", &["s = R\"/*\"; /*", "c */"], &[LineType::Code, LineType::Comment])]
 	#[case::powershell_here_string("PowerShell", &["$s = @'", "don't", "# not a comment", "'@", "# c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
 	#[case::pod_closes_only_unindented("Perl", &["=pod", "", "    =cut", "still pod", "=cut", "sub run { 1 }"], &[LineType::Comment, LineType::Blank, LineType::Comment, LineType::Comment, LineType::Comment, LineType::Code])]
 	#[case::matlab_block_markers_alone("MATLAB", &["%{", "%} not the end", "z = x;", "%}", "%{ note", "z = x + 1;"], &[LineType::Comment, LineType::Comment, LineType::Comment, LineType::Comment, LineType::Comment, LineType::Code])]

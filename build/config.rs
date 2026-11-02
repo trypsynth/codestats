@@ -112,6 +112,7 @@ impl StringSpec {
 				multiline: false,
 				char_literal: false,
 				doc: false,
+				delimited: false,
 			},
 			Self::Full(config) => config.clone(),
 		}
@@ -120,6 +121,7 @@ impl StringSpec {
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
+#[expect(clippy::struct_excessive_bools, reason = "independent switches from languages.json5")]
 pub struct StringConfig {
 	pub open: String,
 	close: Option<String>,
@@ -134,6 +136,9 @@ pub struct StringConfig {
 	/// A docstring delimiter (Python's `"""`): when it starts a line, its contents count as comment rather than code.
 	#[serde(default)]
 	pub doc: bool,
+	/// The opener is followed by a delimiter the writer picks, up to a `(`, and the string ends at `)`, that delimiter and `close` (C++'s `R"xy(...)xy"`).
+	#[serde(default)]
+	pub delimited: bool,
 }
 
 impl StringConfig {

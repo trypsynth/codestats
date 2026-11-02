@@ -1,5 +1,7 @@
 //! Lexing string, char and regex literals, so comment markers inside them aren't taken for comments.
 
+use memchr::memmem;
+
 use super::{CommentState, HeredocEnd, LineType, contains_non_whitespace, is_valid_line_comment_match, is_word_char};
 use crate::langs::{
 	Heredoc, Language,
@@ -48,7 +50,12 @@ pub(super) fn classify_with_strings(
 		} else if let Some(index) = state.string {
 			has_code |= !state.doc_string;
 			let delimiter = &lang.strings[index];
-			if let Some(end) = strings.find_close(bytes, pos, index, delimiter.escape) {
+			let close = if state.string_close.is_some() {
+				find_chosen_close(state, bytes, pos)
+			} else {
+				strings.find_close(bytes, pos, index, delimiter.escape)
+			};
+			if let Some(end) = close {
 				state.string = None;
 				pos = end;
 			} else {
@@ -90,6 +97,10 @@ pub(super) fn classify_with_strings(
 					if state.heredoc.is_none() {
 						state.heredoc = lang.heredoc.and_then(|syntax| heredoc_terminator(bytes, start, end, syntax));
 					}
+				}
+				Token::DelimitedString(i) => {
+					has_code = true;
+					pos = open_delimited_string(state, bytes, start, end, i, lang.strings[i].close);
 				}
 				Token::String(i) => {
 					let delimiter = &lang.strings[i];
@@ -216,6 +227,48 @@ fn heredoc_terminator(line: &[u8], start: usize, end: usize, syntax: Heredoc) ->
 		};
 	(spaced_ok && !terminator.is_empty())
 		.then(|| HeredocEnd { terminator: String::from_utf8_lossy(terminator).into(), indented })
+}
+
+/// Where the open string closes on `line` after `from`, at the closer its writer chose (C++'s `)xy"`), forgetting that closer once it's found. Rare, so kept out of the hot loop.
+#[cold]
+#[inline(never)]
+fn find_chosen_close(state: &mut CommentState, line: &[u8], from: usize) -> Option<usize> {
+	let close = state.string_close.as_deref()?;
+	let end = from + memmem::find(&line[from..], close)? + close.len();
+	state.string_close = None;
+	Some(end)
+}
+
+/// Open the delimited string `index` whose opener spans `start..end`, returning where to carry on scanning: inside its body, or at the quote when it's not a raw string after all (`DIR"/x"` pastes a macro to a string). Rare, so kept out of the hot loop.
+#[cold]
+#[inline(never)]
+fn open_delimited_string(
+	state: &mut CommentState,
+	line: &[u8],
+	start: usize,
+	end: usize,
+	index: usize,
+	close: &str,
+) -> usize {
+	delimited_string(line, start, end, close).map_or(start + 1, |(body, close)| {
+		state.string = Some(index);
+		state.string_close = Some(close);
+		body
+	})
+}
+
+/// For a delimited string whose opener spans `start..end`, the position its body starts at and what closes it: `)xy"` for `R"xy(`. `None` when the opener is part of a longer word (other than an encoding prefix, as in `u8R"(`) or isn't followed by a delimiter of at most 16 characters and a `(`.
+fn delimited_string(line: &[u8], start: usize, end: usize, close: &str) -> Option<(usize, Box<[u8]>)> {
+	let word = line[..start].iter().rev().take_while(|&&b| is_word_char(b)).count();
+	if !matches!(&line[start - word..start], b"" | b"u8" | b"u" | b"U" | b"L") {
+		return None;
+	}
+	let len = line[end..].iter().take(17).position(|&b| b == b'(')?;
+	let delimiter = &line[end..end + len];
+	if delimiter.iter().any(|&b| b.is_ascii_whitespace() || matches!(b, b')' | b'\\' | b'"')) {
+		return None;
+	}
+	Some((end + len + 1, [b")", delimiter, close.as_bytes()].concat().into()))
 }
 
 /// Whether the text after an opening `'` looks like a char literal: one character or an escape, then a closing `'`.

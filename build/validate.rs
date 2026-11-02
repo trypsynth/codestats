@@ -113,6 +113,9 @@ impl Validator {
 			if config.char_literal && (config.open.len() != 1 || config.close() != config.open) {
 				self.error(lang, "char literals need a single-character delimiter");
 			}
+			if config.delimited && (config.escape.is_some() || !config.multiline) {
+				self.error(lang, "delimited strings are raw and multiline");
+			}
 			if lang.line_comments.contains(&config.open) || lang.block_comments.iter().any(|(s, _)| s == &config.open) {
 				self.error(lang, format_args!("string delimiter '{}' is also a comment marker", config.open));
 			}

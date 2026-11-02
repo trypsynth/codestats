@@ -222,7 +222,7 @@ fn several_paths_are_counted_together_once() {
 	let output = cs().current_dir(&root).args(["a", "b", "a", "a/main.rs", "-v", "-o", "csv"]).output().unwrap();
 	assert!(output.status.success(), "stderr: {}", String::from_utf8_lossy(&output.stderr));
 	let csv = String::from_utf8(output.stdout).unwrap();
-	let mut files: Vec<_> = csv.lines().filter(|row| row.ends_with(".rs") || row.contains(".rs,")).collect();
+	let mut files: Vec<_> = csv.lines().filter(|row| row.contains("main.rs")).collect();
 	files.sort_unstable();
 	assert_eq!(files.len(), 2, "{csv}");
 	assert!(files[0].starts_with("a/main.rs") && files[1].starts_with("b/main.rs"), "{csv}");

@@ -101,6 +101,8 @@ pub enum Token {
 	LineComment(usize),
 	BlockComment(usize),
 	String(usize),
+	/// The opener of a string whose writer picks its closer (C++'s `R"xy(`), as an index into the language's strings.
+	DelimitedString(usize),
 	/// A `/` that may start a regex literal (or be division).
 	Regex,
 	/// A heredoc's opener (`<<`), whose body starts on the next line, if it's followed by a terminator.
@@ -269,7 +271,7 @@ fn build_string_matchers(lang: &Language) -> StringMatchers {
 	}
 	for (i, delimiter) in lang.strings.iter().enumerate() {
 		patterns.push(delimiter.open);
-		kinds.push(Token::String(i));
+		kinds.push(if delimiter.delimited { Token::DelimitedString(i) } else { Token::String(i) });
 	}
 	if lang.regex_literals {
 		// Leftmost-longest matching lets `//` and `/*` win over a lone `/`.

@@ -37,10 +37,14 @@ const STRING_DELIMITER_FIELDS: &[(&str, &str)] = &[
 	("multiline", "bool"),
 	("char_literal", "bool"),
 	("doc", "bool"),
+	("delimited", "bool"),
 ];
 
 pub fn render_languages(languages: &[LanguageConfig]) -> String {
 	let mut output = String::new();
+	output.push_str(
+		"#[expect(clippy::struct_excessive_bools, reason = \"independent switches from languages.json5\")]\n",
+	);
 	render_struct(
 		&mut output,
 		"StringDelimiter",
@@ -117,12 +121,13 @@ fn render_string_delimiter(spec: &StringSpec) -> String {
 	let config = spec.config();
 	let escape = config.escape.as_ref().map_or_else(|| "None".to_string(), |e| format!("Some({:?})", e.as_bytes()[0]));
 	format!(
-		"StringDelimiter {{ open: {:?}, close: {:?}, escape: {escape}, multiline: {}, char_literal: {}, doc: {} }}",
+		"StringDelimiter {{ open: {:?}, close: {:?}, escape: {escape}, multiline: {}, char_literal: {}, doc: {}, delimited: {} }}",
 		config.open,
 		config.close(),
 		config.multiline,
 		config.char_literal,
-		config.doc
+		config.doc,
+		config.delimited
 	)
 }
 

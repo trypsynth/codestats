@@ -25,9 +25,11 @@
 //   strings              String literals, so comment markers inside them are ignored and their contents count as code.
 //                        `"\""` is a one-line string with a `\` escape. The full form is
 //                        {open, close (defaults to open), escape (`null` for raw strings, or the quote itself for
-//                        doubled quotes like 'it''s'), multiline, char, doc}. `char` only opens a string when it looks
-//                        like a char literal (so Rust's `'a` lifetimes stay code). `doc` makes a string that starts a
-//                        line count as a comment, like Python docstrings.
+//                        doubled quotes like 'it''s'), multiline, char, doc, delimited}. `char` only opens a string
+//                        when it looks like a char literal (so Rust's `'a` lifetimes stay code). `doc` makes a string
+//                        that starts a line count as a comment, like Python docstrings. `delimited` puts a delimiter
+//                        of the writer's choosing between the opener and a `(`, and the string ends at `)`, that
+//                        delimiter and the close, like C++'s `R"xy(...)xy"`.
 //   c_preprocessor       The file goes through the C preprocessor although `#` also starts comments (assembly `.S`
 //                        files), so directives like `# define` or `# if defined(X)` count as code.
 //   regex_literals       `/.../` regex literals (JavaScript), so quotes or `/*` inside them are ignored. A `/` starts a
@@ -383,7 +385,7 @@
 		keywords: ["#include", "#define", "#ifndef", "#ifdef", "#endif", "#pragma", "int main", "void", "sizeof", "typedef", "struct", "extern", "static", "NULL", "unsigned", "namespace", "template", "typename", "std::", "nullptr", "constexpr", "virtual", "operator", "public:", "protected:", "private:"],
 		case_sensitive_keywords: true,
 		require_keywords: true,
-		strings: ["\"", {open: "'", char: true}, {open: "R\"(", close: ")\"", escape: null, multiline: true}],
+		strings: ["\"", {open: "'", char: true}, {open: "R\"", close: "\"", escape: null, multiline: true, delimited: true}],
 		line_splices: true,
 	},
 	"C2": {
@@ -1790,7 +1792,7 @@
 		block_comments: [["/*", "*/"]],
 		keywords: ["@interface", "@implementation", "@protocol", "@property", "@synthesize", "@end", "#import", "NSString", "class", "template"],
 		case_sensitive_keywords: true,
-		strings: ["\"", {open: "'", char: true}, {open: "R\"(", close: ")\"", escape: null, multiline: true}],
+		strings: ["\"", {open: "'", char: true}, {open: "R\"", close: "\"", escape: null, multiline: true, delimited: true}],
 		line_splices: true,
 	},
 	"Objective-J": {

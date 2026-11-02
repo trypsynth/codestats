@@ -150,10 +150,7 @@ counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
 counted = { lines = 6, code = 5, comments = 1, blanks = 0 }
 
 [answer.2150-delimited_raw_string_names_its_own_closer.default]
-is-known-failure = true
-counted = { lines = 5, code = 1, comments = 4, blanks = 0 }
-note = """
-C++ raw strings end at the first )" whatever word follows the R", so R"xy( ... )xy" closes early."""
+counted = { lines = 5, code = 4, comments = 1, blanks = 0 }
 
 [answer.2170-lua_level_bracket_holding_plain_close.default]
 counted = { lines = 4, code = 1, comments = 3, blanks = 0 }
