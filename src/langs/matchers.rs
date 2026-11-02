@@ -117,7 +117,7 @@ pub struct StringMatchers {
 	closes: Vec<Finder<'static>>,
 	/// First bytes of string openers, for a fast check that a line can't contain a string.
 	open_bytes: ByteSet,
-	/// The characters that escape inside any of the language's strings (`\\` in a shell, `` ` `` in PowerShell), leaving out quotes that escape by doubling. Outside a string they keep a quote after them from opening one, as `\\'` writes an apostrophe in a shell.
+	/// The characters that escape inside any of the language's strings (a backslash in a shell, a backtick in `PowerShell`), leaving out quotes that escape by doubling. Outside a string they keep a quote after them from opening one, as `\\'` writes an apostrophe in a shell.
 	pub(crate) escapes: Vec<u8>,
 }
 
