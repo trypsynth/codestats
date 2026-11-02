@@ -263,6 +263,10 @@ For performance, Codestats uses memory-mapped I/O for files >=256KB. This provid
 
 Codestats uses parallel processing to maximize performance. Each worker thread maintains its own statistics which are merged at the end, minimizing lock contention. The tool is safe for concurrent execution on different directories, but should not analyze the same directory simultaneously from multiple processes.
 
+## Accuracy
+
+Every change is checked in CI against [LineJudge](https://github.com/loc-conformance/linejudge), a corpus of tricky files (comment markers inside strings, raw strings, heredocs, languages embedded in other languages and more) judged by the rules codestats declares in [`.linejudge`](.linejudge). The cases codestats still gets wrong are recorded, with notes, in [`.linejudge/recorded/codestats.toml`](.linejudge/recorded/codestats.toml); CI fails if any other case changes its answer. To run it locally, install LineJudge and run `linejudge check --counter codestats` after `cargo build --release`.
+
 ## Benchmarks
 
 Measured with [hyperfine](https://github.com/sharkdp/hyperfine) on the repositories below at the commits pinned in [`scripts/bench.sh`](scripts/bench.sh), which reproduces these tables: `hyperfine -N --warmup 2 --runs 10` per tool (5 runs for rust and linux), with a warm file cache and every tool on its default settings.

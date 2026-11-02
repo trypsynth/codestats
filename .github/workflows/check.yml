@@ -39,3 +39,31 @@ jobs:
         run: cargo clippy
       - name: Run tests
         run: cargo test
+  linejudge:
+    name: LineJudge
+    runs-on: ubuntu-latest
+    env:
+      LINEJUDGE_VERSION: v0.3.0
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-linejudge-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-linejudge-
+      - name: Build
+        run: cargo build --release --locked
+      - name: Install LineJudge
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "$LINEJUDGE_VERSION" -R loc-conformance/linejudge -p "linejudge-$LINEJUDGE_VERSION-linux-x86_64.tar.gz" -O - | tar xz
+          echo "$PWD/linejudge-$LINEJUDGE_VERSION-linux-x86_64" >> "$GITHUB_PATH"
+      - name: Check against the recorded answers
+        run: linejudge check --counter codestats

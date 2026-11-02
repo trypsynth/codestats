@@ -1,0 +1,336 @@
+counter = "codestats"
+version = "codestats 0.9.1"
+measured-with = "linejudge 0.3.0"
+
+[answer.1010-code_then_comment_on_one_line.default]
+counted = { lines = 2, code = 2, comments = 0, blanks = 0 }
+
+[answer.1020-comment_then_code_then_comment.default]
+counted = { lines = 2, code = 2, comments = 0, blanks = 0 }
+
+[answer.1030-brace_and_trailing_comment.default]
+counted = { lines = 3, code = 3, comments = 0, blanks = 0 }
+
+[answer.1040-pairs_in_either_order.default]
+counted = { lines = 8, code = 8, comments = 0, blanks = 0 }
+
+[answer.1060-line_comment_holding_block_open.default]
+counted = { lines = 3, code = 1, comments = 2, blanks = 0 }
+
+[answer.1070-block_comment_closed_then_line_comment.default]
+counted = { lines = 2, code = 1, comments = 1, blanks = 0 }
+
+[answer.1080-block_close_touching_a_line_comment.default]
+counted = { lines = 2, code = 1, comments = 1, blanks = 0 }
+
+[answer.1090-block_comment_closed_after_a_line_comment.default]
+counted = { lines = 7, code = 4, comments = 3, blanks = 0 }
+
+[answer.1100-close_touching_reopen_plain.default]
+counted = { lines = 4, code = 1, comments = 3, blanks = 0 }
+
+[answer.1110-close_and_reopen_with_a_space.default]
+counted = { lines = 4, code = 1, comments = 3, blanks = 0 }
+
+[answer.1120-close_then_code_then_stray_and_reopen.default]
+counted = { lines = 4, code = 2, comments = 2, blanks = 0 }
+
+[answer.1130-closer_in_code_with_nothing_open.default]
+counted = { lines = 2, code = 1, comments = 1, blanks = 0 }
+
+[answer.1150-doc_comment_opening_after_code.default]
+counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
+
+[answer.1160-two_comment_pairs_of_one_language.default]
+unclaimed = true
+
+[answer.1170-pascal_writes_two_pairs.default]
+counted = { lines = 3, code = 1, comments = 2, blanks = 0 }
+
+[answer.1180-cmake_bracket_comment.default]
+counted = { lines = 4, code = 1, comments = 3, blanks = 0 }
+
+[answer.1190-nested_block_comment_that_does_not.default]
+counted = { lines = 2, code = 1, comments = 1, blanks = 0 }
+
+[answer.1195-closer_sharing_a_byte_with_an_opener_in_the_text.default]
+counted = { lines = 5, code = 2, comments = 2, blanks = 1 }
+
+[answer.1200-nested_block_comment_that_nests.default]
+counted = { lines = 2, code = 1, comments = 1, blanks = 0 }
+
+[answer.1210-close_touching_reopen_nesting.default]
+counted = { lines = 4, code = 1, comments = 3, blanks = 0 }
+
+[answer.1215-nesting_openers_sharing_bytes_with_closers.default]
+counted = { lines = 5, code = 1, comments = 4, blanks = 0 }
+
+[answer.1220-nested_block_comment_in_odin.default]
+counted = { lines = 6, code = 2, comments = 4, blanks = 0 }
+
+[answer.1230-a_comment_word_at_the_head_of_a_longer_word.default]
+counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
+
+[answer.1240-a_comment_opener_inside_a_vector_type.default]
+is-known-failure = true
+counted = { lines = 10, code = 1, comments = 9, blanks = 0 }
+note = """
+C3's <* opens a documentation comment, so the vector type int[<*>] opens one too. Telling them apart needs the type syntax, which a line counter doesn't parse."""
+
+[answer.1260-pod_closer_indented_inside_the_documentation.default]
+counted = { lines = 15, code = 3, comments = 5, blanks = 7 }
+
+[answer.1280-matlab_block_markers_sharing_their_line.default]
+counted = { lines = 7, code = 2, comments = 5, blanks = 0 }
+
+[answer.2010-comment_symbol_inside_string.default]
+counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
+
+[answer.2020-string_symbol_inside_comment.default]
+counted = { lines = 3, code = 1, comments = 2, blanks = 0 }
+
+[answer.2025-raw_opener_inside_a_comment.default]
+counted = { lines = 6, code = 3, comments = 3, blanks = 0 }
+
+[answer.2026-raw_opener_inside_a_comment_with_a_real_closer_after_it.default]
+counted = { lines = 4, code = 2, comments = 2, blanks = 0 }
+
+[answer.2030-string_symbol_of_another_kind_inside.default]
+counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
+
+[answer.2040-comment_pair_opening_inside_a_string.default]
+counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
+
+[answer.2050-string_opening_after_block_close.default]
+counted = { lines = 3, code = 1, comments = 2, blanks = 0 }
+
+[answer.2060-backtick_template_holding_a_comment.default]
+counted = { lines = 4, code = 4, comments = 0, blanks = 0 }
+
+[answer.2072-verbatim_string_holding_a_doubled_quote.default]
+counted = { lines = 6, code = 5, comments = 1, blanks = 0 }
+
+[answer.2077-interpolation_hole_holding_the_strings_own_quote.default]
+is-known-failure = true
+counted = { lines = 6, code = 3, comments = 3, blanks = 0 }
+note = """
+A quote inside a C# interpolation hole is read as the end of the string. Getting it right means parsing the code inside the holes."""
+
+[answer.2080-odd_triple_quote_count.default]
+counted = { lines = 6, code = 5, comments = 1, blanks = 0 }
+
+[answer.2085-raw_string_ending_in_a_quote.default]
+counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
+
+[answer.2090-docstring_holding_a_comment_symbol.default]
+counted = { lines = 5, code = 2, comments = 3, blanks = 0 }
+
+[answer.2100-triple_quoted_data_not_documentation.default]
+counted = { lines = 6, code = 3, comments = 3, blanks = 0 }
+
+[answer.2110-here_string_holding_an_apostrophe.default]
+counted = { lines = 7, code = 5, comments = 2, blanks = 0 }
+
+[answer.2120-heredoc_holding_an_apostrophe.default]
+counted = { lines = 6, code = 4, comments = 2, blanks = 0 }
+
+[answer.2125-operator_spelled_like_a_heredoc_opener.default]
+counted = { lines = 16, code = 13, comments = 2, blanks = 1 }
+
+[answer.2127-heredoc_closing_word_indented_only_after_a_tilde_or_dash.default]
+counted = { lines = 16, code = 14, comments = 1, blanks = 1 }
+
+[answer.2130-raw_string_holding_quotes.default]
+counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
+
+[answer.2135-raw_string_holding_a_shorter_closer.default]
+counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
+
+[answer.2140-raw_string_holding_its_own_closing_bracket.default]
+counted = { lines = 6, code = 5, comments = 1, blanks = 0 }
+
+[answer.2150-delimited_raw_string_names_its_own_closer.default]
+is-known-failure = true
+counted = { lines = 5, code = 1, comments = 4, blanks = 0 }
+note = """
+C++ raw strings end at the first )" whatever word follows the R", so R"xy( ... )xy" closes early."""
+
+[answer.2170-lua_level_bracket_holding_plain_close.default]
+counted = { lines = 4, code = 1, comments = 3, blanks = 0 }
+
+[answer.2180-lua_short_closer_hiding_the_real_one.default]
+counted = { lines = 3, code = 1, comments = 2, blanks = 0 }
+
+[answer.2190-triple_quote_read_as_three_short_ones.default]
+counted = { lines = 5, code = 5, comments = 0, blanks = 0 }
+
+[answer.3010-escaped_quote_before_comment.default]
+counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
+
+[answer.3020-multiline_string_ending_in_backslash.default]
+counted = { lines = 5, code = 2, comments = 3, blanks = 0 }
+
+[answer.3030-raw_string_ending_in_backslash.default]
+counted = { lines = 2, code = 1, comments = 1, blanks = 0 }
+
+[answer.3050-verbatim_string_ending_in_a_backslash.default]
+counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
+
+[answer.3070-backslash_before_a_closing_quote_in_sql.default]
+counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
+
+[answer.3080-backtick_escapes_inside_a_double_quoted_string.default]
+counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
+
+[answer.3090-backtick_before_a_single_quoted_string.default]
+counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
+
+[answer.4010-char_literal_holding_a_quote.default]
+counted = { lines = 3, code = 1, comments = 2, blanks = 0 }
+
+[answer.4020-two_char_literals_holding_escapes.default]
+counted = { lines = 7, code = 3, comments = 4, blanks = 0 }
+
+[answer.4030-character_written_with_a_backslash.default]
+counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
+
+[answer.4040-escaped_apostrophe_outside_quotes.default]
+counted = { lines = 4, code = 2, comments = 2, blanks = 0 }
+
+[answer.4050-lifetime_and_apostrophe_in_string.default]
+counted = { lines = 3, code = 1, comments = 2, blanks = 0 }
+
+[answer.4055-apostrophe_inside_a_comment.default]
+counted = { lines = 8, code = 3, comments = 5, blanks = 0 }
+
+[answer.4060-primed_identifier_haskell.default]
+counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
+
+[answer.4070-primed_identifier_ocaml.default]
+counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
+
+[answer.4080-primed_identifier_and_apostrophe.default]
+counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
+
+[answer.4090-transpose_operator_and_char.default]
+counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
+
+[answer.5010-line_splice_inside_a_string.default]
+counted = { lines = 4, code = 4, comments = 0, blanks = 0 }
+
+[answer.5020-blank_line_inside_a_spliced_string.default]
+counted = { lines = 4, code = 2, comments = 1, blanks = 1 }
+
+[answer.5030-line_splice_inside_a_comment.default]
+counted = { lines = 3, code = 1, comments = 2, blanks = 0 }
+
+[answer.5040-line_splice_in_a_comment_with_no_words.default]
+counted = { lines = 4, code = 2, comments = 2, blanks = 0 }
+
+[answer.5050-line_splice_after_a_closed_block_comment.default]
+counted = { lines = 4, code = 2, comments = 2, blanks = 0 }
+
+[answer.5060-code_then_a_spliced_line_comment.default]
+counted = { lines = 4, code = 2, comments = 2, blanks = 0 }
+
+[answer.5070-blank_line_inside_a_spliced_comment.default]
+counted = { lines = 3, code = 1, comments = 1, blanks = 1 }
+
+[answer.6010-html_has_no_strings.default]
+counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
+
+[answer.6020-comment_opener_inside_an_attribute.default]
+is-known-failure = true
+counted = { lines = 4, code = 1, comments = 3, blanks = 0 }
+note = """
+A <!-- inside a quoted HTML attribute opens a comment; attribute quotes aren't tracked."""
+
+[answer.6030-opening_tag_split_over_two_lines.default]
+counted = { lines = 5, code = 4, comments = 1, blanks = 0 }
+counted-regions = [
+    { language = "JavaScript", lines = 2, code = 1, comments = 1, blanks = 0 },
+]
+
+[answer.6040-script_tag_in_upper_case.default]
+counted = { lines = 6, code = 5, comments = 1, blanks = 0 }
+counted-regions = [
+    { language = "JavaScript", lines = 2, code = 1, comments = 1, blanks = 0 },
+]
+
+[answer.6050-script_closer_written_with_a_space.default]
+counted = { lines = 4, code = 4, comments = 0, blanks = 0 }
+counted-regions = [
+    { language = "JavaScript", lines = 1, code = 1, comments = 0, blanks = 0 },
+]
+
+[answer.6060-script_closer_inside_a_string.default]
+counted = { lines = 5, code = 5, comments = 0, blanks = 0 }
+
+[answer.6070-script_opener_that_never_closes.default]
+is-known-failure = true
+counted = { lines = 2, code = 2, comments = 0, blanks = 0 }
+counted-regions = [
+    { language = "JavaScript", lines = 1, code = 1, comments = 0, blanks = 0 },
+]
+note = """
+A <script> tag written as text that never closes still starts a JavaScript region."""
+
+[answer.6080-block_named_by_a_mime_type.default]
+counted = { lines = 4, code = 3, comments = 1, blanks = 0 }
+counted-regions = [
+    { language = "TypeScript", lines = 2, code = 1, comments = 1, blanks = 0 },
+]
+
+[answer.6090-vue_blocks_count_as_their_own_languages.default]
+counted = { lines = 13, code = 9, comments = 3, blanks = 1 }
+counted-regions = [
+    { language = "CSS", lines = 2, code = 1, comments = 1, blanks = 0 },
+    { language = "JavaScript", lines = 3, code = 1, comments = 1, blanks = 1 },
+]
+
+[answer.6100-block_language_named_by_the_tag.default]
+counted = { lines = 11, code = 9, comments = 2, blanks = 0 }
+counted-regions = [
+    { language = "SCSS", lines = 2, code = 1, comments = 1, blanks = 0 },
+    { language = "TypeScript", lines = 2, code = 1, comments = 1, blanks = 0 },
+]
+
+[answer.6105-block_language_named_on_a_middle_line_of_the_tag.default]
+counted = { lines = 7, code = 6, comments = 1, blanks = 0 }
+counted-regions = [
+    { language = "SCSS", lines = 2, code = 1, comments = 1, blanks = 0 },
+]
+
+[answer.6110-php_block_holding_html_around_it.default]
+counted = { lines = 7, code = 6, comments = 1, blanks = 0 }
+counted-regions = [
+    { language = "HTML", lines = 2, code = 1, comments = 1, blanks = 0 },
+]
+
+[answer.6120-script_inside_html_inside_php.default]
+counted = { lines = 11, code = 10, comments = 1, blanks = 0 }
+counted-regions = [
+    { language = "HTML", lines = 4, code = 4, comments = 0, blanks = 0 },
+    { language = "JavaScript", lines = 2, code = 1, comments = 1, blanks = 0 },
+]
+
+[answer.7010-regex_literal_holding_a_quote.default]
+counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
+
+[answer.7020-regex_holding_a_comment_opener.default]
+counted = { lines = 4, code = 3, comments = 1, blanks = 0 }
+
+[answer.8010-punctuation_only_line.default]
+counted = { lines = 3, code = 3, comments = 0, blanks = 0 }
+
+[answer.8020-blank_line_inside_block_comment.default]
+counted = { lines = 4, code = 1, comments = 2, blanks = 1 }
+
+[answer.8030-blank_line_inside_a_multiline_string.default]
+counted = { lines = 6, code = 5, comments = 0, blanks = 1 }
+
+[answer.8040-doc_comment_with_no_text.default]
+counted = { lines = 4, code = 1, comments = 3, blanks = 0 }
+
+[answer.8050-doc_comment_with_no_text_ending_a_block.default]
+counted = { lines = 3, code = 1, comments = 2, blanks = 0 }

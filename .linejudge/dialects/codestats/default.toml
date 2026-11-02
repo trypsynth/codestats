@@ -1,0 +1,33 @@
+counter = "codestats"
+dialect = "default"
+buckets = ["code", "comments", "blanks"]
+
+[counts-as-its-own-language]
+rust-doc-comment = false
+vue-template = false
+
+# A line of nothing but whitespace is blank wherever it sits, even inside a comment or string.
+[[rule]]
+name   = "blank-anywhere-is-blank"
+when   = ["blank"]
+bucket = "blanks"
+
+[[rule]]
+name   = "anything-outside-spans-is-code"
+when   = ["has-residue"]
+bucket = "code"
+
+[[rule]]
+name   = "a-plain-string-is-code"
+when   = ["in-string", "!in-doc-string", "!blank"]
+bucket = "code"
+
+[[rule]]
+name   = "a-doc-string-is-documentation"
+when   = ["in-doc-string", "!has-residue", "!blank"]
+bucket = "comments"
+
+[[rule]]
+name   = "a-comment-alone-is-comments"
+when   = ["in-comment", "!has-residue", "!in-string", "!blank"]
+bucket = "comments"

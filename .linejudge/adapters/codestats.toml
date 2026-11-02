@@ -1,0 +1,23 @@
+name   = "codestats"
+repository = "https://github.com/trypsynth/codestats"
+args   = ["{file}", "--output", "json-compact", "--include-generated", "--no-gitignore", "--hidden"]
+
+[variation.default]
+dialect = "default"
+major   = true
+args    = []
+
+[variation.default.read]
+claims   = "languages[]"
+lines    = "totals.lines.total"
+code     = "totals.lines.code"
+comments = "totals.lines.comment"
+blanks   = "totals.lines.blank"
+
+[variation.default.read.regions]
+each     = "languages[].embedded[]"
+language = "name"
+lines    = "lines.total"
+code     = "lines.code"
+comments = "lines.comment"
+blanks   = "lines.blank"
