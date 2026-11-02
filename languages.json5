@@ -612,7 +612,7 @@
 		nested_blocks: ["/+"],
 		shebangs: ["#!/usr/bin/env rdmd", "#!/usr/bin/rdmd"],
 		// `.d` is also the dependency files compilers write for Make, which are lists of paths, so these keywords carry punctuation that paths don't. Doc comments count, since some modules open with pages of them.
-		keywords: ["module ", "import ", "void ", "return ", "auto ", "struct ", "class ", "enum ", "alias ", "immutable ", "writeln(", ");", "@safe", "@nogc", "/**", "/++", "///"],
+		keywords: ["module ", "import ", "void ", "return ", "auto ", "struct ", "class ", "enum ", "alias ", "immutable ", "writeln(", ";", "@safe", "@nogc", "/**", "/++", "///"],
 		require_keywords: true,
 	},
 	"D2": {

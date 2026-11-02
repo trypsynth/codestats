@@ -42,7 +42,7 @@ counted = { lines = 2, code = 1, comments = 1, blanks = 0 }
 counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
 
 [answer.1160-two_comment_pairs_of_one_language.default]
-unclaimed = true
+counted = { lines = 3, code = 1, comments = 2, blanks = 0 }
 
 [answer.1170-pascal_writes_two_pairs.default]
 counted = { lines = 3, code = 1, comments = 2, blanks = 0 }

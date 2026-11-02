@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- A D file whose only sign of being D is a `;` (rather than one of its keywords) is counted as D; Make's dependency files, which share the `.d` extension, still aren't
 - C++ raw strings with a delimiter of their own, like `R"sql(...)sql"`, end only at that delimiter, so a `)"` or comment marker inside one is text
 - The HTML in PHP files, outside their `<?php ... ?>` tags, is counted by HTML's rules and listed as embedded HTML, with its scripts and styles as theirs, so `<!-- -->` comments in a template are comments. PHP's strings may also span lines now, as they can in PHP
 - Perl's POD documentation only starts and ends at a marker at the very start of a line, so `=head1` in a string or an indented `=cut` in the documentation is text, and MATLAB and Octave block comments (`%{`, `%}`) only count alone on their line
