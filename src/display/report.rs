@@ -1,6 +1,6 @@
 use std::{
 	collections::HashMap,
-	path::{Component, Path},
+	path::{Component, Path, PathBuf},
 };
 
 use crate::{
@@ -29,7 +29,10 @@ macro_rules! impl_formatters {
 
 #[derive(Debug)]
 pub struct ReportData<'a> {
+	/// The paths counted, joined for a title.
 	pub analysis_path: String,
+	/// The paths counted, one by one.
+	pub analysis_paths: Vec<String>,
 	pub summary: Summary,
 	pub languages: Vec<LanguageRecord<'a>>,
 	pub directories: Vec<DirRecord<'a>>,
@@ -41,7 +44,7 @@ impl<'a> ReportData<'a> {
 	#[must_use]
 	pub fn from_results(
 		results: &'a AnalysisResults,
-		path: &Path,
+		paths: &[PathBuf],
 		verbosity: Verbosity,
 		ctx: &FormatterContext,
 	) -> Self {
@@ -52,14 +55,20 @@ impl<'a> ReportData<'a> {
 			(Vec::default(), 0)
 		};
 		let (directories, dirs_hidden) = if ctx.options.by_dir && verbosity > Verbosity::Summary {
-			DirRecord::from_results(results, path, ctx)
+			// Several roots are each kept as their files' first directory, as the files' paths start with them.
+			let root = match paths {
+				[root] => root.as_path(),
+				_ => Path::new(""),
+			};
+			DirRecord::from_results(results, root, ctx)
 		} else {
 			(Vec::new(), 0)
 		};
 		let languages_hidden = (languages_hidden > 0).then_some(languages_hidden);
 		let dirs_hidden = (dirs_hidden > 0).then_some(dirs_hidden);
 		Self {
-			analysis_path: path.display().to_string(),
+			analysis_path: paths.iter().map(|path| path.display().to_string()).collect::<Vec<_>>().join(", "),
+			analysis_paths: paths.iter().map(|path| path.display().to_string()).collect(),
 			summary,
 			languages,
 			directories,
@@ -531,7 +540,7 @@ mod tests {
 		results.add_file(lang, LineCounts { total: 10, code: 10, ..LineCounts::default() }.into(), 100, None);
 
 		let ctx = FormatterContext::new(ViewOptions::default());
-		let report = ReportData::from_results(&results, Path::new("."), Verbosity::Summary, &ctx);
+		let report = ReportData::from_results(&results, &[PathBuf::from(".")], Verbosity::Summary, &ctx);
 
 		assert_eq!(report.summary.total_files, 1);
 		assert!(report.languages.is_empty());
@@ -553,7 +562,7 @@ mod tests {
 			..ViewOptions::default()
 		};
 		let ctx = FormatterContext::new(options);
-		let report = ReportData::from_results(&results, Path::new("."), Verbosity::Regular, &ctx);
+		let report = ReportData::from_results(&results, &[PathBuf::from(".")], Verbosity::Regular, &ctx);
 		let names: Vec<_> = report.languages.iter().map(|l| l.name).collect();
 		assert_eq!(names, ["Go", "Python", "Rust"]);
 		assert_eq!(report.languages_hidden, Some(3));
@@ -566,7 +575,7 @@ mod tests {
 		results.add_file(lang, LineCounts { total: 10, code: 10, ..LineCounts::default() }.into(), 100, None);
 
 		let ctx = FormatterContext::new(ViewOptions::default());
-		let report = ReportData::from_results(&results, Path::new("."), Verbosity::Regular, &ctx);
+		let report = ReportData::from_results(&results, &[PathBuf::from(".")], Verbosity::Regular, &ctx);
 
 		assert_eq!(report.summary.total_files, 1);
 		assert_eq!(report.languages.len(), 1);

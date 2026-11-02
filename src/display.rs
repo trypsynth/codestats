@@ -31,7 +31,7 @@ mod report;
 mod separated_values;
 pub mod template_filters;
 
-use std::{io::Write, path::Path};
+use std::{io::Write, path::PathBuf};
 
 use anyhow::Result;
 use clap::ValueEnum;
@@ -70,7 +70,7 @@ pub trait OutputFormatter {
 	fn write_output(
 		&self,
 		results: &AnalysisResults,
-		path: &Path,
+		paths: &[PathBuf],
 		view_options: ViewOptions,
 		writer: &mut dyn Write,
 	) -> Result<()>;
@@ -78,11 +78,11 @@ pub trait OutputFormatter {
 	fn prepare_report<'a>(
 		&self,
 		results: &'a AnalysisResults,
-		path: &Path,
+		paths: &[PathBuf],
 		view_options: ViewOptions,
 	) -> (FormatterContext, ReportData<'a>) {
 		let ctx = FormatterContext::new(view_options);
-		let report = ReportData::from_results(results, path, view_options.verbosity, &ctx);
+		let report = ReportData::from_results(results, paths, view_options.verbosity, &ctx);
 		(ctx, report)
 	}
 }
@@ -95,24 +95,24 @@ pub trait OutputFormatter {
 pub fn write_output(
 	format: OutputFormat,
 	results: &AnalysisResults,
-	path: &Path,
+	paths: &[PathBuf],
 	view_options: ViewOptions,
 	writer: &mut dyn Write,
 ) -> Result<()> {
 	match format {
-		OutputFormat::Human => HumanFormatter.write_output(results, path, view_options, writer),
-		OutputFormat::Json => JsonFormatter.write_output(results, path, view_options, writer),
-		OutputFormat::JsonCompact => JsonCompactFormatter.write_output(results, path, view_options, writer),
-		OutputFormat::Csv => CsvFormatter::default().write_output(results, path, view_options, writer),
-		OutputFormat::Tsv => TsvFormatter::default().write_output(results, path, view_options, writer),
-		OutputFormat::Markdown => MarkdownFormatter.write_output(results, path, view_options, writer),
-		OutputFormat::Html => HtmlFormatter.write_output(results, path, view_options, writer),
+		OutputFormat::Human => HumanFormatter.write_output(results, paths, view_options, writer),
+		OutputFormat::Json => JsonFormatter.write_output(results, paths, view_options, writer),
+		OutputFormat::JsonCompact => JsonCompactFormatter.write_output(results, paths, view_options, writer),
+		OutputFormat::Csv => CsvFormatter::default().write_output(results, paths, view_options, writer),
+		OutputFormat::Tsv => TsvFormatter::default().write_output(results, paths, view_options, writer),
+		OutputFormat::Markdown => MarkdownFormatter.write_output(results, paths, view_options, writer),
+		OutputFormat::Html => HtmlFormatter.write_output(results, paths, view_options, writer),
 	}
 }
 
 #[cfg(test)]
 mod tests {
-	use std::path::Path;
+	use std::path::PathBuf;
 
 	use super::{OutputFormat, Verbosity, ViewOptions, write_output};
 	use crate::analysis::{AnalysisResults, LineCounts};
@@ -129,7 +129,7 @@ mod tests {
 			results.add_file(rust, counts.into(), 100, Some(path.to_owned()));
 		}
 		let mut buf = Vec::new();
-		write_output(format, &results, Path::new("."), options, &mut buf).unwrap();
+		write_output(format, &results, &[PathBuf::from(".")], options, &mut buf).unwrap();
 		String::from_utf8(buf).unwrap()
 	}
 

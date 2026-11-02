@@ -13,7 +13,7 @@ mod swar;
 
 use std::{
 	io::{self, Write as _},
-	path::{Path, PathBuf},
+	path::PathBuf,
 };
 
 use analysis::{AnalysisResults, CodeAnalyzer, Snapshot, count_snapshot};
@@ -76,10 +76,9 @@ fn run() -> Result<()> {
 		let analyzer = if roots.len() > 1 { analyzer.showing_root() } else { analyzer };
 		results.merge(analyzer.analyze()?);
 	}
-	let label = roots.iter().map(|root| root.display().to_string()).collect::<Vec<_>>().join(", ");
 	let view_options: ViewOptions = (&config).into();
 	let mut stdout = io::stdout();
-	display::write_output(config.display.output, &results, Path::new(&label), view_options, &mut stdout)?;
+	display::write_output(config.display.output, &results, &roots, view_options, &mut stdout)?;
 	stdout.flush()?;
 	if config.analysis.fail_on_error && results.skipped_entries() > 0 {
 		return Err(anyhow!("Skipped {} entries due to errors", results.skipped_entries()));

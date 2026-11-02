@@ -1,4 +1,4 @@
-use std::{io::Write, path::Path};
+use std::{io::Write, path::PathBuf};
 
 use anyhow::Result;
 use askama::Template;
@@ -35,11 +35,11 @@ impl OutputFormatter for HtmlFormatter {
 	fn write_output(
 		&self,
 		results: &AnalysisResults,
-		path: &Path,
+		paths: &[PathBuf],
 		view_options: ViewOptions,
 		writer: &mut dyn Write,
 	) -> Result<()> {
-		let (ctx, report) = self.prepare_report(results, path, view_options);
+		let (ctx, report) = self.prepare_report(results, paths, view_options);
 		Self::write_document(&report, view_options.verbosity, &ctx, writer)
 	}
 }

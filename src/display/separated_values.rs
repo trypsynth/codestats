@@ -1,4 +1,4 @@
-use std::{borrow::Cow, io::Write, path::Path};
+use std::{borrow::Cow, io::Write, path::PathBuf};
 
 use anyhow::Result;
 
@@ -63,11 +63,11 @@ impl<const DELIMITER: u8, E: FieldEscaper> OutputFormatter for SeparatedValuesFo
 	fn write_output(
 		&self,
 		results: &AnalysisResults,
-		path: &Path,
+		paths: &[PathBuf],
 		view_options: ViewOptions,
 		writer: &mut dyn Write,
 	) -> Result<()> {
-		let (ctx, report) = self.prepare_report(results, path, view_options);
+		let (ctx, report) = self.prepare_report(results, paths, view_options);
 		match (view_options.verbosity, view_options.by_dir) {
 			(Verbosity::Summary, _) => Self::write_summary_section(&report, &ctx, writer),
 			(Verbosity::Regular, false) => Self::write_language_table(&report.languages, &ctx, writer),

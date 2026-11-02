@@ -152,7 +152,7 @@ cs completions <shell>
 
 ### JSON
 
-Every level of a JSON report counts lines the same way. `files` appears with `--verbose`, and `directories` with `--by-dir`; `schema_version` changes whenever a field is renamed, removed or changes meaning.
+Every level of a JSON report counts lines the same way. `paths` lists the paths counted, and `path` joins them with commas. `files` appears with `--verbose`, and `directories` with `--by-dir`; `schema_version` changes whenever a field is renamed, removed or changes meaning.
 
 A language or file with code embedded in it, like the Rust in a Markdown file, has an `embedded` list of those languages and their lines, which are also counted in its own `lines`:
 
@@ -164,6 +164,7 @@ A language or file with code embedded in it, like the Rust in a Markdown file, h
 {
 	"schema_version": 1,
 	"path": "src",
+	"paths": ["src"],
 	"totals": {
 		"file_count": 30,
 		"lines": { "total": 5956, "code": 5083, "comment": 331, "blank": 542, "shebang": 0 },

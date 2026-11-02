@@ -1,4 +1,4 @@
-use std::{io::Write, path::Path};
+use std::{io::Write, path::PathBuf};
 
 use anyhow::Result;
 use serde::Serialize;
@@ -19,7 +19,10 @@ const SCHEMA_VERSION: u32 = 1;
 #[derive(Serialize)]
 struct Report<'a> {
 	schema_version: u32,
+	/// The paths counted, joined with commas.
 	path: &'a str,
+	/// The paths counted, one by one.
+	paths: &'a [String],
 	totals: Totals,
 	languages: Vec<Group<'a>>,
 	hidden_languages: usize,
@@ -88,6 +91,7 @@ impl<'a> Report<'a> {
 		Self {
 			schema_version: SCHEMA_VERSION,
 			path: &report.analysis_path,
+			paths: &report.analysis_paths,
 			totals: Totals { file_count: summary.total_files, lines: summary.counts, bytes: summary.total_size },
 			languages: report
 				.languages
@@ -124,12 +128,12 @@ impl<'a> Report<'a> {
 fn write_json(
 	formatter: &impl OutputFormatter,
 	results: &AnalysisResults,
-	path: &Path,
+	paths: &[PathBuf],
 	view_options: ViewOptions,
 	writer: &mut dyn Write,
 	pretty: bool,
 ) -> Result<()> {
-	let (_ctx, report) = formatter.prepare_report(results, path, view_options);
+	let (_ctx, report) = formatter.prepare_report(results, paths, view_options);
 	write_value(&Report::new(&report, view_options.by_dir), view_options, writer, pretty)
 }
 
@@ -161,11 +165,11 @@ impl OutputFormatter for JsonFormatter {
 	fn write_output(
 		&self,
 		results: &AnalysisResults,
-		path: &Path,
+		paths: &[PathBuf],
 		view_options: ViewOptions,
 		writer: &mut dyn Write,
 	) -> Result<()> {
-		write_json(self, results, path, view_options, writer, true)
+		write_json(self, results, paths, view_options, writer, true)
 	}
 }
 
@@ -175,17 +179,17 @@ impl OutputFormatter for JsonCompactFormatter {
 	fn write_output(
 		&self,
 		results: &AnalysisResults,
-		path: &Path,
+		paths: &[PathBuf],
 		view_options: ViewOptions,
 		writer: &mut dyn Write,
 	) -> Result<()> {
-		write_json(self, results, path, view_options, writer, false)
+		write_json(self, results, paths, view_options, writer, false)
 	}
 }
 
 #[cfg(test)]
 mod tests {
-	use std::path::Path;
+	use std::path::PathBuf;
 
 	use super::*;
 	use crate::{
@@ -200,7 +204,7 @@ mod tests {
 		results.add_file(rust, counts.into(), 100, Some("src/main.rs".to_owned()));
 		let options = ViewOptions { verbosity, by_dir, ..ViewOptions::default() };
 		let mut buf = Vec::new();
-		JsonCompactFormatter.write_output(&results, Path::new("."), options, &mut buf).unwrap();
+		JsonCompactFormatter.write_output(&results, &[PathBuf::from(".")], options, &mut buf).unwrap();
 		serde_json::from_slice(&buf).unwrap()
 	}
 
@@ -213,7 +217,7 @@ mod tests {
 	fn schema_has_one_shape_for_counts_at_every_level() {
 		use crate::display::Verbosity;
 		let report = render(false, Verbosity::Verbose);
-		assert_eq!(keys(&report), ["hidden_languages", "languages", "path", "schema_version", "totals"]);
+		assert_eq!(keys(&report), ["hidden_languages", "languages", "path", "paths", "schema_version", "totals"]);
 		assert_eq!(report["schema_version"], SCHEMA_VERSION);
 		let lines = serde_json::json!({ "total": 10, "code": 7, "comment": 2, "blank": 1, "shebang": 0 });
 		assert_eq!(report["totals"], serde_json::json!({ "file_count": 1, "lines": lines, "bytes": 100 }));
@@ -249,7 +253,7 @@ mod tests {
 		let options = ViewOptions { indent_style: IndentStyle::Spaces(4), ..Default::default() };
 		let formatter = JsonFormatter;
 		let mut buf = Vec::new();
-		formatter.write_output(&results, Path::new("."), options, &mut buf).unwrap();
+		formatter.write_output(&results, &[PathBuf::from(".")], options, &mut buf).unwrap();
 		let output = String::from_utf8(buf).unwrap();
 		assert!(output.contains("    \""), "expected 4-space indent in JSON, got:\n{output}");
 	}
@@ -260,7 +264,7 @@ mod tests {
 		let options = ViewOptions::default(); // default is Tab
 		let formatter = JsonFormatter;
 		let mut buf = Vec::new();
-		formatter.write_output(&results, Path::new("."), options, &mut buf).unwrap();
+		formatter.write_output(&results, &[PathBuf::from(".")], options, &mut buf).unwrap();
 		let output = String::from_utf8(buf).unwrap();
 		assert!(output.contains("\t\""), "expected tab indent in JSON, got:\n{output}");
 	}
@@ -271,7 +275,7 @@ mod tests {
 		let options = ViewOptions { indent_style: IndentStyle::Spaces(4), ..Default::default() };
 		let formatter = JsonCompactFormatter;
 		let mut buf = Vec::new();
-		formatter.write_output(&results, Path::new("."), options, &mut buf).unwrap();
+		formatter.write_output(&results, &[PathBuf::from(".")], options, &mut buf).unwrap();
 		let output = String::from_utf8(buf).unwrap();
 		assert!(
 			!output.contains('\n') || output.ends_with('\n') && output.matches('\n').count() == 1,

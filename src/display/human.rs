@@ -1,4 +1,4 @@
-use std::{borrow::Cow, io::Write, path::Path};
+use std::{borrow::Cow, io::Write, path::PathBuf};
 
 use anyhow::Result;
 
@@ -32,11 +32,11 @@ impl OutputFormatter for HumanFormatter {
 	fn write_output(
 		&self,
 		results: &AnalysisResults,
-		path: &Path,
+		paths: &[PathBuf],
 		view_options: ViewOptions,
 		writer: &mut dyn Write,
 	) -> Result<()> {
-		let (ctx, report) = self.prepare_report(results, path, view_options);
+		let (ctx, report) = self.prepare_report(results, paths, view_options);
 		Self::write_overview(&report, &ctx, writer)?;
 		if view_options.verbosity == Verbosity::Summary {
 			Self::write_language_summary(results, &report.summary, &ctx, writer)?;
@@ -279,7 +279,7 @@ impl HumanFormatter {
 
 #[cfg(test)]
 mod tests {
-	use std::path::Path;
+	use std::path::PathBuf;
 
 	use super::{HumanFormatter, join_with_commas_and};
 	use crate::{
@@ -307,7 +307,7 @@ mod tests {
 		let options = ViewOptions { indent_style: IndentStyle::Spaces(2), ..Default::default() };
 		let formatter = HumanFormatter;
 		let mut buf = Vec::new();
-		formatter.write_output(&results, Path::new("."), options, &mut buf).unwrap();
+		formatter.write_output(&results, &[PathBuf::from(".")], options, &mut buf).unwrap();
 		let output = String::from_utf8(buf).unwrap();
 		assert!(output.contains("  Files:"), "expected 2-space indent for Files, got:\n{output}");
 		assert!(!output.contains("\tFiles:"), "should not contain tab-indented Files");
