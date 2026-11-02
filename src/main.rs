@@ -11,13 +11,16 @@ mod init;
 mod langs;
 mod swar;
 
-use std::io::{self, Write as _};
+use std::{
+	io::{self, Write as _},
+	path::{Path, PathBuf},
+};
 
-use analysis::{CodeAnalyzer, Snapshot, count_snapshot};
+use analysis::{AnalysisResults, CodeAnalyzer, Snapshot, count_snapshot};
 use anyhow::{Context as _, Result, anyhow, ensure};
 use clap::ArgMatches;
 use cli::{Cli, Commands, DiffArgs, SourceArgs};
-use config::{AnalyzerConfig, Config};
+use config::Config;
 use display::{Versions, ViewOptions};
 use terminal_size::terminal_size;
 
@@ -66,12 +69,17 @@ fn run() -> Result<()> {
 	}
 	let config = cli::merge_config(base_config(&cli.analyze.source)?, &cli.analyze, &matches)?;
 	ensure_path(&config)?;
-	let analyzer_config: AnalyzerConfig = (&config).into();
-	let analyzer = CodeAnalyzer::new(&config.path, analyzer_config);
-	let results = analyzer.analyze()?;
+	let roots = roots(&config);
+	let mut results = AnalysisResults::default();
+	for root in &roots {
+		let analyzer = CodeAnalyzer::new(root, (&config).into());
+		let analyzer = if roots.len() > 1 { analyzer.showing_root() } else { analyzer };
+		results.merge(analyzer.analyze()?);
+	}
+	let label = roots.iter().map(|root| root.display().to_string()).collect::<Vec<_>>().join(", ");
 	let view_options: ViewOptions = (&config).into();
 	let mut stdout = io::stdout();
-	display::write_output(config.display.output, &results, &config.path, view_options, &mut stdout)?;
+	display::write_output(config.display.output, &results, Path::new(&label), view_options, &mut stdout)?;
 	stdout.flush()?;
 	if config.analysis.fail_on_error && results.skipped_entries() > 0 {
 		return Err(anyhow!("Skipped {} entries due to errors", results.skipped_entries()));
@@ -85,12 +93,33 @@ fn base_config(source: &SourceArgs) -> Result<Config> {
 }
 
 fn ensure_path(config: &Config) -> Result<()> {
-	ensure!(config.path.exists(), "Path `{}` not found", config.path.display());
+	for path in std::iter::once(&config.path).chain(&config.extra_paths) {
+		ensure!(path.exists(), "Path `{}` not found", path.display());
+	}
 	Ok(())
+}
+
+/// The paths to count, leaving out any given twice or inside another, whose files would otherwise be counted twice.
+fn roots(config: &Config) -> Vec<PathBuf> {
+	let given: Vec<&PathBuf> = std::iter::once(&config.path).chain(&config.extra_paths).collect();
+	let resolved: Vec<PathBuf> =
+		given.iter().map(|path| path.canonicalize().unwrap_or_else(|_| (*path).clone())).collect();
+	given
+		.iter()
+		.enumerate()
+		.filter(|&(i, _)| {
+			!resolved
+				.iter()
+				.enumerate()
+				.any(|(j, other)| j != i && resolved[i].starts_with(other) && (resolved[i] != *other || j < i))
+		})
+		.map(|(_, path)| (*path).clone())
+		.collect()
 }
 
 fn run_diff(args: &DiffArgs, matches: &ArgMatches) -> Result<()> {
 	let config = cli::merge_diff_config(base_config(&args.source)?, args, matches)?;
+	ensure!(config.extra_paths.is_empty(), "`cs diff` compares one path at a time");
 	ensure_path(&config)?;
 	let from = count_snapshot(&config.path, &Snapshot::Revision(&args.from), &config.analysis, false)
 		.with_context(|| format!("couldn't read revision `{}`", args.from))?;

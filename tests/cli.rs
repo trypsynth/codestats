@@ -210,3 +210,20 @@ fn diff_reports_unknown_revisions_and_non_repositories() {
 	assert!(!output.status.success());
 	assert!(String::from_utf8(output.stderr).unwrap().contains("not a git repository"));
 }
+
+#[test]
+fn several_paths_are_counted_together_once() {
+	let root = scratch_dir("several_paths_are_counted_together_once");
+	for dir in ["a", "b"] {
+		fs::create_dir(root.join(dir)).unwrap();
+		fs::write(root.join(dir).join("main.rs"), "fn main() {}\n").unwrap();
+	}
+	// `a` given twice and `a/main.rs` inside it are counted once; files are told apart by the path they were reached by.
+	let output = cs().current_dir(&root).args(["a", "b", "a", "a/main.rs", "-v", "-o", "csv"]).output().unwrap();
+	assert!(output.status.success(), "stderr: {}", String::from_utf8_lossy(&output.stderr));
+	let csv = String::from_utf8(output.stdout).unwrap();
+	let mut files: Vec<_> = csv.lines().filter(|row| row.ends_with(".rs") || row.contains(".rs,")).collect();
+	files.sort_unstable();
+	assert_eq!(files.len(), 2, "{csv}");
+	assert!(files[0].starts_with("a/main.rs") && files[1].starts_with("b/main.rs"), "{csv}");
+}

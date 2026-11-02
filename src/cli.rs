@@ -109,9 +109,9 @@ pub struct SourceArgs {
 	/// Path to configuration file (TOML format)
 	#[arg(short = 'c', long = "config")]
 	pub config: Option<PathBuf>,
-	/// The path to analyze
-	#[arg(value_name = "PATH", default_value = ".")]
-	pub path: PathBuf,
+	/// The paths to analyze: directories or files, counted together
+	#[arg(value_name = "PATH", default_value = ".", num_args = 1..)]
+	pub paths: Vec<PathBuf>,
 	/// Count generated files (lockfiles, minified assets) which are excluded by default
 	#[arg(long)]
 	pub include_generated: bool,
@@ -205,9 +205,12 @@ pub fn merge_diff_config(config: Config, args: &DiffArgs, matches: &ArgMatches) 
 }
 
 fn merge_shared(mut config: Config, source: &SourceArgs, format: &FormatArgs, matches: &ArgMatches) -> Result<Config> {
-	let path_overridden = cli_overrode(matches, "path");
-	if path_overridden {
-		config.path.clone_from(&source.path);
+	let path_overridden = cli_overrode(matches, "paths");
+	if let [first, rest @ ..] = &source.paths[..]
+		&& path_overridden
+	{
+		config.path.clone_from(first);
+		config.extra_paths = rest.to_vec();
 	}
 	apply!(matches, "hidden", config.analysis.include_hidden = source.hidden);
 	apply!(matches, "include_generated", config.analysis.include_generated = source.include_generated);

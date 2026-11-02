@@ -35,6 +35,9 @@ pub struct Config {
 	#[serde(skip)]
 	/// True when the config file explicitly sets `path`.
 	pub path_overridden: bool,
+	#[serde(skip)]
+	/// Paths after the first given on the command line, counted together with it.
+	pub extra_paths: Vec<PathBuf>,
 }
 
 impl Default for Config {
@@ -45,6 +48,7 @@ impl Default for Config {
 			display: DisplayConfig::default(),
 			source: None,
 			path_overridden: false,
+			extra_paths: Vec::new(),
 		}
 	}
 }
@@ -152,6 +156,7 @@ impl Config {
 			display: raw.display,
 			source: Some(path.to_path_buf()),
 			path_overridden,
+			extra_paths: Vec::new(),
 		})
 	}
 }

@@ -66,6 +66,14 @@ cargo install --path .
 cs
 ```
 
+### Count several paths together
+
+```bash
+cs src tests build.rs
+```
+
+Files are listed by the path they were reached by (`src/main.rs`), and a path given twice or inside another is only counted once.
+
 ### Verbose per-file detail for `src/` in JSON
 
 ```bash
@@ -176,7 +184,7 @@ A language or file with code embedded in it, like the Rust in a Markdown file, h
 
 ## Common flags
 
-Usage: `cs [OPTIONS] [PATH]` (defaults to the current directory)
+Usage: `cs [OPTIONS] [PATH]...` (defaults to the current directory)
 
 - `-q, --quiet` Show totals only, no language breakdown
 - `-v, --verbose` Show per-file details in addition to the language breakdown

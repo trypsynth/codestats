@@ -33,6 +33,8 @@ impl Drop for LocalAggregator {
 /// Walks source files within a directory tree and produces aggregated statistics.
 pub struct CodeAnalyzer {
 	root: PathBuf,
+	/// What files' paths are shown relative to: the root, unless several roots are counted together.
+	display_root: PathBuf,
 	config: AnalyzerConfig,
 }
 
@@ -40,7 +42,14 @@ impl CodeAnalyzer {
 	/// Create a new analyzer rooted at `path`.
 	#[must_use]
 	pub fn new(path: &Path, config: AnalyzerConfig) -> Self {
-		Self { root: path.to_path_buf(), config }
+		Self { root: path.to_path_buf(), display_root: path.to_path_buf(), config }
+	}
+
+	/// Show files' paths as they're reached from the root, root included (`src/main.rs` rather than `main.rs`), as when several roots are counted together.
+	#[must_use]
+	pub fn showing_root(mut self) -> Self {
+		self.display_root = PathBuf::new();
+		self
 	}
 
 	/// Analyze the configured path for code statistics
@@ -62,7 +71,7 @@ impl CodeAnalyzer {
 		let collect_details = self.config.collect_file_details;
 		let include_languages = self.config.analysis.include_languages.clone();
 		let exclude_languages = self.config.analysis.exclude_languages.clone();
-		let root = self.root.clone();
+		let root = self.display_root.clone();
 		let aggregates = Arc::new(Mutex::new(Vec::new()));
 		let aggregates_for_walk = Arc::clone(&aggregates);
 		let error_counter_for_walk = Arc::clone(&error_counter);
