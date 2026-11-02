@@ -30,6 +30,7 @@ memmap2 = "0.9.12"
 num-format = { version = "0.4.4", default-features = false, features = ["std"] }
 serde = { version = "1.0.229", default-features = false, features = ["std", "derive"] }
 serde_json = { version = "1.0.154", default-features = false, features = ["std"] }
+simdutf8 = "0.1.5"
 terminal_size = "0.4.4"
 toml = "1.1.8"
 

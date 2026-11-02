@@ -172,6 +172,12 @@ fn is_preprocessor_directive(line: &str) -> bool {
 #[inline]
 fn find_line_comment(line: &str, lang: &Language, matchers: &LanguageMatchers) -> Option<usize> {
 	let line_comments = matchers.line_comments.as_ref()?;
+	// Most comment lines start with their marker. Leftmost-first matching picks the first listed marker that matches there, so checking for it directly finds the same one without running the automaton.
+	if let Some(marker) = lang.line_comments.iter().find(|marker| line.starts_with(*marker))
+		&& is_valid_line_comment_match(line, marker.len(), marker)
+	{
+		return Some(0);
+	}
 	line_comments
 		.find_iter(line)
 		.find(|matched| {

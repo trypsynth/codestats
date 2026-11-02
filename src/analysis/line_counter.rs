@@ -15,8 +15,8 @@ pub(super) fn count_lines(language: &Language, encoding: FileEncoding, bytes: &[
 	}
 	let mut counts = LineCounts::default();
 	let mut classifier = Classifier::new(language);
-	// Validating the whole file once is much cheaper than decoding it line by line.
-	if let Ok(text) = std::str::from_utf8(bytes.get(encoding.bom_len..).unwrap_or_default()) {
+	// Validating the whole file once is much cheaper than decoding it line by line, and SIMD validation is several times faster than the standard library's on text that isn't mostly ASCII.
+	if let Ok(text) = simdutf8::basic::from_utf8(bytes.get(encoding.bom_len..).unwrap_or_default()) {
 		count_text(text, language, &mut counts, &mut classifier);
 	} else {
 		// Invalid UTF-8 is replaced line by line, keeping one bad byte from affecting the rest of the file.

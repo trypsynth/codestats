@@ -182,6 +182,7 @@ dependencies = [
  "rstest",
  "serde",
  "serde_json",
+ "simdutf8",
  "terminal_size",
  "toml",
 ]

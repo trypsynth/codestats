@@ -10,6 +10,7 @@
 - Device tree overlays (`.dtso`) count as Device Tree, property lists (`.plist`) as XML, and the `makefile.vc`, `makefile.gcc`, `makefile.bcc` and `makefile.unx` files wxWidgets builds with as Makefile
 - More code block names are recognized, such as `shell`, `golang`, `elisp`, `csharp` and `latex`
 - Counting a single file with `--verbose` shows its name instead of an empty path
+- Faster on files with many comment lines or a lot of non-ASCII text, such as translations: nvda, which is mostly translations, is counted about 15% faster
 
 ## 0.9.0
 
