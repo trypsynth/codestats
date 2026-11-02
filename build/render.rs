@@ -21,6 +21,7 @@ const LANGUAGE_FIELDS: &[(&str, &str)] = &[
 	("strings", "&'static [StringDelimiter]"),
 	("c_preprocessor", "bool"),
 	("regex_literals", "bool"),
+	("line_splices", "bool"),
 	("embedding", "Option<Embedding>"),
 	("heredoc", "Option<Heredoc>"),
 ];
@@ -89,6 +90,7 @@ fn render_language(output: &mut String, index: usize, lang: &LanguageConfig) {
 	write_field(output, "strings", render_slice(&lang.strings, render_string_delimiter));
 	write_field(output, "c_preprocessor", lang.c_preprocessor);
 	write_field(output, "regex_literals", lang.regex_literals);
+	write_field(output, "line_splices", lang.line_splices);
 	write_field(
 		output,
 		"embedding",

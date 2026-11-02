@@ -37,6 +37,8 @@ pub struct LanguageConfig {
 	#[serde(default)]
 	pub regex_literals: bool,
 	#[serde(default)]
+	pub line_splices: bool,
+	#[serde(default)]
 	pub embedding: Option<Embedding>,
 	#[serde(default)]
 	pub heredoc: Option<Heredoc>,

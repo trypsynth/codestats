@@ -48,6 +48,15 @@ impl LineType {
 	}
 }
 
+/// How an open heredoc ends.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct HeredocEnd {
+	/// The word on the line that ends it.
+	terminator: Box<str>,
+	/// Whether that word may be indented (`<<~EOF` and `<<-EOF`, and any heredoc in PHP), or must start its line.
+	indented: bool,
+}
+
 /// Tracks block comment state across lines: how deeply nested we are, and which delimiter pair opened the comment.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct CommentState {
@@ -57,8 +66,10 @@ pub struct CommentState {
 	string: Option<usize>,
 	/// Whether the open string is a docstring, whose contents count as comment.
 	doc_string: bool,
-	/// The terminator of the heredoc whose body the next line is in, which counts as being in a string.
-	heredoc: Option<Box<str>>,
+	/// The heredoc whose body the next line is in, which counts as being in a string.
+	heredoc: Option<HeredocEnd>,
+	/// Whether the previous line ended a line comment with a backslash, which in C carries the comment onto the next line.
+	spliced_line_comment: bool,
 }
 
 impl CommentState {
@@ -91,6 +102,14 @@ impl CommentState {
 		self.block_comment_depth > 0
 	}
 
+	/// Note that a line comment runs to the end of `line`, which carries it on to the next line if the line ends with a backslash in a language with C's line splices.
+	#[inline]
+	fn end_line_comment(&mut self, line: &str, lang: &Language) {
+		if lang.line_splices {
+			self.spliced_line_comment = line.ends_with('\\');
+		}
+	}
+
 	#[must_use]
 	#[inline]
 	const fn is_in_string(&self) -> bool {
@@ -101,7 +120,7 @@ impl CommentState {
 	#[must_use]
 	#[inline]
 	pub(crate) const fn is_clear(&self) -> bool {
-		!self.is_in_comment() && !self.is_in_string()
+		!self.is_in_comment() && !self.is_in_string() && !self.spliced_line_comment
 	}
 }
 
@@ -190,6 +209,12 @@ fn find_line_comment(line: &str, lang: &Language, matchers: &LanguageMatchers) -
 #[inline]
 pub fn classify_line(line: &str, lang: &Language, comment_state: &mut CommentState, is_first_line: bool) -> LineType {
 	let trimmed = trim_ascii(line);
+	// Outside every comment and string, the common case, which the checks below need to know.
+	let clear = comment_state.is_clear();
+	if !clear && comment_state.spliced_line_comment {
+		comment_state.end_line_comment(trimmed, lang);
+		return if trimmed.is_empty() { LineType::Blank } else { LineType::Comment };
+	}
 	if trimmed.is_empty() {
 		return LineType::Blank;
 	}
@@ -197,30 +222,29 @@ pub fn classify_line(line: &str, lang: &Language, comment_state: &mut CommentSta
 		return LineType::Shebang;
 	}
 	// Markers like fixed-form Fortran's `C` only count in the first column, so check the untrimmed line.
-	if !comment_state.is_in_comment()
-		&& !comment_state.is_in_string()
-		&& lang.column_one_comments.iter().any(|marker| line.starts_with(marker))
-	{
+	if clear && lang.column_one_comments.iter().any(|marker| line.starts_with(marker)) {
 		return LineType::Comment;
 	}
-	if lang.c_preprocessor
-		&& !comment_state.is_in_comment()
-		&& !comment_state.is_in_string()
-		&& is_preprocessor_directive(trimmed)
-	{
+	if lang.c_preprocessor && clear && is_preprocessor_directive(trimmed) {
 		return LineType::Code;
 	}
 	let matchers = language_matchers(lang);
 	// Outside a comment or string, a line with no byte that could start one is code: every search below would come up empty.
-	if !comment_state.is_in_comment() && !comment_state.is_in_string() && !matchers.openers.any_in(trimmed.as_bytes()) {
+	if clear && !matchers.openers.any_in(trimmed.as_bytes()) {
 		return LineType::Code;
 	}
-	classify_markers(trimmed, lang, matchers, comment_state)
+	classify_markers(trimmed, is_indented(line, trimmed), lang, matchers, comment_state)
+}
+
+/// Whether `line` starts with whitespace that trimming took off, leaving `trimmed`.
+fn is_indented(line: &str, trimmed: &str) -> bool {
+	!std::ptr::eq(line.as_ptr(), trimmed.as_ptr())
 }
 
 /// Classify a trimmed, non-blank line by the comment markers and string literals in it.
 fn classify_markers(
 	trimmed: &str,
+	indented: bool,
 	lang: &Language,
 	matchers: &LanguageMatchers,
 	comment_state: &mut CommentState,
@@ -228,7 +252,7 @@ fn classify_markers(
 	if let Some(strings) = matchers.strings.as_ref()
 		&& (comment_state.is_in_string() || strings.may_contain_string(trimmed.as_bytes()))
 	{
-		return classify_with_strings(trimmed, lang, matchers, strings, comment_state);
+		return classify_with_strings(trimmed, indented, lang, matchers, strings, comment_state);
 	}
 	let mut line_remainder = trimmed;
 	#[expect(
@@ -246,6 +270,7 @@ fn classify_markers(
 		return if has_code { LineType::Code } else { LineType::Comment };
 	}
 	if let Some(pos) = find_line_comment(line_remainder, lang, matchers) {
+		comment_state.end_line_comment(trimmed, lang);
 		if pos > 0 && contains_non_whitespace(&line_remainder[..pos]) {
 			has_code = true;
 		}
@@ -405,14 +430,14 @@ mod tests {
 					fast_lines += 1;
 					let before = state.clone();
 					assert_eq!(
-						classify_markers(trimmed, lang, matchers, &mut state),
+						classify_markers(trimmed, is_indented(&line, trimmed), lang, matchers, &mut state),
 						LineType::Code,
 						"{}: {line:?}",
 						lang.name
 					);
 					assert_eq!(state, before, "{}: {line:?} changed the state", lang.name);
 				} else {
-					classify_markers(trimmed, lang, matchers, &mut state);
+					classify_markers(trimmed, is_indented(&line, trimmed), lang, matchers, &mut state);
 				}
 			}
 		}
@@ -498,6 +523,10 @@ mod tests {
 	#[case::toml_literal("TOML", &["p = '''", "# not a comment", "'''"], &[LineType::Code, LineType::Code, LineType::Code])]
 	#[case::cmake_quoted("CMake", &["check_cxx_source_compiles(\"", "#include <x>", "int main() {}\" HAVE_X)", "# c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
 	#[case::cmake_bracket("CMake", &["set(s [=[", "# not a comment", "]=])", "#[[ c ]]"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
+	#[case::cmake_bracket_comment_with_equals("CMake", &["#[==[ c", "]] still c", "]==]", "set(X 1)"], &[LineType::Comment, LineType::Comment, LineType::Comment, LineType::Code])]
+	#[case::kotlin_raw_string_ending_in_a_quote("Kotlin", &["val s = \"\"\"a \"\"\"\" // c", "// c"], &[LineType::Code, LineType::Comment])]
+	#[case::c_spliced_line_comment("C", &["int x; // c \\", "still c \\", "and this", "int y;"], &[LineType::Code, LineType::Comment, LineType::Comment, LineType::Code])]
+	#[case::c_splice_ends_at_blank("C", &["// c \\", "", "int y;"], &[LineType::Comment, LineType::Blank, LineType::Code])]
 	fn config_strings(#[case] language: &str, #[case] lines: &[&str], #[case] expected: &[LineType]) {
 		assert_eq!(classify_all(language, lines), expected);
 	}
@@ -516,6 +545,12 @@ mod tests {
 	#[case::crystal_append_constant("Crystal", &["types << FFI::Type.pointer", "# c"], &[LineType::Code, LineType::Comment])]
 	#[case::php("PHP", &["$s = <<<EOT", "# not a comment", "EOT;", "# c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
 	#[case::in_comment("Bash", &["# cat <<EOF", "# c"], &[LineType::Comment, LineType::Comment])]
+	#[case::ruby_singleton_class_unspaced("Ruby", &["class <<self", "# c"], &[LineType::Code, LineType::Comment])]
+	// A plain `<<` heredoc only closes at its word at the start of a line; `<<~` and `<<-` also behind spaces.
+	#[case::ruby_plain_closes_unindented("Ruby", &["x = <<RUBY", "  RUBY", "# not a comment", "RUBY", "# c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
+	#[case::ruby_squiggly_closes_indented("Ruby", &["x = <<~TEXT", "  a", "  TEXT", "# c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
+	#[case::shell_escaped_apostrophe("Bash", &["echo don\\'t", "# c"], &[LineType::Code, LineType::Comment])]
+	#[case::powershell_escaped_apostrophe("PowerShell", &["Write-Host don`'t <# c #>", "# c"], &[LineType::Code, LineType::Comment])]
 	fn heredocs(#[case] language: &str, #[case] lines: &[&str], #[case] expected: &[LineType]) {
 		assert_eq!(classify_all(language, lines), expected);
 	}

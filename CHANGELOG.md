@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- A plain heredoc (`<<EOF`) only ends at its word at the start of a line, while `<<~EOF` and `<<-EOF` (and any heredoc in PHP) may end at an indented one, and Ruby's `class <<self` is no longer taken for a heredoc
+- In C, C++, Objective-C and CUDA, a line comment ending in a backslash carries on onto the next line, as the compiler reads it
+- In shells and PowerShell, a quote escaped outside a string (`don\'t`, ``don`'t``) no longer opens one
+- CMake's bracket comments and arguments with equals signs (`#[==[ ... ]==]`) are recognized, and a tripled quote followed by more quotes (`""""`) ends its string at the last of them
 - Strings are recognized in Nix, Julia, OCaml, Visual Basic, R, PowerShell, Protocol Buffers and Fish, so comment markers inside them are no longer counted as comments. In Nix, a shell glob like `images/*.gif` in a script string used to start a comment that could run for thousands of lines, and in Visual Basic, an apostrophe in a string like `"Don't"` started one
 - Faster at telling apart languages that share an extension, such as C, C++ and Objective-C headers: linux is counted about 8% faster. With `--lang` or `--exclude-lang`, files whose possible languages are all filtered out are skipped without being read, unless they start with a shebang
 - Faster on languages whose strings or comments start with a letter, like Rust's raw strings (`r"`), and on languages with four or more kinds of comment and string markers, like Go: the rust repository is counted about 20% faster and kubernetes about 9%

@@ -115,6 +115,8 @@ pub struct StringMatchers {
 	closes: Vec<Finder<'static>>,
 	/// First bytes of string openers, for a fast check that a line can't contain a string.
 	open_bytes: ByteSet,
+	/// The characters that escape inside any of the language's strings (`\\` in a shell, `` ` `` in PowerShell), leaving out quotes that escape by doubling. Outside a string they keep a quote after them from opening one, as `\\'` writes an apostrophe in a shell.
+	pub(crate) escapes: Vec<u8>,
 }
 
 impl StringMatchers {
@@ -135,6 +137,15 @@ impl StringMatchers {
 	/// Find where the string `index` closes, starting at `from` and honoring its escape character. Returns the position just past the closing delimiter.
 	#[inline]
 	pub(crate) fn find_close(&self, line: &[u8], from: usize, index: usize, escape: Option<u8>) -> Option<usize> {
+		let close = self.closes[index].needle();
+		self.find_close_start(line, from, index, escape).map(|end| {
+			// A tripled quote closes at the end of a longer run of quotes, the ones before it being the string's last characters (`""""` ends a string with a quote).
+			let run = close.len() >= 3 && close.iter().all(|&b| b == close[0]);
+			if run { end + line[end..].iter().take_while(|&&b| b == close[0]).count() } else { end }
+		})
+	}
+
+	fn find_close_start(&self, line: &[u8], from: usize, index: usize, escape: Option<u8>) -> Option<usize> {
 		let close = &self.closes[index];
 		let Some(escape) = escape else {
 			return close.find(&line[from..]).map(|pos| from + pos + close.needle().len());
@@ -280,5 +291,13 @@ fn build_string_matchers(lang: &Language) -> StringMatchers {
 			.chain(lang.heredoc.map(Heredoc::opener))
 			.chain(lang.regex_literals.then_some("/")),
 	);
-	StringMatchers { tokens, kinds, closes, open_bytes }
+	let mut escapes: Vec<u8> = lang
+		.strings
+		.iter()
+		.filter_map(|delimiter| delimiter.escape)
+		.filter(|escape| !lang.strings.iter().any(|delimiter| delimiter.open.as_bytes().contains(escape)))
+		.collect();
+	escapes.sort_unstable();
+	escapes.dedup();
+	StringMatchers { tokens, kinds, closes, open_bytes, escapes }
 }

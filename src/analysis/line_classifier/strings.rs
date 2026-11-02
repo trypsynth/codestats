@@ -1,6 +1,6 @@
 //! Lexing string, char and regex literals, so comment markers inside them aren't taken for comments.
 
-use super::{CommentState, LineType, contains_non_whitespace, is_valid_line_comment_match, is_word_char};
+use super::{CommentState, HeredocEnd, LineType, contains_non_whitespace, is_valid_line_comment_match, is_word_char};
 use crate::langs::{
 	Heredoc, Language,
 	matchers::{LanguageMatchers, StringMatchers, Token},
@@ -9,16 +9,18 @@ use crate::langs::{
 /// Classify a line in a language with string literals, scanning left to right so comment markers inside strings are ignored. String contents count as code.
 pub(super) fn classify_with_strings(
 	line: &str,
+	indented: bool,
 	lang: &Language,
 	matchers: &LanguageMatchers,
 	strings: &StringMatchers,
 	state: &mut CommentState,
 ) -> LineType {
-	// A heredoc's body is a string, up to the line that's just its terminator (which may be indented).
-	if let Some(terminator) = &state.heredoc {
-		if line
-			.strip_prefix(&**terminator)
-			.is_some_and(|rest| !rest.as_bytes().first().is_some_and(|&b| is_word_char(b)))
+	// A heredoc's body is a string, up to the line that's just its terminator, indented only where the heredoc allows it.
+	if let Some(heredoc) = &state.heredoc {
+		if (heredoc.indented || !indented)
+			&& line
+				.strip_prefix(&*heredoc.terminator)
+				.is_some_and(|rest| !rest.as_bytes().first().is_some_and(|&b| is_word_char(b)))
 		{
 			state.heredoc = None;
 		}
@@ -67,6 +69,7 @@ pub(super) fn classify_with_strings(
 			match token {
 				Token::LineComment(i) => {
 					if is_valid_line_comment_match(line, end, lang.line_comments[i]) {
+						state.end_line_comment(line, lang);
 						return if has_code { LineType::Code } else { LineType::Comment };
 					}
 					has_code = true;
@@ -90,8 +93,9 @@ pub(super) fn classify_with_strings(
 				}
 				Token::String(i) => {
 					let delimiter = &lang.strings[i];
-					// An escaped quote outside a string (in a regex or sigil like `~r[\"]`) doesn't open one.
-					let escaped = start > 0 && delimiter.escape == Some(bytes[start - 1]);
+					// An escaped quote outside a string (in a regex or sigil like `~r[\"]`, or a shell's `\'`) doesn't open one.
+					let escaped = start > 0
+						&& (delimiter.escape == Some(bytes[start - 1]) || strings.escapes.contains(&bytes[start - 1]));
 					// A quote that doesn't look like a char literal (a Rust lifetime like `'a`) is just code.
 					let char_mismatch = delimiter.char_literal && !looks_like_char(bytes, end);
 					// A docstring is a string that starts its line; after code (`x = """`) it's an ordinary string.
@@ -173,14 +177,16 @@ fn find_regex_end(line: &[u8], start: usize) -> Option<usize> {
 }
 
 /// The terminator of a heredoc whose opener (`<<`) spans `start..end`: `EOF` in `<<EOF`, `<<-EOF`, `<<~EOF`, `<<'EOF'` or `<<\EOF`, and in `<< EOF` where `syntax` allows the space. `None` when it's a shift or append (`1 << n`, `x << y`) or a here-string (`<<<`).
-fn heredoc_terminator(line: &[u8], start: usize, end: usize, syntax: Heredoc) -> Option<Box<str>> {
-	let follows_value = line[..start]
-		.iter()
-		.rfind(|b| !b.is_ascii_whitespace())
-		.is_some_and(|&b| b.is_ascii_digit() || matches!(b, b')' | b']'));
-	if follows_value || line.get(end) == Some(&b'<') {
+fn heredoc_terminator(line: &[u8], start: usize, end: usize, syntax: Heredoc) -> Option<HeredocEnd> {
+	let before = line[..start].trim_ascii_end();
+	let follows_value = before.last().is_some_and(|&b| b.is_ascii_digit() || matches!(b, b')' | b']'));
+	// Ruby's `class <<self` opens the singleton class, written with or without a space.
+	let singleton_class = syntax == Heredoc::Ruby
+		&& before.strip_suffix(b"class").is_some_and(|rest| !rest.last().is_some_and(|&b| is_word_char(b)));
+	if follows_value || singleton_class || line.get(end) == Some(&b'<') {
 		return None;
 	}
+	let indented = matches!(line.get(end), Some(b'-' | b'~')) || syntax == Heredoc::Php;
 	let mut pos = end + usize::from(matches!(line.get(end), Some(b'-' | b'~')));
 	let spaces = line[pos..].iter().take_while(|&&b| b == b' ' || b == b'\t').count();
 	pos += spaces;
@@ -208,7 +214,8 @@ fn heredoc_terminator(line: &[u8], start: usize, end: usize, syntax: Heredoc) ->
 						&& terminator.iter().any(u8::is_ascii_uppercase))
 			}
 		};
-	(spaced_ok && !terminator.is_empty()).then(|| String::from_utf8_lossy(terminator).into())
+	(spaced_ok && !terminator.is_empty())
+		.then(|| HeredocEnd { terminator: String::from_utf8_lossy(terminator).into(), indented })
 }
 
 /// Whether the text after an opening `'` looks like a char literal: one character or an escape, then a closing `'`.

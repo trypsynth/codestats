@@ -32,6 +32,8 @@
 //                        files), so directives like `# define` or `# if defined(X)` count as code.
 //   regex_literals       `/.../` regex literals (JavaScript), so quotes or `/*` inside them are ignored. A `/` starts a
 //                        regex after an operator, opening bracket or keyword like `return`; otherwise it's division.
+//   line_splices         A backslash ending a line joins it to the next, as in C, so a line comment ending in one
+//                        carries on onto the next line.
 //   heredoc              The language's heredocs, whose body runs from the next line to the line holding just the
 //                        terminator named after the opener: "shell" (`<<EOF`, `<< 'EOF'`), "perl" (`<<EOF`, `<< "EOF"`),
 //                        "ruby" (`<<~EOF`, with no space, as `x << y` appends) or "php" (`<<<EOT`).
@@ -356,6 +358,7 @@
 		keywords: ["#include", "#define", "#ifndef", "#pragma", "int main", "void", "sizeof", "typedef", "struct", "extern", "#ifdef", "#endif", "static", "NULL", "unsigned"],
 		case_sensitive_keywords: true,
 		strings: ["\"", {open: "'", char: true}],
+		line_splices: true,
 	},
 	"C Shell": {
 		file_patterns: ["*.csh", ".cshrc", ".login"],
@@ -377,6 +380,7 @@
 		case_sensitive_keywords: true,
 		require_keywords: true,
 		strings: ["\"", {open: "'", char: true}, {open: "R\"(", close: ")\"", escape: null, multiline: true}],
+		line_splices: true,
 	},
 	"C2": {
 		file_patterns: ["*.c2"],
@@ -494,8 +498,8 @@
 	"CMake": {
 		file_patterns: ["*.cmake", "*.cmake.in", "*.cmake.rule", "CMakeLists.txt", "cmakelists.txt"],
 		line_comments: ["#"],
-		block_comments: [["#[[", "]]"]],
-		strings: [{open: "\"", multiline: true}, {open: "[[", close: "]]", escape: null, multiline: true}, {open: "[=[", close: "]=]", escape: null, multiline: true}],
+		block_comments: [["#[[", "]]"], ["#[=[", "]=]"], ["#[==[", "]==]"], ["#[===[", "]===]"]],
+		strings: [{open: "\"", multiline: true}, {open: "[[", close: "]]", escape: null, multiline: true}, {open: "[=[", close: "]=]", escape: null, multiline: true}, {open: "[==[", close: "]==]", escape: null, multiline: true}, {open: "[===[", close: "]===]", escape: null, multiline: true}],
 	},
 	"COBOL": {
 		file_patterns: ["*.cob", "*.cbl", "*.ccp", "*.cobol", "*.cpy"],
@@ -564,6 +568,7 @@
 		file_patterns: ["*.cu", "*.cuh"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		line_splices: true,
 	},
 	"CUE": {
 		file_patterns: ["*.cue"],
@@ -1772,6 +1777,7 @@
 		case_sensitive_keywords: true,
 		require_keywords: true,
 		strings: ["\"", {open: "'", char: true}],
+		line_splices: true,
 	},
 	"Objective-C++": {
 		file_patterns: ["*.mm"],
@@ -1780,6 +1786,7 @@
 		keywords: ["@interface", "@implementation", "@protocol", "@property", "@synthesize", "@end", "#import", "NSString", "class", "template"],
 		case_sensitive_keywords: true,
 		strings: ["\"", {open: "'", char: true}, {open: "R\"(", close: ")\"", escape: null, multiline: true}],
+		line_splices: true,
 	},
 	"Objective-J": {
 		file_patterns: ["*.j", "*.sj"],
