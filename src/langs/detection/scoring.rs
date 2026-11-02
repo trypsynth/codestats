@@ -205,8 +205,13 @@ fn build_scoring_matchers(lang: &Language) -> ScoringMatchers {
 			substrings.push(SubstringKeyword { finder: Finder::new(keyword), index, ends_in_word });
 		}
 	}
-	let block_comments =
-		lang.block_comments.iter().map(|&(start, end, _)| (Finder::new(start), Finder::new(end))).collect();
+	let block_comments = lang
+		.block_comments
+		.iter()
+		.map(|&(start, end, _)| (start, end))
+		.chain(lang.line_block_comments.iter().copied())
+		.map(|(start, end)| (Finder::new(start), Finder::new(end)))
+		.collect();
 	let max_word_len = words.iter().map(|(word, _)| word.len()).max().unwrap_or(0);
 	let mut words_by_start = vec![Vec::new(); 256];
 	for &(word, index) in &words {
@@ -432,6 +437,8 @@ mod tests {
 		c_preprocessor: false,
 		regex_literals: false,
 		line_splices: false,
+		line_block_comments: &[],
+		line_blocks_alone: false,
 		strings: &[],
 		embedding: None,
 		heredoc: None,
@@ -452,6 +459,8 @@ mod tests {
 		c_preprocessor: false,
 		regex_literals: false,
 		line_splices: false,
+		line_block_comments: &[],
+		line_blocks_alone: false,
 		strings: &[],
 		embedding: None,
 		heredoc: None,

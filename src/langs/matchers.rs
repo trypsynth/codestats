@@ -248,6 +248,7 @@ fn build_language_matchers(lang: &Language) -> LanguageMatchers {
 			.iter()
 			.copied()
 			.chain(lang.block_comments.iter().map(|&(start, _, _)| start))
+			.chain(lang.line_block_comments.iter().map(|&(start, _)| start))
 			.chain(lang.strings.iter().map(|delimiter| delimiter.open))
 			.chain(lang.heredoc.map(Heredoc::opener))
 			.chain(lang.regex_literals.then_some("/")),

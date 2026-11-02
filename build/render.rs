@@ -22,6 +22,9 @@ const LANGUAGE_FIELDS: &[(&str, &str)] = &[
 	("c_preprocessor", "bool"),
 	("regex_literals", "bool"),
 	("line_splices", "bool"),
+	// Block comments whose markers only count at the start of a line, or alone on it with `line_blocks_alone`.
+	("line_block_comments", "&'static [(&'static str, &'static str)]"),
+	("line_blocks_alone", "bool"),
 	("embedding", "Option<Embedding>"),
 	("heredoc", "Option<Heredoc>"),
 ];
@@ -91,6 +94,12 @@ fn render_language(output: &mut String, index: usize, lang: &LanguageConfig) {
 	write_field(output, "c_preprocessor", lang.c_preprocessor);
 	write_field(output, "regex_literals", lang.regex_literals);
 	write_field(output, "line_splices", lang.line_splices);
+	write_field(
+		output,
+		"line_block_comments",
+		render_slice(&lang.line_block_comments, |(start, end)| format!("({start:?}, {end:?})")),
+	);
+	write_field(output, "line_blocks_alone", lang.line_blocks_alone);
 	write_field(
 		output,
 		"embedding",

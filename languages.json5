@@ -32,6 +32,10 @@
 //                        files), so directives like `# define` or `# if defined(X)` count as code.
 //   regex_literals       `/.../` regex literals (JavaScript), so quotes or `/*` inside them are ignored. A `/` starts a
 //                        regex after an operator, opening bracket or keyword like `return`; otherwise it's division.
+//   line_block_comments  Block comments whose markers only count at the start of a line, with no indentation before
+//                        them (Perl's POD, from `=pod` to `=cut`), so an indented `=cut` in the documentation is text.
+//   line_blocks_alone    The line block comments' markers also have to be alone on their line, spaces aside (MATLAB's
+//                        `%{` and `%}`), so `%{ note` is an ordinary comment.
 //   line_splices         A backslash ending a line joins it to the next, as in C, so a line comment ending in one
 //                        carries on onto the next line.
 //   heredoc              The language's heredocs, whose body runs from the next line to the line holding just the
@@ -1528,7 +1532,8 @@
 	"MATLAB": {
 		file_patterns: ["*.m"],
 		line_comments: ["%"],
-		block_comments: [["%{", "%}"]],
+		line_block_comments: [["%{", "%}"]],
+		line_blocks_alone: true,
 		keywords: ["function", "classdef", "end", "disp", "plot", "elseif"],
 	},
 	"Maven": {
@@ -1806,7 +1811,8 @@
 	"Octave": {
 		file_patterns: ["*.m"],
 		line_comments: ["#", "%"],
-		block_comments: [["#{", "#}"], ["%{", "%}"]],
+		line_block_comments: [["#{", "#}"], ["%{", "%}"]],
+		line_blocks_alone: true,
 		keywords: ["function", "endfunction", "pkg", "pkg load"],
 	},
 	"Odin": {
@@ -1903,7 +1909,7 @@
 	"Perl": {
 		file_patterns: ["*.pl", "*.al", "*.perl", "*.plx", "*.pm", "rexfile", "cpanfile", "cpanfile.snapshot", "*.psgi", "*.t"],
 		line_comments: ["#"],
-		block_comments: [["=pod", "=cut"], ["=head1", "=cut"], ["=head2", "=cut"], ["=head3", "=cut"], ["=head4", "=cut"], ["=begin", "=cut"], ["=over", "=cut"], ["=for", "=cut"], ["=encoding", "=cut"]],
+		line_block_comments: [["=pod", "=cut"], ["=head1", "=cut"], ["=head2", "=cut"], ["=head3", "=cut"], ["=head4", "=cut"], ["=begin", "=cut"], ["=over", "=cut"], ["=for", "=cut"], ["=encoding", "=cut"]],
 		shebangs: ["#!/usr/bin/perl", "#!/usr/bin/env perl"],
 		keywords: ["use strict", "use warnings", "my", "sub", "Test::More", "done_testing"],
 		heredoc: "perl",
@@ -2002,7 +2008,7 @@
 		line_comments: ["#"],
 		block_comments: [["<#", "#>"]],
 		shebangs: ["#!/usr/bin/env pwsh", "#!/usr/bin/pwsh"],
-		strings: [{open: "\"", escape: "`", multiline: true}, {open: "'", escape: null, multiline: true}],
+		strings: [{open: "@\"", close: "\"@", escape: "`", multiline: true}, {open: "@'", close: "'@", escape: null, multiline: true}, {open: "\"", escape: "`", multiline: true}, {open: "'", escape: null, multiline: true}],
 	},
 	"Prisma": {
 		file_patterns: ["*.prisma"],

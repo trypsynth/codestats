@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Perl's POD documentation only starts and ends at a marker at the very start of a line, so `=head1` in a string or an indented `=cut` in the documentation is text, and MATLAB and Octave block comments (`%{`, `%}`) only count alone on their line
+- PowerShell here-strings (`@'...'@`, `@"..."@`) are recognized
+- A C string carried onto the next line by a backslash ends at a blank line
 - `cs completions` no longer panics when its output is cut short, as by `cs completions bash | head`
 - Several paths can be counted together, as in `cs src tests build.rs`. Files are listed by the path they were reached by, and a path given twice or inside another is only counted once. `cs diff` still takes one path. JSON reports list them in a new `paths` field, and `path` joins them with commas
 - The summary's list of languages ends with "and" before the last one, like the other lists in human output
