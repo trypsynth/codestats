@@ -6,27 +6,30 @@
 
 The fastest code counter around. Think that's wrong? Open an issue with [numbers](#benchmarks) and I'll change this line.
 
-codestats counts the code, comment, blank, and shebang lines in a codebase by language, and reports them as readable text, JSON, CSV, TSV, Markdown, or HTML. Built for quick audits, comparisons, scripts, or randomly being curious how much source code is in your home directory.
+codestats counts the lines in a codebase by language. It counts code lines, comment lines, blank lines, and shebang lines. It shows the results as text, JSON, CSV, TSV, Markdown, or HTML. Use it for quick audits, comparisons, and scripts.
 
 ## Highlights
 
-- Counts files, lines, and bytes by language
-- Counts code embedded in other files by its own rules, and shows how much of each language is there: scripts and styles in HTML, Vue, Svelte, Astro and HTML templates, the HTML around PHP's `<?php ... ?>` blocks, and code blocks in Markdown, AsciiDoc, Org and reStructuredText
-- Respects `.gitignore` and `.ignore` when you want it to
-- Can follow symlinks and scan hidden files
-- Filter by language: include only specific languages or exclude unwanted ones
-- Exclude files and directories with glob patterns
-- Optional per-file detail for drilling into hot spots
-- Outputs in human-readable or machine-friendly formats
-- Supports 550+ languages out of the box
-- Fully encoding-aware
-- Runs insanely quickly on anything from a tiny laptop to a large desktop
+- Counts files, lines, and bytes by language.
+- Counts code that is inside other files by the rules of its own language. Examples:
+  - Scripts and styles in HTML, Vue, Svelte, Astro, and HTML templates.
+  - The HTML around the `<?php ... ?>` blocks in PHP files.
+  - Code blocks in Markdown, AsciiDoc, Org, and reStructuredText.
+- Obeys `.gitignore` and `.ignore` files. You can turn this off.
+- Can follow symbolic links and read hidden files.
+- Can count only the languages that you select, or all languages except the ones that you select.
+- Can exclude files and directories that match glob patterns.
+- Can show the counts for each file.
+- Does not count generated files, such as lockfiles. You can turn this off.
+- Knows more than 550 languages.
+- Reads files in all common text encodings.
+- Runs very quickly on small and large computers.
 
 ## Install
 
 ### Pre-built binaries
 
-Download the latest binary for your platform from [GitHub Releases](https://github.com/trypsynth/codestats/releases/latest):
+Download the binary for your platform from [GitHub Releases](https://github.com/trypsynth/codestats/releases/latest):
 
 | Platform | Download |
 | --- | --- |
@@ -37,7 +40,10 @@ Download the latest binary for your platform from [GitHub Releases](https://gith
 | Windows x86_64 | [cs-x86_64-pc-windows-gnu.exe](https://github.com/trypsynth/codestats/releases/latest/download/cs-x86_64-pc-windows-gnu.exe) |
 | Windows ARM64 | [cs-aarch64-pc-windows-gnullvm.exe](https://github.com/trypsynth/codestats/releases/latest/download/cs-aarch64-pc-windows-gnullvm.exe) |
 
-On Linux and macOS, make the binary executable and move it somewhere on your `PATH`:
+On Linux and macOS, do these steps after the download:
+
+1. Make the binary executable.
+2. Move the binary to a directory on your `PATH`.
 
 ```bash
 chmod +x cs-*
@@ -50,7 +56,7 @@ sudo mv cs-* /usr/local/bin/cs
 cargo install codestats
 ```
 
-This needs Rust 1.88 or newer. The minimum version only goes up in a minor release, never a patch release.
+You must have Rust 1.88 or newer. We increase the minimum Rust version only in a minor release. We do not increase it in a patch release.
 
 ### From source
 
@@ -62,21 +68,21 @@ cargo install --path .
 
 ## Quick start
 
-### Analyze the current directory
+### Count the current directory
 
 ```bash
 cs
 ```
 
-### Count several paths together
+### Count more than one path
 
 ```bash
 cs src tests build.rs
 ```
 
-Files are listed by the path they were reached by (`src/main.rs`), and a path given twice or inside another is only counted once.
+codestats adds the counts of all the paths together. Each file shows with the path that you gave (for example, `src/main.rs`). If you give a path two times, or a path that is in a different path that you gave, codestats counts its files one time only.
 
-### Verbose per-file detail for `src/` in JSON
+### Show the counts for each file in `src/`, as JSON
 
 ```bash
 cs -v src -o json
@@ -85,61 +91,61 @@ cs -v src -o json
 ### Compare with an earlier release
 
 ```bash
-cs diff v1.0.0               # v1.0.0 against the working tree
-cs diff v1.0.0 --to v2.0.0   # between two revisions
+cs diff v1.0.0               # Compare v1.0.0 with the working tree.
+cs diff v1.0.0 --to v2.0.0   # Compare two revisions.
 ```
 
-Each language's files, lines and code, comment and blank lines in both versions, with the change. Both sides count the files git tracks, with the same filters, so only real changes show.
+For each language, the output shows the counts in the two versions and the change. The counts are files, lines, code lines, comment lines, and blank lines. Both versions use the files that git tracks and the same filters. Thus, the output shows only real changes.
 
-### Show only the top 10 languages
+### Show only the 10 largest languages
 
 ```bash
 cs -t 10
 ```
 
-### Analyze only Rust files
+### Count only Rust files
 
 ```bash
 cs -L rust
 ```
 
-### Exclude files by glob pattern
+### Exclude files that match a glob pattern
 
 ```bash
 cs -e 'test_*' -e '*.md'
 ```
 
-### Exclude specific languages
+### Exclude languages
 
 ```bash
 cs --exclude-lang markdown --exclude-lang toml
 ```
 
-### Follow symlinks and include hidden files
+### Follow symbolic links and include hidden files
 
 ```bash
 cs --symlinks -H
 ```
 
-### Ignore `.gitignore` rules
+### Count the files that `.gitignore` excludes
 
 ```bash
-cs -i
+cs --no-gitignore
 ```
 
-### List supported languages
+### Show the list of languages
 
 ```bash
 cs langs
 ```
 
-### Show breakdown by directory
+### Show the counts by directory
 
 ```bash
 cs -D
 ```
 
-### Generate shell completions
+### Make shell completions
 
 ```bash
 cs completions <shell>
@@ -147,18 +153,16 @@ cs completions <shell>
 
 ## Output formats
 
-- `human` (default) for terminals
-- `json` or `json-compact` for scripts
-- `csv` or `tsv` for spreadsheets
-- `markdown` or `html` for docs and dashboards
+- `human` (default): for terminals.
+- `json` or `json-compact`: for scripts.
+- `csv` or `tsv`: for spreadsheets.
+- `markdown` or `html`: for documents and dashboards.
 
 ### JSON
 
-Every level of a JSON report counts lines the same way. `paths` lists the paths counted together. `files` appears with `--verbose`, and `directories` with `--by-dir`. `cs diff -o json` reports `from` and `to` counts in the same shape.
+All levels of a JSON report count lines in the same way. `paths` is the list of paths that codestats counted. `files` shows only with `--verbose`. `directories` shows only with `--by-dir`. `cs diff -o json` shows its `from` counts and its `to` counts in the same shape.
 
-`schema_version` goes up whenever a field is renamed, removed or changes meaning; new fields can appear without it changing, so read reports in a way that ignores fields you don't know. The same promise covers CSV and TSV columns and the config file's keys: from 1.0 on, those only break in a new major version.
-
-A language or file with code embedded in it, like the Rust in a Markdown file, has an `embedded` list of those languages and their lines, which are also counted in its own `lines`:
+If code from a different language is inside a language or a file, the language or file has an `embedded` list. An example is Rust code in a Markdown file. The list gives each embedded language and its lines. The `lines` of the language or file also include these lines.
 
 ```json
 "embedded": [{ "name": "Rust", "lines": { "total": 120, "code": 96, "comment": 14, "blank": 10, "shebang": 0 } }]
@@ -186,67 +190,84 @@ A language or file with code embedded in it, like the Rust in a Markdown file, h
 }
 ```
 
+### Stability
+
+From version 1.0, these items change only in a new major version:
+
+- The JSON fields.
+- The CSV columns and the TSV columns.
+- The keys of the configuration file.
+
+When we rename a JSON field, remove a JSON field, or change what a JSON field means, we increase `schema_version`. We can add new fields and keep the same `schema_version`. Thus, your scripts must ignore the fields that they do not know.
+
 ## Common flags
 
-Usage: `cs [OPTIONS] [PATH]...` (defaults to the current directory)
+Usage: `cs [OPTIONS] [PATH]...`. If you do not give a path, codestats counts the current directory.
 
-- `-q, --quiet` Show totals only, no language breakdown
-- `-v, --verbose` Show per-file details in addition to the language breakdown
-- `--no-gitignore` Do not respect `.gitignore`
-- `--include-generated` Count generated files. By default, codestats does not count them. Generated files are lockfiles, minified assets, and files with a "generated" header. For examples of these headers, see [Generated files](#generated-files)
-- `--git` Only count files tracked by git, including in submodules, so untracked scratch files and downloads are left out. `.gitignore` doesn't apply to what git tracks
-- `--max-depth <N>` Limit directory traversal to N levels deep
-- `--min-lines <N>` Hide languages with fewer than N total lines
-- `-H, --hidden` Search hidden files and directories
-- `--symlinks` Follow symlinks (avoid cycles)
-- `-e, --exclude <PATTERN>` Exclude files or directories matching glob patterns (can be specified multiple times)
-- `-L, --lang <LANGUAGE>` Only analyze files of the specified language(s) (can be specified multiple times, cannot be used with `--exclude-lang`)
-- `--exclude-lang <LANGUAGE>` Exclude files of the specified language(s) (can be specified multiple times, cannot be used with `--lang`)
-- `-n, --number-style <plain|comma|underscore|space>` Number formatting style. Default: `plain`
-- `-u, --size-units <binary|decimal>` Human-readable size units. Default: `binary`
-- `-p, --precision <0-6>` Percentage precision. Default: `1`
-- `-s, --sort-by <lines|code|comments|blanks|files|size|name>` Sort key for languages and per-file detail. Default: `lines`
-- `-d, --sort-direction <asc|desc>` Sort direction. Default: `desc`
-- `-t, --top-languages <N>` Limit the language breakdown to the top N languages (at least 1; `--quiet` shows totals only)
-- `-D, --by-dir` Show a breakdown by directory instead of by language
-- `-o, --output <human|json|json-compact|csv|tsv|markdown|html>` Output format. Default: `human`
-- `--fail-on-error` Exit with a non-zero status code if any files are skipped due to errors
-- `-c, --config <PATH>` Use a TOML config file
-- `-h, --help` Print help
-- `-V, --version` Print version
+- `-q, --quiet`: Show only the totals. Do not show the languages.
+- `-v, --verbose`: Show the counts for each file, and the languages.
+- `--no-gitignore`: Ignore the `.gitignore` files.
+- `--include-generated`: Count generated files. Refer to [Generated files](#generated-files).
+- `--git`: Count only the files that git tracks, also in submodules. This flag excludes files that git does not track, such as downloads. `.gitignore` does not apply to files that git tracks.
+- `--max-depth <N>`: Go down a maximum of N directory levels.
+- `--min-lines <N>`: Do not show languages that have fewer than N lines.
+- `-H, --hidden`: Include hidden files and directories.
+- `--symlinks`: Follow symbolic links. Make sure that no link makes a loop.
+- `-e, --exclude <PATTERN>`: Exclude the files and directories that match the glob pattern. You can use this flag more than one time.
+- `-L, --lang <LANGUAGE>`: Count only this language. You can use this flag more than one time. You cannot use it with `--exclude-lang`.
+- `--exclude-lang <LANGUAGE>`: Do not count this language. You can use this flag more than one time. You cannot use it with `--lang`.
+- `-n, --number-style <plain|comma|underscore|space>`: The style of numbers. Default: `plain`.
+- `-u, --size-units <binary|decimal>`: The units of sizes. Default: `binary`.
+- `-p, --precision <0-6>`: The number of decimal places in percentages. Default: `1`.
+- `-s, --sort-by <lines|code|comments|blanks|files|size|name>`: The sort key for languages and files. Default: `lines`.
+- `-d, --sort-direction <asc|desc>`: The sort direction. Default: `desc`.
+- `-t, --top-languages <N>`: Show only the N largest languages. N must be 1 or more. To show only the totals, use `--quiet`.
+- `-D, --by-dir`: Show the counts by directory, not by language.
+- `-o, --output <human|json|json-compact|csv|tsv|markdown|html>`: The output format. Default: `human`.
+- `--fail-on-error`: If an error stops codestats from reading a file, exit with an error status.
+- `-c, --config <PATH>`: Use this TOML configuration file.
+- `-h, --help`: Show the help.
+- `-V, --version`: Show the version.
 
-`cs` exits with status 0 on success, 1 on an error (including a file skipped with `--fail-on-error`), and 2 when its arguments are invalid.
+### Exit status
+
+- `0`: The count is complete.
+- `1`: An error occurred. With `--fail-on-error`, a file that codestats could not read is an error.
+- `2`: The arguments are not correct.
 
 ## Subcommands
 
-- `diff <FROM> [PATH]` Compare line counts by language between a git revision and the working tree, or another revision with `--to <REV>`
-- `langs` List all supported languages
-- `completions <shell>` Generate shell completions (e.g. `bash`, `zsh`, `fish`)
+- `diff <FROM> [PATH]`: Compare the counts by language between a git revision and the working tree. To compare with a different revision, use `--to <REV>`.
+- `langs`: Show all the languages that codestats knows.
+- `completions <shell>`: Make shell completions, for example for `bash`, `zsh`, or `fish`.
+- `init`: Make a configuration file that shows all the settings.
 
 ## Configuration
 
-Codestats can read settings from TOML; anything given on the command line wins. A key it doesn't know is an error, so a typo can't be silently ignored. Search order:
+codestats can read its settings from a TOML file. A flag on the command line has priority over the same setting in the file. If the file has a key that codestats does not know, codestats stops with an error. Thus, a spelling mistake cannot go unseen.
 
-1. `--config <path>` (errors if missing)
+codestats uses the first file that it finds in this list:
+
+1. The file that you give with `--config <path>`. If this file is missing, codestats stops with an error.
 2. `./.codestats.toml`
 3. `./codestats.toml`
 4. `~/.config/codestats/config.toml`
 5. `~/.codestats.toml`
 
-### Example TOML config
+### Example configuration
 
 ```toml
-paths = ["src", "tests"]  # relative to this file
+paths = ["src", "tests"]  # Relative to this file.
 
 [analysis]
 verbosity = "verbose"
 respect_gitignore = true
-git_tracked_only = false  # true counts only files git tracks
+git_tracked_only = false  # If true, count only the files that git tracks.
 include_hidden = true
 follow_symlinks = false
-exclude_patterns = ["languages.json5", "*.tmp", "node_modules/*"]  # filenames or globs
-include_languages = ["rust", "python"]  # Only analyze these languages
-# exclude_languages = ["markdown", "toml"]  # Or exclude these (cannot use both)
+exclude_patterns = ["languages.json5", "*.tmp", "node_modules/*"]  # File names or glob patterns.
+include_languages = ["rust", "python"]  # Count only these languages.
+# exclude_languages = ["markdown", "toml"]  # Or do not count these languages. You cannot use both.
 fail_on_error = false
 
 [display]
@@ -262,40 +283,48 @@ by_dir = false
 
 ## Generated files
 
-By default, codestats does not count generated files. To count them, use `--include-generated`.
+codestats does not count generated files. To count them, use `--include-generated`.
 
-Codestats finds generated files in two ways:
+codestats finds generated files in two ways:
 
-- **By name.** Lockfiles (such as `Cargo.lock` and `package-lock.json`) and minified assets (`*.min.js`, `*.min.css`).
-- **By header.** Codestats reads the comments at the start of each file. These comments stop at the first line of code. If they say that a tool made the file, codestats does not count the file. Examples:
+- **By name.** Lockfiles (for example, `Cargo.lock` and `package-lock.json`) and minified files (`*.min.js` and `*.min.css`).
+- **By header.** codestats reads the comments at the start of each file. These comments stop at the first line of code. If the comments say that a tool made the file, codestats does not count the file. Examples:
   - `// Code generated by stringer; DO NOT EDIT.` (Go)
   - `// Generated by the protocol buffer compiler.  DO NOT EDIT!` (protobuf)
   - `// <auto-generated />` (C#)
   - `// @generated by pegen` (and other tools that write `@generated`)
   - `/* automatically generated by rust-bindgen */`
-  - `# This makefile was generated by bakefile.` with `# Do not modify` on a near line
+  - `# This makefile was generated by bakefile.`, with `# Do not modify` on a near line
 
 A comment that only mentions generated code does not make a file generated. For example, `// Retrieves the auto-generated key` does not.
 
-## Technical Notes
+## Technical notes
 
-### Memory-Mapped I/O
+### Memory-mapped files
 
-For performance, Codestats uses memory-mapped I/O for files >=256KB. This provides significant speedups but requires that files remain stable during analysis.
+codestats maps files of 256 KB or more into memory. This makes codestats faster. Do not change files while codestats counts them.
 
-### Thread Safety
+### Threads
 
-Codestats uses parallel processing to maximize performance. Each worker thread maintains its own statistics which are merged at the end, minimizing lock contention. The tool is safe for concurrent execution on different directories, but should not analyze the same directory simultaneously from multiple processes.
+codestats counts files on many threads at the same time. Each thread keeps its own counts. At the end, codestats adds the counts together. You can run codestats on different directories at the same time. Do not count the same directory with more than one codestats process at the same time.
 
 ## Accuracy
 
-Every change is checked in CI against [LineJudge](https://github.com/loc-conformance/linejudge), a corpus of tricky files (comment markers inside strings, raw strings, heredocs, languages embedded in other languages and more) judged by the rules codestats declares in [`.linejudge`](.linejudge). The cases codestats still gets wrong are recorded, with notes, in [`.linejudge/recorded/codestats.toml`](.linejudge/recorded/codestats.toml); CI fails if any other case changes its answer. To run it locally, install LineJudge and run `linejudge check --counter codestats` after `cargo build --release`.
+Each change to codestats must pass the [LineJudge](https://github.com/loc-conformance/linejudge) tests in CI. LineJudge is a set of difficult files. Examples are comment markers in strings, raw strings, heredocs, and languages in other languages. LineJudge compares the counts of codestats with the rules in [`.linejudge`](.linejudge).
+
+[`.linejudge/recorded/codestats.toml`](.linejudge/recorded/codestats.toml) gives the cases that codestats counts incorrectly, with notes. If the count of a different case changes, CI fails.
+
+To run LineJudge on your computer:
+
+1. Install LineJudge.
+2. Run `cargo build --release`.
+3. Run `linejudge check --counter codestats`.
 
 ## Benchmarks
 
-Measured with [hyperfine](https://github.com/sharkdp/hyperfine) on the repositories below at the commits pinned in [`scripts/bench.sh`](scripts/bench.sh), which reproduces these tables: `hyperfine -N --warmup 2 --runs 10` per tool (5 runs for rust and linux), with a warm file cache and every tool on its default settings.
+We measured these times with [hyperfine](https://github.com/sharkdp/hyperfine). [`scripts/bench.sh`](scripts/bench.sh) gives the commit of each repository, and it makes these tables again. Each tool ran with `hyperfine -N --warmup 2 --runs 10` (5 runs for rust and linux), with its default settings. The files were in the file cache.
 
-Mean wall time:
+Mean time:
 
 | Repository | Files | Lines | codestats | tokei | scc | gocloc |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -321,8 +350,8 @@ Peak memory:
 | [rust](https://github.com/rust-lang/rust) | **27 MB** | 86 MB | 130 MB | 67 MB |
 | [linux](https://github.com/torvalds/linux) | **72 MB** | 234 MB | 373 MB | 110 MB |
 
-Measured with codestats 0.9.1, tokei 15.0.0, scc 4.1.0, gocloc 0.7.0 and hyperfine 2.0.0 on an AMD Ryzen 7 PRO 5850U (8 cores, 16 threads) with 32 GB of RAM. File and line counts are codestats' own; tools differ slightly in what they count (for example, codestats skips generated and minified files by default).
+Versions: codestats 0.9.1, tokei 15.0.0, scc 4.1.0, gocloc 0.7.0, and hyperfine 2.0.0. Computer: AMD Ryzen 7 PRO 5850U (8 cores, 16 threads) with 32 GB of RAM. The counts of files and lines are from codestats. The tools do not count all the same files. For example, codestats does not count generated files.
 
 ## License
 
-Codestats is licensed under the [MIT License](LICENSE).
+codestats has the [MIT License](LICENSE).
