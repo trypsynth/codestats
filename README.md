@@ -262,27 +262,27 @@ Mean wall time:
 
 | Repository | Files | Lines | codestats | tokei | scc | gocloc |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| [ripgrep](https://github.com/BurntSushi/ripgrep) | 154 | 65K | **5.2 ms** | 9.4 ms | 12 ms | 40 ms |
-| [cli](https://github.com/cli/cli) | 1,125 | 321K | **10.0 ms** | 22 ms | 19 ms | 109 ms |
-| [nvda](https://github.com/nvaccess/nvda) | 1,158 | 1.6M | **19 ms** | 47 ms | 22 ms | 135 ms |
-| [wxWidgets](https://github.com/wxWidgets/wxWidgets) | 4,922 | 2.4M | **44 ms** | 147 ms | 104 ms | 444 ms |
-| [cpython](https://github.com/python/cpython) | 5,176 | 3.0M | **38 ms** | 140 ms | 79 ms | 658 ms |
-| [kubernetes](https://github.com/kubernetes/kubernetes) | 27,174 | 7.3M | **108 ms** | 356 ms | 217 ms | 2.01 s |
-| [rust](https://github.com/rust-lang/rust) | 42,485 | 5.3M | **131 ms** | 459 ms | 229 ms | 2.41 s |
-| [linux](https://github.com/torvalds/linux) | 93,350 | 44M | **510 ms** | 1.48 s | 968 ms | 11.0 s |
+| [ripgrep](https://github.com/BurntSushi/ripgrep) | 154 | 65K | **6.0 ms** | 9.9 ms | 13 ms | 45 ms |
+| [cli](https://github.com/cli/cli) | 1,125 | 321K | **9.9 ms** | 23 ms | 19 ms | 118 ms |
+| [nvda](https://github.com/nvaccess/nvda) | 1,158 | 1.6M | **15 ms** | 49 ms | 22 ms | 147 ms |
+| [wxWidgets](https://github.com/wxWidgets/wxWidgets) | 4,922 | 2.4M | **42 ms** | 156 ms | 115 ms | 485 ms |
+| [cpython](https://github.com/python/cpython) | 5,176 | 3.0M | **39 ms** | 153 ms | 88 ms | 720 ms |
+| [kubernetes](https://github.com/kubernetes/kubernetes) | 27,174 | 7.3M | **105 ms** | 387 ms | 242 ms | 2.13 s |
+| [rust](https://github.com/rust-lang/rust) | 42,485 | 5.3M | **137 ms** | 504 ms | 244 ms | 2.50 s |
+| [linux](https://github.com/torvalds/linux) | 93,350 | 44M | **550 ms** | 1.62 s | 1.06 s | 11.3 s |
 
 Peak memory:
 
 | Repository | codestats | tokei | scc | gocloc |
 | --- | ---: | ---: | ---: | ---: |
-| [ripgrep](https://github.com/BurntSushi/ripgrep) | **7.5 MB** | 7.8 MB | 27 MB | 30 MB |
-| [cli](https://github.com/cli/cli) | **7.7 MB** | 7.9 MB | 32 MB | 37 MB |
-| [nvda](https://github.com/nvaccess/nvda) | **17 MB** | 30 MB | 38 MB | 37 MB |
-| [wxWidgets](https://github.com/wxWidgets/wxWidgets) | **17 MB** | 127 MB | 75 MB | 40 MB |
-| [cpython](https://github.com/python/cpython) | **13 MB** | 24 MB | 65 MB | 45 MB |
-| [kubernetes](https://github.com/kubernetes/kubernetes) | **18 MB** | 64 MB | 99 MB | 52 MB |
+| [ripgrep](https://github.com/BurntSushi/ripgrep) | **7.4 MB** | 7.7 MB | 27 MB | 29 MB |
+| [cli](https://github.com/cli/cli) | **7.6 MB** | 7.9 MB | 33 MB | 36 MB |
+| [nvda](https://github.com/nvaccess/nvda) | **17 MB** | 29 MB | 38 MB | 38 MB |
+| [wxWidgets](https://github.com/wxWidgets/wxWidgets) | **17 MB** | 127 MB | 74 MB | 40 MB |
+| [cpython](https://github.com/python/cpython) | **12 MB** | 23 MB | 66 MB | 46 MB |
+| [kubernetes](https://github.com/kubernetes/kubernetes) | **17 MB** | 66 MB | 98 MB | 53 MB |
 | [rust](https://github.com/rust-lang/rust) | **25 MB** | 89 MB | 129 MB | 65 MB |
-| [linux](https://github.com/torvalds/linux) | **68 MB** | 259 MB | 380 MB | 110 MB |
+| [linux](https://github.com/torvalds/linux) | **61 MB** | 262 MB | 381 MB | 109 MB |
 
 Measured with codestats 0.9.1, tokei 15.0.0, scc 4.1.0, gocloc 0.7.0 and hyperfine 2.0.0 on an AMD Ryzen 7 PRO 5850U (8 cores, 16 threads) with 32 GB of RAM. File and line counts are codestats' own; tools differ slightly in what they count (for example, codestats skips generated and minified files by default).
 
