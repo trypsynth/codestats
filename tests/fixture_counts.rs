@@ -47,7 +47,14 @@ fn fixtures_match_expected_counts() {
 	assert!(!fixtures.is_empty(), "Add at least one fixture under {}", fixtures_root.display());
 	let binary = env!("CARGO_BIN_EXE_cs");
 	let output = Command::new(binary)
-		.args([fixtures_root.to_str().expect("Non-UTF-8 fixtures root"), "-o", "json", "-v", "--hidden"])
+		.args([
+			fixtures_root.to_str().expect("Non-UTF-8 fixtures root"),
+			"-o",
+			"json",
+			"-v",
+			"--hidden",
+			"--include-generated",
+		])
 		.output()
 		.unwrap_or_else(|err| panic!("Failed to run codestats for {}: {err}", fixtures_root.display()));
 	assert!(

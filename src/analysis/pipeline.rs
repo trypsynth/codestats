@@ -5,6 +5,7 @@ use anyhow::{Context as _, Result};
 use super::{
 	encoding::{decode_bytes, detect_encoding, is_probably_binary},
 	file_io::{self, FileSource},
+	generated::{has_generated_header, is_generated_name},
 	line_counter,
 	stats::{AnalysisResults, FileCounts},
 };
@@ -13,14 +14,15 @@ use crate::langs::{self, Language};
 /// How much of a file to read when its extension is shared by several languages and its content decides.
 const DETECTION_WINDOW: usize = 64 * 1024;
 
-/// The `--lang` and `--exclude-lang` filters.
+/// Which files count: the `--lang` and `--exclude-lang` filters, and `--include-generated` for files whose header says they were generated.
 #[derive(Clone, Copy)]
-pub struct LanguageFilter<'a> {
+pub struct FileFilter<'a> {
 	pub include: &'a [String],
 	pub exclude: &'a [String],
+	pub include_generated: bool,
 }
 
-impl LanguageFilter<'_> {
+impl FileFilter<'_> {
 	fn allows(self, language: &Language) -> bool {
 		if !self.include.is_empty() {
 			return self.include.iter().any(|filter| filter.eq_ignore_ascii_case(language.name));
@@ -39,15 +41,22 @@ fn detection_name(path: &Path) -> Option<Cow<'_, str>> {
 }
 
 /// The language and line counts of a file named `path` with contents `bytes`, or `None` if it isn't counted: unrecognized, binary, or filtered out.
-pub fn count_bytes(path: &Path, bytes: &[u8], languages: LanguageFilter) -> Option<(&'static Language, FileCounts)> {
-	count_contents(&langs::get_candidates(&detection_name(path)?), bytes, languages)
+pub fn count_bytes(path: &Path, bytes: &[u8], languages: FileFilter) -> Option<(&'static Language, FileCounts)> {
+	let name = detection_name(path)?;
+	if !languages.include_generated && is_generated_name(&name) {
+		return None;
+	}
+	count_contents(&langs::get_candidates(&name), bytes, languages)
 }
 
-/// Whether a file named `path` could be counted, judging by its name alone: false when its only possible language is filtered out and a shebang couldn't claim it, so its contents needn't be read.
-pub fn could_count(path: &Path, languages: LanguageFilter) -> bool {
-	detection_name(path).is_some_and(|name| match langs::get_candidates(&name)[..] {
-		[language] => languages.allows(language) || language.shebang_overrides,
-		_ => true,
+/// Whether a file named `path` could be counted, judging by its name alone: false when it's named like a generated file that isn't counted, or its only possible language is filtered out and a shebang couldn't claim it, so its contents needn't be read.
+pub fn could_count(path: &Path, languages: FileFilter) -> bool {
+	detection_name(path).is_some_and(|name| {
+		(languages.include_generated || !is_generated_name(&name))
+			&& match langs::get_candidates(&name)[..] {
+				[language] => languages.allows(language) || language.shebang_overrides,
+				_ => true,
+			}
 	})
 }
 
@@ -59,7 +68,7 @@ fn may_be_script(language: &Language, bytes: &[u8]) -> bool {
 fn count_contents(
 	candidates: &[&'static Language],
 	bytes: &[u8],
-	languages: LanguageFilter,
+	languages: FileFilter,
 ) -> Option<(&'static Language, FileCounts)> {
 	if bytes.is_empty() {
 		let language = langs::detect_language(candidates, None).language?;
@@ -67,7 +76,7 @@ fn count_contents(
 	}
 	let sample_bytes = file_io::sample(bytes);
 	let encoding = detect_encoding(&sample_bytes);
-	if is_probably_binary(&sample_bytes, encoding) {
+	if is_probably_binary(&sample_bytes, encoding) || (!languages.include_generated && has_generated_header(bytes)) {
 		return None;
 	}
 	// A single candidate decides by name alone, unless the file might be a script claimed by its shebang, so only decode the sample when content has a say.
@@ -96,9 +105,12 @@ pub fn process_file(
 	display_root: &Path,
 	results: &mut AnalysisResults,
 	collect_details: bool,
-	languages: LanguageFilter,
+	languages: FileFilter,
 ) -> Result<()> {
 	let filename = detection_name(file_path).context("Missing file name")?;
+	if !languages.include_generated && is_generated_name(&filename) {
+		return Ok(());
+	}
 	let candidates = langs::get_candidates(&filename);
 	if let [language] = candidates[..]
 		&& !languages.allows(language)
@@ -158,7 +170,7 @@ mod tests {
 					stack.push(path);
 					continue;
 				}
-				let languages = LanguageFilter { include: &[], exclude: &[] };
+				let languages = FileFilter { include: &[], exclude: &[], include_generated: true };
 				let mut results = AnalysisResults::default();
 				process_file(&path, &root, &mut results, true, languages).unwrap();
 				let from_disk = results.languages().next().map(|(lang, stats)| {

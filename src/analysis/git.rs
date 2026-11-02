@@ -14,22 +14,17 @@ use anyhow::{Context as _, Result, ensure};
 use ignore::overrides::{Override, OverrideBuilder};
 
 use super::{
-	pipeline::{self, LanguageFilter},
+	pipeline::{self, FileFilter},
 	stats::AnalysisResults,
 };
 use crate::config::AnalysisConfig;
 
-/// The exclusions a walk applies as overrides: generated files unless they're included, and `--exclude` patterns.
+/// The `--exclude` patterns a walk applies as overrides.
 pub(super) fn exclusions(root: &Path, config: &AnalysisConfig) -> Result<Option<Override>> {
-	if config.exclude_patterns.is_empty() && config.include_generated {
+	if config.exclude_patterns.is_empty() {
 		return Ok(None);
 	}
 	let mut builder = OverrideBuilder::new(root);
-	if !config.include_generated {
-		for pattern in super::generated::PATTERNS {
-			builder.add(&format!("!{pattern}"))?;
-		}
-	}
 	for pattern in &config.exclude_patterns {
 		// OverrideBuilder treats patterns without '!' as include rules, so we invert to enforce exclusion.
 		let glob: Cow<'_, str> =
@@ -106,7 +101,11 @@ pub fn count_snapshot(
 		Snapshot::Revision(revision) => git(&dir, &["ls-tree", "-r", "-z", revision, "--", &pathspec])?,
 	};
 	let filter = PathFilter::new(&dir, config, root.is_file())?;
-	let languages = LanguageFilter { include: &config.include_languages, exclude: &config.exclude_languages };
+	let languages = FileFilter {
+		include: &config.include_languages,
+		exclude: &config.exclude_languages,
+		include_generated: config.include_generated,
+	};
 	let records: Vec<&[u8]> = listing.split(|&b| b == 0).filter(|record| !record.is_empty()).collect();
 	// Workers take batches from a shared counter, so they stay evenly loaded, and each batch is a run of nearby paths.
 	let next = AtomicUsize::new(0);
@@ -171,13 +170,13 @@ enum Counter<'a> {
 	Files {
 		dir: &'a Path,
 		root: &'a Path,
-		languages: LanguageFilter<'a>,
+		languages: FileFilter<'a>,
 		collect_details: bool,
 		results: AnalysisResults,
 		skipped: u64,
 	},
 	Objects {
-		languages: LanguageFilter<'a>,
+		languages: FileFilter<'a>,
 		collect_details: bool,
 		results: AnalysisResults,
 		git: Child,
@@ -192,7 +191,7 @@ impl<'a> Counter<'a> {
 		snapshot: &Snapshot,
 		dir: &'a Path,
 		root: &'a Path,
-		languages: LanguageFilter<'a>,
+		languages: FileFilter<'a>,
 		collect_details: bool,
 	) -> Result<Self> {
 		let results = AnalysisResults::default();

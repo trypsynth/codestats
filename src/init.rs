@@ -27,7 +27,7 @@ const DEFAULT_CONFIG_TEMPLATE: &str = "\
 # Follow symbolic links
 # follow_symlinks = false
 
-# Count generated files (lockfiles, minified assets) excluded by default
+# Count generated files (lockfiles, minified assets, files whose header says they're generated) excluded by default
 # include_generated = false
 
 # Only count files tracked by git, including in submodules

@@ -11,7 +11,7 @@ use ignore::WalkBuilder;
 
 use super::{
 	git,
-	pipeline::{self, LanguageFilter},
+	pipeline::{self, FileFilter},
 	stats::AnalysisResults,
 };
 use crate::{config::AnalyzerConfig, display::Verbosity};
@@ -71,6 +71,7 @@ impl CodeAnalyzer {
 		let collect_details = self.config.collect_file_details;
 		let include_languages = self.config.analysis.include_languages.clone();
 		let exclude_languages = self.config.analysis.exclude_languages.clone();
+		let include_generated = self.config.analysis.include_generated;
 		let root = self.display_root.clone();
 		let aggregates = Arc::new(Mutex::new(Vec::new()));
 		let aggregates_for_walk = Arc::clone(&aggregates);
@@ -103,7 +104,7 @@ impl CodeAnalyzer {
 							&root,
 							&mut aggregator.local,
 							collect_details,
-							LanguageFilter { include: &include_languages, exclude: &exclude_languages },
+							FileFilter { include: &include_languages, exclude: &exclude_languages, include_generated },
 						) {
 							if verbosity == Verbosity::Verbose {
 								eprintln!("Failed to process {}: {err}", entry.path().display());
