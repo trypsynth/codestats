@@ -72,10 +72,7 @@ counted = { lines = 6, code = 2, comments = 4, blanks = 0 }
 counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
 
 [answer.1240-a_comment_opener_inside_a_vector_type.default]
-is-known-failure = true
-counted = { lines = 10, code = 1, comments = 9, blanks = 0 }
-note = """
-C3's <* opens a documentation comment, so the vector type int[<*>] opens one too. Telling them apart needs the type syntax, which a line counter doesn't parse."""
+counted = { lines = 10, code = 6, comments = 4, blanks = 0 }
 
 [answer.1260-pod_closer_indented_inside_the_documentation.default]
 counted = { lines = 15, code = 3, comments = 5, blanks = 7 }

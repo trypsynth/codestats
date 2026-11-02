@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- C3 vector types like `int[<*>]` no longer open a `<*` documentation comment, which turned much of C3's standard library into comments (`mem.c3` went from 40 lines of code to 555), and C3's strings, char literals and backtick raw strings are recognized
 - A D file whose only sign of being D is a `;` (rather than one of its keywords) is counted as D; Make's dependency files, which share the `.d` extension, still aren't
 - C++ raw strings with a delimiter of their own, like `R"sql(...)sql"`, end only at that delimiter, so a `)"` or comment marker inside one is text
 - The HTML in PHP files, outside their `<?php ... ?>` tags, is counted by HTML's rules and listed as embedded HTML, with its scripts and styles as theirs, so `<!-- -->` comments in a template are comments. PHP's strings may also span lines now, as they can in PHP

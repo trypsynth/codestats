@@ -398,6 +398,8 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"], ["<*", "*>"]],
 		nested_blocks: true,
+		// `[<` and `>]` bracket a vector's length (`int[<*>]`), which the compiler reads as one token, so the `<*` there isn't a comment.
+		strings: ["\"", {open: "'", char: true}, {open: "`", escape: null, multiline: true}, {open: "[<", close: ">]", escape: null}],
 	},
 	"Cabal": {
 		file_patterns: ["*.cabal", "cabal.project", "cabal.project.freeze"],
