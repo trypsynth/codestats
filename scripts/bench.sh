@@ -38,7 +38,7 @@ for entry in "${repos[@]}"; do
 		args+=(-n "$tool" "$bin $dir/$name")
 	done
 	hyperfine -N --warmup 2 --runs "$runs" --export-json "$dir/results/$name.json" "${args[@]}" >/dev/null || exit 1
-	"$cs" "$dir/$name" -q -o json-compact | jq -c .summary >"$dir/results/$name.summary.json"
+	"$cs" "$dir/$name" -q -o json-compact | jq -c .totals >"$dir/results/$name.summary.json"
 done
 
 table() {
@@ -72,7 +72,7 @@ table() {
 			| [$values[] | (if $metric == "time" then seconds else megabytes end) as $cell | if . == $best then "**\($cell)**" else $cell end] as $cells
 			| ($repo | split("/")[1]) as $name
 			| "| [\($name)](https://github.com/\($repo)) |"
-				+ (if $metric == "time" then " \($summary[0].total_files | grouped) | \($summary[0].total_lines | lines) |" else "" end)
+				+ (if $metric == "time" then " \($summary[0].file_count | grouped) | \($summary[0].lines.total | lines) |" else "" end)
 				+ ($cells | map(" \(.) |") | join(""))
 		' "$dir/results/$name.json"
 	done
