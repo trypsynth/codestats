@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.9.1
 
 - Embedded code is now broken down by language. Each language lists the languages embedded in its files and their lines, such as the JavaScript in Markdown files, in every output format: an `embedded` list on languages and files in JSON, an "Embedded code" list in human output, and an embedded code table in CSV and TSV (with `--verbose`), Markdown and HTML. Embedded lines still count toward their file's language
 - Code blocks in AsciiDoc (`[source,python]` listings and fenced blocks), Org (`#+BEGIN_SRC`) and reStructuredText (`.. code-block::` and similar directives) are counted by their own language's rules, like those in Markdown
