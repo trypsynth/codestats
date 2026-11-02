@@ -49,9 +49,50 @@ impl ByteSet {
 			[a] => memchr(a, haystack),
 			[a, b] => memchr2(a, b, haystack),
 			[a, b, c] => memchr3(a, b, c, haystack),
+			[a, b, c, ref rest @ ..] if rest.len() <= 6 => find_in_groups([a, b, c], rest, haystack),
 			_ => haystack.iter().position(|&b| self.table[usize::from(b)]),
 		}
 	}
+
+	/// A set with a byte of each of `markers`, so a text with none of the set's bytes contains none of the markers. A marker's punctuation is chosen over its letters and digits, which turn up on nearly every line, and bytes already chosen are reused: Rust's raw strings `r"` and `r#"` are covered by the `"` of its plain strings rather than by `r`.
+	fn covering<'a>(markers: impl IntoIterator<Item = &'a str>) -> Self {
+		let mut chosen = Vec::new();
+		let mut candidates: Vec<Vec<u8>> = markers
+			.into_iter()
+			.filter(|marker| !marker.is_empty())
+			.map(|marker| {
+				let bytes = marker.as_bytes();
+				let punctuation: Vec<u8> =
+					bytes.iter().copied().filter(|b| !b.is_ascii_alphanumeric() && *b != b'_').collect();
+				if punctuation.is_empty() { bytes.to_vec() } else { punctuation }
+			})
+			.collect();
+		// Markers with the fewest choices pick first, so the others can reuse what they picked.
+		candidates.sort_by_key(Vec::len);
+		for bytes in candidates {
+			if !bytes.iter().any(|b| chosen.contains(b)) {
+				chosen.push(bytes[0]);
+			}
+		}
+		Self::new(chosen)
+	}
+}
+
+/// The first of `first` or `rest` in `haystack`, searching for three bytes at a time, each search stopping at the earliest match so far: two or three vectorized passes beat looking at every byte. Kept out of line so the one- to three-byte searches inline.
+#[inline(never)]
+fn find_in_groups([a, b, c]: [u8; 3], rest: &[u8], haystack: &[u8]) -> Option<usize> {
+	let mut found = memchr3(a, b, c, haystack);
+	for group in rest.chunks(3) {
+		let end = found.unwrap_or(haystack.len());
+		let earlier = match *group {
+			[a] => memchr(a, &haystack[..end]),
+			[a, b] => memchr2(a, b, &haystack[..end]),
+			[a, b, c] => memchr3(a, b, c, &haystack[..end]),
+			_ => unreachable!("chunks of three are never empty or longer"),
+		};
+		found = earlier.or(found);
+	}
+	found
 }
 
 /// What a token found by [`StringMatchers::find_token`] starts.
@@ -191,15 +232,14 @@ fn build_language_matchers(lang: &Language) -> LanguageMatchers {
 		Some(BlockCommentMatchers { start_automaton, pairs })
 	};
 	let strings = (!lang.strings.is_empty() || lang.heredoc.is_some()).then(|| build_string_matchers(lang));
-	let openers = ByteSet::new(
+	let openers = ByteSet::covering(
 		lang.line_comments
 			.iter()
 			.copied()
 			.chain(lang.block_comments.iter().map(|&(start, _, _)| start))
 			.chain(lang.strings.iter().map(|delimiter| delimiter.open))
 			.chain(lang.heredoc.map(Heredoc::opener))
-			.filter_map(|marker| marker.as_bytes().first().copied())
-			.chain(lang.regex_literals.then_some(b'/')),
+			.chain(lang.regex_literals.then_some("/")),
 	);
 	LanguageMatchers { line_comments, block_comments, strings, openers }
 }
@@ -233,13 +273,12 @@ fn build_string_matchers(lang: &Language) -> StringMatchers {
 		.build(&patterns)
 		.expect("AhoCorasick should never fail to build with valid comment and string patterns");
 	let closes = lang.strings.iter().map(|delimiter| Finder::new(delimiter.close)).collect();
-	let open_bytes = ByteSet::new(
+	let open_bytes = ByteSet::covering(
 		lang.strings
 			.iter()
 			.map(|delimiter| delimiter.open)
 			.chain(lang.heredoc.map(Heredoc::opener))
-			.map(|open| open.as_bytes()[0])
-			.chain(lang.regex_literals.then_some(b'/')),
+			.chain(lang.regex_literals.then_some("/")),
 	);
 	StringMatchers { tokens, kinds, closes, open_bytes }
 }
