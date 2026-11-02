@@ -12,7 +12,7 @@ use crate::{
 };
 
 /// Version of the `cs diff` JSON shape, raised whenever a field is renamed, removed or changes meaning.
-const SCHEMA_VERSION: u32 = 1;
+const SCHEMA_VERSION: u32 = 2;
 
 /// One version's counts for a language, or for everything.
 #[derive(Clone, Copy, Default, Serialize)]
@@ -229,7 +229,8 @@ fn write_human(diff: &Diff, ctx: &FormatterContext, writer: &mut dyn Write) -> R
 #[derive(Serialize)]
 struct JsonDiff<'a> {
 	schema_version: u32,
-	path: &'a str,
+	/// The paths compared, as a list like the main report's, though `cs diff` takes one.
+	paths: [&'a str; 1],
 	from: &'a str,
 	/// `None` for the working tree.
 	to: Option<&'a str>,
@@ -255,7 +256,7 @@ struct JsonLanguage {
 fn write_json(diff: &Diff, options: ViewOptions, writer: &mut dyn Write, pretty: bool) -> Result<()> {
 	let json = JsonDiff {
 		schema_version: SCHEMA_VERSION,
-		path: &diff.path,
+		paths: [&diff.path],
 		from: diff.from_name,
 		to: diff.to_name,
 		totals: JsonPair { from: diff.totals.0, to: diff.totals.1 },

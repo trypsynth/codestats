@@ -3,7 +3,7 @@ use std::{
 	path::{Path, PathBuf},
 };
 
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
 
 use crate::display::{
@@ -23,32 +23,26 @@ fn parse_config_context(path: &Path) -> String {
 }
 
 /// Resolved configuration after loading defaults, config files, and CLI overrides.
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(default)]
+#[derive(Clone, Debug)]
 pub struct Config {
-	pub path: PathBuf,
+	/// The paths to count together, never empty.
+	pub paths: Vec<PathBuf>,
 	pub analysis: AnalysisConfig,
 	pub display: DisplayConfig,
-	#[serde(skip)]
 	/// Path to the config file that provided these settings, if any.
 	pub source: Option<PathBuf>,
-	#[serde(skip)]
-	/// True when the config file explicitly sets `path`.
-	pub path_overridden: bool,
-	#[serde(skip)]
-	/// Paths after the first given on the command line, counted together with it.
-	pub extra_paths: Vec<PathBuf>,
+	/// True when the config file explicitly sets `paths`.
+	pub paths_overridden: bool,
 }
 
 impl Default for Config {
 	fn default() -> Self {
 		Self {
-			path: PathBuf::from("."),
+			paths: vec![PathBuf::from(".")],
 			analysis: AnalysisConfig::default(),
 			display: DisplayConfig::default(),
 			source: None,
-			path_overridden: false,
-			extra_paths: Vec::new(),
+			paths_overridden: false,
 		}
 	}
 }
@@ -59,7 +53,7 @@ impl Default for Config {
 	reason = "each bool maps to a distinct on/off analysis option with no meaningful grouping as an enum"
 )]
 #[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(default)]
+#[serde(default, deny_unknown_fields)]
 pub struct AnalysisConfig {
 	pub verbosity: Verbosity,
 	pub respect_gitignore: bool,
@@ -95,7 +89,7 @@ impl Default for AnalysisConfig {
 
 /// Output formatting settings loaded from TOML and the CLI.
 #[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(default)]
+#[serde(default, deny_unknown_fields)]
 pub struct DisplayConfig {
 	pub number_style: NumberStyle,
 	pub size_units: SizeStyle,
@@ -133,12 +127,21 @@ pub struct AnalyzerConfig {
 	pub collect_file_details: bool,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, Default)]
-#[serde(default)]
+#[derive(Debug, Deserialize, Default)]
+#[serde(default, deny_unknown_fields)]
 struct RawConfig {
-	path: Option<PathBuf>,
+	#[serde(alias = "path")]
+	paths: Option<Paths>,
 	analysis: AnalysisConfig,
 	display: DisplayConfig,
+}
+
+/// `paths` in a config file: a list, or one path on its own.
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+enum Paths {
+	One(PathBuf),
+	Many(Vec<PathBuf>),
 }
 
 impl Config {
@@ -149,14 +152,20 @@ impl Config {
 		let path = path.as_ref();
 		let contents = fs::read_to_string(path).with_context(|| read_config_context(path))?;
 		let raw: RawConfig = toml::from_str(&contents).with_context(|| parse_config_context(path))?;
-		let path_overridden = raw.path.is_some();
+		let paths = match raw.paths {
+			None => None,
+			Some(Paths::One(path)) => Some(vec![path]),
+			Some(Paths::Many(paths)) => {
+				ensure!(!paths.is_empty(), "{}: `paths` needs at least one path", parse_config_context(path));
+				Some(paths)
+			}
+		};
 		Ok(Self {
-			path: raw.path.unwrap_or_else(|| PathBuf::from(".")),
+			paths_overridden: paths.is_some(),
+			paths: paths.unwrap_or_else(|| vec![PathBuf::from(".")]),
 			analysis: raw.analysis,
 			display: raw.display,
 			source: Some(path.to_path_buf()),
-			path_overridden,
-			extra_paths: Vec::new(),
 		})
 	}
 }

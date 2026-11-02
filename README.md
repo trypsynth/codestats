@@ -50,6 +50,8 @@ sudo mv cs-* /usr/local/bin/cs
 cargo install codestats
 ```
 
+This needs Rust 1.88 or newer. The minimum version only goes up in a minor release, never a patch release.
+
 ### From source
 
 ```bash
@@ -152,7 +154,9 @@ cs completions <shell>
 
 ### JSON
 
-Every level of a JSON report counts lines the same way. `paths` lists the paths counted, and `path` joins them with commas. `files` appears with `--verbose`, and `directories` with `--by-dir`; `schema_version` changes whenever a field is renamed, removed or changes meaning.
+Every level of a JSON report counts lines the same way. `paths` lists the paths counted together. `files` appears with `--verbose`, and `directories` with `--by-dir`. `cs diff -o json` reports `from` and `to` counts in the same shape.
+
+`schema_version` goes up whenever a field is renamed, removed or changes meaning; new fields can appear without it changing, so read reports in a way that ignores fields you don't know. The same promise covers CSV and TSV columns and the config file's keys: from 1.0 on, those only break in a new major version.
 
 A language or file with code embedded in it, like the Rust in a Markdown file, has an `embedded` list of those languages and their lines, which are also counted in its own `lines`:
 
@@ -162,8 +166,7 @@ A language or file with code embedded in it, like the Rust in a Markdown file, h
 
 ```json
 {
-	"schema_version": 1,
-	"path": "src",
+	"schema_version": 2,
 	"paths": ["src"],
 	"totals": {
 		"file_count": 30,
@@ -204,13 +207,15 @@ Usage: `cs [OPTIONS] [PATH]...` (defaults to the current directory)
 - `-p, --precision <0-6>` Percentage precision. Default: `1`
 - `-s, --sort-by <lines|code|comments|blanks|files|size|name>` Sort key for languages and per-file detail. Default: `lines`
 - `-d, --sort-direction <asc|desc>` Sort direction. Default: `desc`
-- `-t, --top-languages <N>` Limit the language breakdown to the top N languages
+- `-t, --top-languages <N>` Limit the language breakdown to the top N languages (at least 1; `--quiet` shows totals only)
 - `-D, --by-dir` Show a breakdown by directory instead of by language
 - `-o, --output <human|json|json-compact|csv|tsv|markdown|html>` Output format. Default: `human`
 - `--fail-on-error` Exit with a non-zero status code if any files are skipped due to errors
 - `-c, --config <PATH>` Use a TOML config file
 - `-h, --help` Print help
 - `-V, --version` Print version
+
+`cs` exits with status 0 on success, 1 on an error (including a file skipped with `--fail-on-error`), and 2 when its arguments are invalid.
 
 ## Subcommands
 
@@ -220,7 +225,7 @@ Usage: `cs [OPTIONS] [PATH]...` (defaults to the current directory)
 
 ## Configuration
 
-Codestats can read settings from TOML while keeping full CLI compatibility. Search order:
+Codestats can read settings from TOML; anything given on the command line wins. A key it doesn't know is an error, so a typo can't be silently ignored. Search order:
 
 1. `--config <path>` (errors if missing)
 2. `./.codestats.toml`
@@ -231,6 +236,8 @@ Codestats can read settings from TOML while keeping full CLI compatibility. Sear
 ### Example TOML config
 
 ```toml
+paths = ["src", "tests"]  # relative to this file
+
 [analysis]
 verbosity = "verbose"
 respect_gitignore = true

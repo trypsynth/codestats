@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Breaking: JSON reports, including `cs diff`'s, list the counted paths in `paths` and no longer have `path`, and `schema_version` is 2
+- Breaking: the `size` column in CSV and TSV is now `bytes`, as in JSON and `cs diff`'s CSV
+- Breaking: an unknown key in a config file is an error naming it, rather than silently ignored, so a typo like `sort_bye` is caught
+- Breaking: `--top-languages 0` (or `top_languages = 0`) is an error pointing to `--quiet`, rather than reporting that no languages were found
+- A config file can set `paths = ["src", "tests"]`, relative to the file; `path = "src"` still works
 - C3 vector types like `int[<*>]` no longer open a `<*` documentation comment, which turned much of C3's standard library into comments (`mem.c3` went from 40 lines of code to 555), and C3's strings, char literals and backtick raw strings are recognized
 - A D file whose only sign of being D is a `;` (rather than one of its keywords) is counted as D; Make's dependency files, which share the `.d` extension, still aren't
 - C++ raw strings with a delimiter of their own, like `R"sql(...)sql"`, end only at that delimiter, so a `)"` or comment marker inside one is text
@@ -10,7 +15,7 @@
 - PowerShell here-strings (`@'...'@`, `@"..."@`) are recognized
 - A C string carried onto the next line by a backslash ends at a blank line
 - `cs completions` no longer panics when its output is cut short, as by `cs completions bash | head`
-- Several paths can be counted together, as in `cs src tests build.rs`. Files are listed by the path they were reached by, and a path given twice or inside another is only counted once. `cs diff` still takes one path. JSON reports list them in a new `paths` field, and `path` joins them with commas
+- Several paths can be counted together, as in `cs src tests build.rs`. Files are listed by the path they were reached by, and a path given twice or inside another is only counted once. `cs diff` still takes one path. JSON reports list them in a new `paths` field
 - The summary's list of languages ends with "and" before the last one, like the other lists in human output
 - A plain heredoc (`<<EOF`) only ends at its word at the start of a line, while `<<~EOF` and `<<-EOF` (and any heredoc in PHP) may end at an indented one, and Ruby's `class <<self` is no longer taken for a heredoc
 - In C, C++, Objective-C and CUDA, a line comment ending in a backslash carries on onto the next line, as the compiler reads it

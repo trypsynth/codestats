@@ -11,6 +11,9 @@ const DEFAULT_CONFIG_TEMPLATE: &str = "\
 # Codestats configuration file
 # See: cs --help for details on each option
 
+# Paths to count together, relative to this file (default: the current directory)
+# paths = [\"src\", \"tests\"]
+
 [analysis]
 # Verbosity level: summary (totals only), regular (default), verbose (per-file details)
 # verbosity = \"regular\"

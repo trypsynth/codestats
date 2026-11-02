@@ -17,7 +17,7 @@ use std::{
 };
 
 use analysis::{AnalysisResults, CodeAnalyzer, Snapshot, count_snapshot};
-use anyhow::{Context as _, Result, anyhow, ensure};
+use anyhow::{Context as _, Result, anyhow, bail, ensure};
 use clap::ArgMatches;
 use cli::{Cli, Commands, DiffArgs, SourceArgs};
 use config::Config;
@@ -92,7 +92,7 @@ fn base_config(source: &SourceArgs) -> Result<Config> {
 }
 
 fn ensure_path(config: &Config) -> Result<()> {
-	for path in std::iter::once(&config.path).chain(&config.extra_paths) {
+	for path in &config.paths {
 		ensure!(path.exists(), "Path `{}` not found", path.display());
 	}
 	Ok(())
@@ -100,9 +100,9 @@ fn ensure_path(config: &Config) -> Result<()> {
 
 /// The paths to count, leaving out any given twice or inside another, whose files would otherwise be counted twice.
 fn roots(config: &Config) -> Vec<PathBuf> {
-	let given: Vec<&PathBuf> = std::iter::once(&config.path).chain(&config.extra_paths).collect();
+	let given = &config.paths;
 	let resolved: Vec<PathBuf> =
-		given.iter().map(|path| path.canonicalize().unwrap_or_else(|_| (*path).clone())).collect();
+		given.iter().map(|path| path.canonicalize().unwrap_or_else(|_| path.clone())).collect();
 	given
 		.iter()
 		.enumerate()
@@ -112,25 +112,27 @@ fn roots(config: &Config) -> Vec<PathBuf> {
 				.enumerate()
 				.any(|(j, other)| j != i && resolved[i].starts_with(other) && (resolved[i] != *other || j < i))
 		})
-		.map(|(_, path)| (*path).clone())
+		.map(|(_, path)| path.clone())
 		.collect()
 }
 
 fn run_diff(args: &DiffArgs, matches: &ArgMatches) -> Result<()> {
 	let config = cli::merge_diff_config(base_config(&args.source)?, args, matches)?;
-	ensure!(config.extra_paths.is_empty(), "`cs diff` compares one path at a time");
+	let [path] = &config.paths[..] else {
+		bail!("`cs diff` compares one path at a time");
+	};
 	ensure_path(&config)?;
-	let from = count_snapshot(&config.path, &Snapshot::Revision(&args.from), &config.analysis, false)
+	let from = count_snapshot(path, &Snapshot::Revision(&args.from), &config.analysis, false)
 		.with_context(|| format!("couldn't read revision `{}`", args.from))?;
 	let to = match &args.to {
-		Some(revision) => count_snapshot(&config.path, &Snapshot::Revision(revision), &config.analysis, false)
+		Some(revision) => count_snapshot(path, &Snapshot::Revision(revision), &config.analysis, false)
 			.with_context(|| format!("couldn't read revision `{revision}`"))?,
 		// The working tree's submodules are left out, as a revision's can't be read.
-		None => count_snapshot(&config.path, &Snapshot::WorkingTree { submodules: false }, &config.analysis, false)?,
+		None => count_snapshot(path, &Snapshot::WorkingTree { submodules: false }, &config.analysis, false)?,
 	};
 	let versions = Versions { from_name: &args.from, to_name: args.to.as_deref(), from: &from, to: &to };
 	let mut stdout = io::stdout();
-	display::write_diff(config.display.output, &versions, &config.path, (&config).into(), &mut stdout)?;
+	display::write_diff(config.display.output, &versions, path, (&config).into(), &mut stdout)?;
 	stdout.flush()?;
 	let skipped = from.skipped_entries() + to.skipped_entries();
 	if config.analysis.fail_on_error && skipped > 0 {

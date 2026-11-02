@@ -14,14 +14,12 @@ use crate::{
 };
 
 /// Version of the JSON output's shape, raised whenever a field is renamed, removed or changes meaning.
-const SCHEMA_VERSION: u32 = 1;
+const SCHEMA_VERSION: u32 = 2;
 
 #[derive(Serialize)]
 struct Report<'a> {
 	schema_version: u32,
-	/// The paths counted, joined with commas.
-	path: &'a str,
-	/// The paths counted, one by one.
+	/// The paths counted together.
 	paths: &'a [String],
 	totals: Totals,
 	languages: Vec<Group<'a>>,
@@ -90,7 +88,6 @@ impl<'a> Report<'a> {
 		let summary = &report.summary;
 		Self {
 			schema_version: SCHEMA_VERSION,
-			path: &report.analysis_path,
 			paths: &report.analysis_paths,
 			totals: Totals { file_count: summary.total_files, lines: summary.counts, bytes: summary.total_size },
 			languages: report
@@ -217,7 +214,7 @@ mod tests {
 	fn schema_has_one_shape_for_counts_at_every_level() {
 		use crate::display::Verbosity;
 		let report = render(false, Verbosity::Verbose);
-		assert_eq!(keys(&report), ["hidden_languages", "languages", "path", "paths", "schema_version", "totals"]);
+		assert_eq!(keys(&report), ["hidden_languages", "languages", "paths", "schema_version", "totals"]);
 		assert_eq!(report["schema_version"], SCHEMA_VERSION);
 		let lines = serde_json::json!({ "total": 10, "code": 7, "comment": 2, "blank": 1, "shebang": 0 });
 		assert_eq!(report["totals"], serde_json::json!({ "file_count": 1, "lines": lines, "bytes": 100 }));

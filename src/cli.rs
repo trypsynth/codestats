@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use anyhow::{Result, ensure};
 use clap::{ArgMatches, CommandFactory, FromArgMatches, Parser, Subcommand, parser::ValueSource};
@@ -151,7 +151,7 @@ pub struct FormatArgs {
 	#[arg(short, long, value_enum, default_value_t = OutputFormat::Human)]
 	pub output: OutputFormat,
 	/// Only show the top N languages in the breakdown
-	#[arg(short = 't', long, value_name = "N")]
+	#[arg(short = 't', long, value_name = "N", value_parser = parse_top_languages)]
 	pub top_languages: Option<usize>,
 }
 
@@ -205,12 +205,9 @@ pub fn merge_diff_config(config: Config, args: &DiffArgs, matches: &ArgMatches) 
 }
 
 fn merge_shared(mut config: Config, source: &SourceArgs, format: &FormatArgs, matches: &ArgMatches) -> Result<Config> {
-	let path_overridden = cli_overrode(matches, "paths");
-	if let [first, rest @ ..] = &source.paths[..]
-		&& path_overridden
-	{
-		config.path.clone_from(first);
-		config.extra_paths = rest.to_vec();
+	let paths_given = cli_overrode(matches, "paths") && !source.paths.is_empty();
+	if paths_given {
+		config.paths.clone_from(&source.paths);
 	}
 	apply!(matches, "hidden", config.analysis.include_hidden = source.hidden);
 	apply!(matches, "include_generated", config.analysis.include_generated = source.include_generated);
@@ -230,20 +227,35 @@ fn merge_shared(mut config: Config, source: &SourceArgs, format: &FormatArgs, ma
 	if cli_overrode(matches, "exclude_lang") {
 		config.analysis.exclude_languages.extend(source.exclude_lang.clone());
 	}
-	if !path_overridden
-		&& config.path_overridden
-		&& let Some(source) = &config.source
-		&& config.path.is_relative()
-		&& let Some(parent) = source.parent()
+	// Paths in a config file are relative to the file.
+	if !paths_given
+		&& config.paths_overridden
+		&& let Some(parent) = config.source.as_deref().and_then(Path::parent)
 	{
-		config.path = parent.join(&config.path);
+		for path in &mut config.paths {
+			if path.is_relative() {
+				*path = parent.join(&*path);
+			}
+		}
 	}
 	config.display.precision = config.display.precision.min(6);
+	ensure!(
+		config.display.top_languages != Some(0),
+		"top_languages must be at least 1 (use verbosity = \"summary\" for totals only)"
+	);
 	ensure!(
 		config.analysis.include_languages.is_empty() || config.analysis.exclude_languages.is_empty(),
 		"Config cannot set both include_languages and exclude_languages"
 	);
 	Ok(config)
+}
+
+fn parse_top_languages(value: &str) -> Result<usize, String> {
+	match value.parse() {
+		Ok(0) => Err("must be at least 1 (use --quiet for totals only)".into()),
+		Ok(n) => Ok(n),
+		Err(error) => Err(error.to_string()),
+	}
 }
 
 fn cli_overrode(matches: &ArgMatches, id: &str) -> bool {
@@ -288,7 +300,30 @@ mod tests {
 		let (args, matches) = parse_cli(&["cs"]);
 		let merged = merge_config(config, &args, &matches).expect("merge config");
 		let expected = config_path.parent().expect("config parent").join("fixtures");
-		assert_eq!(merged.path, expected);
+		assert_eq!(merged.paths, [expected]);
+	}
+
+	#[test]
+	fn config_takes_a_list_of_paths_relative_to_itself() {
+		let config_path = write_config("paths = [\"src\", \"/abs\"]\n");
+		let config = Config::from_file(&config_path).expect("load config");
+		let (args, matches) = parse_cli(&["cs"]);
+		let merged = merge_config(config, &args, &matches).expect("merge config");
+		let parent = config_path.parent().expect("config parent");
+		assert_eq!(merged.paths, [parent.join("src"), PathBuf::from("/abs")]);
+	}
+
+	#[test]
+	fn config_rejects_unknown_keys() {
+		for contents in ["sort_by = \"code\"\n", "[display]\nsort_bye = \"code\"\n", "[analysis]\nhidden = true\n"] {
+			let error = Config::from_file(write_config(contents)).expect_err(contents);
+			assert!(format!("{error:#}").contains("unknown field"), "{contents}: {error:#}");
+		}
+	}
+
+	#[test]
+	fn config_rejects_an_empty_list_of_paths() {
+		assert!(Config::from_file(write_config("paths = []\n")).is_err());
 	}
 
 	#[test]
@@ -297,7 +332,7 @@ mod tests {
 		let config = Config::from_file(&config_path).expect("load config");
 		let (args, matches) = parse_cli(&["cs", "custom-path"]);
 		let merged = merge_config(config, &args, &matches).expect("merge config");
-		assert_eq!(merged.path, PathBuf::from("custom-path"));
+		assert_eq!(merged.paths, [PathBuf::from("custom-path")]);
 	}
 
 	#[test]
