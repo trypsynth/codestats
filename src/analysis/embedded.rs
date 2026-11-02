@@ -1,6 +1,6 @@
 //! Counting the regions of a file written in another language (a `<script>` in HTML, a fenced code block in Markdown) by that language's rules. The lines still belong to the file's own language.
 
-use std::mem;
+use std::{mem, sync::LazyLock};
 
 use memchr::memchr_iter;
 
@@ -27,6 +27,8 @@ enum Region {
 	},
 	/// After an `AsciiDoc` `[source,python]` line, which says what the listing block it's followed by is written in.
 	SourceAttribute(Option<&'static Language>),
+	/// A PHP file's HTML, outside its `<?php ... ?>` tags, read by a classifier of its own that follows HTML's elements, made once a line of HTML needs it.
+	Markup(Option<Box<Classifier<'static>>>),
 	/// Inside an embedded region. Its lines are classified as the host's when its language isn't known.
 	Embedded {
 		language: Option<&'static Language>,
@@ -89,7 +91,9 @@ impl End {
 
 impl<'a> Classifier<'a> {
 	pub(super) fn new(language: &'a Language) -> Self {
-		Self { language, state: CommentState::new(), region: Region::Host, embedded: Embedded::default() }
+		// A PHP file is HTML until its first `<?php`.
+		let region = if language.embedding == Some(Embedding::Php) { Region::Markup(None) } else { Region::Host };
+		Self { language, state: CommentState::new(), region, embedded: Embedded::default() }
 	}
 
 	/// Whether the next line starts in the file's own language, outside any comment or string.
@@ -101,8 +105,11 @@ impl<'a> Classifier<'a> {
 		let Some(embedding) = self.language.embedding else {
 			return classify_line(line, self.language, &mut self.state, is_first_line);
 		};
+		if embedding == Embedding::Php {
+			return self.classify_php(line, is_first_line);
+		}
 		match &mut self.region {
-			Region::Host => {}
+			Region::Host | Region::Markup(_) => {}
 			Region::OpeningTag { tag, attributes } => {
 				let Some(end) = line.find('>') else {
 					attributes.push_str(line);
@@ -169,8 +176,44 @@ impl<'a> Classifier<'a> {
 	}
 
 	/// The lines classified so far that were in a region of a known language.
-	pub(super) fn into_embedded(self) -> Embedded {
+	pub(super) fn into_embedded(mut self) -> Embedded {
+		if let Region::Markup(Some(markup)) = mem::replace(&mut self.region, Region::Host) {
+			self.embedded.merge(&markup.into_embedded());
+		}
 		self.embedded
+	}
+
+	/// A line of a PHP file: HTML until a `<?php` tag, whose line is PHP's, and PHP until a `?>` outside its strings and comments, whose line is too.
+	fn classify_php(&mut self, line: &str, is_first_line: bool) -> LineType {
+		let in_markup = matches!(self.region, Region::Markup(_));
+		if let Region::Markup(markup) = &mut self.region
+			&& let Some(html) = *HTML
+		{
+			if !opens_php(line) {
+				let markup = markup.get_or_insert_with(|| Box::new(Classifier::new(html)));
+				let before = markup.embedded.total();
+				let line_type = markup.classify(line, is_first_line);
+				// Lines of the HTML's own scripts and styles are already counted as theirs.
+				if markup.embedded.total() == before {
+					self.embedded.add(html, line_type);
+				}
+				return line_type;
+			}
+			if let Region::Markup(Some(markup)) = mem::replace(&mut self.region, Region::Host) {
+				self.embedded.merge(&markup.into_embedded());
+			}
+		}
+		let starts_clear = in_markup || self.state.is_clear();
+		let line_type = classify_line(line, self.language, &mut self.state, is_first_line);
+		// Only a line with a closing tag can leave PHP, and only where the tag isn't in a string or block comment.
+		if starts_clear
+			&& self.state.is_clear()
+			&& contains_pair(line.as_bytes(), *b"?>")
+			&& php_line_ends_in_markup(line.as_bytes(), in_markup)
+		{
+			self.region = Region::Markup(None);
+		}
+		line_type
 	}
 
 	/// The region a line of the file's own language starts, if it starts one.
@@ -178,6 +221,8 @@ impl<'a> Classifier<'a> {
 		let trimmed = line.trim_start();
 		let embedded = |language, end| Region::Embedded { language, state: CommentState::new(), end };
 		match embedding {
+			// PHP's regions are followed by `classify_php`.
+			Embedding::Php => None,
 			Embedding::Markdown | Embedding::AsciiDoc => {
 				if let Some((marker, len, info)) = fence(line) {
 					return Some(embedded(info_language(info), End::Fence { marker, len }));
@@ -229,14 +274,104 @@ impl<'a> Classifier<'a> {
 	}
 }
 
-/// The bytes that can begin a line starting a region in `embedding`'s files (after indentation), where regions can only start that way; other lines of the file's own language can be swept like any language's.
-pub(super) const fn region_start_bytes(embedding: Embedding) -> Option<&'static [u8]> {
+/// The language of a PHP file's markup.
+static HTML: LazyLock<Option<&'static Language>> = LazyLock::new(|| language_named("HTML"));
+
+/// The PHP tags on `line` in order, each with whether it opens PHP (`<?php`, `<?=`, or a short `<?`) rather than closing it (`?>`).
+fn php_tags(line: &str) -> impl Iterator<Item = bool> + '_ {
+	let bytes = line.as_bytes();
+	memchr::memchr2_iter(b'<', b'?', bytes).filter_map(move |pos| match bytes[pos] {
+		b'<' => {
+			let rest = bytes[pos + 1..].strip_prefix(b"?")?;
+			let opens = starts_with_ignore_case(rest, b"php")
+				|| rest.first().is_none_or(|&b| b == b'=' || b.is_ascii_whitespace());
+			opens.then_some(true)
+		}
+		_ => (bytes.get(pos + 1) == Some(&b'>') && (pos == 0 || bytes[pos - 1] != b'<')).then_some(false),
+	})
+}
+
+/// Whether `bytes` holds `pair` anywhere.
+pub(super) fn contains_pair(bytes: &[u8], [first, second]: [u8; 2]) -> bool {
+	memchr_iter(first, bytes).any(|pos| bytes.get(pos + 1) == Some(&second))
+}
+
+/// Whether `line` has a tag that opens PHP.
+fn opens_php(line: &str) -> bool {
+	php_tags(line).any(|opens| opens)
+}
+
+/// Whether a PHP file is in its HTML after `line`, which started in it if `in_markup` and otherwise outside any string or comment. A `?>` in a string or block comment is text, while one in a line comment ends PHP, as PHP reads it.
+fn php_line_ends_in_markup(line: &[u8], in_markup: bool) -> bool {
+	let mut markup = in_markup;
+	let mut pos = 0;
+	while pos < line.len() {
+		let rest = &line[pos..];
+		if markup {
+			let Some(open) = memchr::memmem::find(rest, b"<?") else {
+				return true;
+			};
+			let after = &rest[open + 2..];
+			let opens = starts_with_ignore_case(after, b"php")
+				|| after.first().is_none_or(|&b| b == b'=' || b.is_ascii_whitespace());
+			markup = !opens;
+			pos += open + 2;
+			continue;
+		}
+		match rest {
+			[b'?', b'>', ..] => {
+				markup = true;
+				pos += 2;
+			}
+			[quote @ (b'\'' | b'"'), ..] => {
+				// To the matching quote, past escaped ones; a string left open carries PHP on to the next line.
+				let mut end = pos + 1;
+				loop {
+					match line.get(end) {
+						None => return false,
+						Some(b'\\') => end += 2,
+						Some(b) if b == quote => break,
+						Some(_) => end += 1,
+					}
+				}
+				pos = end + 1;
+			}
+			[b'/', b'*', ..] => match memchr::memmem::find(&rest[2..], b"*/") {
+				Some(end) => pos += 2 + end + 2,
+				None => return false,
+			},
+			// A line comment runs to the end of the line, or to a `?>` before it.
+			[b'/', b'/', ..] | [b'#', ..] if !rest.starts_with(b"#[") => match memchr::memmem::find(rest, b"?>") {
+				Some(close) => {
+					markup = true;
+					pos += close + 2;
+				}
+				None => return false,
+			},
+			_ => pos += 1,
+		}
+	}
+	markup
+}
+
+/// Which lines of a file's own language might start a region, where that can be told from their bytes alone; other lines can be swept like any language's.
+#[derive(Debug, Clone, Copy)]
+pub(super) enum RegionStarts {
+	/// Lines whose first byte after indentation is one of these.
+	LineStart(&'static [u8]),
+	/// Lines holding these two bytes together anywhere (PHP's `?>`).
+	Anywhere([u8; 2]),
+}
+
+/// Which lines might start a region in `embedding`'s files, or `None` where every line has to be classified.
+pub(super) const fn region_starts(embedding: Embedding) -> Option<RegionStarts> {
 	match embedding {
 		Embedding::Html | Embedding::Astro => None,
-		Embedding::Markdown => Some(b"`~"),
-		Embedding::AsciiDoc => Some(b"`~["),
-		Embedding::Org => Some(b"#"),
-		Embedding::ReStructuredText => Some(b"."),
+		Embedding::Markdown => Some(RegionStarts::LineStart(b"`~")),
+		Embedding::AsciiDoc => Some(RegionStarts::LineStart(b"`~[")),
+		Embedding::Org => Some(RegionStarts::LineStart(b"#")),
+		Embedding::ReStructuredText => Some(RegionStarts::LineStart(b".")),
+		Embedding::Php => Some(RegionStarts::Anywhere(*b"?>")),
 	}
 }
 
@@ -435,8 +570,28 @@ mod tests {
 		".. code-block:: python\n   :linenos:\n\n   # note\n   x = 1\nText",
 		&[Code, Code, Blank, Comment, Code, Code]
 	)]
+	#[case::php_markup("PHP", "<?php\n?>\n<p>hi</p>\n<!-- c -->\n<?php\necho \"hi\"; // c\n?>", &[Code, Code, Code, Comment, Code, Code, Code])]
+	#[case::php_starts_in_markup("PHP", "<!-- c -->\n<?php // c\n# c\n", &[Comment, Code, Comment])]
+	#[case::php_closer_in_a_string("PHP", "<?php\n$s = \"\n?>\n# not html\";\n// c", &[Code, Code, Code, Code, Comment])]
+	#[case::php_closer_in_a_one_line_string("PHP", "<?php\n$h = \"<?x ?>\";\n// c\n/* ?> */\n# c", &[Code, Code, Comment, Comment, Comment])]
+	#[case::php_closer_in_a_line_comment("PHP", "<?php\n// c ?>\n<!-- c -->", &[Code, Comment, Comment])]
+	#[case::php_inline_tags("PHP", "<?php\n?>\n<p><?= $x ?></p>\n<!-- c -->", &[Code, Code, Code, Comment])]
 	fn embedded_regions(#[case] language: &str, #[case] text: &str, #[case] expected: &[LineType]) {
 		assert_eq!(classify_all(language, text), expected);
+	}
+
+	/// A PHP file's HTML counts as HTML, and the scripts in it as theirs, whatever language is innermost.
+	#[test]
+	fn php_markup_counts_as_html_and_its_scripts_as_theirs() {
+		let php = language_named("PHP").unwrap();
+		let mut classifier = Classifier::new(php);
+		let text = "<?php\n?>\n<div>\n<script>\n// c\nvar x = 1;\n</script>\n</div>\n<?php\necho 1;\n?>";
+		for (i, line) in text.split('\n').enumerate() {
+			classifier.classify(line, i == 0);
+		}
+		let embedded = classifier.into_embedded().languages();
+		let totals: Vec<_> = embedded.iter().map(|(language, counts)| (language.name, counts.total)).collect();
+		assert_eq!(totals, [("HTML", 4), ("JavaScript", 2)]);
 	}
 
 	/// A xorshift generator of numbers below a bound, so a failure reproduces.
@@ -561,6 +716,7 @@ mod tests {
 				end: End::Dedent { indent: 0, preamble: false, blanks: 0 },
 				indent: "   ",
 			},
+			Embedding::Php => unreachable!("PHP files start in HTML, so they have tests of their own"),
 		};
 		(syntax, language)
 	}
@@ -574,7 +730,9 @@ mod tests {
 			.iter()
 			.filter(|language| language.embedding.is_none() && info_language(language.name) == Some(*language))
 			.collect();
-		for host in LANGUAGES.iter().filter(|language| language.embedding.is_some()) {
+		for host in
+			LANGUAGES.iter().filter(|language| language.embedding.is_some_and(|embedding| embedding != Embedding::Php))
+		{
 			let embedding = host.embedding.unwrap();
 			// Lines complete on their own, so they classify the same anywhere outside a region, and that can't be taken for one's start or end.
 			let host_lines: &[&str] = match embedding {

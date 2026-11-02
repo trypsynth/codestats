@@ -44,8 +44,8 @@
 //   embedding            Regions written in other languages, counted by those languages' rules: "html" (`<script>`
 //                        and `<style>` elements), "astro" (those plus a TypeScript frontmatter), "markdown" (fenced
 //                        code blocks, and YAML or TOML frontmatter), "asciidoc" (`[source,python]` blocks and fenced
-//                        code blocks), "org" (`#+BEGIN_SRC python` blocks) or "restructuredtext" (`.. code-block::`
-//                        directives).
+//                        code blocks), "org" (`#+BEGIN_SRC python` blocks), "restructuredtext" (`.. code-block::`
+//                        directives) or "php" (the HTML outside `<?php ... ?>` tags, with its own elements).
 {
 	"8th": {
 		file_patterns: ["*.8th"],
@@ -1925,8 +1925,9 @@
 		shebangs: ["#!/usr/bin/php", "#!/usr/bin/env php"],
 		keywords: ["<?php", "$this->", "?>", "array(", "public function", "private function"],
 		require_keywords: true,
-		strings: ["\"", "'"],
+		strings: [{open: "\"", multiline: true}, {open: "'", multiline: true}],
 		heredoc: "php",
+		embedding: "php",
 	},
 	"Pico": {
 		file_patterns: ["*.pico"],

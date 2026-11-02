@@ -1,7 +1,7 @@
 use memchr::memchr;
 
 use super::{
-	embedded::{Classifier, region_start_bytes},
+	embedded::{Classifier, RegionStarts, contains_pair, region_starts},
 	encoding::{self, FileEncoding, decode_bytes},
 	line_classifier::{LineType, is_blank},
 	stats::{FileCounts, LineCounts},
@@ -36,7 +36,7 @@ fn count_text(text: &str, language: &Language, counts: &mut LineCounts, classifi
 	let openers = &language_matchers(language).openers;
 	// Neither markers that only count in the first column nor the starts of embedded regions are among the openers. Regions that start a line are checked for line by line; languages with other kinds classify every line.
 	let (can_sweep, region_starts) = language.embedding.map_or((true, None), |embedding| {
-		region_start_bytes(embedding).map_or((false, None), |starts| (true, Some(starts)))
+		region_starts(embedding).map_or((false, None), |starts| (true, Some(starts)))
 	});
 	let can_sweep = can_sweep && language.column_one_comments.is_empty();
 	let mut pos = 0;
@@ -64,9 +64,15 @@ fn count_text(text: &str, language: &Language, counts: &mut LineCounts, classifi
 }
 
 /// Whether `line` might start an embedded region: its first byte after whitespace is one that can, or isn't ASCII and so might be Unicode whitespace hiding one, which the classifier sorts out.
-fn may_start_region(line: &[u8], starts: &[u8]) -> bool {
-	// The whitespace `str::trim_start` skips, as far as ASCII goes.
-	line.iter().find(|&&b| !matches!(b, b'\t'..=b'\r' | b' ')).is_some_and(|&b| !b.is_ascii() || starts.contains(&b))
+fn may_start_region(line: &[u8], starts: RegionStarts) -> bool {
+	match starts {
+		// The whitespace `str::trim_start` skips, as far as ASCII goes.
+		RegionStarts::LineStart(starts) => line
+			.iter()
+			.find(|&&b| !matches!(b, b'\t'..=b'\r' | b' '))
+			.is_some_and(|&b| !b.is_ascii() || starts.contains(&b)),
+		RegionStarts::Anywhere(pair) => contains_pair(line, pair),
+	}
 }
 
 /// Where the line starting at `start` ends, just past its `\n` or at the end of `bytes`.

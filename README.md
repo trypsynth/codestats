@@ -11,7 +11,7 @@ codestats counts the code, comment, blank, and shebang lines in a codebase by la
 ## Highlights
 
 - Counts files, lines, and bytes by language
-- Counts code embedded in other files by its own rules, and shows how much of each language is there: scripts and styles in HTML, Vue, Svelte, Astro and HTML templates, and code blocks in Markdown, AsciiDoc, Org and reStructuredText
+- Counts code embedded in other files by its own rules, and shows how much of each language is there: scripts and styles in HTML, Vue, Svelte, Astro and HTML templates, the HTML around PHP's `<?php ... ?>` blocks, and code blocks in Markdown, AsciiDoc, Org and reStructuredText
 - Respects `.gitignore` and `.ignore` when you want it to
 - Can follow symlinks and scan hidden files
 - Filter by language: include only specific languages or exclude unwanted ones

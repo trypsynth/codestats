@@ -1,4 +1,4 @@
-// expect: lang="PHP" total=8 code=6 comment=1 blank=1 shebang=0
+// expect: lang="PHP" total=8 code=7 comment=0 blank=1 shebang=0
 <?php
 
 return [

@@ -13,6 +13,8 @@ pub enum Embedding {
 	Org,
 	/// `.. code-block:: python` directives.
 	ReStructuredText,
+	/// HTML outside `<?php ... ?>` tags, with HTML's own elements inside it.
+	Php,
 }
 
 /// A language's heredocs (`<<EOF`): string literals whose body runs from the next line to a line holding just the terminator. They differ in where a space may come between the opener and the terminator, which tells them apart from a shift or append (`x << y`).

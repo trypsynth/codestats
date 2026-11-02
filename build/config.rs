@@ -68,6 +68,7 @@ pub enum Embedding {
 	AsciiDoc,
 	Org,
 	ReStructuredText,
+	Php,
 }
 
 /// Which block comment pairs nest: `true` for all of them, or a list of the start delimiters that do.

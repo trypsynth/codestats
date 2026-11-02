@@ -78,6 +78,11 @@ impl Embedded {
 		self.counts_mut(language).add(line_type);
 	}
 
+	/// How many lines are in embedded code, whatever its language.
+	pub(crate) fn total(&self) -> u64 {
+		self.0.iter().map(|(_, counts)| counts.total).sum()
+	}
+
 	pub(crate) fn merge(&mut self, other: &Self) {
 		for (language, counts) in &other.0 {
 			self.counts_mut(language).merge(counts);
