@@ -6,7 +6,7 @@
 
 The fastest code counter around. Think that's wrong? Open an issue with [numbers](#benchmarks) and I'll change this line.
 
-codestats counts the code, comments and blank lines in a codebase by language. Built for quick audits, comparisons, scripts, or randomly being curious how much source code is in your home directory.
+codestats counts the code, comment, blank, and shebang lines in a codebase by language, and reports them as readable text, JSON, CSV, TSV, Markdown, or HTML. Built for quick audits, comparisons, scripts, or randomly being curious how much source code is in your home directory.
 
 ## Highlights
 
