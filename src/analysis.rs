@@ -1,6 +1,6 @@
 //! The analysis pipeline consists of several stages:
 //!
-//! 1. Directory Walking ([`analyzer`]): Parallel walking of the file tree using the `ignore` crate.
+//! 1. Directory Walking ([`analyzer`]): Parallel walking of the file tree ([`walk`]).
 //! 2. I/O Strategy ([`file_io`]): Chooses between buffered and memory-mapped reading based on file size.
 //! 3. Encoding Detection ([`encoding`]): Detects file encoding and filters out binary files.
 //! 4. Line Classification ([`line_classifier`]): Categorizes each line as code, comment, blank, or shebang.
@@ -21,6 +21,7 @@ mod list;
 mod masks;
 mod pipeline;
 pub mod stats;
+mod walk;
 
 pub use analyzer::CodeAnalyzer;
 pub use git::{Snapshot, count_snapshot};

@@ -1,30 +1,30 @@
 use std::{
 	path::{Path, PathBuf},
 	sync::{
-		Arc, Mutex, PoisonError,
+		Mutex, PoisonError,
 		atomic::{AtomicU64, Ordering},
 	},
 	thread,
 };
 
 use anyhow::Result;
-use ignore::WalkBuilder;
 
 use super::{
 	attributes::{Attributes, DirCache},
 	git,
 	pipeline::{self, FileFilter},
 	stats::AnalysisResults,
+	walk::{self, WalkOptions},
 };
 use crate::{config::AnalyzerConfig, display::Verbosity};
 
 /// A worker thread's own results, handed to the shared sink once when the worker finishes, so threads don't contend on a lock per file.
-struct LocalAggregator {
-	sink: Arc<Mutex<Vec<AnalysisResults>>>,
+struct LocalAggregator<'a> {
+	sink: &'a Mutex<Vec<AnalysisResults>>,
 	local: AnalysisResults,
 }
 
-impl Drop for LocalAggregator {
+impl Drop for LocalAggregator<'_> {
 	fn drop(&mut self) {
 		let local = std::mem::take(&mut self.local);
 		let mut sink = self.sink.lock().unwrap_or_else(PoisonError::into_inner);
@@ -68,83 +68,56 @@ impl CodeAnalyzer {
 			return git::count_snapshot(&self.root, &snapshot, &self.config.analysis, self.config.collect_file_details)
 				.map_err(|err| anyhow::anyhow!("--git: {err}"));
 		}
-		let error_counter = Arc::new(AtomicU64::new(0));
+		let error_counter = AtomicU64::new(0);
 		let verbosity = self.config.analysis.verbosity;
 		let collect_details = self.config.collect_file_details;
-		let include_languages = self.config.analysis.include_languages.clone();
-		let exclude_languages = self.config.analysis.exclude_languages.clone();
-		let extensions = self.config.analysis.include_extensions.clone();
-		let include_generated = self.config.analysis.include_generated;
-		let attributes = self.config.analysis.respect_gitattributes.then(|| Arc::new(Attributes::on_disk(&self.root)));
-		let root = self.display_root.clone();
-		let aggregates = Arc::new(Mutex::new(Vec::new()));
-		let aggregates_for_walk = Arc::clone(&aggregates);
-		let error_counter_for_walk = Arc::clone(&error_counter);
-		let mut builder = WalkBuilder::new(&self.root);
-		builder
-			.follow_links(self.config.analysis.follow_symlinks)
-			.ignore(self.config.analysis.respect_gitignore)
-			.git_ignore(self.config.analysis.respect_gitignore)
-			.git_global(self.config.analysis.respect_gitignore)
-			.git_exclude(self.config.analysis.respect_gitignore)
-			.require_git(false)
-			.hidden(!self.config.analysis.include_hidden)
-			.max_depth(self.config.analysis.max_depth)
-			// Git's own directory is never source, even when hidden files are counted.
-			.filter_entry(|entry| entry.file_name() != ".git")
-			// The walker's own default stops at 12 threads, however many the machine has.
-			.threads(thread::available_parallelism().map_or(1, usize::from));
-		if let Some(exclusions) = git::exclusions(&self.root, &self.config.analysis)? {
-			builder.overrides(exclusions);
-		}
-		builder.build_parallel().run(move || {
-			let mut aggregator =
-				LocalAggregator { sink: Arc::clone(&aggregates_for_walk), local: AnalysisResults::default() };
-			let error_counter = Arc::clone(&error_counter_for_walk);
-			let include_languages = include_languages.clone();
-			let exclude_languages = exclude_languages.clone();
-			let extensions = extensions.clone();
-			let root = root.clone();
-			let attributes = attributes.clone();
+		let attributes = self.config.analysis.respect_gitattributes.then(|| Attributes::on_disk(&self.root));
+		let root = &self.display_root;
+		let aggregates = Mutex::new(Vec::new());
+		let options = WalkOptions {
+			follow_links: self.config.analysis.follow_symlinks,
+			skip_hidden: !self.config.analysis.include_hidden,
+			max_depth: self.config.analysis.max_depth,
+			respect_ignores: self.config.analysis.respect_gitignore,
+			overrides: git::exclusions(&self.root, &self.config.analysis)?,
+			threads: thread::available_parallelism().map_or(1, usize::from),
+		};
+		let filter = FileFilter {
+			include: &self.config.analysis.include_languages,
+			exclude: &self.config.analysis.exclude_languages,
+			include_generated: self.config.analysis.include_generated,
+			attributes: attributes.as_ref(),
+			extensions: &self.config.analysis.include_extensions,
+		};
+		walk::walk(&self.root, options, &|| {
+			let mut aggregator = LocalAggregator { sink: &aggregates, local: AnalysisResults::default() };
 			let mut cache = DirCache::default();
-			Box::new(move |entry_result| {
-				match entry_result {
-					Ok(entry) if entry.file_type().is_some_and(|ft| ft.is_file()) => {
-						if let Err(err) = pipeline::process_file(
-							entry.path(),
-							&root,
-							&mut aggregator.local,
-							collect_details,
-							FileFilter {
-								include: &include_languages,
-								exclude: &exclude_languages,
-								include_generated,
-								attributes: attributes.as_deref(),
-								extensions: &extensions,
-							},
-							&mut cache,
-						) {
-							if verbosity == Verbosity::Verbose {
-								eprintln!("Failed to process {}: {err}", entry.path().display());
-							}
-							error_counter.fetch_add(1, Ordering::Relaxed);
-						}
-					}
-					Err(err) => {
+			let error_counter = &error_counter;
+			move |entry_result: Result<walk::Entry, ignore::Error>| match entry_result {
+				Ok(entry) => {
+					if let Err(err) = pipeline::process_file(
+						entry.path(),
+						root,
+						&mut aggregator.local,
+						collect_details,
+						filter,
+						&mut cache,
+					) {
 						if verbosity == Verbosity::Verbose {
-							eprintln!("Walker error: {err}");
+							eprintln!("Failed to process {}: {err}", entry.path().display());
 						}
 						error_counter.fetch_add(1, Ordering::Relaxed);
 					}
-					_ => {}
 				}
-				ignore::WalkState::Continue
-			})
+				Err(err) => {
+					if verbosity == Verbosity::Verbose {
+						eprintln!("Walker error: {err}");
+					}
+					error_counter.fetch_add(1, Ordering::Relaxed);
+				}
+			}
 		});
-		let partials = Arc::try_unwrap(aggregates)
-			.map_err(|_| anyhow::anyhow!("Failed to unwrap aggregates Arc - walker still holds references"))?
-			.into_inner()
-			.unwrap_or_else(PoisonError::into_inner);
+		let partials = aggregates.into_inner().unwrap_or_else(PoisonError::into_inner);
 		let mut results = partials.into_iter().fold(AnalysisResults::with_language_capacity(), |mut acc, local| {
 			acc.merge(local);
 			acc

@@ -22,12 +22,14 @@ anyhow = "1.0.104"
 askama = "0.16.1"
 clap = { version = "4.6.7", default-features = false, features = ["std", "derive", "error-context", "help", "suggestions", "usage", "wrap_help"] }
 clap_complete = "4.6.11"
+crossbeam-deque = "0.8.8"
 encoding_rs = "0.8.44"
 globset = "0.4.21"
 ignore = "0.4.34"
 memchr = "2.8.3"
 memmap2 = "0.9.12"
 num-format = { version = "0.4.4", default-features = false, features = ["std"] }
+same-file = "1"
 serde = { version = "1.0.229", default-features = false, features = ["std", "derive"] }
 serde_json = { version = "1.0.154", default-features = false, features = ["std"] }
 simdutf8 = "0.1.5"
