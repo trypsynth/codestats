@@ -326,7 +326,7 @@ To run LineJudge locally:
 
 ## Benchmarks
 
-All times are for files already in the file cache, on an AMD Ryzen 7 PRO 5850U (8 cores, 16 threads) with 32 GB of RAM. They use the x86-64 Linux glibc binary that CI built at commit `fb4d9d0`, which is the same build a release ships.
+All times are for files already in the file cache, on an AMD Ryzen 7 PRO 5850U (8 cores, 16 threads) with 32 GB of RAM. They use the x86-64 Linux glibc binary that CI built at commit `8ebd313`, which is the same build a release ships.
 
 ### Equal work
 
@@ -336,17 +336,17 @@ Mean time:
 
 | Repository | Files | Lines | codestats | mezura | scc | tokei |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| [cpython](https://github.com/python/cpython) | 3,554 | 2.2M | **20 ms** | 25 ms | 54 ms | 109 ms |
-| [jdk](https://github.com/openjdk/jdk) | 61,420 | 13M | **129 ms** | 151 ms | 339 ms | 871 ms |
-| [linux](https://github.com/torvalds/linux) | 63,738 | 36M | **220 ms** | 239 ms | 624 ms | 1.11 s |
+| [cpython](https://github.com/python/cpython) | 3,554 | 2.2M | **21 ms** | 24 ms | 53 ms | 110 ms |
+| [jdk](https://github.com/openjdk/jdk) | 61,420 | 13M | **131 ms** | 157 ms | 350 ms | 901 ms |
+| [linux](https://github.com/torvalds/linux) | 63,738 | 36M | **232 ms** | 252 ms | 658 ms | 1.17 s |
 
 Peak memory:
 
 | Repository | codestats | mezura | scc | tokei |
 | --- | ---: | ---: | ---: | ---: |
-| [cpython](https://github.com/python/cpython) | **12 MB** | 18 MB | 46 MB | 17 MB |
-| [jdk](https://github.com/openjdk/jdk) | **19 MB** | 28 MB | 94 MB | 56 MB |
-| [linux](https://github.com/torvalds/linux) | **72 MB** | 119 MB | 350 MB | 251 MB |
+| [cpython](https://github.com/python/cpython) | **11 MB** | 18 MB | 46 MB | 18 MB |
+| [jdk](https://github.com/openjdk/jdk) | **18 MB** | 28 MB | 94 MB | 57 MB |
+| [linux](https://github.com/torvalds/linux) | **78 MB** | 124 MB | 349 MB | 249 MB |
 
 To reproduce these tables, run the following command with linebench 0.3.1, after running `linebench fetch --counters all --corpus all`:
 
@@ -364,27 +364,27 @@ Mean time:
 
 | Repository | Files | Lines | codestats | mezura | tokei | scc | gocloc |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| [ripgrep](https://github.com/BurntSushi/ripgrep) | 154 | 65K | **5.9 ms** | 6.9 ms | 9.0 ms | 12 ms | 39 ms |
-| [cli](https://github.com/cli/cli) | 1,102 | 312K | **9.0 ms** | 10 ms | 21 ms | 19 ms | 115 ms |
-| [nvda](https://github.com/nvaccess/nvda) | 1,158 | 1.6M | 14 ms | **9.6 ms** | 45 ms | 23 ms | 142 ms |
-| [wxWidgets](https://github.com/wxWidgets/wxWidgets) | 4,491 | 2.3M | 32 ms | **25 ms** | 85 ms | 112 ms | 484 ms |
-| [cpython](https://github.com/python/cpython) | 4,947 | 2.5M | **30 ms** | 31 ms | 145 ms | 88 ms | 721 ms |
-| [kubernetes](https://github.com/kubernetes/kubernetes) | 22,693 | 5.2M | 74 ms | **73 ms** | 300 ms | 240 ms | 2.15 s |
-| [rust](https://github.com/rust-lang/rust) | 44,334 | 5.1M | 113 ms | **104 ms** | 404 ms | 254 ms | 2.54 s |
-| [linux](https://github.com/torvalds/linux) | 92,811 | 44M | **322 ms** | 338 ms | 1.44 s | 1.04 s | 11.3 s |
+| [ripgrep](https://github.com/BurntSushi/ripgrep) | 154 | 65K | **4.1 ms** | 6.9 ms | 9.3 ms | 12 ms | 41 ms |
+| [cli](https://github.com/cli/cli) | 1,102 | 312K | **6.5 ms** | 10 ms | 20 ms | 20 ms | 117 ms |
+| [nvda](https://github.com/nvaccess/nvda) | 1,158 | 1.6M | 13 ms | **9.8 ms** | 44 ms | 21 ms | 144 ms |
+| [wxWidgets](https://github.com/wxWidgets/wxWidgets) | 4,491 | 2.3M | 29 ms | **25 ms** | 82 ms | 108 ms | 475 ms |
+| [cpython](https://github.com/python/cpython) | 4,947 | 2.5M | **26 ms** | 31 ms | 144 ms | 87 ms | 719 ms |
+| [kubernetes](https://github.com/kubernetes/kubernetes) | 22,693 | 5.2M | **71 ms** | 74 ms | 300 ms | 242 ms | 2.17 s |
+| [rust](https://github.com/rust-lang/rust) | 44,334 | 5.1M | 104 ms | **102 ms** | 409 ms | 261 ms | 2.57 s |
+| [linux](https://github.com/torvalds/linux) | 92,811 | 44M | **319 ms** | 342 ms | 1.45 s | 1.05 s | 11.4 s |
 
 Peak memory:
 
 | Repository | codestats | mezura | tokei | scc | gocloc |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| [ripgrep](https://github.com/BurntSushi/ripgrep) | 8.3 MB | 8.5 MB | **7.9 MB** | 27 MB | 29 MB |
-| [cli](https://github.com/cli/cli) | 8.8 MB | 9.7 MB | **8.1 MB** | 32 MB | 36 MB |
-| [nvda](https://github.com/nvaccess/nvda) | 19 MB | **9.8 MB** | 26 MB | 39 MB | 37 MB |
-| [wxWidgets](https://github.com/wxWidgets/wxWidgets) | **20 MB** | 20 MB | 24 MB | 74 MB | 40 MB |
-| [cpython](https://github.com/python/cpython) | **15 MB** | 22 MB | 24 MB | 65 MB | 45 MB |
-| [kubernetes](https://github.com/kubernetes/kubernetes) | **19 MB** | 24 MB | 64 MB | 100 MB | 53 MB |
-| [rust](https://github.com/rust-lang/rust) | **31 MB** | 45 MB | 97 MB | 129 MB | 66 MB |
-| [linux](https://github.com/torvalds/linux) | **82 MB** | 180 MB | 278 MB | 385 MB | 110 MB |
+| [ripgrep](https://github.com/BurntSushi/ripgrep) | **7.3 MB** | 8.1 MB | 7.8 MB | 26 MB | 30 MB |
+| [cli](https://github.com/cli/cli) | **8.2 MB** | 9.3 MB | 8.2 MB | 32 MB | 36 MB |
+| [nvda](https://github.com/nvaccess/nvda) | 19 MB | **9.5 MB** | 27 MB | 38 MB | 38 MB |
+| [wxWidgets](https://github.com/wxWidgets/wxWidgets) | **19 MB** | 20 MB | 23 MB | 73 MB | 40 MB |
+| [cpython](https://github.com/python/cpython) | **14 MB** | 22 MB | 25 MB | 65 MB | 46 MB |
+| [kubernetes](https://github.com/kubernetes/kubernetes) | **18 MB** | 23 MB | 63 MB | 97 MB | 52 MB |
+| [rust](https://github.com/rust-lang/rust) | **31 MB** | 43 MB | 98 MB | 127 MB | 67 MB |
+| [linux](https://github.com/torvalds/linux) | **95 MB** | 158 MB | 278 MB | 387 MB | 111 MB |
 
 To reproduce these tables, run `CS=path/to/cs scripts/bench.sh`, which pins each repository's commit. It uses hyperfine 2.0.0 and these tools: mezura 3.3.0, tokei 15.0.0, scc 4.1.0, and gocloc 0.7.0.
 
