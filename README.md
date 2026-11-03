@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/crates/l/codestats.svg)](LICENSE)
 [![MSRV](https://img.shields.io/badge/MSRV-1.88+-blue)](#)
 
-The fastest code counter around. Think that's wrong? Open an issue with [numbers](#benchmarks) and I'll change this line.
+The fastest and most accurate code counter around. Think that's wrong? Open an issue with [numbers](#benchmarks) or [a miscounted file](#accuracy) and I'll change this line.
 
 codestats counts the code, comment, blank, and shebang lines in a codebase by language, and reports them as text, JSON, CSV, TSV, Markdown, or HTML. Use it for audits, comparisons, scripts, or to see how much code is in a directory.
 
@@ -316,7 +316,16 @@ codestats counts files on several threads, each keeping its own totals, and comb
 
 Every change is checked in CI against [LineJudge](https://github.com/loc-conformance/linejudge), a collection of tricky files: comment markers in strings, raw strings, heredocs, languages embedded in other languages, and more. LineJudge checks codestats against the counting rules declared in [`.linejudge`](.linejudge).
 
-The cases codestats still gets wrong are recorded, with notes, in [`.linejudge/recorded/codestats.toml`](.linejudge/recorded/codestats.toml). CI fails if any other case changes.
+Each tool is judged against its own declared rules, so a failure means that the tool breaks its own rules. Results with LineJudge 0.3.0:
+
+| Tool | Cases that agree, out of 95 |
+| --- | ---: |
+| codestats | **95** |
+| mezura 3.3.0 | 89 |
+| scc 4.1.0 | 71 |
+| tokei 15.0.0 | 45 |
+
+codestats' answers are recorded in [`.linejudge/recorded/codestats.toml`](.linejudge/recorded/codestats.toml), and CI fails if any of them changes.
 
 To run LineJudge locally:
 
