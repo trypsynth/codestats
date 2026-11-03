@@ -57,6 +57,7 @@ fn count_text(text: &str, language: &Language, counts: &mut LineCounts, classifi
 	let mut scanner = region_starts.is_none().then(|| BlockScanner::new(bytes)).flatten();
 	#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
 	let openers_suit = BlockScanner::suits(openers.bytes());
+	let mut next_opener = 0;
 	let mut pos = 0;
 	while pos < bytes.len() {
 		// The first line goes through the classifier, which checks it for a shebang.
@@ -68,10 +69,10 @@ fn count_text(text: &str, language: &Language, counts: &mut LineCounts, classifi
 					pos = next;
 					at_stop
 				} else {
-					sweep_by_search(bytes, openers, region_starts, &mut pos, counts)
+					sweep_by_search(bytes, openers, region_starts, &mut next_opener, &mut pos, counts)
 				};
 				#[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
-				let at_stop = sweep_by_search(bytes, openers, region_starts, &mut pos, counts);
+				let at_stop = sweep_by_search(bytes, openers, region_starts, &mut next_opener, &mut pos, counts);
 				// A line stopped at only for its strings, which all close on it, is code like the others, and the sweep carries on after it.
 				let end = line_end(bytes, pos);
 				if at_stop {
@@ -119,10 +120,15 @@ fn sweep_by_search(
 	bytes: &[u8],
 	openers: &ByteSet,
 	region_starts: Option<RegionStarts>,
+	next_opener: &mut usize,
 	pos: &mut usize,
 	counts: &mut LineCounts,
 ) -> bool {
-	let stop = openers.find(&bytes[*pos..]).map_or(bytes.len(), |i| *pos + i);
+	// Stopping for a line that may start a region comes back here before reaching the opener. Without remembering it, a file of such lines with few openers takes time quadratic in its size.
+	if *next_opener < *pos {
+		*next_opener = openers.find(&bytes[*pos..]).map_or(bytes.len(), |i| *pos + i);
+	}
+	let stop = *next_opener;
 	while *pos < stop {
 		let end = line_end(bytes, *pos);
 		if region_starts.is_some_and(|starts| may_start_region(&bytes[*pos..end], starts)) {

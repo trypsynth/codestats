@@ -83,9 +83,34 @@ impl ByteSet {
 	}
 }
 
-/// The first of `first` or `rest` in `haystack`, searching for three bytes at a time, each search stopping at the earliest match so far: two or three vectorized passes beat looking at every byte. Kept out of line so the one- to three-byte searches inline.
+/// The size of the first window [`find_in_groups`] looks through, longer than nearly every line.
+const FIRST_WINDOW: usize = 4096;
+
+/// The first of `first` or `rest` in `haystack`. Kept out of line so the one- to three-byte searches inline.
+///
+/// It looks through windows that grow, since a byte the rest of the file doesn't have would otherwise be searched for up to its end each time, making a file of the other bytes take quadratic time.
 #[inline(never)]
-fn find_in_groups([a, b, c]: [u8; 3], rest: &[u8], haystack: &[u8]) -> Option<usize> {
+fn find_in_groups(first: [u8; 3], rest: &[u8], haystack: &[u8]) -> Option<usize> {
+	// Most searches are of a line.
+	if haystack.len() <= FIRST_WINDOW {
+		return find_in_window(first, rest, haystack);
+	}
+	let mut start = 0;
+	let mut window = FIRST_WINDOW;
+	while start < haystack.len() {
+		let end = haystack.len().min(start.saturating_add(window));
+		if let Some(found) = find_in_window(first, rest, &haystack[start..end]) {
+			return Some(start + found);
+		}
+		start = end;
+		window = window.saturating_mul(2);
+	}
+	None
+}
+
+/// The first of `first` or `rest` in `haystack`, searching for three bytes at a time, each search stopping at the earliest match so far: two or three vectorized passes beat looking at every byte.
+#[inline]
+fn find_in_window([a, b, c]: [u8; 3], rest: &[u8], haystack: &[u8]) -> Option<usize> {
 	let mut found = memchr3(a, b, c, haystack);
 	for group in rest.chunks(3) {
 		let end = found.unwrap_or(haystack.len());
@@ -529,6 +554,21 @@ fn build_string_matchers(lang: &Language) -> StringMatchers {
 mod tests {
 	use super::*;
 	use crate::langs::LANGUAGES;
+
+	#[test]
+	fn byte_set_finds_bytes_in_any_window() {
+		let set = ByteSet::new(*b"abcde");
+		for at in [0, 1, FIRST_WINDOW - 1, FIRST_WINDOW, FIRST_WINDOW + 1, 3 * FIRST_WINDOW, 3 * FIRST_WINDOW + 7] {
+			for byte in *b"ae" {
+				let mut text = vec![b'x'; 4 * FIRST_WINDOW];
+				text[at] = byte;
+				text[at + 100..].fill(b'c');
+				assert_eq!(set.find(&text), Some(at));
+			}
+		}
+		assert_eq!(set.find(&[b'x'; 4 * FIRST_WINDOW]), None);
+		assert_eq!(set.find(&[]), None);
+	}
 
 	/// The search by first byte must find what the automaton finds, for every language that uses it.
 	#[test]

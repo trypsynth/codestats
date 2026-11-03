@@ -19,6 +19,49 @@ pub(super) struct Classifier<'a> {
 	state: CommentState,
 	region: Region,
 	embedded: Embedded,
+	closing_tags: ClosingTags,
+}
+
+/// Where the rest of the file next closes each element, which saves looking again at each opening tag: without this, a file of opening tags that never close takes time quadratic in its size.
+#[derive(Clone, Copy, Default)]
+struct ClosingTags {
+	script: NextClosingTag,
+	style: NextClosingTag,
+}
+
+#[derive(Clone, Copy, Default)]
+enum NextClosingTag {
+	#[default]
+	Unknown,
+	None,
+	/// This many bytes before the end of the file.
+	At(usize),
+}
+
+impl ClosingTags {
+	/// Whether `following`, the rest of the file, closes `tag`.
+	fn close(&mut self, tag: Tag, following: &str) -> bool {
+		let next = match tag {
+			Tag::Script => &mut self.script,
+			Tag::Style => &mut self.style,
+		};
+		match *next {
+			NextClosingTag::None => false,
+			NextClosingTag::At(from_end) if from_end <= following.len() => true,
+			_ => {
+				let found = closing_tag(tag, following);
+				*next = found.map_or(NextClosingTag::None, |at| NextClosingTag::At(following.len() - at));
+				found.is_some()
+			}
+		}
+	}
+}
+
+/// Where `text` first closes `tag`.
+fn closing_tag(tag: Tag, text: &str) -> Option<usize> {
+	memchr_iter(b'<', text.as_bytes()).find(|&pos| {
+		text.as_bytes()[pos + 1..].strip_prefix(b"/").is_some_and(|rest| starts_with_ignore_case(rest, tag.name()))
+	})
 }
 
 enum Region {
@@ -75,11 +118,7 @@ impl End {
 	fn closes(&self, line: &str) -> bool {
 		match *self {
 			Self::Frontmatter(marker) => line.trim_end() == marker,
-			Self::Tag(tag) => memchr_iter(b'<', line.as_bytes()).any(|pos| {
-				line.as_bytes()[pos + 1..]
-					.strip_prefix(b"/")
-					.is_some_and(|rest| starts_with_ignore_case(rest, tag.name()))
-			}),
+			Self::Tag(tag) => closing_tag(tag, line).is_some(),
 			Self::Fence { marker, len } => fence(line)
 				.is_some_and(|(found, found_len, info)| found == marker && found_len >= len && info.is_empty()),
 			Self::Delimiter { marker, len } => {
@@ -96,7 +135,13 @@ impl<'a> Classifier<'a> {
 	pub(super) fn new(language: &'a Language) -> Self {
 		// A PHP file is HTML until its first `<?php`.
 		let region = if language.embedding == Some(Embedding::Php) { Region::Markup(None) } else { Region::Host };
-		Self { language, state: CommentState::new(), region, embedded: Embedded::default() }
+		Self {
+			language,
+			state: CommentState::new(),
+			region,
+			embedded: Embedded::default(),
+			closing_tags: ClosingTags::default(),
+		}
 	}
 
 	/// Whether the next line starts in the file's own language, outside any comment or string.
@@ -151,7 +196,7 @@ impl<'a> Classifier<'a> {
 				let attributes = mem::take(attributes);
 				let rest = &line[end + 1..];
 				self.region = if End::Tag(tag).closes(rest)
-					|| following.is_none_or(|following| End::Tag(tag).closes(following))
+					|| following.is_none_or(|following| self.closing_tags.close(tag, following))
 				{
 					element_region(tag, &attributes, rest)
 				} else {
@@ -230,7 +275,9 @@ impl<'a> Classifier<'a> {
 			&& let Some(html) = *HTML
 		{
 			if !opens_php(line) {
-				let markup = markup.get_or_insert_with(|| Box::new(Classifier::new(html)));
+				let closing_tags = self.closing_tags;
+				let markup =
+					markup.get_or_insert_with(|| Box::new(Classifier { closing_tags, ..Classifier::new(html) }));
 				let before = markup.embedded.total();
 				let line_type = markup.classify_before(line, is_first_line, following);
 				// Lines of the HTML's own scripts and styles are already counted as theirs.
@@ -240,6 +287,7 @@ impl<'a> Classifier<'a> {
 				return line_type;
 			}
 			if let Region::Markup(Some(markup)) = mem::replace(&mut self.region, Region::Host) {
+				self.closing_tags = markup.closing_tags;
 				self.embedded.merge(&markup.into_embedded());
 			}
 		}
@@ -257,7 +305,7 @@ impl<'a> Classifier<'a> {
 	}
 
 	/// The region a line of the file's own language starts, if it starts one. `following` is the rest of the file, when it's known.
-	fn region_start(&self, embedding: Embedding, line: &str, following: Option<&str>) -> Option<Region> {
+	fn region_start(&mut self, embedding: Embedding, line: &str, following: Option<&str>) -> Option<Region> {
 		let trimmed = line.trim_start();
 		let embedded = |language, end| Region::Embedded { language, state: CommentState::new(), end };
 		match embedding {
@@ -289,7 +337,7 @@ impl<'a> Classifier<'a> {
 				// A self-closing or one-line element (`<script src="app.js"></script>`) is just markup, and so is an element that's never closed.
 				(!rest[..end].ends_with('/')
 					&& !End::Tag(tag).closes(&rest[end + 1..])
-					&& following.is_none_or(|following| End::Tag(tag).closes(following)))
+					&& following.is_none_or(|following| self.closing_tags.close(tag, following)))
 				.then(|| element_region(tag, &rest[..end], &rest[end + 1..]))
 			}
 		}
@@ -575,6 +623,40 @@ mod tests {
 		let language = language_named(language).unwrap();
 		let mut classifier = Classifier::new(language);
 		text.lines().enumerate().map(|(i, line)| classifier.classify(line, i == 0)).collect()
+	}
+
+	/// `classify_before` with each line followed by the rest of `text`.
+	fn classify_all_before(language: &str, text: &str) -> Vec<LineType> {
+		let language = language_named(language).unwrap();
+		let mut classifier = Classifier::new(language);
+		let mut pos = 0;
+		text.split_inclusive('\n')
+			.enumerate()
+			.map(|(i, line)| {
+				pos += line.len();
+				classifier.classify_before(line, i == 0, Some(&text[pos..]))
+			})
+			.collect()
+	}
+
+	#[test]
+	fn an_element_after_the_last_closing_tag_never_closes() {
+		let text = "<script>\n// a\n</script>\n<script>\n<!-- b -->\n";
+		assert_eq!(classify_all_before("HTML", text), [Code, Comment, Code, Code, Comment]);
+		let text = "<style>\n</style>\n<script>\n// a\n</script>\n<style>\n<!-- b -->\n";
+		assert_eq!(classify_all_before("HTML", text), [Code, Code, Code, Comment, Code, Code, Comment]);
+	}
+
+	#[rstest]
+	#[case::html("HTML", "<script>\n")]
+	#[case::split_tag("HTML", "<style type=\"a\"\n>\n")]
+	#[case::php("PHP", "<?php\n?>\n<script>\n")]
+	fn elements_that_never_close_take_linear_time(#[case] language: &str, #[case] piece: &str) {
+		let text = piece.repeat(1_000_000 / piece.len());
+		let start = std::time::Instant::now();
+		let utf8 = FileEncoding { encoding: encoding_rs::UTF_8, bom_len: 0 };
+		count_lines(language_named(language).unwrap(), utf8, text.as_bytes());
+		assert!(start.elapsed().as_secs() < 10, "took {:?}", start.elapsed());
 	}
 
 	#[rstest]
