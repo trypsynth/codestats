@@ -3,7 +3,7 @@ use memchr::memchr;
 use super::{
 	embedded::{Classifier, RegionStarts, contains_pair, region_starts},
 	encoding::{self, FileEncoding, decode_bytes},
-	line_classifier::{LineType, is_blank},
+	line_classifier::{LineType, is_blank, is_plain_line_comment},
 	stats::{FileCounts, LineCounts},
 };
 use crate::langs::{Language, matchers::language_matchers};
@@ -39,6 +39,7 @@ fn count_text(text: &str, language: &Language, counts: &mut LineCounts, classifi
 		region_starts(embedding).map_or((false, None), |starts| (true, Some(starts)))
 	});
 	let can_sweep = can_sweep && language.column_one_comments.is_empty();
+	let plain_comments = language.embedding.is_none() && !language.line_comments.is_empty();
 	let quick = language_matchers(language)
 		.strings
 		.as_ref()
@@ -65,10 +66,18 @@ fn count_text(text: &str, language: &Language, counts: &mut LineCounts, classifi
 				}
 				// A line stopped at only for its strings, which all close on it, is code like the others, and the sweep carries on after it.
 				let end = line_end(bytes, pos);
-				if at_stop && quick.is_some_and(|(quick, strings)| quick.is_plain_code(&bytes[pos..end], strings)) {
-					counts.add(LineType::Code);
-					pos = end;
-					continue;
+				if at_stop {
+					// A line stopped at that's just a line comment, which leaves nothing open, needn't go through the classifier either.
+					if plain_comments && is_plain_line_comment(&text[pos..end], language) {
+						counts.add(LineType::Comment);
+						pos = end;
+						continue;
+					}
+					if quick.is_some_and(|(quick, strings)| quick.is_plain_code(&bytes[pos..end], strings)) {
+						counts.add(LineType::Code);
+						pos = end;
+						continue;
+					}
 				}
 				break;
 			}

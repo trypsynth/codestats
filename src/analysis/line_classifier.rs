@@ -205,7 +205,10 @@ fn is_preprocessor_directive(line: &str) -> bool {
 fn find_line_comment(line: &str, lang: &Language, matchers: &LanguageMatchers) -> Option<usize> {
 	let line_comments = matchers.line_comments.as_ref()?;
 	// Most comment lines start with their marker. Leftmost-first matching picks the first listed marker that matches there, so checking for it directly finds the same one without running the automaton.
-	if let Some(marker) = lang.line_comments.iter().find(|marker| line.starts_with(*marker))
+	// Markers are a few bytes long, so comparing them byte by byte beats a call to `memcmp` on every comment line.
+	let starts_with =
+		|marker: &str| line.len() >= marker.len() && line.bytes().zip(marker.bytes()).all(|(a, b)| a == b);
+	if let Some(marker) = lang.line_comments.iter().find(|marker| starts_with(marker))
 		&& is_valid_line_comment_match(line, marker.len(), marker)
 	{
 		return Some(0);
@@ -216,6 +219,21 @@ fn find_line_comment(line: &str, lang: &Language, matchers: &LanguageMatchers) -
 			is_valid_line_comment_match(line, matched.end(), lang.line_comments[matched.pattern().as_usize()])
 		})
 		.map(|matched| matched.start())
+}
+
+/// Whether `line`, after the first and read from a clear state, is just a line comment, as `classify_line` would find, and leaves the state clear: it starts with a line comment marker, after indentation, that doesn't start a block comment there too (Lua's `--[[`), and doesn't carry on to the next line with a backslash. `false` means the line needs the classifier, not that it isn't a comment.
+#[inline]
+pub(super) fn is_plain_line_comment(line: &str, lang: &Language) -> bool {
+	let trimmed = trim_ascii(line);
+	let starts_with =
+		|marker: &str| trimmed.len() >= marker.len() && trimmed.bytes().zip(marker.bytes()).all(|(a, b)| a == b);
+	lang.line_comments
+		.iter()
+		.find(|marker| starts_with(marker))
+		.is_some_and(|marker| is_valid_line_comment_match(trimmed, marker.len(), marker))
+		&& !lang.block_comments.iter().any(|(start, _, _)| starts_with(start))
+		&& lang.line_block_comments.is_empty()
+		&& !(lang.line_splices && trimmed.ends_with('\\'))
 }
 
 /// Classify a line as code, comment, blank, or shebang.

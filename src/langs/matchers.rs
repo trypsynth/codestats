@@ -117,7 +117,8 @@ impl QuickLines {
 					let delimiter = &lang.strings[index];
 					let simple = token.len() == 1
 						&& delimiter.close == delimiter.open
-						&& !delimiter.doc && !delimiter.char_literal
+						&& !delimiter.doc
+						&& !delimiter.char_literal
 						&& !delimiter.attribute;
 					if simple && strings[usize::from(token.as_bytes()[0])].is_none() {
 						strings[usize::from(token.as_bytes()[0])] = Some((index, delimiter.escape));

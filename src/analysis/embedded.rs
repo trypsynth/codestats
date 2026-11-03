@@ -101,15 +101,29 @@ impl<'a> Classifier<'a> {
 		matches!(self.region, Region::Host) && self.state.is_clear()
 	}
 
+	#[inline]
 	pub(super) fn classify(&mut self, line: &str, is_first_line: bool) -> LineType {
 		self.classify_before(line, is_first_line, None)
 	}
 
 	/// Classify `line`, followed in its file by `following`, when the rest of the file is at hand: an element's opening tag only starts a region if its closing tag comes later, since a `<script>` that never closes is text written in the page.
+	#[inline]
 	pub(super) fn classify_before(&mut self, line: &str, is_first_line: bool, following: Option<&str>) -> LineType {
-		let Some(embedding) = self.language.embedding else {
-			return classify_line(line, self.language, &mut self.state, is_first_line);
-		};
+		match self.language.embedding {
+			None => classify_line(line, self.language, &mut self.state, is_first_line),
+			Some(embedding) => self.classify_embedding(embedding, line, is_first_line, following),
+		}
+	}
+
+	/// A line of a file that may hold regions of other languages. Kept out of line, so the call for every other file's lines stays small enough to inline.
+	#[inline(never)]
+	fn classify_embedding(
+		&mut self,
+		embedding: Embedding,
+		line: &str,
+		is_first_line: bool,
+		following: Option<&str>,
+	) -> LineType {
 		if embedding == Embedding::Php {
 			return self.classify_php(line, is_first_line, following);
 		}
