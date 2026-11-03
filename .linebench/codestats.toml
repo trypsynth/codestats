@@ -1,0 +1,23 @@
+name         = "codestats"
+repository   = "https://github.com/trypsynth/codestats"
+version-flag = "--version"
+
+[acquisition]
+channel = "crates-io"
+name    = "codestats"
+version = "0.9.1"
+
+[run]
+args           = ["{target}"]
+json           = ["--output", "json-compact"]
+languages      = ["--ext", "{extensions}"]
+same-work      = ["--no-gitignore", "--hidden", "--include-generated", "--no-gitattributes"]
+same-work-note = "ignore files off, hidden files counted, generated files counted, linguist attributes off"
+
+[read]
+files    = "totals.file_count"
+lines    = "totals.lines.total"
+code     = "totals.lines.code"
+comments = "totals.lines.comment"
+blanks   = "totals.lines.blank"
+shebangs = "totals.lines.shebang"

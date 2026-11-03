@@ -22,6 +22,8 @@ pub struct FileFilter<'a> {
 	pub exclude: &'a [String],
 	pub include_generated: bool,
 	pub attributes: Option<&'a Attributes>,
+	/// `--ext`: only files with these extensions count, when there are any.
+	pub extensions: &'a [String],
 }
 
 impl FileFilter<'_> {
@@ -49,6 +51,12 @@ fn judge_name<'a>(
 	languages: FileFilter<'a>,
 	cache: &mut DirCache,
 ) -> Option<(Vec<&'static Language>, FileFilter<'a>)> {
+	if !languages.extensions.is_empty() {
+		let extension = path.extension()?.to_str()?;
+		if !languages.extensions.iter().any(|wanted| wanted.eq_ignore_ascii_case(extension)) {
+			return None;
+		}
+	}
 	let verdict = languages.attributes.and_then(|attributes| attributes.verdict(path, cache)).unwrap_or_default();
 	let generated = verdict.generated.unwrap_or_else(|| is_generated_name(name));
 	if verdict.excluded || (generated && !languages.include_generated) {
@@ -197,7 +205,13 @@ mod tests {
 					stack.push(path);
 					continue;
 				}
-				let languages = FileFilter { include: &[], exclude: &[], include_generated: true, attributes: None };
+				let languages = FileFilter {
+					include: &[],
+					exclude: &[],
+					include_generated: true,
+					attributes: None,
+					extensions: &[],
+				};
 				let mut results = AnalysisResults::default();
 				process_file(&path, &root, &mut results, true, languages, &mut DirCache::default()).unwrap();
 				let from_disk = results.languages().next().map(|(lang, stats)| {

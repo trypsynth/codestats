@@ -72,6 +72,7 @@ impl CodeAnalyzer {
 		let collect_details = self.config.collect_file_details;
 		let include_languages = self.config.analysis.include_languages.clone();
 		let exclude_languages = self.config.analysis.exclude_languages.clone();
+		let extensions = self.config.analysis.include_extensions.clone();
 		let include_generated = self.config.analysis.include_generated;
 		let attributes = self.config.analysis.respect_gitattributes.then(|| Arc::new(Attributes::on_disk(&self.root)));
 		let root = self.display_root.clone();
@@ -87,7 +88,9 @@ impl CodeAnalyzer {
 			.git_exclude(self.config.analysis.respect_gitignore)
 			.require_git(false)
 			.hidden(!self.config.analysis.include_hidden)
-			.max_depth(self.config.analysis.max_depth);
+			.max_depth(self.config.analysis.max_depth)
+			// Git's own directory is never source, even when hidden files are counted.
+			.filter_entry(|entry| entry.file_name() != ".git");
 		if let Some(exclusions) = git::exclusions(&self.root, &self.config.analysis)? {
 			builder.overrides(exclusions);
 		}
@@ -97,6 +100,7 @@ impl CodeAnalyzer {
 			let error_counter = Arc::clone(&error_counter_for_walk);
 			let include_languages = include_languages.clone();
 			let exclude_languages = exclude_languages.clone();
+			let extensions = extensions.clone();
 			let root = root.clone();
 			let attributes = attributes.clone();
 			let mut cache = DirCache::default();
@@ -113,6 +117,7 @@ impl CodeAnalyzer {
 								exclude: &exclude_languages,
 								include_generated,
 								attributes: attributes.as_deref(),
+								extensions: &extensions,
 							},
 							&mut cache,
 						) {

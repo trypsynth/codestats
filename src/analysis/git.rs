@@ -109,6 +109,7 @@ pub fn count_snapshot(
 		exclude: &config.exclude_languages,
 		include_generated: config.include_generated,
 		attributes: attributes.as_ref(),
+		extensions: &config.include_extensions,
 	};
 	let records: Vec<&[u8]> = listing.split(|&b| b == 0).filter(|record| !record.is_empty()).collect();
 	// Workers take batches from a shared counter, so they stay evenly loaded, and each batch is a run of nearby paths.

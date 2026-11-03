@@ -326,3 +326,23 @@ fn a_name_only_codestats_knows_keeps_its_language() {
 	// `.bgt` is only BGT, but `.pp` is Pascal or Puppet, so the attribute decides.
 	assert_eq!(names, ["BGT", "Rust"]);
 }
+
+#[test]
+fn ext_counts_only_those_extensions_and_git_internals_never_count() {
+	let root = scratch_dir("ext_counts_only_those_extensions_and_git_internals_never_count");
+	fs::create_dir_all(root.join(".git/hooks")).unwrap();
+	fs::write(root.join(".git/hooks/pre-commit.sample"), "#!/bin/sh\nexit 0\n").unwrap();
+	fs::write(root.join("main.rs"), "fn main() {}\n").unwrap();
+	fs::write(root.join("Cargo.toml"), "[package]\n").unwrap();
+	fs::write(root.join("build"), "#!/bin/sh\nmake\n").unwrap();
+	let files = |extra: &[&str]| {
+		let output = cs().current_dir(&root).args(["-o", "json", "--hidden"]).args(extra).output().unwrap();
+		assert!(output.status.success(), "stderr: {}", String::from_utf8_lossy(&output.stderr));
+		let report: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+		report["totals"]["file_count"].as_u64().unwrap()
+	};
+	// main.rs, Cargo.toml, and the `build` script, but nothing under `.git` even with `--hidden`.
+	assert_eq!(files(&[]), 3);
+	assert_eq!(files(&["--ext", "rs"]), 1);
+	assert_eq!(files(&["--ext", ".RS,toml"]), 2);
+}

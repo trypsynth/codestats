@@ -9,6 +9,8 @@
 - Breaking: unknown keys in a config file are now an error
 - Breaking: `--top-languages 0` is now an error
 - Count several paths together: `cs src tests build.rs`
+- Added `--ext` (`include_extensions` in config files) to count only files with the given extensions
+- `--lang` and `--exclude-lang` accept comma-separated lists
 - Read the paths to count from standard input with `cs -`, for example `git ls-files -z | cs -`
 - Config files accept a `paths` list
 - Added Blueprint, JCL, Julius, Lucius, Mako, MLIR, Ren'Py, RPM Spec, Slang, Snakemake, Tact, TTCN-3, TypeSpec, Ur/Web, and Visual Studio Solution
@@ -27,6 +29,7 @@
 - D files without a D keyword are counted
 - `.spec`, `.target`, `.path`, `.pck`, and `.fnc` files from other tools are no longer counted as RPM Spec, systemd, or PL/SQL
 - Fixed a hang on some tiny files containing a zero byte
+- `--hidden` no longer counts files inside `.git`
 - Fixed `cs completions` panicking when its output is cut short
 - The summary's language list uses an Oxford comma
 - Faster on most repositories, especially those with many strings or line comments, shared extensions, or generated files: about 20% on Kubernetes and 10% on Linux compared to 0.9.1

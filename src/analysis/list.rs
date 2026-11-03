@@ -46,6 +46,7 @@ pub fn count_listed(paths: &[PathBuf], config: &AnalyzerConfig) -> Result<Analys
 		exclude: &analysis.exclude_languages,
 		include_generated: analysis.include_generated,
 		attributes: attributes.as_ref(),
+		extensions: &analysis.include_extensions,
 	};
 	let verbose = analysis.verbosity == Verbosity::Verbose;
 	let next = AtomicUsize::new(0);

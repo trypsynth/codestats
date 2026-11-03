@@ -48,6 +48,9 @@ const DEFAULT_CONFIG_TEMPLATE: &str = "\
 # Skip these languages (case-insensitive, conflicts with include_languages)
 # exclude_languages = []
 
+# Only count files with these extensions (case-insensitive)
+# include_extensions = [\"rs\", \"toml\"]
+
 # Exit with non-zero status if any files are skipped due to errors
 # fail_on_error = false
 

@@ -174,11 +174,12 @@ If you don't give a path, codestats counts the current directory. If the path is
 - `--git`: count only the files that git tracks, including in submodules. `.gitignore` doesn't apply to tracked files.
 - `--max-depth <N>`: descend at most N directory levels.
 - `--min-lines <N>`: hide languages with fewer than N lines.
-- `-H, --hidden`: include hidden files and directories.
+- `-H, --hidden`: include hidden files and directories. The `.git` directory is always skipped.
 - `--symlinks`: follow symbolic links. Links that form a loop make the walk run forever.
 - `-e, --exclude <PATTERN>`: exclude files and directories that match a glob pattern. Repeatable.
-- `-L, --lang <LANGUAGE>`: count only this language. Repeatable. Can't be combined with `--exclude-lang`.
-- `--exclude-lang <LANGUAGE>`: don't count this language. Repeatable. Can't be combined with `--lang`.
+- `-L, --lang <LANGUAGE>`: count only this language. Repeatable, or comma-separated. Can't be combined with `--exclude-lang`.
+- `--exclude-lang <LANGUAGE>`: don't count this language. Repeatable, or comma-separated. Can't be combined with `--lang`.
+- `--ext <EXT>`: count only files with this extension, such as `rs` or `py`. Repeatable, or comma-separated.
 - `-n, --number-style <plain|comma|underscore|space>`: how to format numbers. Default: `plain`.
 - `-u, --size-units <binary|decimal>`: the units for sizes. Default: `binary`.
 - `-p, --precision <0-6>`: decimal places in percentages. Default: `1`.
@@ -232,6 +233,7 @@ follow_symlinks = false
 exclude_patterns = ["languages.json5", "*.tmp", "node_modules/*"]  # File names or glob patterns.
 include_languages = ["rust", "python"]  # Count only these languages.
 # exclude_languages = ["markdown", "toml"]  # Or skip these. You can't set both.
+include_extensions = ["rs", "py"]  # Count only these extensions.
 fail_on_error = false
 
 [display]

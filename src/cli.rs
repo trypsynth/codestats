@@ -31,7 +31,7 @@ pub enum Commands {
 	/// List all supported programming languages
 	Langs,
 	/// Compare line counts between two versions of a git repository, by language
-	Diff(DiffArgs),
+	Diff(Box<DiffArgs>),
 	/// Generate a default configuration file
 	Init {
 		/// Output path for the configuration file [default: .codestats.toml]
@@ -130,12 +130,17 @@ pub struct SourceArgs {
 	/// Exclude files or directories matching the given glob patterns. Can be specified more than once.
 	#[arg(short, long)]
 	pub exclude: Vec<String>,
-	/// Only analyze files of the specified language(s). Can be specified multiple times, and cannot be used together with --exclude-lang.
-	#[arg(short = 'L', long = "lang", conflicts_with = "exclude_lang")]
+	/// Only analyze files of the specified language(s), comma-separated or given more than once. Cannot be used together
+	/// with --exclude-lang.
+	#[arg(short = 'L', long = "lang", conflicts_with = "exclude_lang", value_delimiter = ',')]
 	pub include_lang: Vec<String>,
-	/// Exclude files of the specified language(s). Can be specified multiple times, and cannot be used together with --lang.
-	#[arg(long = "exclude-lang", conflicts_with = "include_lang")]
+	/// Exclude files of the specified language(s), comma-separated or given more than once. Cannot be used together with
+	/// --lang.
+	#[arg(long = "exclude-lang", conflicts_with = "include_lang", value_delimiter = ',')]
 	pub exclude_lang: Vec<String>,
+	/// Only count files with these extensions (`rs`, `py`), comma-separated or given more than once
+	#[arg(long = "ext", value_name = "EXT", value_delimiter = ',')]
+	pub ext: Vec<String>,
 	/// Exit with a non-zero status code if any files are skipped due to errors.
 	#[arg(long = "fail-on-error")]
 	pub fail_on_error: bool,
@@ -233,6 +238,12 @@ fn merge_shared(mut config: Config, source: &SourceArgs, format: &FormatArgs, ma
 	}
 	if cli_overrode(matches, "exclude_lang") {
 		config.analysis.exclude_languages.extend(source.exclude_lang.clone());
+	}
+	if cli_overrode(matches, "ext") {
+		config.analysis.include_extensions.extend(source.ext.clone());
+	}
+	for extension in &mut config.analysis.include_extensions {
+		*extension = extension.trim_start_matches('.').to_owned();
 	}
 	// Paths in a config file are relative to the file.
 	if !paths_given

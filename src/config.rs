@@ -68,6 +68,8 @@ pub struct AnalysisConfig {
 	pub exclude_patterns: Vec<String>,
 	pub include_languages: Vec<String>,
 	pub exclude_languages: Vec<String>,
+	/// Only count files with these extensions, without the dot, ignoring case.
+	pub include_extensions: Vec<String>,
 	pub fail_on_error: bool,
 }
 
@@ -85,6 +87,7 @@ impl Default for AnalysisConfig {
 			exclude_patterns: Vec::new(),
 			include_languages: Vec::new(),
 			exclude_languages: Vec::new(),
+			include_extensions: Vec::new(),
 			fail_on_error: false,
 		}
 	}
