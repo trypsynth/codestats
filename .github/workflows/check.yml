@@ -39,6 +39,26 @@ jobs:
         run: cargo clippy
       - name: Run tests
         run: cargo test
+  windows:
+    name: Test (Windows)
+    runs-on: windows-latest
+    steps:
+      - name: Keep line endings as committed
+        run: git config --global core.autocrlf false
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-test-
+      - name: Run tests
+        run: cargo test
   linejudge:
     name: LineJudge
     runs-on: ubuntu-latest
