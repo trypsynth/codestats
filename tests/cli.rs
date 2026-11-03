@@ -78,7 +78,7 @@ fn git_counts_only_tracked_files() {
 			.unwrap()
 			.iter()
 			.flat_map(|lang| {
-				lang["files"].as_array().unwrap().iter().map(|file| file["path"].as_str().unwrap().to_owned())
+				lang["files"].as_array().unwrap().iter().map(|file| file["path"].as_str().unwrap().replace('\\', "/"))
 			})
 			.collect();
 		paths.sort();
@@ -222,7 +222,8 @@ fn several_paths_are_counted_together_once() {
 	let output = cs().current_dir(&root).args(["a", "b", "a", "a/main.rs", "-v", "-o", "csv"]).output().unwrap();
 	assert!(output.status.success(), "stderr: {}", String::from_utf8_lossy(&output.stderr));
 	let csv = String::from_utf8(output.stdout).unwrap();
-	let mut files: Vec<_> = csv.lines().filter(|row| row.contains("main.rs")).collect();
+	let mut files: Vec<_> =
+		csv.lines().filter(|row| row.contains("main.rs")).map(|row| row.replace('\\', "/")).collect();
 	files.sort_unstable();
 	assert_eq!(files.len(), 2, "{csv}");
 	assert!(files[0].starts_with("a/main.rs") && files[1].starts_with("b/main.rs"), "{csv}");

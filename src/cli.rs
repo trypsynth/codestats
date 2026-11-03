@@ -329,7 +329,8 @@ mod tests {
 		let merged = merge_config(config, &args, &matches).expect("merge config");
 		let parent = config_path.parent().expect("config parent");
 		// On Windows, a path that starts with a slash stays on the config's drive.
-		assert_eq!(merged.paths, [parent.join("src"), parent.join("/abs")]);
+		let rooted = PathBuf::from("/abs");
+		assert_eq!(merged.paths, [parent.join("src"), parent.join(rooted)]);
 	}
 
 	#[test]
