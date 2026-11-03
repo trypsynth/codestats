@@ -23,11 +23,7 @@ pub struct LanguageConfig {
 	#[serde(default)]
 	pub shebangs: Vec<String>,
 	#[serde(default)]
-	pub keywords: Vec<String>,
-	#[serde(default)]
-	pub require_keywords: bool,
-	#[serde(default)]
-	pub case_sensitive_keywords: bool,
+	pub keywords: Keywords,
 	#[serde(default)]
 	pub shebang_overrides: bool,
 	#[serde(default)]
@@ -46,6 +42,59 @@ pub struct LanguageConfig {
 	pub embedding: Option<Embedding>,
 	#[serde(default)]
 	pub heredoc: Option<Heredoc>,
+}
+
+/// Words that tell a language apart from others sharing its file patterns: a list, or the full form `{words, required, case_sensitive}`.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(untagged)]
+pub enum Keywords {
+	Words(Vec<String>),
+	Full(KeywordsConfig),
+}
+
+impl Default for Keywords {
+	fn default() -> Self {
+		Self::Words(Vec::new())
+	}
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct KeywordsConfig {
+	words: Vec<String>,
+	#[serde(default)]
+	required: Option<RequireKeywords>,
+	/// Word keywords only match in the case they're written.
+	#[serde(default)]
+	case_sensitive: bool,
+}
+
+/// When a language needs a keyword to be picked; mirrors `RequireKeywords` in `src/langs/data.rs`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum RequireKeywords {
+	Shared,
+	Always,
+}
+
+impl Keywords {
+	pub fn words(&self) -> &[String] {
+		match self {
+			Self::Words(words) => words,
+			Self::Full(config) => &config.words,
+		}
+	}
+
+	pub const fn required(&self) -> Option<RequireKeywords> {
+		match self {
+			Self::Words(_) => None,
+			Self::Full(config) => config.required,
+		}
+	}
+
+	pub const fn case_sensitive(&self) -> bool {
+		matches!(self, Self::Full(KeywordsConfig { case_sensitive: true, .. }))
+	}
 }
 
 /// Which heredoc syntax a language has; mirrors `Heredoc` in `src/langs/data.rs`.

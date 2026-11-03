@@ -8,7 +8,7 @@ use std::{
 use memchr::memmem::Finder;
 
 use crate::{
-	langs::data::{LANGUAGES, Language},
+	langs::data::{LANGUAGES, Language, RequireKeywords},
 	swar,
 };
 
@@ -88,7 +88,7 @@ fn score_language(
 		score = score.saturating_add(capped * KEYWORD_MATCH_SCORE);
 	}
 	// Languages that share junk-drawer extensions (e.g. `.inc`) need real keyword evidence, not just a matching comment marker or keywords every candidate has.
-	if lang.require_keywords && distinctive_hits == 0 {
+	if lang.require_keywords != RequireKeywords::Never && distinctive_hits == 0 {
 		return 0;
 	}
 	// For symbol-only languages (all keywords are symbols), require high density if alphabetic content exists
@@ -327,7 +327,7 @@ fn block_end(
 
 /// Order for breaking ties between equal scores: lower ranks first.
 const fn tie_rank(lang: &Language) -> (bool, usize) {
-	(lang.require_keywords, lang.keywords.len())
+	(!matches!(lang.require_keywords, RequireKeywords::Never), lang.keywords.len())
 }
 
 /// Pick the best-scoring candidate, returning it with how far it beat the runner-up.
@@ -431,7 +431,7 @@ mod tests {
 		column_one_comments: &[],
 		shebangs: &[],
 		keywords: &["alpha", "beta"],
-		require_keywords: false,
+		require_keywords: RequireKeywords::Never,
 		case_sensitive_keywords: false,
 		shebang_overrides: false,
 		c_preprocessor: false,
@@ -453,7 +453,7 @@ mod tests {
 		column_one_comments: &[],
 		shebangs: &[],
 		keywords: &["winner"],
-		require_keywords: false,
+		require_keywords: RequireKeywords::Never,
 		case_sensitive_keywords: false,
 		shebang_overrides: false,
 		c_preprocessor: false,

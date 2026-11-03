@@ -7,11 +7,11 @@ use self::{
 	scoring::{KEYWORD_MATCH_SCORE, disambiguate},
 	shebang::detect_from_shebang,
 };
-use super::data::Language;
+use super::data::{Language, RequireKeywords};
 
 /// When nothing scores, fall back to the one candidate that doesn't require keyword evidence, if there is exactly one (e.g. C over Objective-C for a bare `.h`).
 fn default_candidate(candidates: &[&'static Language]) -> Option<&'static Language> {
-	let mut defaults = candidates.iter().filter(|lang| !lang.require_keywords);
+	let mut defaults = candidates.iter().filter(|lang| lang.require_keywords == RequireKeywords::Never);
 	match (defaults.next(), defaults.next()) {
 		(Some(lang), None) => Some(lang),
 		_ => None,
@@ -28,7 +28,7 @@ pub struct Detection {
 /// How far the winning candidate must beat the runner-up (three keyword hits) for a decision from a small sample to stand.
 const DECISIVE_MARGIN: i32 = 3 * KEYWORD_MATCH_SCORE;
 
-/// Pick a language from a filename's candidates (see [`get_candidates`]). Content is only consulted when there isn't exactly one candidate.
+/// Pick a language from a filename's candidates (see [`get_candidates`]). Content is only consulted when there isn't exactly one candidate, or the one always needs keywords.
 #[must_use]
 pub fn detect_language(candidates: &[&'static Language], content: Option<&str>) -> Detection {
 	let decided = |language| Detection { language, close_call: false };
@@ -36,7 +36,8 @@ pub fn detect_language(candidates: &[&'static Language], content: Option<&str>) 
 		0 => decided(content.and_then(detect_from_shebang)),
 		// A shebang claims a file only where the extension's language says it may (BRLTTY's `latex-access.ctb` is Python); elsewhere a shebang atop, say, a `.cxx` lexer test or a dpatch `.patch` doesn't change what the file is.
 		1 if candidates[0].shebang_overrides => decided(content.and_then(detect_from_shebang).or(Some(candidates[0]))),
-		1 => decided(Some(candidates[0])),
+		// A language that always needs keyword evidence is held to it even alone on its pattern.
+		1 if candidates[0].require_keywords != RequireKeywords::Always => decided(Some(candidates[0])),
 		_ => {
 			let Some(file_content) = content else {
 				return decided(default_candidate(candidates));
@@ -141,6 +142,22 @@ mod tests {
 		// A kbd keymap: its `#` comments alone shouldn't make it BitBake.
 		let content = "# Common keys\nkeycode 1 = Escape\nkeycode 2 = one exclam\n";
 		assert!(detect_language_info("qwerty-layout.inc", Some(content)).is_none());
+	}
+
+	#[rstest]
+	#[case::rpm_spec("kernel.spec", "Name: kernel\n%description\nThe Linux kernel.\n", Some("RPM Spec"))]
+	#[case::erlang_test_spec("emulator.spec", "{suites,\"../emulator_test\",all}.\n", None)]
+	#[case::systemd_target("multi-user.target", "[Unit]\nDescription=Multi-User System\n", Some("systemd"))]
+	#[case::makefile_target("Makefile.target", "obj-y += hid.o\n", None)]
+	#[case::pickle_data("randv3.pck", "(lp0\nI-2147483648\n", None)]
+	fn always_required_keywords_hold_alone(#[case] name: &str, #[case] content: &str, #[case] expected: Option<&str>) {
+		assert_eq!(detect_language_info(name, Some(content)).map(|language| language.name), expected);
+	}
+
+	#[test]
+	fn shared_required_keywords_dont_hold_alone() {
+		// C++ needs keywords to win a `.h` from C, but a `.cpp` is C++ whatever it holds.
+		assert_eq!(detect_language_info("main.cpp", Some("int x;\n")).map(|language| language.name), Some("C++"));
 	}
 
 	#[test]

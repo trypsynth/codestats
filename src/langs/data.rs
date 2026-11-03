@@ -17,6 +17,17 @@ pub enum Embedding {
 	Php,
 }
 
+/// When content has to show one of a language's keywords for a file to be that language.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RequireKeywords {
+	/// Never: the language is the default among those sharing a pattern.
+	Never,
+	/// Where the file's pattern is shared with other languages (C++ for a `.h`), but not for its own (`.cpp`).
+	Shared,
+	/// Even for a pattern only this language has, which others' files often use too (RPM Spec's `.spec`).
+	Always,
+}
+
 /// A language's heredocs (`<<EOF`): string literals whose body runs from the next line to a line holding just the terminator. They differ in where a space may come between the opener and the terminator, which tells them apart from a shift or append (`x << y`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Heredoc {

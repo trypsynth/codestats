@@ -10,7 +10,7 @@ use super::{
 	line_counter,
 	stats::{AnalysisResults, FileCounts},
 };
-use crate::langs::{self, Language};
+use crate::langs::{self, Language, RequireKeywords};
 
 /// How much of a file to read when its extension is shared by several languages and its content decides.
 const DETECTION_WINDOW: usize = 64 * 1024;
@@ -105,7 +105,10 @@ fn count_contents(
 	}
 	// A single candidate decides by name alone, unless the file might be a script claimed by its shebang, so only decode the sample when content has a say.
 	let content_decides = match candidates {
-		[language] => may_be_script(language, &sample_bytes[encoding.bom_len.min(sample_bytes.len())..]),
+		[language] => {
+			language.require_keywords == RequireKeywords::Always
+				|| may_be_script(language, &sample_bytes[encoding.bom_len.min(sample_bytes.len())..])
+		}
 		_ => true,
 	};
 	let mut detection = langs::detect_language(

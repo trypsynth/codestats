@@ -123,11 +123,12 @@ impl Validator {
 	}
 
 	fn check_keywords(&mut self, lang: &LanguageConfig) {
-		if lang.require_keywords && lang.keywords.is_empty() {
-			self.error(lang, "require_keywords needs keywords");
+		let words = lang.keywords.words();
+		if lang.keywords.required().is_some() && words.is_empty() {
+			self.error(lang, "required keywords need words");
 		}
-		for (i, keyword) in lang.keywords.iter().enumerate() {
-			if lang.keywords[..i].contains(keyword) {
+		for (i, keyword) in words.iter().enumerate() {
+			if words[..i].contains(keyword) {
 				self.error(lang, format!("duplicate keyword {keyword:?}"));
 			}
 		}
@@ -137,7 +138,7 @@ impl Validator {
 		for pattern in &lang.file_patterns {
 			let (names, all_have_keywords) = self.patterns.entry(pattern.clone()).or_insert((Vec::new(), true));
 			names.push(lang.name.clone());
-			*all_have_keywords &= !lang.keywords.is_empty();
+			*all_have_keywords &= !lang.keywords.words().is_empty();
 		}
 	}
 

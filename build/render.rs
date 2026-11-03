@@ -2,7 +2,7 @@
 
 use std::fmt::{Display, Write as _};
 
-use crate::config::{LanguageConfig, StringSpec};
+use crate::config::{LanguageConfig, RequireKeywords, StringSpec};
 
 /// Fields of the generated `Language` struct, in order.
 const LANGUAGE_FIELDS: &[(&str, &str)] = &[
@@ -15,7 +15,7 @@ const LANGUAGE_FIELDS: &[(&str, &str)] = &[
 	("column_one_comments", "&'static [&'static str]"),
 	("shebangs", "&'static [&'static str]"),
 	("keywords", "&'static [&'static str]"),
-	("require_keywords", "bool"),
+	("require_keywords", "RequireKeywords"),
 	("case_sensitive_keywords", "bool"),
 	("shebang_overrides", "bool"),
 	("strings", "&'static [StringDelimiter]"),
@@ -91,9 +91,14 @@ fn render_language(output: &mut String, index: usize, lang: &LanguageConfig) {
 	write_field(output, "block_comments", block_comments);
 	write_field(output, "column_one_comments", quoted_slice(&lang.column_one_comments));
 	write_field(output, "shebangs", quoted_slice(&lang.shebangs));
-	write_field(output, "keywords", quoted_slice(&lang.keywords));
-	write_field(output, "require_keywords", lang.require_keywords);
-	write_field(output, "case_sensitive_keywords", lang.case_sensitive_keywords);
+	write_field(output, "keywords", quoted_slice(lang.keywords.words()));
+	let require = match lang.keywords.required() {
+		None => "Never",
+		Some(RequireKeywords::Shared) => "Shared",
+		Some(RequireKeywords::Always) => "Always",
+	};
+	write_field(output, "require_keywords", format_args!("RequireKeywords::{require}"));
+	write_field(output, "case_sensitive_keywords", lang.keywords.case_sensitive());
 	write_field(output, "shebang_overrides", lang.shebang_overrides);
 	write_field(output, "strings", render_slice(&lang.strings, render_string_delimiter));
 	write_field(output, "c_preprocessor", lang.c_preprocessor);

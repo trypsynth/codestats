@@ -12,14 +12,18 @@
 //   shebangs             Shebang prefixes that identify the language for files without a known extension.
 //   keywords             Used to choose between languages that share a pattern; every language sharing a pattern needs
 //                        some. Words match whole tokens case-insensitively; anything with punctuation (`@interface`,
-//                        `:=`) matches as text. On a tie, a language without `require_keywords` wins, then the one with
-//                        fewer keywords, so a language that extends another should list the base language's keywords
-//                        plus its own. When all the languages sharing a pattern write comments the same way, keywords
-//                        inside comments don't count.
-//   require_keywords     Only pick this language when a keyword matches that not every other language sharing the
-//                        pattern has (used for junk-drawer extensions like `.inc`, and for C++ in `.h`). When nothing
-//                        matches, the one sharing language without this flag is used as the default.
-//   case_sensitive_keywords  Word keywords only match in the case they're written (C: `virtual` but not `VIRTUAL`).
+//                        `:=`) matches as text. On a tie, a language whose keywords aren't required wins, then the one
+//                        with fewer keywords, so a language that extends another should list the base language's
+//                        keywords plus its own. When all the languages sharing a pattern write comments the same way,
+//                        keywords inside comments don't count. A list of words, or the full form
+//                        {words, required, case_sensitive}:
+//                          required: "shared" only picks the language, where its pattern is shared, when a keyword
+//                            matches that not every other language sharing it has (junk-drawer extensions like `.inc`,
+//                            and C++ in a `.h`); when nothing matches, the sharing language without required keywords is
+//                            the default. "always" holds the language to that even for a pattern only it has, for one
+//                            that other files often use too (RPM Spec's `.spec`), which are then left uncounted.
+//                          case_sensitive: word keywords only match in the case they're written (C's `virtual`, but
+//                            not `VIRTUAL`).
 //   shebang_overrides    A file with this language's extension that starts with a shebang is the shebang's language
 //                        (BRLTTY runs contraction tables that are programs, like a `.ctb` Python script).
 //   strings              String literals, so comment markers inside them are ignored and their contents count as code.
@@ -192,8 +196,7 @@
 		file_patterns: ["*.asm", "*.s", "*.S", "*.inc", "*.s65", "*.a65", "*.a51"],
 		line_comments: [";", "# ", "#\t", "//"],
 		block_comments: [["/*", "*/"]],
-		keywords: ["%macro", "%endmacro", "%define", "%include", "%ifdef", "section ."],
-		require_keywords: true,
+		keywords: {words: ["%macro", "%endmacro", "%define", "%include", "%ifdef", "section ."], required: "shared"},
 		c_preprocessor: true,
 	},
 	"Astro": {
@@ -309,8 +312,7 @@
 	"BitBake": {
 		file_patterns: ["*.bb", "*.bbappend", "*.bbclass", "*.inc"],
 		line_comments: ["#"],
-		keywords: ["DESCRIPTION", "SRC_URI", "do_compile", "do_install", "inherit", "DEPENDS", "RDEPENDS", "do_configure"],
-		require_keywords: true,
+		keywords: {words: ["DESCRIPTION", "SRC_URI", "do_compile", "do_install", "inherit", "DEPENDS", "RDEPENDS", "do_configure"], required: "shared"},
 	},
 	"Blade": {
 		file_patterns: ["*.blade.php", "*.blade"],
@@ -368,8 +370,7 @@
 		file_patterns: ["*.c", "*.h", "*.ec", "*.pch", "*.pgc"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
-		keywords: ["#include", "#define", "#ifndef", "#pragma", "int main", "void", "sizeof", "typedef", "struct", "extern", "#ifdef", "#endif", "static", "NULL", "unsigned"],
-		case_sensitive_keywords: true,
+		keywords: {words: ["#include", "#define", "#ifndef", "#pragma", "int main", "void", "sizeof", "typedef", "struct", "extern", "#ifdef", "#endif", "static", "NULL", "unsigned"], case_sensitive: true},
 		strings: ["\"", {open: "'", char: true}],
 		line_splices: true,
 	},
@@ -389,9 +390,7 @@
 		file_patterns: ["*.cpp", "*.h", "*.hpp", "*.pch", "*.c++", "*.h++", "*.cc", "*.cxx", "*.hxx", "*.ino", "*.ipp", "*.cppm", "*.ixx", "*.c++m", "*.pcc", "*.tpp", "*.hh", "*.inl", "*.inc", "*.ccm", "*.cxxm", "*.mxx", "*.hppm", "*.hxxm", "*.tcc"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
-		keywords: ["#include", "#define", "#ifndef", "#ifdef", "#endif", "#pragma", "int main", "void", "sizeof", "typedef", "struct", "extern", "static", "NULL", "unsigned", "namespace", "template", "typename", "std::", "nullptr", "constexpr", "virtual", "operator", "public:", "protected:", "private:"],
-		case_sensitive_keywords: true,
-		require_keywords: true,
+		keywords: {words: ["#include", "#define", "#ifndef", "#ifdef", "#endif", "#pragma", "int main", "void", "sizeof", "typedef", "struct", "extern", "static", "NULL", "unsigned", "namespace", "template", "typename", "std::", "nullptr", "constexpr", "virtual", "operator", "public:", "protected:", "private:"], required: "shared", case_sensitive: true},
 		strings: ["\"", {open: "'", char: true}, {open: "R\"", close: "\"", escape: null, multiline: true, delimited: true}],
 		line_splices: true,
 	},
@@ -621,8 +620,7 @@
 		nested_blocks: ["/+"],
 		shebangs: ["#!/usr/bin/env rdmd", "#!/usr/bin/rdmd"],
 		// `.d` is also the dependency files compilers write for Make, which are lists of paths, so these keywords carry punctuation that paths don't. Doc comments count, since some modules open with pages of them.
-		keywords: ["module ", "import ", "void ", "return ", "auto ", "struct ", "class ", "enum ", "alias ", "immutable ", "writeln(", ";", "@safe", "@nogc", "/**", "/++", "///"],
-		require_keywords: true,
+		keywords: {words: ["module ", "import ", "void ", "return ", "auto ", "struct ", "class ", "enum ", "alias ", "immutable ", "writeln(", ";", "@safe", "@nogc", "/**", "/++", "///"], required: "shared"},
 	},
 	"D2": {
 		file_patterns: ["*.d2"],
@@ -1480,9 +1478,7 @@
 		file_patterns: ["*.c"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
-		keywords: ["inherit", "nomask", "varargs", "efun", "([", "::create(", "this_object()", "this_player()"],
-		case_sensitive_keywords: true,
-		require_keywords: true,
+		keywords: {words: ["inherit", "nomask", "varargs", "efun", "([", "::create(", "this_object()", "this_player()"], required: "shared", case_sensitive: true},
 	},
 	"LSL": {
 		file_patterns: ["*.lsl"],
@@ -1524,8 +1520,7 @@
 		file_patterns: ["*.mak", "*.make", "*.mk", "*.mkfile", "BSDmakefile", "GNUmakefile", "Kbuild", "Makefile", "Makefile.boot", "Makefile.frag", "Makefile.in", "Makefile.inc", "Makefile.wat", "makefile", "makefile.bcc", "makefile.gcc", "makefile.sco", "makefile.unx", "makefile.vc", "mkfile", "*.inc", "*.d"],
 		line_comments: ["#"],
 		shebangs: ["#!/usr/bin/make", "#!/usr/bin/env make"],
-		keywords: [":=", "$(", "ifeq", "ifneq", ".PHONY", "$@"],
-		require_keywords: true,
+		keywords: {words: [":=", "$(", "ifeq", "ifneq", ".PHONY", "$@"], required: "shared"},
 	},
 	"Mako": {
 		file_patterns: ["*.mako", "*.mao"],
@@ -1815,9 +1810,7 @@
 		file_patterns: ["*.m", "*.h", "*.pch"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
-		keywords: ["#include", "#define", "#ifndef", "#pragma", "#ifdef", "#endif", "@interface", "@implementation", "@protocol", "@property", "@synthesize", "@end", "@autoreleasepool", "@selector", "@class", "@\"", "NSString", "NSInteger", "#import", "NSObject"],
-		case_sensitive_keywords: true,
-		require_keywords: true,
+		keywords: {words: ["#include", "#define", "#ifndef", "#pragma", "#ifdef", "#endif", "@interface", "@implementation", "@protocol", "@property", "@synthesize", "@end", "@autoreleasepool", "@selector", "@class", "@\"", "NSString", "NSInteger", "#import", "NSObject"], required: "shared", case_sensitive: true},
 		strings: ["\"", {open: "'", char: true}],
 		line_splices: true,
 	},
@@ -1825,8 +1818,7 @@
 		file_patterns: ["*.mm"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
-		keywords: ["@interface", "@implementation", "@protocol", "@property", "@synthesize", "@end", "#import", "NSString", "class", "template"],
-		case_sensitive_keywords: true,
+		keywords: {words: ["@interface", "@implementation", "@protocol", "@property", "@synthesize", "@end", "#import", "NSString", "class", "template"], case_sensitive: true},
 		strings: ["\"", {open: "'", char: true}, {open: "R\"", close: "\"", escape: null, multiline: true, delimited: true}],
 		line_splices: true,
 	},
@@ -1930,8 +1922,7 @@
 		file_patterns: ["*.pas", "*.pp", "*.p", "*.inc", "*.pascal"],
 		line_comments: ["//"],
 		block_comments: [["(*", "*)"], ["{", "}"]],
-		keywords: [":=", "end;", "begin", "procedure", "program"],
-		require_keywords: true,
+		keywords: {words: [":=", "end;", "begin", "procedure", "program"], required: "shared"},
 	},
 	"Pawn": {
 		file_patterns: ["*.pwn", "*.pawn"],
@@ -1960,8 +1951,7 @@
 		line_comments: ["//", "#"],
 		block_comments: [["/*", "*/"]],
 		shebangs: ["#!/usr/bin/php", "#!/usr/bin/env php"],
-		keywords: ["<?php", "$this->", "?>", "array(", "public function", "private function"],
-		require_keywords: true,
+		keywords: {words: ["<?php", "$this->", "?>", "array(", "public function", "private function"], required: "shared"},
 		strings: [{open: "\"", multiline: true}, {open: "'", multiline: true}],
 		heredoc: "php",
 		embedding: "php",
@@ -1999,9 +1989,11 @@
 		block_comments: [["/*", "*/"]],
 	},
 	"PL/SQL": {
-		file_patterns: ["*.pls", "*.plb", "*.pck", "*.pkb", "*.pks", "*.plsql", "*.bdy", "*.bod", "*.prc", "*.spc", "*.trg"],
+		file_patterns: ["*.pls", "*.plb", "*.pck", "*.pkb", "*.pks", "*.plsql", "*.bdy", "*.bod", "*.fnc", "*.prc", "*.spc", "*.trg"],
 		line_comments: ["--"],
 		block_comments: [["/*", "*/"]],
+		// Others use these extensions too, like Perl's `embed.fnc`.
+		keywords: {words: ["create or replace", "end;", "package body", "procedure", "exception", "pragma", "%type", "%rowtype"], required: "always"},
 	},
 	"PlantUML": {
 		file_patterns: ["*.puml", "*.plantuml", "*.pu", "*.iuml", "*.wsd"],
@@ -2263,6 +2255,12 @@
 		line_comments: ["//"],
 		keywords: ["dcl-s", "dcl-ds", "dcl-pr", "dcl-proc", "end-proc"],
 	},
+	"RPM Spec": {
+		file_patterns: ["*.spec"],
+		line_comments: ["#"],
+		// Erlang's common_test specs, PyInstaller's and generated files share `.spec`, so a file has to show an RPM section or tag.
+		keywords: {words: ["%description", "%prep", "%build", "%install", "%files", "%changelog", "BuildRequires:", "%global "], required: "always"},
+	},
 	"Ruby": {
 		file_patterns: ["*.rb", "*.builder", "*.eye", "*.gemspec", "*.god", "*.jbuilder", "*.mspec", "*.pluginspec", "*.podspec", "*.rabl", "*.rake", "*.rbuild", "*.rbw", "*.rbx", "*.ruby", "*.thor", "*.watchr", ".irbrc", ".pryrc", "Appraisals", "Berksfile", "Brewfile", "Buildfile", "Capfile", "Dangerfile", "Deliverfile", "Fastfile", "Gemfile", "Guardfile", "Jarfile", "Mavenfile", "Podfile", "Puppetfile", "Rakefile", "Snapfile", "Thorfile", "rakefile", "*.ru", "Vagrantfile"],
 		line_comments: ["#"],
@@ -2513,8 +2511,10 @@
 		keywords: ["%module", "%include", "%apply", "%typemap", "%inline", "%exception"],
 	},
 	"systemd": {
-		file_patterns: ["*.service", "*.socket", "*.timer", "*.mount", "*.automount", "*.device", "*.scope", "*.slice", "*.swap"],
+		file_patterns: ["*.service", "*.socket", "*.timer", "*.mount", "*.automount", "*.device", "*.scope", "*.slice", "*.swap", "*.target", "*.path"],
 		line_comments: ["#", ";"],
+		// Every unit has a section, and `.target` and `.path` are common names for other files (a `Makefile.target`).
+		keywords: {words: ["[Unit]", "[Service]", "[Install]", "[Socket]", "[Timer]", "[Mount]", "[Automount]", "[Path]", "[Slice]", "[Swap]", "[Scope]"], required: "always"},
 	},
 	"SystemVerilog": {
 		file_patterns: ["*.sv", "*.svh"],
