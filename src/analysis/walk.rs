@@ -6,7 +6,7 @@ mod rules;
 
 use std::{
 	fs::{self, FileType},
-	io,
+	io, mem,
 	path::{Path, PathBuf},
 	sync::{
 		Arc, Condvar, Mutex, PoisonError,
@@ -178,7 +178,12 @@ where
 	F: Fn() -> V + Sync,
 {
 	fn run(mut self) {
+		let mut starting_up = true;
 		while let Some(work) = self.next_work() {
+			// The worker that started this one may have long since finished queueing, so nothing else would start the next.
+			if mem::take(&mut starting_up) && self.pool.stealers.iter().any(|stealer| !stealer.is_empty()) {
+				self.start_another();
+			}
 			match work {
 				Work::File(entry) => (self.visit)(Ok(entry)),
 				Work::Dir(entry, rules) => self.read_dir(&entry, &rules),
@@ -454,6 +459,25 @@ mod tests {
 
 	fn names(names: &[&str]) -> BTreeSet<String> {
 		names.iter().map(ToString::to_string).collect()
+	}
+
+	/// Each visit waits for every thread to be in one, which only happens if all of them start, though the files are all queued long before the second is up.
+	#[test]
+	fn a_flat_directory_gets_every_thread() {
+		let files: Vec<_> = (0..16).map(|i| (format!("{i}.rs"), "")).collect();
+		let files: Vec<_> = files.iter().map(|(name, contents)| (name.as_str(), *contents)).collect();
+		let tree = Tree::new(&files);
+		let threads = AtomicUsize::new(0);
+		let deadline = std::time::Instant::now() + Duration::from_secs(20);
+		walk(&tree.0, defaults(), &|| {
+			threads.fetch_add(1, Ordering::SeqCst);
+			|_: Result<Entry, Error>| {
+				while threads.load(Ordering::SeqCst) < defaults().threads && std::time::Instant::now() < deadline {
+					thread::yield_now();
+				}
+			}
+		});
+		assert_eq!(threads.load(Ordering::SeqCst), defaults().threads);
 	}
 
 	#[test]
