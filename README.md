@@ -22,7 +22,7 @@ codestats counts the lines in a codebase by language. It counts code lines, comm
 - Can show the counts for each file.
 - Does not count generated files, such as lockfiles. You can turn this off.
 - Obeys the linguist attributes in `.gitattributes` files, as GitHub does.
-- Knows more than 550 languages.
+- Knows more than 560 languages.
 - Reads files in all common text encodings.
 - Runs very quickly on small and large computers.
 
