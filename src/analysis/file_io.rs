@@ -1,4 +1,10 @@
-use std::{cell::RefCell, fs::File, io::Read, ops::Deref, path::Path};
+use std::{
+	cell::RefCell,
+	fs::File,
+	io::{ErrorKind, Read},
+	ops::Deref,
+	path::Path,
+};
 
 use anyhow::{Context as _, Result};
 use memmap2::Mmap;
@@ -29,13 +35,14 @@ impl Deref for SampleBuf {
 }
 
 thread_local! {
-	/// Each worker reads small files into the same buffer, so they don't cost an allocation apiece.
+	/// Each worker reads small files into the same buffer, so they don't cost an allocation apiece. It stays at its longest length, so nothing is zeroed twice.
 	static READ_BUFFER: RefCell<Vec<u8>> = const { RefCell::new(Vec::new()) };
 }
 
 /// A file's contents: read into memory when small, memory-mapped when large.
 pub(super) enum FileSource {
-	Read(Vec<u8>),
+	/// The buffer, and how many of its bytes this file filled.
+	Read(Vec<u8>, usize),
 	Mapped(Mmap),
 }
 
@@ -52,14 +59,9 @@ impl FileSource {
 			Ok(Self::Mapped(mmap))
 		} else {
 			let mut buffer = READ_BUFFER.take();
-			buffer.clear();
-			// The size is known, so reserve it and read through `Take`, which skips the `fstat` and `lseek` that `File::read_to_end` makes to size its buffer.
-			buffer.reserve(usize::try_from(file_size).unwrap_or(0) + 1);
-			Read::by_ref(&mut file)
-				.take(u64::MAX)
-				.read_to_end(&mut buffer)
+			let len = read_into(&mut file, usize::try_from(file_size).unwrap_or(0), &mut buffer)
 				.with_context(|| format!("Failed to read file {}", file_path.display()))?;
-			Ok(Self::Read(buffer))
+			Ok(Self::Read(buffer, len))
 		}
 	}
 
@@ -75,7 +77,7 @@ impl Deref for FileSource {
 	type Target = [u8];
 	fn deref(&self) -> &[u8] {
 		match self {
-			Self::Read(buffer) => buffer,
+			Self::Read(buffer, len) => &buffer[..*len],
 			Self::Mapped(mmap) => mmap,
 		}
 	}
@@ -83,10 +85,31 @@ impl Deref for FileSource {
 
 impl Drop for FileSource {
 	fn drop(&mut self) {
-		if let Self::Read(buffer) = self {
+		if let Self::Read(buffer, _) = self {
 			READ_BUFFER.set(std::mem::take(buffer));
 		}
 	}
+}
+
+/// Read `file` into `buffer`, returning how many bytes it holds. A file that gives up the `size` it reported needs no further `read` to find its end, which `read_to_end` would make after several smaller ones. One reporting no size, as files in `/proc` do, is read to its end.
+fn read_into(file: &mut File, size: usize, buffer: &mut Vec<u8>) -> std::io::Result<usize> {
+	if size == 0 {
+		buffer.clear();
+		return file.read_to_end(buffer);
+	}
+	if buffer.len() < size {
+		buffer.resize(size, 0);
+	}
+	let mut len = 0;
+	while len < size {
+		match file.read(&mut buffer[len..size]) {
+			Ok(0) => break,
+			Ok(read) => len += read,
+			Err(err) if err.kind() == ErrorKind::Interrupted => {}
+			Err(err) => return Err(err),
+		}
+	}
+	Ok(len)
 }
 
 fn sample_ranges(file_len: u64) -> (usize, Option<(u64, usize)>) {
@@ -147,6 +170,24 @@ mod tests {
 		assert_eq!(mid_len, SAMPLE_SIZE);
 		// Offset should be even for UTF-16 alignment
 		assert_eq!(mid_offset % 2, 0);
+	}
+
+	#[test]
+	fn read_into_stops_at_the_size_and_the_end() {
+		let path = std::env::temp_dir().join(format!("codestats_read_into_test_{}", std::process::id()));
+		std::fs::write(&path, b"hello world").unwrap();
+		// The buffer's longer than the file, as it is after a bigger one, and its old contents don't show.
+		let mut buffer = vec![b'x'; 64];
+		let mut read = |size| {
+			let len = read_into(&mut File::open(&path).unwrap(), size, &mut buffer).unwrap();
+			buffer[..len].to_vec()
+		};
+		assert_eq!(read(11), b"hello world");
+		// It shrank since the size was taken, or grew, or reports no size.
+		assert_eq!(read(100), b"hello world");
+		assert_eq!(read(5), b"hello");
+		assert_eq!(read(0), b"hello world");
+		std::fs::remove_file(&path).unwrap();
 	}
 
 	#[test]
