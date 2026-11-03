@@ -39,18 +39,38 @@ fn count_text(text: &str, language: &Language, counts: &mut LineCounts, classifi
 		region_starts(embedding).map_or((false, None), |starts| (true, Some(starts)))
 	});
 	let can_sweep = can_sweep && language.column_one_comments.is_empty();
+	let quick = language_matchers(language)
+		.strings
+		.as_ref()
+		.filter(|_| language.embedding.is_none())
+		.and_then(|strings| strings.quick.as_ref().map(|quick| (quick, strings)));
 	let mut pos = 0;
 	while pos < bytes.len() {
 		// The first line goes through the classifier, which checks it for a shebang.
 		if can_sweep && pos > 0 && classifier.is_clear() {
-			let stop = openers.find(&bytes[pos..]).map_or(bytes.len(), |i| pos + i);
-			while pos < stop {
-				let end = line_end(bytes, pos);
-				if end > stop || region_starts.is_some_and(|starts| may_start_region(&bytes[pos..end], starts)) {
-					break;
+			loop {
+				let stop = openers.find(&bytes[pos..]).map_or(bytes.len(), |i| pos + i);
+				let mut at_stop = false;
+				while pos < stop {
+					let end = line_end(bytes, pos);
+					if region_starts.is_some_and(|starts| may_start_region(&bytes[pos..end], starts)) {
+						break;
+					}
+					if end > stop {
+						at_stop = true;
+						break;
+					}
+					counts.add(if is_blank(&bytes[pos..end]) { LineType::Blank } else { LineType::Code });
+					pos = end;
 				}
-				counts.add(if is_blank(&bytes[pos..end]) { LineType::Blank } else { LineType::Code });
-				pos = end;
+				// A line stopped at only for its strings, which all close on it, is code like the others, and the sweep carries on after it.
+				let end = line_end(bytes, pos);
+				if at_stop && quick.is_some_and(|(quick, strings)| quick.is_plain_code(&bytes[pos..end], strings)) {
+					counts.add(LineType::Code);
+					pos = end;
+					continue;
+				}
+				break;
 			}
 			if pos >= bytes.len() {
 				break;

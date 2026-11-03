@@ -95,6 +95,110 @@ fn find_in_groups([a, b, c]: [u8; 3], rest: &[u8], haystack: &[u8]) -> Option<us
 	found
 }
 
+/// The language's one-byte strings that close with the byte they open with (`"`, `'`), and the tokens that aren't such strings. A line holding none of those other tokens, whose strings of this kind all close on it, is plain code, and leaves nothing open.
+#[derive(Debug)]
+pub struct QuickLines {
+	others: TokenStarts,
+	quotes: ByteSet,
+	/// Each quote byte's string, as an index into the language's strings, and its escape.
+	strings: Vec<Option<(usize, Option<u8>)>>,
+}
+
+impl QuickLines {
+	fn new(lang: &Language, tokens: &[(&'static str, Token)]) -> Option<Self> {
+		if !lang.line_block_comments.is_empty() || !lang.column_one_comments.is_empty() {
+			return None;
+		}
+		let mut strings = vec![None; 256];
+		let mut others = Vec::new();
+		for &(token, kind) in tokens {
+			match kind {
+				Token::String(index) => {
+					let delimiter = &lang.strings[index];
+					let simple = token.len() == 1
+						&& delimiter.close == delimiter.open
+						&& !delimiter.doc && !delimiter.char_literal
+						&& !delimiter.attribute;
+					if simple && strings[usize::from(token.as_bytes()[0])].is_none() {
+						strings[usize::from(token.as_bytes()[0])] = Some((index, delimiter.escape));
+						continue;
+					}
+					others.push((token, kind));
+				}
+				_ => others.push((token, kind)),
+			}
+		}
+		let quotes = ByteSet::new((0..=255).filter(|&b| strings[usize::from(b)].is_some()));
+		if quotes.bytes.is_empty() {
+			return None;
+		}
+		Some(Self { others: TokenStarts::new(others)?, quotes, strings })
+	}
+
+	/// Whether `line`, read from a clear state, is plain code that leaves nothing open: its only tokens are strings of the simple kind, each closing on the line. `false` means the line needs the classifier, not that it isn't code.
+	pub(crate) fn is_plain_code(&self, line: &[u8], matchers: &StringMatchers) -> bool {
+		if self.others.find(line, 0).is_some() {
+			return false;
+		}
+		let mut pos = 0;
+		while let Some(found) = self.quotes.find(&line[pos..]) {
+			let at = pos + found;
+			let Some((index, escape)) = self.strings[usize::from(line[at])] else { return false };
+			// As in the classifier, an escaped quote outside a string opens nothing.
+			if at > 0 && (escape == Some(line[at - 1]) || matchers.escapes.contains(&line[at - 1])) {
+				pos = at + 1;
+				continue;
+			}
+			let Some(end) = matchers.find_close(line, at + 1, index, escape) else { return false };
+			pos = end;
+		}
+		true
+	}
+}
+
+/// A language's tokens by their first byte, each byte's longest first.
+#[derive(Debug)]
+struct TokenStarts {
+	first: ByteSet,
+	by_first: Vec<Vec<(&'static [u8], Token)>>,
+}
+
+impl TokenStarts {
+	/// `None` when a token starts with a letter or digit (Rust's `r"`), whose byte is on nearly every line and would stop the search at every word.
+	fn new(tokens: impl IntoIterator<Item = (&'static str, Token)>) -> Option<Self> {
+		let mut by_first: Vec<Vec<(&'static [u8], Token)>> = vec![Vec::new(); 256];
+		for (token, kind) in tokens {
+			let &first = token.as_bytes().first()?;
+			if first.is_ascii_alphanumeric() || first == b'_' {
+				return None;
+			}
+			by_first[usize::from(first)].push((token.as_bytes(), kind));
+		}
+		for bucket in &mut by_first {
+			// Longest first; a stable sort keeps the earlier of equal tokens, as the automaton would.
+			bucket.sort_by_key(|(token, _)| std::cmp::Reverse(token.len()));
+		}
+		let first = ByteSet::new((0..=255).filter(|&b| !by_first[usize::from(b)].is_empty()));
+		Some(Self { first, by_first })
+	}
+
+	#[inline]
+	fn find(&self, line: &[u8], mut from: usize) -> Option<(usize, usize, Token)> {
+		while let Some(found) = self.first.find(&line[from..]) {
+			let at = from + found;
+			let rest = &line[at..];
+			for &(token, kind) in &self.by_first[usize::from(line[at])] {
+				// Byte by byte, as tokens are a few bytes long, which saves a call to `memcmp`.
+				if rest.len() >= token.len() && rest.iter().zip(token).all(|(a, b)| a == b) {
+					return Some((at, at + token.len(), kind));
+				}
+			}
+			from = at + 1;
+		}
+		None
+	}
+}
+
 /// What a token found by [`StringMatchers::find_token`] starts.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Token {
@@ -113,6 +217,10 @@ pub enum Token {
 #[derive(Debug)]
 pub struct StringMatchers {
 	tokens: AhoCorasick,
+	/// A cheap test for lines that are plain code although they hold strings, so they needn't go through the classifier.
+	pub(crate) quick: Option<QuickLines>,
+	/// The same tokens by their first byte, where every token starts with punctuation, so the next one is found by a vectorized search for those bytes and a look at the few tokens starting with the one found. On short lines that's much cheaper than the automaton's setup.
+	starts: Option<TokenStarts>,
 	kinds: Vec<Token>,
 	closes: Vec<Finder<'static>>,
 	/// First bytes of string openers, for a fast check that a line can't contain a string.
@@ -131,6 +239,9 @@ impl StringMatchers {
 	/// Find the first comment marker or string opener at or after `from`, preferring the longest at a position (`"""` over `"`).
 	#[inline]
 	pub(crate) fn find_token(&self, line: &str, from: usize) -> Option<(usize, usize, Token)> {
+		if let Some(starts) = &self.starts {
+			return starts.find(line.as_bytes(), from);
+		}
 		self.tokens
 			.find(Input::new(line).span(from..line.len()))
 			.map(|m| (m.start(), m.end(), self.kinds[m.pattern().as_usize()]))
@@ -282,6 +393,9 @@ fn build_string_matchers(lang: &Language) -> StringMatchers {
 		patterns.push(heredoc.opener());
 		kinds.push(Token::Heredoc);
 	}
+	let starts = TokenStarts::new(patterns.iter().copied().zip(kinds.iter().copied()));
+	let all: Vec<(&'static str, Token)> = patterns.iter().copied().zip(kinds.iter().copied()).collect();
+	let quick = QuickLines::new(lang, &all);
 	let tokens = AhoCorasickBuilder::new()
 		.match_kind(MatchKind::LeftmostLongest)
 		.build(&patterns)
@@ -302,5 +416,50 @@ fn build_string_matchers(lang: &Language) -> StringMatchers {
 		.collect();
 	escapes.sort_unstable();
 	escapes.dedup();
-	StringMatchers { tokens, kinds, closes, open_bytes, escapes }
+	StringMatchers { tokens, quick, starts, kinds, closes, open_bytes, escapes }
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use crate::langs::LANGUAGES;
+
+	/// The search by first byte must find what the automaton finds, for every language that uses it.
+	#[test]
+	fn token_starts_find_what_the_automaton_finds() {
+		let mut seed: u64 = 0x2545_f491_4f6c_dd1d;
+		let mut next = |bound: usize| {
+			seed ^= seed << 13;
+			seed ^= seed >> 7;
+			seed ^= seed << 17;
+			usize::try_from(seed % bound as u64).unwrap()
+		};
+		let mut checked = 0;
+		for language in LANGUAGES {
+			let Some(strings) = &language_matchers(language).strings else { continue };
+			let Some(starts) = &strings.starts else { continue };
+			let mut pieces: Vec<&str> =
+				vec!["x", " ", "\\", "é", "=", "<", "/", "*", "#", "-", "'", "\"", "`", "(", ")"];
+			pieces.extend(language.line_comments);
+			pieces.extend(language.block_comments.iter().flat_map(|(start, end, _)| [*start, *end]));
+			pieces.extend(language.strings.iter().flat_map(|delimiter| [delimiter.open, delimiter.close]));
+			for _ in 0..200 {
+				let line: String = (0..next(12)).map(|_| pieces[next(pieces.len())]).collect();
+				let mut from = 0;
+				while from <= line.len() {
+					let expected = strings
+						.tokens
+						.find(Input::new(&line).span(from..line.len()))
+						.map(|m| (m.start(), m.end(), strings.kinds[m.pattern().as_usize()]));
+					assert_eq!(starts.find(line.as_bytes(), from), expected, "{}: {line:?} from {from}", language.name);
+					from = expected.map_or(line.len() + 1, |(start, _, _)| start + 1);
+					while !line.is_char_boundary(from.min(line.len())) {
+						from += 1;
+					}
+				}
+			}
+			checked += 1;
+		}
+		assert!(checked > 50, "only {checked} languages");
+	}
 }
