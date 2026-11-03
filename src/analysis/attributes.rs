@@ -1,6 +1,7 @@
 //! The linguist attributes a project sets in its `.gitattributes` files, which GitHub reads for its language statistics: `linguist-generated`, `linguist-vendored`, `linguist-documentation` and `linguist-language`.
 
 use std::{
+	borrow::Cow,
 	collections::HashMap,
 	fs,
 	hash::{BuildHasherDefault, Hasher},
@@ -13,6 +14,7 @@ use ignore::{
 	gitignore::{Gitignore, GitignoreBuilder},
 };
 
+use super::walk::strip_start;
 use crate::langs::{Language, language_named};
 
 /// What a file's attributes say about it. `None` fields say nothing, leaving the file to codestats' own rules.
@@ -119,8 +121,8 @@ impl Attributes {
 		// Deeper files override shallower ones, so the first opinion found from the deepest wins.
 		for rules in dir.layers.iter().rev() {
 			let relative = match &rules.place {
-				Place::Within(dir) => path.strip_prefix(dir).ok()?.to_path_buf(),
-				Place::Above(root) => root.join(path.strip_prefix(&self.root).ok()?),
+				Place::Within(dir) => Cow::Borrowed(below(dir, path)?),
+				Place::Above(root) => Cow::Owned(root.join(below(&self.root, path)?)),
 			};
 			if verdict.generated.is_none() {
 				verdict.generated = opinion(&rules.generated, &relative);
@@ -238,6 +240,12 @@ impl Hasher for Fnv {
 		}
 		self.0 = hash;
 	}
+}
+
+/// `path` relative to `dir`, which it starts with as spelled, the way a walk gives it.
+fn below<'a>(dir: &Path, path: &'a Path) -> Option<&'a Path> {
+	let relative = strip_start(dir, path)?;
+	Some(strip_start(Path::new("/"), relative).unwrap_or(relative))
 }
 
 /// Whether a set of patterns sets an attribute for `path` (`Some(true)`), unsets it (`Some(false)`), or says nothing.

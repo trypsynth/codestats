@@ -2,7 +2,6 @@
 
 use std::{
 	env,
-	ffi::OsStr,
 	fs::{self, File, FileType},
 	io::{BufRead, BufReader},
 	path::{Path, PathBuf},
@@ -24,6 +23,7 @@ pub(super) struct Shared {
 	respect_ignores: bool,
 	overrides: Option<Override>,
 	global: Gitignore,
+	global_dir: PathBuf,
 	/// The rules from the directories above the root, nearest first, and the root's absolute path. Left out if there are none.
 	above_root: Option<(Vec<DirRules>, PathBuf)>,
 }
@@ -37,22 +37,26 @@ impl Shared {
 		overrides: Option<Override>,
 	) -> (Self, Vec<Error>) {
 		let mut errors = Vec::new();
-		let (global, above_root) =
-			if respect_ignores { (global_rules(), rules_above(root, &mut errors)) } else { (Gitignore::empty(), None) };
-		(Self { root: root.to_path_buf(), skip_hidden, respect_ignores, overrides, global, above_root }, errors)
+		let ((global, global_dir), above_root) = if respect_ignores {
+			(global_rules(), rules_above(root, &mut errors))
+		} else {
+			((Gitignore::empty(), PathBuf::new()), None)
+		};
+		let root = rules_dir(root);
+		(Self { root, skip_hidden, respect_ignores, overrides, global, global_dir, above_root }, errors)
 	}
 }
 
-/// The rules from git's global ignore file, whose paths are relative to the working directory. Without one, they can't be matched.
-fn global_rules() -> Gitignore {
+/// The rules from git's global ignore file, and the working directory, which its paths are relative to. Without one, they can't be matched.
+fn global_rules() -> (Gitignore, PathBuf) {
 	let path = global_ignore_path();
 	let cwd = env::current_dir();
 	let (Some(path), Ok(cwd)) = (path.filter(|path| path.is_file()), cwd) else {
-		return Gitignore::empty();
+		return (Gitignore::empty(), PathBuf::new());
 	};
-	let mut builder = GitignoreBuilder::new(cwd);
+	let mut builder = GitignoreBuilder::new(".");
 	let _ = builder.add(path);
-	builder.build().unwrap_or_else(|_| Gitignore::empty())
+	(builder.build().unwrap_or_else(|_| Gitignore::empty()), cwd)
 }
 
 /// The file that git's `core.excludesFile` names, looking through its config files in order of priority, or else the file git uses by default.
@@ -119,17 +123,11 @@ impl Found {
 	}
 
 	pub(super) fn note(&mut self, path: &Path) {
-		let Some(name) = path.file_name() else { return };
-		// Only hidden names matter, which most aren't.
-		if !name.as_encoded_bytes().starts_with(b".") {
-			return;
-		}
-		if name == OsStr::new(".ignore") {
-			self.ignore = true;
-		} else if name == OsStr::new(".gitignore") {
-			self.git_ignore = true;
-		} else if name == OsStr::new(".git") {
-			self.git = true;
+		match listed_name(path) {
+			b".ignore" => self.ignore = true,
+			b".gitignore" => self.git_ignore = true,
+			b".git" => self.git = true,
+			_ => {}
 		}
 	}
 
@@ -140,6 +138,7 @@ impl Found {
 
 /// The rules from one directory's files.
 struct DirRules {
+	dir: PathBuf,
 	ignore: Option<Gitignore>,
 	git_ignore: Option<Gitignore>,
 	git_exclude: Option<Gitignore>,
@@ -147,12 +146,12 @@ struct DirRules {
 
 impl DirRules {
 	fn read(dir: &Path, found: &Found, errors: &mut Vec<Error>) -> Self {
-		let ignore = found.ignore.then(|| read_rules(dir, dir, ".ignore", errors)).flatten();
-		let git_ignore = found.git_ignore.then(|| read_rules(dir, dir, ".gitignore", errors)).flatten();
+		let ignore = found.ignore.then(|| read_rules(dir, ".ignore", errors)).flatten();
+		let git_ignore = found.git_ignore.then(|| read_rules(dir, ".gitignore", errors)).flatten();
 		let git_exclude = if found.git {
 			let git_type = dir.join(".git").metadata().ok().map(|metadata| metadata.file_type());
 			match git_common_dir(dir, git_type) {
-				Ok(git_dir) => read_rules(dir, &git_dir, "info/exclude", errors),
+				Ok(git_dir) => read_rules(&git_dir, "info/exclude", errors),
 				Err(err) => {
 					errors.extend(err);
 					None
@@ -161,7 +160,7 @@ impl DirRules {
 		} else {
 			None
 		};
-		Self { ignore, git_ignore, git_exclude }
+		Self { dir: rules_dir(dir), ignore, git_ignore, git_exclude }
 	}
 
 	const fn is_empty(&self) -> bool {
@@ -169,14 +168,16 @@ impl DirRules {
 	}
 }
 
-/// The rules in `directory/name`, which apply below `dir`, if it has any. I/O errors just mean there are none.
-fn read_rules(dir: &Path, directory: &Path, name: &str, errors: &mut Vec<Error>) -> Option<Gitignore> {
+/// The rules in `directory/name`, if it has any. I/O errors just mean there are none.
+///
+/// They're built with `.` as their root, and given paths relative to where they apply. With any other root, `Gitignore` compares it with `.` by parsing path components for every path, which takes up to 6% of a run.
+fn read_rules(directory: &Path, name: &str, errors: &mut Vec<Error>) -> Option<Gitignore> {
 	let path = directory.join(name);
 	// A `stat` is cheaper than failing to open the file, except on Windows.
 	if !cfg!(windows) && !path.exists() {
 		return None;
 	}
-	let mut builder = GitignoreBuilder::new(dir);
+	let mut builder = GitignoreBuilder::new(".");
 	if let Some(err) = builder.add(path)
 		&& !err.is_io()
 	{
@@ -261,7 +262,7 @@ impl Rules {
 		if matched.is_ignore() {
 			return true;
 		}
-		matched.is_none() && shared.skip_hidden && (hidden_attribute || is_hidden(path))
+		matched.is_none() && shared.skip_hidden && (hidden_attribute || listed_name(path).starts_with(b"."))
 	}
 
 	fn matched(&self, path: &Path, is_dir: bool, shared: &Shared) -> Match<()> {
@@ -270,12 +271,12 @@ impl Rules {
 			totals.add(rules, path, is_dir);
 		}
 		if let Some((above, absolute)) = &shared.above_root {
-			let path = absolute.join(relative_to_root(path, &shared.root));
+			let path = absolute.join(relative_to(&shared.root, path));
 			for rules in above {
 				totals.add(rules, &path, is_dir);
 			}
 		}
-		let global = shared.global.matched(path, is_dir).map(|_| ());
+		let global = shared.global.matched(relative_to(&shared.global_dir, path), is_dir).map(|_| ());
 		totals.ignore.or(totals.git_ignore).or(totals.git_exclude).or(global)
 	}
 }
@@ -295,6 +296,7 @@ impl Default for RuleMatches {
 
 impl RuleMatches {
 	fn add(&mut self, rules: &DirRules, path: &Path, is_dir: bool) {
+		let path = relative_to(&rules.dir, path);
 		fill(&mut self.ignore, rules.ignore.as_ref(), path, is_dir);
 		fill(&mut self.git_ignore, rules.git_ignore.as_ref(), path, is_dir);
 		fill(&mut self.git_exclude, rules.git_exclude.as_ref(), path, is_dir);
@@ -309,21 +311,25 @@ fn fill(found: &mut Match<()>, rules: Option<&Gitignore>, path: &Path, is_dir: b
 	}
 }
 
-/// `path`, which is under the walk's `root`, relative to it. With `.` as the root, a leading dot could belong to a hidden name, so nothing's taken off.
-fn relative_to_root<'a>(path: &'a Path, root: &'a Path) -> &'a Path {
-	if root == Path::new(".") {
-		return path;
+/// `dir` as [`relative_to`] takes it: the walk's paths lose any leading `./`, and `.` is where they already start.
+fn rules_dir(dir: &Path) -> PathBuf {
+	if dir == Path::new(".") {
+		return PathBuf::new();
 	}
-	let root = strip_start(Path::new("./"), root).unwrap_or(root);
-	let relative = strip_start(root, path).unwrap_or(path);
+	strip_start(Path::new("./"), dir).unwrap_or(dir).to_path_buf()
+}
+
+/// `path` relative to `dir`, or all of it if it's elsewhere.
+fn relative_to<'a>(dir: &Path, path: &'a Path) -> &'a Path {
+	let relative = strip_start(dir, path).unwrap_or(path);
 	strip_start(Path::new("/"), relative).unwrap_or(relative)
 }
 
 /// `path` without `prefix` at its start, as bytes on Unix, which is much cheaper than comparing components.
-fn strip_start<'a>(prefix: &Path, path: &'a Path) -> Option<&'a Path> {
+pub fn strip_start<'a>(prefix: &Path, path: &'a Path) -> Option<&'a Path> {
 	#[cfg(unix)]
 	{
-		use std::os::unix::ffi::OsStrExt;
+		use std::{ffi::OsStr, os::unix::ffi::OsStrExt};
 		path.as_os_str()
 			.as_bytes()
 			.strip_prefix(prefix.as_os_str().as_bytes())
@@ -335,8 +341,10 @@ fn strip_start<'a>(prefix: &Path, path: &'a Path) -> Option<&'a Path> {
 	}
 }
 
-fn is_hidden(path: &Path) -> bool {
-	path.file_name().is_some_and(|name| name.as_encoded_bytes().starts_with(b"."))
+/// The name at the end of a path from a directory listing, which never ends in a separator. [`Path::file_name`] parses components, which adds up over every entry of a walk.
+pub fn listed_name(path: &Path) -> &[u8] {
+	let bytes = path.as_os_str().as_encoded_bytes();
+	bytes.iter().rposition(|&byte| std::path::is_separator(char::from(byte))).map_or(bytes, |end| &bytes[end + 1..])
 }
 
 #[cfg(test)]

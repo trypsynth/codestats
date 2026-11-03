@@ -18,6 +18,7 @@ use std::{
 
 use crossbeam_deque::{Stealer, Worker as Deque};
 use ignore::{Error, overrides::Override};
+pub(super) use rules::strip_start;
 use rules::{Rules, Shared};
 use same_file::Handle;
 
@@ -226,7 +227,7 @@ where
 		attribute: bool,
 	) {
 		// Git's own directory is never source, even when hidden files are counted.
-		if path.file_name().is_some_and(|name| name == ".git") {
+		if rules::listed_name(&path) == b".git" {
 			return;
 		}
 		let file_type = match file_type {
