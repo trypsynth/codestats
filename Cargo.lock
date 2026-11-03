@@ -186,6 +186,7 @@ dependencies = [
  "ignore",
  "indexmap",
  "json5",
+ "libc",
  "memchr",
  "memmap2",
  "mimalloc",

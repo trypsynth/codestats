@@ -36,6 +36,7 @@ toml = "1.1.8"
 
 # musl's own allocator is slow under threads.
 [target.'cfg(target_env = "musl")'.dependencies]
+libc = "0.2"
 mimalloc = { version = "0.1.52", default-features = false }
 
 [build-dependencies]

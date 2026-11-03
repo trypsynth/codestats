@@ -14,6 +14,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v8
         with:
+          pattern: cs-*
           path: artifacts/
           merge-multiple: true
       - name: Release
