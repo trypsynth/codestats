@@ -77,6 +77,10 @@ pub struct AnalyzeArgs {
 	/// Do not respect .gitignore files
 	#[arg(long)]
 	pub no_gitignore: bool,
+	/// Ignore the linguist attributes in .gitattributes files (linguist-generated, linguist-vendored,
+	/// linguist-documentation, linguist-language)
+	#[arg(long)]
+	pub no_gitattributes: bool,
 	/// Only count files tracked by git, including in submodules
 	#[arg(long)]
 	pub git: bool,
@@ -186,6 +190,7 @@ pub fn merge_config(mut config: Config, args: &AnalyzeArgs, matches: &ArgMatches
 		config.analysis.verbosity = Verbosity::Verbose;
 	}
 	apply!(matches, "no_gitignore", config.analysis.respect_gitignore = !args.no_gitignore);
+	apply!(matches, "no_gitattributes", config.analysis.respect_gitattributes = !args.no_gitattributes);
 	apply!(matches, "git", config.analysis.git_tracked_only = args.git);
 	apply!(matches, "symlinks", config.analysis.follow_symlinks = args.symlinks);
 	apply!(matches, "percent_precision", config.display.precision = args.percent_precision);

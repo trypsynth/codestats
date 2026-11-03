@@ -21,6 +21,9 @@ const DEFAULT_CONFIG_TEMPLATE: &str = "\
 # Respect .gitignore rules when scanning
 # respect_gitignore = true
 
+# Read linguist attributes (generated, vendored, documentation, language) from .gitattributes
+# respect_gitattributes = true
+
 # Include hidden files and directories
 # include_hidden = false
 

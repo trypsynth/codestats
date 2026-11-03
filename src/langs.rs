@@ -25,6 +25,13 @@ pub use detection::{detect_language, get_candidates, is_shebang_for};
 
 use crate::display::formatting::pluralize;
 
+/// The language called `name`, ignoring case, found by binary search as `languages.json5` keeps them in order.
+pub fn language_named(name: &str) -> Option<&'static Language> {
+	let key = |text: &str| -> Vec<u8> { text.bytes().map(|b| b.to_ascii_lowercase()).collect() };
+	let name = key(name);
+	LANGUAGES.binary_search_by(|language| key(language.name).cmp(&name)).ok().map(|index| &LANGUAGES[index])
+}
+
 /// Write a list of all supported programming languages to a writer.
 /// # Errors
 ///

@@ -14,6 +14,7 @@ use anyhow::{Context as _, Result, ensure};
 use ignore::overrides::{Override, OverrideBuilder};
 
 use super::{
+	attributes::{Attributes, DirCache},
 	pipeline::{self, FileFilter},
 	stats::AnalysisResults,
 };
@@ -101,10 +102,13 @@ pub fn count_snapshot(
 		Snapshot::Revision(revision) => git(&dir, &["ls-tree", "-r", "-z", revision, "--", &pathspec])?,
 	};
 	let filter = PathFilter::new(&dir, config, root.is_file())?;
+	// The working tree's attributes apply to every snapshot, so `cs diff` judges both sides alike. Paths are given joined to `dir`.
+	let attributes = config.respect_gitattributes.then(|| Attributes::on_disk(&dir));
 	let languages = FileFilter {
 		include: &config.include_languages,
 		exclude: &config.exclude_languages,
 		include_generated: config.include_generated,
+		attributes: attributes.as_ref(),
 	};
 	let records: Vec<&[u8]> = listing.split(|&b| b == 0).filter(|record| !record.is_empty()).collect();
 	// Workers take batches from a shared counter, so they stay evenly loaded, and each batch is a run of nearby paths.
@@ -116,6 +120,7 @@ pub fn count_snapshot(
 				scope.spawn(|| -> Result<AnalysisResults> {
 					let mut counter = Counter::new(snapshot, &dir, root, languages, collect_details)?;
 					let mut excluded_dirs = HashMap::new();
+					let mut cache = DirCache::default();
 					let mut batch = Vec::with_capacity(BATCH);
 					loop {
 						let start = next.fetch_add(BATCH, Ordering::Relaxed);
@@ -132,11 +137,13 @@ pub fn count_snapshot(
 								continue;
 							}
 							let path = path_from_git(path);
-							if filter.allows(&path, &mut excluded_dirs) && pipeline::could_count(&path, languages) {
+							if filter.allows(&path, &mut excluded_dirs)
+								&& pipeline::could_count(&dir.join(&path), languages, &mut cache)
+							{
 								batch.push(Entry { path, object });
 							}
 						}
-						counter.count(&batch)?;
+						counter.count(&batch, &mut cache)?;
 					}
 					counter.finish()
 				})
@@ -176,6 +183,7 @@ enum Counter<'a> {
 		skipped: u64,
 	},
 	Objects {
+		dir: &'a Path,
 		languages: FileFilter<'a>,
 		collect_details: bool,
 		results: AnalysisResults,
@@ -208,24 +216,29 @@ impl<'a> Counter<'a> {
 			.context("git isn't installed")?;
 		let requests = git.stdin.take().context("no stdin for git")?;
 		let output = BufReader::with_capacity(256 * 1024, git.stdout.take().context("no stdout for git")?);
-		Ok(Self::Objects { languages, collect_details, results, git, requests, output, contents: Vec::new() })
+		Ok(Self::Objects { dir, languages, collect_details, results, git, requests, output, contents: Vec::new() })
 	}
 
-	fn count(&mut self, batch: &[Entry]) -> Result<()> {
+	fn count(&mut self, batch: &[Entry], cache: &mut DirCache) -> Result<()> {
 		match self {
 			Self::Files { dir, root, languages, collect_details, results, skipped } => {
 				for entry in batch {
 					// A tracked file deleted from disk isn't there to count; other failures count as skipped.
-					if let Err(err) =
-						pipeline::process_file(&dir.join(&entry.path), root, results, *collect_details, *languages)
-						&& !err.chain().any(|cause| {
-							cause.downcast_ref::<std::io::Error>().is_some_and(|e| e.kind() == ErrorKind::NotFound)
-						}) {
+					if let Err(err) = pipeline::process_file(
+						&dir.join(&entry.path),
+						root,
+						results,
+						*collect_details,
+						*languages,
+						cache,
+					) && !err.chain().any(|cause| {
+						cause.downcast_ref::<std::io::Error>().is_some_and(|e| e.kind() == ErrorKind::NotFound)
+					}) {
 						*skipped += 1;
 					}
 				}
 			}
-			Self::Objects { languages, collect_details, results, requests, output, contents, .. } => {
+			Self::Objects { dir, languages, collect_details, results, requests, output, contents, .. } => {
 				// A batch's requests (256 object ids) fit in the pipe, so git can't block us by not reading them yet.
 				let mut ids = Vec::with_capacity(batch.len() * 41);
 				for entry in batch {
@@ -252,7 +265,9 @@ impl<'a> Counter<'a> {
 					contents.clear();
 					output.by_ref().take(size + 1).read_to_end(contents)?;
 					contents.pop();
-					if let Some((language, counts)) = pipeline::count_bytes(&entry.path, contents, *languages) {
+					if let Some((language, counts)) =
+						pipeline::count_bytes(&dir.join(&entry.path), contents, *languages, cache)
+					{
 						results.add_file(
 							language,
 							counts,

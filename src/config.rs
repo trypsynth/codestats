@@ -57,6 +57,8 @@ impl Default for Config {
 pub struct AnalysisConfig {
 	pub verbosity: Verbosity,
 	pub respect_gitignore: bool,
+	/// Read linguist attributes from `.gitattributes` files.
+	pub respect_gitattributes: bool,
 	pub include_hidden: bool,
 	pub follow_symlinks: bool,
 	pub include_generated: bool,
@@ -74,6 +76,7 @@ impl Default for AnalysisConfig {
 		Self {
 			verbosity: Verbosity::Regular,
 			respect_gitignore: true,
+			respect_gitattributes: true,
 			include_hidden: false,
 			follow_symlinks: false,
 			include_generated: false,

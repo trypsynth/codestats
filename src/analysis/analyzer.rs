@@ -10,6 +10,7 @@ use anyhow::Result;
 use ignore::WalkBuilder;
 
 use super::{
+	attributes::{Attributes, DirCache},
 	git,
 	pipeline::{self, FileFilter},
 	stats::AnalysisResults,
@@ -72,6 +73,7 @@ impl CodeAnalyzer {
 		let include_languages = self.config.analysis.include_languages.clone();
 		let exclude_languages = self.config.analysis.exclude_languages.clone();
 		let include_generated = self.config.analysis.include_generated;
+		let attributes = self.config.analysis.respect_gitattributes.then(|| Arc::new(Attributes::on_disk(&self.root)));
 		let root = self.display_root.clone();
 		let aggregates = Arc::new(Mutex::new(Vec::new()));
 		let aggregates_for_walk = Arc::clone(&aggregates);
@@ -96,6 +98,8 @@ impl CodeAnalyzer {
 			let include_languages = include_languages.clone();
 			let exclude_languages = exclude_languages.clone();
 			let root = root.clone();
+			let attributes = attributes.clone();
+			let mut cache = DirCache::default();
 			Box::new(move |entry_result| {
 				match entry_result {
 					Ok(entry) if entry.file_type().is_some_and(|ft| ft.is_file()) => {
@@ -104,7 +108,13 @@ impl CodeAnalyzer {
 							&root,
 							&mut aggregator.local,
 							collect_details,
-							FileFilter { include: &include_languages, exclude: &exclude_languages, include_generated },
+							FileFilter {
+								include: &include_languages,
+								exclude: &exclude_languages,
+								include_generated,
+								attributes: attributes.as_deref(),
+							},
+							&mut cache,
 						) {
 							if verbosity == Verbosity::Verbose {
 								eprintln!("Failed to process {}: {err}", entry.path().display());

@@ -3,6 +3,7 @@ use std::{borrow::Cow, fs::File, io::Seek as _, path::Path};
 use anyhow::{Context as _, Result};
 
 use super::{
+	attributes::{Attributes, DirCache},
 	encoding::{decode_bytes, detect_encoding, is_probably_binary},
 	file_io::{self, FileSource},
 	generated::{has_generated_header, is_generated_name},
@@ -14,12 +15,13 @@ use crate::langs::{self, Language};
 /// How much of a file to read when its extension is shared by several languages and its content decides.
 const DETECTION_WINDOW: usize = 64 * 1024;
 
-/// Which files count: the `--lang` and `--exclude-lang` filters, and `--include-generated` for files whose header says they were generated.
+/// Which files count: the `--lang` and `--exclude-lang` filters, `--include-generated`, and the project's `.gitattributes`.
 #[derive(Clone, Copy)]
 pub struct FileFilter<'a> {
 	pub include: &'a [String],
 	pub exclude: &'a [String],
 	pub include_generated: bool,
+	pub attributes: Option<&'a Attributes>,
 }
 
 impl FileFilter<'_> {
@@ -40,24 +42,42 @@ fn detection_name(path: &Path) -> Option<Cow<'_, str>> {
 	Some(path.extension().map_or(name, |ext| Cow::Owned(format!("file.{}", ext.to_string_lossy()))))
 }
 
-/// The language and line counts of a file named `path` with contents `bytes`, or `None` if it isn't counted: unrecognized, binary, or filtered out.
-pub fn count_bytes(path: &Path, bytes: &[u8], languages: FileFilter) -> Option<(&'static Language, FileCounts)> {
-	let name = detection_name(path)?;
-	if !languages.include_generated && is_generated_name(&name) {
+/// The languages a file named `name` at `path` could be, and the filter its contents are judged by, or `None` when its name and attributes leave it out: vendored or documentation, or generated and not included. A file whose attributes say it isn't generated is counted whatever its name or header say, and one whose attributes name its language is that language.
+fn judge_name<'a>(
+	path: &Path,
+	name: &str,
+	languages: FileFilter<'a>,
+	cache: &mut DirCache,
+) -> Option<(Vec<&'static Language>, FileFilter<'a>)> {
+	let verdict = languages.attributes.and_then(|attributes| attributes.verdict(path, cache)).unwrap_or_default();
+	let generated = verdict.generated.unwrap_or_else(|| is_generated_name(name));
+	if verdict.excluded || (generated && !languages.include_generated) {
 		return None;
 	}
-	count_contents(&langs::get_candidates(&name), bytes, languages)
+	let include_generated = languages.include_generated || verdict.generated == Some(false);
+	let candidates = verdict.language.map_or_else(|| langs::get_candidates(name), |language| vec![language]);
+	Some((candidates, FileFilter { include_generated, ..languages }))
 }
 
-/// Whether a file named `path` could be counted, judging by its name alone: false when it's named like a generated file that isn't counted, or its only possible language is filtered out and a shebang couldn't claim it, so its contents needn't be read.
-pub fn could_count(path: &Path, languages: FileFilter) -> bool {
-	detection_name(path).is_some_and(|name| {
-		(languages.include_generated || !is_generated_name(&name))
-			&& match langs::get_candidates(&name)[..] {
-				[language] => languages.allows(language) || language.shebang_overrides,
-				_ => true,
-			}
-	})
+/// The language and line counts of a file named `path` with contents `bytes`, or `None` if it isn't counted: unrecognized, binary, or filtered out.
+pub fn count_bytes(
+	path: &Path,
+	bytes: &[u8],
+	languages: FileFilter,
+	cache: &mut DirCache,
+) -> Option<(&'static Language, FileCounts)> {
+	let (candidates, languages) = judge_name(path, &detection_name(path)?, languages, cache)?;
+	count_contents(&candidates, bytes, languages)
+}
+
+/// Whether a file named `path` could be counted, judging by its name and attributes alone: false when they leave it out, or its only possible language is filtered out and a shebang couldn't claim it, so its contents needn't be read.
+pub fn could_count(path: &Path, languages: FileFilter, cache: &mut DirCache) -> bool {
+	detection_name(path).and_then(|name| judge_name(path, &name, languages, cache)).is_some_and(
+		|(candidates, languages)| match candidates[..] {
+			[language] => languages.allows(language) || language.shebang_overrides,
+			_ => true,
+		},
+	)
 }
 
 /// Whether a file whose name says `language` might be a script its shebang claims instead: only where the language allows it, and only if it starts with `#!`.
@@ -106,12 +126,12 @@ pub fn process_file(
 	results: &mut AnalysisResults,
 	collect_details: bool,
 	languages: FileFilter,
+	cache: &mut DirCache,
 ) -> Result<()> {
 	let filename = detection_name(file_path).context("Missing file name")?;
-	if !languages.include_generated && is_generated_name(&filename) {
+	let Some((candidates, languages)) = judge_name(file_path, &filename, languages, cache) else {
 		return Ok(());
-	}
-	let candidates = langs::get_candidates(&filename);
+	};
 	if let [language] = candidates[..]
 		&& !languages.allows(language)
 		&& !language.shebang_overrides
@@ -170,15 +190,16 @@ mod tests {
 					stack.push(path);
 					continue;
 				}
-				let languages = FileFilter { include: &[], exclude: &[], include_generated: true };
+				let languages = FileFilter { include: &[], exclude: &[], include_generated: true, attributes: None };
 				let mut results = AnalysisResults::default();
-				process_file(&path, &root, &mut results, true, languages).unwrap();
+				process_file(&path, &root, &mut results, true, languages, &mut DirCache::default()).unwrap();
 				let from_disk = results.languages().next().map(|(lang, stats)| {
 					let file = &stats.files_list()[0];
 					(lang.name, *file.counts(), file.embedded().clone())
 				});
-				let from_bytes = count_bytes(&path, &std::fs::read(&path).unwrap(), languages)
-					.map(|(lang, counts)| (lang.name, counts.lines, counts.embedded));
+				let from_bytes =
+					count_bytes(&path, &std::fs::read(&path).unwrap(), languages, &mut DirCache::default())
+						.map(|(lang, counts)| (lang.name, counts.lines, counts.embedded));
 				assert_eq!(from_bytes, from_disk, "{}", path.display());
 				checked += 1;
 			}

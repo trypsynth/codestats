@@ -8,7 +8,7 @@ use super::{
 	line_classifier::{CommentState, LineType, classify_line, is_blank},
 	stats::Embedded,
 };
-use crate::langs::{Embedding, LANGUAGES, Language, detect_language, get_candidates};
+use crate::langs::{Embedding, Language, detect_language, get_candidates, language_named};
 
 /// Classifies a file's lines in order, following the regions its language embeds others in.
 pub(super) struct Classifier<'a> {
@@ -510,13 +510,6 @@ fn attribute<'a>(attributes: &'a str, name: &str) -> Option<&'a str> {
 	})
 }
 
-/// The language called `name`, ignoring case, found by binary search as `languages.json5` keeps them in order.
-fn language_named(name: &str) -> Option<&'static Language> {
-	let key = |text: &str| -> Vec<u8> { text.bytes().map(|b| b.to_ascii_lowercase()).collect() };
-	let name = key(name);
-	LANGUAGES.binary_search_by(|language| key(language.name).cmp(&name)).ok().map(|index| &LANGUAGES[index])
-}
-
 fn starts_with_ignore_case(bytes: &[u8], prefix: &[u8]) -> bool {
 	bytes.get(..prefix.len()).is_some_and(|start| start.eq_ignore_ascii_case(prefix))
 }
@@ -526,11 +519,14 @@ mod tests {
 	use rstest::rstest;
 
 	use super::*;
-	use crate::analysis::{
-		LineType::{Blank, Code, Comment},
-		encoding::FileEncoding,
-		line_counter::count_lines,
-		stats::LineCounts,
+	use crate::{
+		analysis::{
+			LineType::{Blank, Code, Comment},
+			encoding::FileEncoding,
+			line_counter::count_lines,
+			stats::LineCounts,
+		},
+		langs::LANGUAGES,
 	};
 
 	fn classify_all(language: &str, text: &str) -> Vec<LineType> {
