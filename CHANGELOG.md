@@ -33,7 +33,7 @@
 - Fixed `cs completions` panicking when its output is cut short
 - The summary's language list uses an Oxford comma
 - Linux release binaries now link against glibc, with static musl builds still available, and all release binaries use profile-guided optimization
-- Faster on most repositories, especially those with many strings or line comments, shared extensions, or generated files: about 30% on Kubernetes and 35% on Linux and ripgrep compared to 0.9.1
+- Faster on most repositories, especially those with many strings or line comments, shared extensions, or generated files: about 30% on cli and rust, 35-40% on ripgrep, cpython, and Kubernetes, and 45% on Linux compared to 0.9.1
 
 ## 0.9.1
 
