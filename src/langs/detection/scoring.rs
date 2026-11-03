@@ -2,9 +2,11 @@
 
 use std::{
 	borrow::Cow,
+	cell::RefCell,
 	sync::{LazyLock, OnceLock},
 };
 
+use aho_corasick::{AhoCorasick, packed};
 use memchr::memmem::Finder;
 
 use crate::{
@@ -367,6 +369,92 @@ pub(super) fn disambiguate<'a>(candidates: &[&'a Language], content: &str) -> (O
 	best.map_or((None, 0), |(lang, score)| (Some(lang), score - runner_up))
 }
 
+/// What it takes to settle a set of candidates without scoring them: the keywords only the other candidates have, and the one that doesn't need keywords.
+struct OutrightWin {
+	default: &'static Language,
+	others_keywords: KeywordSearcher,
+}
+
+/// A search for any of a set of keywords through a sample: vectorized where the machine and the keywords allow it, as the automaton looks at every byte of what's nearly always a sample without any.
+enum KeywordSearcher {
+	Packed(packed::Searcher),
+	Automaton(AhoCorasick),
+}
+
+impl KeywordSearcher {
+	fn new(keywords: &[&str], case_sensitive: bool) -> Self {
+		let packed = case_sensitive.then(|| packed::Searcher::new(keywords.iter().copied())).flatten();
+		packed.map_or_else(
+			|| {
+				Self::Automaton(
+					AhoCorasick::builder()
+						.ascii_case_insensitive(!case_sensitive)
+						.build(keywords)
+						.expect("AhoCorasick should never fail to build with valid keywords"),
+				)
+			},
+			Self::Packed,
+		)
+	}
+
+	fn is_match(&self, content: &str) -> bool {
+		match self {
+			Self::Packed(searcher) => searcher.find(content).is_some(),
+			Self::Automaton(automaton) => automaton.is_match(content),
+		}
+	}
+}
+
+/// One candidate set's [`OutrightWin`], or `None` when scoring could favor another candidate whatever its keywords: there isn't exactly one candidate to default to, or the others write comments or match keywords differently.
+fn build_outright_win(candidates: &[&'static Language]) -> Option<OutrightWin> {
+	let mut defaults = candidates.iter().filter(|lang| lang.require_keywords == RequireKeywords::Never);
+	let (&default, None) = (defaults.next()?, defaults.next()) else {
+		return None;
+	};
+	let mut keywords: Vec<&str> = Vec::new();
+	for other in candidates.iter().filter(|other| !std::ptr::eq(**other, default)) {
+		if !same_comments(default, other)
+			|| other.line_block_comments != default.line_block_comments
+			|| other.case_sensitive_keywords != default.case_sensitive_keywords
+		{
+			return None;
+		}
+		keywords.extend(other.keywords.iter().filter(|keyword| !default.keywords.contains(keyword)));
+	}
+	let others_keywords = KeywordSearcher::new(&keywords, default.case_sensitive_keywords);
+	Some(OutrightWin { default, others_keywords })
+}
+
+thread_local! {
+	/// The candidate sets a worker has met, which are few.
+	static OUTRIGHT_WINS: RefCell<Vec<(Vec<usize>, &'static Option<OutrightWin>)>> = const { RefCell::new(Vec::new()) };
+}
+
+/// The language scoring is sure to pick, found without scoring: the sample holds no keyword that only the other candidates have, so at best they tie the default on keywords, and on comments, which they write the same way. The default wins ties, once it has scored at all, which a comment in the sample makes sure of. `None` means the candidates have to be scored, not that the default loses.
+///
+/// Most files with a shared extension are like this, such as nearly every `.c` and `.h` in the Linux kernel.
+pub(super) fn default_wins_outright(candidates: &[&'static Language], content: &str) -> Option<&'static Language> {
+	let win = OUTRIGHT_WINS.with_borrow_mut(|wins| {
+		let key = candidates.iter().map(|lang| lang.index);
+		if let Some((_, win)) = wins.iter().find(|(known, _)| known.iter().copied().eq(key.clone())) {
+			return *win;
+		}
+		let win: &'static Option<OutrightWin> = Box::leak(Box::new(build_outright_win(candidates)));
+		wins.push((key.collect(), win));
+		win
+	});
+	let win = win.as_ref()?;
+	if win.others_keywords.is_match(content) {
+		return None;
+	}
+	let matchers = scoring_matchers(win.default);
+	let bytes = content.as_bytes();
+	let has_comment =
+		matchers.block_comments.iter().any(|(start, end)| start.find(bytes).is_some() && end.find(bytes).is_some())
+			|| win.default.line_comments.iter().any(|marker| has_line_comment(content, marker));
+	has_comment.then_some(win.default)
+}
+
 /// The identifier-like words of a sample that could be keywords, and whether it had any words at all.
 struct Tokens<'a> {
 	words: Vec<&'a [u8]>,
@@ -591,5 +679,55 @@ mod tests {
 		let rust = LANGUAGES.iter().find(|l| l.name == "Rust");
 		assert!(rust.is_some());
 		assert!(!is_symbol_only_language(rust.unwrap()));
+	}
+
+	/// A language settled without scoring must be the one scoring would pick, for every set of languages sharing a pattern.
+	#[test]
+	fn an_outright_win_is_what_scoring_picks() {
+		let mut seed: u64 = 0x9e37_79b9_7f4a_7c15;
+		let mut next = |bound: usize| {
+			seed ^= seed << 13;
+			seed ^= seed >> 7;
+			seed ^= seed << 17;
+			usize::try_from(seed % bound as u64).unwrap()
+		};
+		let mut sets: Vec<Vec<&'static Language>> = Vec::new();
+		for language in LANGUAGES {
+			for pattern in language.file_patterns {
+				let name = pattern.replace('*', "file");
+				let candidates = crate::langs::get_candidates(&name);
+				if candidates.len() > 1
+					&& !sets.iter().any(|set| set.iter().map(|l| l.index).eq(candidates.iter().map(|l| l.index)))
+				{
+					sets.push(candidates);
+				}
+			}
+		}
+		let (mut settled, mut checked) = (0, 0);
+		for set in &sets {
+			let mut pieces = vec!["x", " ", "\n", "\n", "word", "(", ")", ";"];
+			for language in set {
+				pieces.extend(language.keywords);
+				pieces.extend(language.line_comments);
+				pieces.extend(language.block_comments.iter().flat_map(|(start, end, _)| [*start, *end]));
+			}
+			// Without keywords now and then, the samples that can settle outright get a look in.
+			let plain = pieces
+				.iter()
+				.copied()
+				.filter(|piece| !set.iter().any(|l| l.keywords.contains(piece)))
+				.collect::<Vec<_>>();
+			for round in 0..300 {
+				let from = if round % 2 == 0 { &pieces } else { &plain };
+				let sample: String = (0..next(30)).map(|_| from[next(from.len())]).collect();
+				checked += 1;
+				if let Some(language) = default_wins_outright(set, &sample) {
+					settled += 1;
+					let (picked, _) = disambiguate(set, &sample);
+					assert_eq!(picked.map(|l| l.name), Some(language.name), "{sample:?}");
+				}
+			}
+		}
+		assert!(settled > 100, "only {settled} of {checked} settled");
 	}
 }

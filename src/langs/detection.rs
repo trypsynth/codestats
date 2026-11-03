@@ -4,7 +4,7 @@ mod shebang;
 
 pub use self::{patterns::get_candidates, shebang::is_shebang_for};
 use self::{
-	scoring::{KEYWORD_MATCH_SCORE, disambiguate},
+	scoring::{KEYWORD_MATCH_SCORE, default_wins_outright, disambiguate},
 	shebang::detect_from_shebang,
 };
 use super::data::{Language, RequireKeywords};
@@ -43,6 +43,9 @@ pub fn detect_language(candidates: &[&'static Language], content: Option<&str>) 
 				return decided(default_candidate(candidates));
 			};
 			if let Some(language) = detect_from_shebang(file_content) {
+				return decided(Some(language));
+			}
+			if let Some(language) = default_wins_outright(candidates, file_content) {
 				return decided(Some(language));
 			}
 			let (language, margin) = disambiguate(candidates, file_content);
