@@ -2,7 +2,9 @@
 
 use memchr::memmem;
 
-use super::{CommentState, HeredocEnd, LineType, contains_non_whitespace, is_valid_line_comment_match, is_word_char};
+use super::{
+	CommentState, HeredocEnd, Hole, LineType, contains_non_whitespace, is_valid_line_comment_match, is_word_char,
+};
 use crate::langs::{
 	Heredoc, Language,
 	matchers::{LanguageMatchers, StringMatchers, Token},
@@ -17,15 +19,8 @@ pub(super) fn classify_with_strings(
 	strings: &StringMatchers,
 	state: &mut CommentState,
 ) -> LineType {
-	// A heredoc's body is a string, up to the line that's just its terminator, indented only where the heredoc allows it.
-	if let Some(heredoc) = &state.heredoc {
-		if (heredoc.indented || !indented)
-			&& line
-				.strip_prefix(&*heredoc.terminator)
-				.is_some_and(|rest| !rest.as_bytes().first().is_some_and(|&b| is_word_char(b)))
-		{
-			state.heredoc = None;
-		}
+	if state.heredoc.is_some() {
+		continue_heredoc(line, indented, state);
 		return LineType::Code;
 	}
 	let bytes = line.as_bytes();
@@ -50,13 +45,12 @@ pub(super) fn classify_with_strings(
 		} else if let Some(index) = state.string {
 			has_code |= !state.doc_string;
 			let delimiter = &lang.strings[index];
-			let close = if state.string_close.is_some() {
-				find_chosen_close(state, bytes, pos)
-			} else {
-				strings.find_close(bytes, pos, index, delimiter.escape)
-			};
-			if let Some(end) = close {
+			if let Some((end, hole)) = find_string_end(state, lang, strings, bytes, pos, index) {
 				state.string = None;
+				if hole {
+					state.holes.push(Hole { string: index, depth: 0 });
+					has_code = true;
+				}
 				pos = end;
 			} else {
 				// An unclosed single-line string ends with the line, unless the line ends in an escape (a continuation).
@@ -67,7 +61,16 @@ pub(super) fn classify_with_strings(
 				break;
 			}
 		} else {
-			let Some((start, end, token)) = strings.find_token(line, pos) else {
+			let found = strings.find_token(line, pos);
+			// In a hole, a bracket of its kind before the next token nests or closes it.
+			if !state.holes.is_empty()
+				&& let Some(next) = hole_bracket(state, lang, bytes, pos, found.map(|(start, _, _)| start))
+			{
+				has_code = true;
+				pos = next;
+				continue;
+			}
+			let Some((start, end, token)) = found else {
 				has_code |= contains_non_whitespace(&line[pos..]);
 				break;
 			};
@@ -77,6 +80,7 @@ pub(super) fn classify_with_strings(
 				Token::LineComment(i) => {
 					if is_valid_line_comment_match(line, end, lang.line_comments[i]) {
 						state.end_line_comment(line, lang);
+						state.end_one_line_holes(lang);
 						return if has_code { LineType::Code } else { LineType::Comment };
 					}
 					has_code = true;
@@ -121,7 +125,70 @@ pub(super) fn classify_with_strings(
 			}
 		}
 	}
+	state.end_one_line_holes(lang);
 	if has_code { LineType::Code } else { LineType::Comment }
+}
+
+/// In the innermost hole, follow the first of its brackets on `line` from `from`, if it comes before the next token at `token`: an opening one nests, and the closing one of the hole itself goes back into its string. Returns where to carry on, or `None` when the token comes first.
+#[inline(never)]
+fn hole_bracket(
+	state: &mut CommentState,
+	lang: &Language,
+	line: &[u8],
+	from: usize,
+	token: Option<usize>,
+) -> Option<usize> {
+	let hole = state.holes.last_mut()?;
+	let opener = lang.strings[hole.string].interpolation?.as_bytes();
+	let open = *opener.last()?;
+	let close = if open == b'(' { b')' } else { b'}' };
+	let at = from + memchr::memchr2(open, close, &line[from..])?;
+	if token.is_some_and(|token| token < at) {
+		return None;
+	}
+	if line[at] == open {
+		hole.depth += 1;
+	} else if hole.depth > 0 {
+		hole.depth -= 1;
+	} else {
+		let string = hole.string;
+		state.holes.pop();
+		state.string = Some(string);
+		state.doc_string = false;
+	}
+	Some(at + 1)
+}
+
+/// A line in a heredoc's body, which is a string up to the line that's just its terminator, indented only where the heredoc allows it.
+fn continue_heredoc(line: &str, indented: bool, state: &mut CommentState) {
+	if let Some(heredoc) = &state.heredoc
+		&& (heredoc.indented || !indented)
+		&& line
+			.strip_prefix(&*heredoc.terminator)
+			.is_some_and(|rest| !rest.as_bytes().first().is_some_and(|&b| is_word_char(b)))
+	{
+		state.heredoc = None;
+	}
+}
+
+/// Where the open string `index` ends on `line` after `from`: the position past its closer, or past the opener of an interpolation hole, with whether it's a hole.
+#[inline]
+fn find_string_end(
+	state: &mut CommentState,
+	lang: &Language,
+	strings: &StringMatchers,
+	line: &[u8],
+	from: usize,
+	index: usize,
+) -> Option<(usize, bool)> {
+	let delimiter = &lang.strings[index];
+	if let Some(hole) = delimiter.interpolation {
+		strings.find_close_or_hole(line, from, index, delimiter.escape, hole.as_bytes())
+	} else if state.string_close.is_some() {
+		find_chosen_close(state, line, from).map(|end| (end, false))
+	} else {
+		strings.find_close(line, from, index, delimiter.escape).map(|end| (end, false))
+	}
 }
 
 /// Keywords after which a `/` starts a regex literal rather than dividing.

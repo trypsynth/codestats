@@ -35,6 +35,9 @@
 //                        puts a delimiter of the writer's choosing between the opener and a `(`, and the string ends
 //                        at `)`, that delimiter and the close, like C++'s `R"xy(...)xy"`. `attribute` strings only
 //                        open right after an `=`, as HTML attribute values do, so an apostrophe in text opens nothing.
+//                        `interpolation` names what opens a hole of code in the string (`${`, `#{`, C#'s `{`, Swift's
+//                        `\(`), which runs to the bracket matching the opener's last one; strings and comments in it
+//                        are read as code's. A doubled one-character opener, like C#'s `{{`, is text.
 //   c_preprocessor       The file goes through the C preprocessor although `#` also starts comments (assembly `.S`
 //                        files), so directives like `# define` or `# if defined(X)` count as code.
 //   regex_literals       `/.../` regex literals (JavaScript), so quotes or `/*` inside them are ignored. A `/` starts a
@@ -384,7 +387,18 @@
 		file_patterns: ["*.cs", "*.csx", "*.cake", "*.cshtml.cs", "*.razor.cs"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
-		strings: ["\"", {open: "'", char: true}, {open: "@\"", close: "\"", escape: "\"", multiline: true}, {open: "\"\"\"", escape: null, multiline: true}],
+		strings: [
+			"\"",
+			{open: "'", char: true},
+			{open: "@\"", close: "\"", escape: "\"", multiline: true},
+			{open: "\"\"\"", escape: null, multiline: true},
+			{open: "$\"", close: "\"", interpolation: "{"},
+			{open: "$@\"", close: "\"", escape: "\"", multiline: true, interpolation: "{"},
+			{open: "@$\"", close: "\"", escape: "\"", multiline: true, interpolation: "{"},
+			{open: "$\"\"\"", close: "\"\"\"", escape: null, multiline: true, interpolation: "{"},
+			// Its holes open with `{{`, which isn't followed; a single `{` is text.
+			{open: "$$\"\"\"", close: "\"\"\"", escape: null, multiline: true},
+		],
 	},
 	"C++": {
 		file_patterns: ["*.cpp", "*.h", "*.hpp", "*.pch", "*.c++", "*.h++", "*.cc", "*.cxx", "*.hxx", "*.ino", "*.ipp", "*.cppm", "*.ixx", "*.c++m", "*.pcc", "*.tpp", "*.hh", "*.inl", "*.inc", "*.ccm", "*.cxxm", "*.mxx", "*.hppm", "*.hxxm", "*.tcc"],
@@ -644,7 +658,7 @@
 		line_comments: ["//", "///"],
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
-		strings: [{open: "\"\"\"", multiline: true}, {open: "'''", multiline: true}, "\"", "'"],
+		strings: [{open: "\"\"\"", multiline: true, interpolation: "${"}, {open: "'''", multiline: true, interpolation: "${"}, {open: "\"", interpolation: "${"}, {open: "'", interpolation: "${"}],
 	},
 	"Datalog": {
 		file_patterns: ["*.dl", "*.datalog"],
@@ -1020,7 +1034,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		shebangs: ["#!/usr/bin/env groovy", "#!/usr/bin/groovy"],
-		strings: [{open: "\"\"\"", multiline: true}, {open: "'''", multiline: true}, "\"", "'"],
+		strings: [{open: "\"\"\"", multiline: true, interpolation: "${"}, {open: "'''", multiline: true}, {open: "\"", interpolation: "${"}, "'"],
 	},
 	"Gwion": {
 		file_patterns: ["*.gw"],
@@ -1234,7 +1248,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		shebangs: ["#!/usr/bin/node", "#!/usr/bin/env node", "#!/usr/bin/env bun"],
-		strings: ["\"", "'", {open: "`", multiline: true}],
+		strings: ["\"", "'", {open: "`", multiline: true, interpolation: "${"}],
 		regex_literals: true,
 	},
 	"JAWS Script": {
@@ -1359,7 +1373,7 @@
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
 		shebangs: ["#!/usr/bin/env kotlin"],
-		strings: ["\"", {open: "'", char: true}, {open: "\"\"\"", escape: null, multiline: true}],
+		strings: [{open: "\"", interpolation: "${"}, {open: "'", char: true}, {open: "\"\"\"", escape: null, multiline: true, interpolation: "${"}],
 	},
 	"Kusto": {
 		file_patterns: ["*.kql", "*.csl"],
@@ -2266,7 +2280,7 @@
 		line_comments: ["#"],
 		block_comments: [["=begin", "=end"]],
 		shebangs: ["#!/usr/bin/ruby", "#!/usr/bin/env ruby"],
-		strings: ["\"", "'"],
+		strings: [{open: "\"", interpolation: "#{"}, "'"],
 		heredoc: "ruby",
 	},
 	"Rust": {
@@ -2502,7 +2516,7 @@
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
 		shebangs: ["#!/usr/bin/env swift", "#!/usr/bin/swift"],
-		strings: ["\"", {open: "\"\"\"", multiline: true}],
+		strings: [{open: "\"", interpolation: "\\("}, {open: "\"\"\"", multiline: true, interpolation: "\\("}],
 	},
 	"Swig": {
 		file_patterns: ["*.swg", "*.i"],
@@ -2639,7 +2653,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		shebangs: ["#!/usr/bin/env deno", "#!/usr/bin/env tsx", "#!/usr/bin/env ts-node"],
-		strings: ["\"", "'", {open: "`", multiline: true}],
+		strings: ["\"", "'", {open: "`", multiline: true, interpolation: "${"}],
 		regex_literals: true,
 	},
 	"TypeSpec": {

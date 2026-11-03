@@ -113,6 +113,9 @@ impl Validator {
 			if config.char_literal && (config.open.len() != 1 || config.close() != config.open) {
 				self.error(lang, "char literals need a single-character delimiter");
 			}
+			if config.interpolation.as_ref().is_some_and(|hole| !matches!(hole.chars().last(), Some('{' | '('))) {
+				self.error(lang, "an interpolation opener has to end with `{` or `(`");
+			}
 			if config.delimited && (config.escape.is_some() || !config.multiline) {
 				self.error(lang, "delimited strings are raw and multiline");
 			}

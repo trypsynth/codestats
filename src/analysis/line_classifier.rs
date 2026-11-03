@@ -66,12 +66,21 @@ pub struct CommentState {
 	string: Option<usize>,
 	/// Whether the open string is a docstring, whose contents count as comment.
 	doc_string: bool,
+	/// The interpolation holes the next line is in, innermost last, as in JavaScript's `` `a ${f(`b ${c}`)} d` ``. Inside one, code is lexed until the bracket that closes it.
+	holes: Vec<Hole>,
 	/// What closes the open string when its writer chose it (`)xy"` for C++'s `R"xy(`), rather than the language.
 	string_close: Option<Box<[u8]>>,
 	/// The heredoc whose body the next line is in, which counts as being in a string.
 	heredoc: Option<HeredocEnd>,
 	/// A comment the next line is in that's decided line by line, rather than by markers anywhere in it.
 	carried: Carried,
+}
+
+/// An open interpolation hole: the string it's in, as an index into the language's strings, and how many of its brackets are open inside it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct Hole {
+	string: usize,
+	depth: u32,
 }
 
 /// A comment carried from one line to the next that isn't an ordinary block comment.
@@ -126,7 +135,15 @@ impl CommentState {
 	#[must_use]
 	#[inline]
 	const fn is_in_string(&self) -> bool {
-		self.string.is_some() || self.heredoc.is_some()
+		self.string.is_some() || self.heredoc.is_some() || !self.holes.is_empty()
+	}
+
+	/// End the holes in a one-line string at the end of its line, as the string itself ends there.
+	fn end_one_line_holes(&mut self, lang: &Language) {
+		if self.holes.first().is_some_and(|hole| !lang.strings[hole.string].multiline) {
+			self.holes.clear();
+			self.string = None;
+		}
 	}
 
 	/// Whether the next line starts outside any comment or string.
@@ -261,6 +278,9 @@ pub fn classify_line(line: &str, lang: &Language, comment_state: &mut CommentSta
 		// A one-line string goes on past a line ending in a backslash, but not past a line that doesn't, like this one.
 		if !clear && comment_state.string.is_some_and(|i| !lang.strings[i].multiline) {
 			comment_state.string = None;
+		}
+		if !clear {
+			comment_state.end_one_line_holes(lang);
 		}
 		return LineType::Blank;
 	}
@@ -589,6 +609,15 @@ mod tests {
 	#[case::kotlin_raw_string_ending_in_a_quote("Kotlin", &["val s = \"\"\"a \"\"\"\" // c", "// c"], &[LineType::Code, LineType::Comment])]
 	#[case::c_spliced_line_comment("C", &["int x; // c \\", "still c \\", "and this", "int y;"], &[LineType::Code, LineType::Comment, LineType::Comment, LineType::Code])]
 	#[case::c_string_splice_ends_at_blank("C", &["char *s = \"abc \\", "", "// c\";", "int x;"], &[LineType::Code, LineType::Blank, LineType::Comment, LineType::Code])]
+	#[case::csharp_hole_holding_a_quote("C#", &["var row = $@\"Name: {(quoted ? '\"' : ' ')}", "// still in the string", "\";", "// c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
+	#[case::csharp_doubled_brace_is_text("C#", &["var s = $\"{{ \\\" }}\"; // c"], &[LineType::Code])]
+	#[case::csharp_raw_dollar_dollar("C#", &["var s = $$\"\"\"", "{x} // text", "\"\"\";", "// c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
+	#[case::js_nested_template("JavaScript", &["const s = `a ${f(`b ${c}`)} d", "// still in the template", "`;", "// c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
+	#[case::js_hole_over_lines("JavaScript", &["const s = `a ${", "  x // a comment in the hole", "} b`;", "// c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
+	#[case::js_braces_in_hole("JavaScript", &["const s = `${ {a: \"`\"}.a }`; // c", "// c"], &[LineType::Code, LineType::Comment])]
+	#[case::ruby_hole_holding_a_quote("Ruby", &["s = \"#{h[\"k\"] + '\"'}\" # c", "# c"], &[LineType::Code, LineType::Comment])]
+	#[case::swift_hole("Swift", &["let s = \"\\(a ? \"x\" : \"y\")\" // c", "// c"], &[LineType::Code, LineType::Comment])]
+	#[case::kotlin_one_line_hole_ends_with_line("Kotlin", &["val s = \"${a", "// c"], &[LineType::Code, LineType::Comment])]
 	#[case::cpp_raw_string("C++", &["auto s = R\"(", "/* not a comment", ")\";", "// c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
 	#[case::cpp_raw_string_with_delimiter("C++", &["auto s = R\"xy(a \")\" b", "/* not a comment", ")xy\"; /* c */"], &[LineType::Code, LineType::Code, LineType::Code])]
 	#[case::cpp_raw_string_with_prefix("C++", &["auto s = u8R\"--(", "// not a comment", ")--\";", "// c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]

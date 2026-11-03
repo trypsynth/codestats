@@ -99,6 +99,8 @@ fn find_in_groups([a, b, c]: [u8; 3], rest: &[u8], haystack: &[u8]) -> Option<us
 #[derive(Debug)]
 pub struct QuickLines {
 	others: TokenStarts,
+	/// The openers of interpolation holes (`${`), searched for on their own, as a byte like `$` is common in code.
+	holes: Vec<&'static [u8]>,
 	quotes: ByteSet,
 	/// Each quote byte's string, as an index into the language's strings, and its escape.
 	strings: Vec<Option<(usize, Option<u8>)>>,
@@ -129,16 +131,24 @@ impl QuickLines {
 				_ => others.push((token, kind)),
 			}
 		}
+		// A line holding a hole opener needs the classifier, which follows the hole.
+		let mut holes: Vec<&'static [u8]> = Vec::new();
+		for hole in lang.strings.iter().filter_map(|delimiter| delimiter.interpolation) {
+			if !holes.contains(&hole.as_bytes()) {
+				holes.push(hole.as_bytes());
+			}
+		}
 		let quotes = ByteSet::new((0..=255).filter(|&b| strings[usize::from(b)].is_some()));
 		if quotes.bytes.is_empty() {
 			return None;
 		}
-		Some(Self { others: TokenStarts::new(others)?, quotes, strings })
+		Some(Self { others: TokenStarts::new(others)?, holes, quotes, strings })
 	}
 
 	/// Whether `line`, read from a clear state, is plain code that leaves nothing open: its only tokens are strings of the simple kind, each closing on the line. `false` means the line needs the classifier, not that it isn't code.
 	pub(crate) fn is_plain_code(&self, line: &[u8], matchers: &StringMatchers) -> bool {
-		if self.others.find(line, 0).is_some() {
+		let has_hole = |hole: &&[u8]| memchr::memchr_iter(hole[0], line).any(|at| starts_with(&line[at..], hole));
+		if self.others.find(line, 0).is_some() || self.holes.iter().any(has_hole) {
 			return false;
 		}
 		let mut pos = 0;
@@ -155,6 +165,12 @@ impl QuickLines {
 		}
 		true
 	}
+}
+
+/// `haystack.starts_with(needle)` for a needle of a few bytes, compared inline rather than through a call to `memcmp`.
+#[inline]
+fn starts_with(haystack: &[u8], needle: &[u8]) -> bool {
+	haystack.len() >= needle.len() && haystack.iter().zip(needle).all(|(a, b)| a == b)
 }
 
 /// A language's tokens by their first byte, each byte's longest first.
@@ -257,6 +273,54 @@ impl StringMatchers {
 			let run = close.len() >= 3 && close.iter().all(|&b| b == close[0]);
 			if run { end + line[end..].iter().take_while(|&&b| b == close[0]).count() } else { end }
 		})
+	}
+
+	/// In an interpolated string, where the string `index` closes or a hole (`${`) opens, whichever comes first, starting at `from`: the position just past it, and whether it's a hole. A doubled one-character opener (C#'s `{{`) is a literal brace.
+	pub(crate) fn find_close_or_hole(
+		&self,
+		line: &[u8],
+		from: usize,
+		index: usize,
+		escape: Option<u8>,
+		hole: &[u8],
+	) -> Option<(usize, bool)> {
+		let close = self.closes[index].needle();
+		let mut pos = from;
+		loop {
+			// An escape at the end of the line steps past it.
+			let rest = line.get(pos..)?;
+			let next = pos
+				+ match escape {
+					Some(escape) => memchr3(close[0], escape, hole[0], rest)?,
+					None => memchr2(close[0], hole[0], rest)?,
+				};
+			let found = line[next];
+			// The hole is checked first, as Swift's `\(` starts with its strings' escape.
+			if starts_with(&line[next..], hole) {
+				if hole.len() == 1 && line.get(next + 1) == Some(&hole[0]) {
+					pos = next + 2;
+					continue;
+				}
+				return Some((next + hole.len(), true));
+			}
+			if Some(found) == escape {
+				// When the escape is the closing quote itself (C#'s `$@"a""b"`), only a doubled quote is an escape.
+				let doubled = found == close[0] && line.get(next + 1) == Some(&found);
+				if found != close[0] || doubled {
+					pos = next + 2;
+					continue;
+				}
+			}
+			if starts_with(&line[next..], close) {
+				let end = next + close.len();
+				let run = close.len() >= 3 && close.iter().all(|&b| b == close[0]);
+				return Some((
+					if run { end + line[end..].iter().take_while(|&&b| b == close[0]).count() } else { end },
+					false,
+				));
+			}
+			pos = next + 1;
+		}
 	}
 
 	fn find_close_start(&self, line: &[u8], from: usize, index: usize, escape: Option<u8>) -> Option<usize> {

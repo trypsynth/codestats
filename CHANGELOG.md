@@ -15,6 +15,7 @@
 - Added about 170 extensions and filenames, including `.sbt`, `config.ru`, `Vagrantfile`, `.bashrc`, `.zshrc`, C++ module extensions, GLSL and HLSL shader extensions, `.storyboard`, and `.xib`
 - PHP files count the HTML outside `<?php ... ?>` as embedded HTML
 - Strings are recognized in Nix, Julia, OCaml, Visual Basic, R, PowerShell, Protocol Buffers, Fish, and C3
+- Interpolated strings are read correctly, including quotes and nested strings inside their holes, in C#, JavaScript, TypeScript, Ruby, Kotlin, Groovy, Dart, and Swift
 - C++ raw strings with custom delimiters (`R"sql(...)sql"`), PowerShell here-strings, and CMake bracket comments (`#[==[ ... ]==]`) are recognized
 - Fixed C3 vector types like `int[<*>]` opening a documentation comment
 - Fixed an HTML `<script>` or `<style>` tag that never closes, and `<!--` inside a quoted attribute value

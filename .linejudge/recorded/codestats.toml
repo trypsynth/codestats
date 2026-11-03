@@ -108,10 +108,7 @@ counted = { lines = 4, code = 4, comments = 0, blanks = 0 }
 counted = { lines = 6, code = 5, comments = 1, blanks = 0 }
 
 [answer.2077-interpolation_hole_holding_the_strings_own_quote.default]
-is-known-failure = true
-counted = { lines = 6, code = 3, comments = 3, blanks = 0 }
-note = """
-A quote inside a C# interpolation hole is read as the end of the string. Getting it right means parsing the code inside the holes."""
+counted = { lines = 6, code = 5, comments = 1, blanks = 0 }
 
 [answer.2080-odd_triple_quote_count.default]
 counted = { lines = 6, code = 5, comments = 1, blanks = 0 }

@@ -163,6 +163,7 @@ impl StringSpec {
 				doc: false,
 				delimited: false,
 				attribute: false,
+				interpolation: None,
 			},
 			Self::Full(config) => config.clone(),
 		}
@@ -192,6 +193,9 @@ pub struct StringConfig {
 	/// The string only opens right after an `=`, spaces aside, as an HTML attribute's value does, so an apostrophe in a page's text opens nothing.
 	#[serde(default)]
 	pub attribute: bool,
+	/// What opens an interpolation hole in the string (`${`, `#{`, C#'s `{`, Swift's `\(`), which holds code up to the bracket that matches the opener's last one. A doubled one-character opener (`{{`) is a literal.
+	#[serde(default)]
+	pub interpolation: Option<String>,
 }
 
 impl StringConfig {
