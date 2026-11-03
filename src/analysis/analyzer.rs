@@ -4,6 +4,7 @@ use std::{
 		Arc, Mutex, PoisonError,
 		atomic::{AtomicU64, Ordering},
 	},
+	thread,
 };
 
 use anyhow::Result;
@@ -90,7 +91,9 @@ impl CodeAnalyzer {
 			.hidden(!self.config.analysis.include_hidden)
 			.max_depth(self.config.analysis.max_depth)
 			// Git's own directory is never source, even when hidden files are counted.
-			.filter_entry(|entry| entry.file_name() != ".git");
+			.filter_entry(|entry| entry.file_name() != ".git")
+			// The walker's own default stops at 12 threads, however many the machine has.
+			.threads(thread::available_parallelism().map_or(1, usize::from));
 		if let Some(exclusions) = git::exclusions(&self.root, &self.config.analysis)? {
 			builder.overrides(exclusions);
 		}
