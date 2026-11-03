@@ -10,12 +10,23 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: llvm-tools
-      - name: Take the profile
-        run: scripts/pgo-profile.sh cs.profdata
+          targets: aarch64-unknown-linux-musl
+      - uses: goto-bus-stop/setup-zig@v2
+        with:
+          zig-version: master
+      - name: Install qemu
+        run: sudo apt-get update && sudo apt-get install -y qemu-user
+      # A profile from another architecture misses some of the hottest functions.
+      - name: Take the x86-64 profile
+        run: scripts/pgo-profile.sh x86_64.profdata
+      - name: Take the ARM64 profile
+        run: scripts/pgo-profile.sh arm.profdata "" arm
       - uses: actions/upload-artifact@v7
         with:
           name: pgo-profile
-          path: cs.profdata
+          path: |
+            x86_64.profdata
+            arm.profdata
   build:
     name: Build (${{ matrix.target }})
     needs: profile
@@ -59,7 +70,7 @@ jobs:
       - name: Build
         env:
           RUSTC_WRAPPER: ${{ github.workspace }}/scripts/pgo-rustc.sh
-          RUSTFLAGS: -Cprofile-use=${{ github.workspace }}/cs.profdata
+          RUSTFLAGS: -Cprofile-use=${{ github.workspace }}/${{ startsWith(matrix.target, 'aarch64') && 'arm' || 'x86_64' }}.profdata
         run: cargo zigbuild --release --locked --target ${{ matrix.build }}
       - name: Copy binary (Unix)
         if: "!contains(matrix.target, 'windows')"
