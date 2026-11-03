@@ -323,7 +323,14 @@ GitHub uses the linguist attributes in `.gitattributes` files for its language s
 | `-linguist-generated` or `linguist-generated=false` | The file is not generated. codestats counts it, also if its name or header looks generated. |
 | `linguist-vendored` | codestats does not count the file. |
 | `linguist-documentation` | codestats does not count the file. |
-| `linguist-language=Name` | codestats counts the file as the language `Name`. If codestats does not know `Name`, it ignores the attribute. |
+| `linguist-language=Name` | codestats counts the file as the language `Name`. Refer to the rules below this table. |
+
+codestats ignores `linguist-language` in these conditions:
+
+- codestats does not know the language `Name`.
+- The name of the file gives exactly one language that codestats knows. For example, codestats counts `*.bgt` files as BGT and `*.nvgt` files as NVGT. Many projects map these files to AngelScript because GitHub does not know BGT or NVGT.
+
+If the name of the file gives no language or more than one language (for example, `*.h` or `*.pp`), codestats uses `Name`.
 
 Example `.gitattributes` file:
 

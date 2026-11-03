@@ -310,3 +310,19 @@ fn paths_can_come_from_standard_input() {
 	let output = cs().current_dir(&root).args(["-", "c.rs"]).output().unwrap();
 	assert!(!output.status.success());
 }
+
+#[test]
+fn a_name_only_codestats_knows_keeps_its_language() {
+	let root = scratch_dir("a_name_only_codestats_knows_keeps_its_language");
+	fs::write(root.join(".gitattributes"), "*.bgt linguist-language=AngelScript\n*.pp linguist-language=Rust\n")
+		.unwrap();
+	fs::write(root.join("game.bgt"), "void main() {}\n").unwrap();
+	fs::write(root.join("pretty.pp"), "fn main() {}\n").unwrap();
+	let output = cs().current_dir(&root).args(["-o", "json"]).output().unwrap();
+	let report: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+	let mut names: Vec<&str> =
+		report["languages"].as_array().unwrap().iter().map(|l| l["name"].as_str().unwrap()).collect();
+	names.sort_unstable();
+	// `.bgt` is only BGT, but `.pp` is Pascal or Puppet, so the attribute decides.
+	assert_eq!(names, ["BGT", "Rust"]);
+}

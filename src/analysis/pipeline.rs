@@ -42,7 +42,7 @@ fn detection_name(path: &Path) -> Option<Cow<'_, str>> {
 	Some(path.extension().map_or(name, |ext| Cow::Owned(format!("file.{}", ext.to_string_lossy()))))
 }
 
-/// The languages a file named `name` at `path` could be, and the filter its contents are judged by, or `None` when its name and attributes leave it out: vendored or documentation, or generated and not included. A file whose attributes say it isn't generated is counted whatever its name or header say, and one whose attributes name its language is that language.
+/// The languages a file named `name` at `path` could be, and the filter its contents are judged by, or `None` when its name and attributes leave it out: vendored or documentation, or generated and not included. A file whose attributes say it isn't generated is counted whatever its name or header say, and one whose attributes name its language is that language, unless its name gives exactly one language.
 fn judge_name<'a>(
 	path: &Path,
 	name: &str,
@@ -55,7 +55,11 @@ fn judge_name<'a>(
 		return None;
 	}
 	let include_generated = languages.include_generated || verdict.generated == Some(false);
-	let candidates = verdict.language.map_or_else(|| langs::get_candidates(name), |language| vec![language]);
+	// `linguist-language` decides where the name doesn't: a name only codestats knows (`*.bgt`, often mapped to AngelScript for GitHub's sake) keeps its own language.
+	let candidates = match (verdict.language, langs::get_candidates(name)) {
+		(Some(language), candidates) if candidates.len() != 1 => vec![language],
+		(_, candidates) => candidates,
+	};
 	Some((candidates, FileFilter { include_generated, ..languages }))
 }
 
