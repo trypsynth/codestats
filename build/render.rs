@@ -38,6 +38,7 @@ const STRING_DELIMITER_FIELDS: &[(&str, &str)] = &[
 	("char_literal", "bool"),
 	("doc", "bool"),
 	("delimited", "bool"),
+	("attribute", "bool"),
 ];
 
 pub fn render_languages(languages: &[LanguageConfig]) -> String {
@@ -121,13 +122,14 @@ fn render_string_delimiter(spec: &StringSpec) -> String {
 	let config = spec.config();
 	let escape = config.escape.as_ref().map_or_else(|| "None".to_string(), |e| format!("Some({:?})", e.as_bytes()[0]));
 	format!(
-		"StringDelimiter {{ open: {:?}, close: {:?}, escape: {escape}, multiline: {}, char_literal: {}, doc: {}, delimited: {} }}",
+		"StringDelimiter {{ open: {:?}, close: {:?}, escape: {escape}, multiline: {}, char_literal: {}, doc: {}, delimited: {}, attribute: {} }}",
 		config.open,
 		config.close(),
 		config.multiline,
 		config.char_literal,
 		config.doc,
-		config.delimited
+		config.delimited,
+		config.attribute
 	)
 }
 

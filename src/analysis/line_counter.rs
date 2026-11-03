@@ -58,7 +58,7 @@ fn count_text(text: &str, language: &Language, counts: &mut LineCounts, classifi
 		}
 		let end = line_end(bytes, pos);
 		// Lines end at a `\n`, which is never inside a multi-byte character, so each is valid UTF-8 on its own.
-		counts.add(classifier.classify(&text[pos..end], pos == 0));
+		counts.add(classifier.classify_before(&text[pos..end], pos == 0, Some(&text[end..])));
 		pos = end;
 	}
 }
@@ -157,7 +157,7 @@ mod tests {
 				let mut expected = LineCounts::default();
 				let mut classifier = Classifier::new(language);
 				for (i, line) in lines(text.as_bytes()).enumerate() {
-					expected.add(classifier.classify(&text[line], i == 0));
+					expected.add(classifier.classify_before(&text[line.clone()], i == 0, Some(&text[line.end..])));
 				}
 				let mut got = LineCounts::default();
 				count_text(&text, language, &mut got, &mut Classifier::new(language));
@@ -177,7 +177,7 @@ mod tests {
 					let mut expected = LineCounts::default();
 					let mut classifier = Classifier::new(language);
 					for (i, line) in lines(text.as_bytes()).enumerate() {
-						expected.add(classifier.classify(&text[line], i == 0));
+						expected.add(classifier.classify_before(&text[line.clone()], i == 0, Some(&text[line.end..])));
 					}
 					let mut got = LineCounts::default();
 					count_text(&text, language, &mut got, &mut Classifier::new(language));

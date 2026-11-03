@@ -113,6 +113,7 @@ impl StringSpec {
 				char_literal: false,
 				doc: false,
 				delimited: false,
+				attribute: false,
 			},
 			Self::Full(config) => config.clone(),
 		}
@@ -139,6 +140,9 @@ pub struct StringConfig {
 	/// The opener is followed by a delimiter the writer picks, up to a `(`, and the string ends at `)`, that delimiter and `close` (C++'s `R"xy(...)xy"`).
 	#[serde(default)]
 	pub delimited: bool,
+	/// The string only opens right after an `=`, spaces aside, as an HTML attribute's value does, so an apostrophe in a page's text opens nothing.
+	#[serde(default)]
+	pub attribute: bool,
 }
 
 impl StringConfig {

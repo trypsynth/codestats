@@ -234,10 +234,7 @@ counted = { lines = 3, code = 1, comments = 1, blanks = 1 }
 counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
 
 [answer.6020-comment_opener_inside_an_attribute.default]
-is-known-failure = true
-counted = { lines = 4, code = 1, comments = 3, blanks = 0 }
-note = """
-A <!-- inside a quoted HTML attribute opens a comment; attribute quotes aren't tracked."""
+counted = { lines = 4, code = 3, comments = 1, blanks = 0 }
 
 [answer.6030-opening_tag_split_over_two_lines.default]
 counted = { lines = 5, code = 4, comments = 1, blanks = 0 }
@@ -261,13 +258,7 @@ counted-regions = [
 counted = { lines = 5, code = 5, comments = 0, blanks = 0 }
 
 [answer.6070-script_opener_that_never_closes.default]
-is-known-failure = true
 counted = { lines = 2, code = 2, comments = 0, blanks = 0 }
-counted-regions = [
-    { language = "JavaScript", lines = 1, code = 1, comments = 0, blanks = 0 },
-]
-note = """
-A <script> tag written as text that never closes still starts a JavaScript region."""
 
 [answer.6080-block_named_by_a_mime_type.default]
 counted = { lines = 4, code = 3, comments = 1, blanks = 0 }

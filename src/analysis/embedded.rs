@@ -102,11 +102,16 @@ impl<'a> Classifier<'a> {
 	}
 
 	pub(super) fn classify(&mut self, line: &str, is_first_line: bool) -> LineType {
+		self.classify_before(line, is_first_line, None)
+	}
+
+	/// Classify `line`, followed in its file by `following`, when the rest of the file is at hand: an element's opening tag only starts a region if its closing tag comes later, since a `<script>` that never closes is text written in the page.
+	pub(super) fn classify_before(&mut self, line: &str, is_first_line: bool, following: Option<&str>) -> LineType {
 		let Some(embedding) = self.language.embedding else {
 			return classify_line(line, self.language, &mut self.state, is_first_line);
 		};
 		if embedding == Embedding::Php {
-			return self.classify_php(line, is_first_line);
+			return self.classify_php(line, is_first_line, following);
 		}
 		match &mut self.region {
 			Region::Host | Region::Markup(_) => {}
@@ -116,7 +121,16 @@ impl<'a> Classifier<'a> {
 					return if is_blank(line.as_bytes()) { LineType::Blank } else { LineType::Code };
 				};
 				attributes.push_str(&line[..end]);
-				self.region = element_region(*tag, &mem::take(attributes), &line[end + 1..]);
+				let tag = *tag;
+				let attributes = mem::take(attributes);
+				let rest = &line[end + 1..];
+				self.region = if End::Tag(tag).closes(rest)
+					|| following.is_none_or(|following| End::Tag(tag).closes(following))
+				{
+					element_region(tag, &attributes, rest)
+				} else {
+					Region::Host
+				};
 				return LineType::Code;
 			}
 			Region::SourceAttribute(language) => {
@@ -167,7 +181,7 @@ impl<'a> Classifier<'a> {
 			return LineType::Code;
 		}
 		if self.state.is_clear()
-			&& let Some(region) = self.region_start(embedding, line)
+			&& let Some(region) = self.region_start(embedding, line, following)
 		{
 			self.region = region;
 			return LineType::Code;
@@ -184,7 +198,7 @@ impl<'a> Classifier<'a> {
 	}
 
 	/// A line of a PHP file: HTML until a `<?php` tag, whose line is PHP's, and PHP until a `?>` outside its strings and comments, whose line is too.
-	fn classify_php(&mut self, line: &str, is_first_line: bool) -> LineType {
+	fn classify_php(&mut self, line: &str, is_first_line: bool, following: Option<&str>) -> LineType {
 		let in_markup = matches!(self.region, Region::Markup(_));
 		if let Region::Markup(markup) = &mut self.region
 			&& let Some(html) = *HTML
@@ -192,7 +206,7 @@ impl<'a> Classifier<'a> {
 			if !opens_php(line) {
 				let markup = markup.get_or_insert_with(|| Box::new(Classifier::new(html)));
 				let before = markup.embedded.total();
-				let line_type = markup.classify(line, is_first_line);
+				let line_type = markup.classify_before(line, is_first_line, following);
 				// Lines of the HTML's own scripts and styles are already counted as theirs.
 				if markup.embedded.total() == before {
 					self.embedded.add(html, line_type);
@@ -216,8 +230,8 @@ impl<'a> Classifier<'a> {
 		line_type
 	}
 
-	/// The region a line of the file's own language starts, if it starts one.
-	fn region_start(&self, embedding: Embedding, line: &str) -> Option<Region> {
+	/// The region a line of the file's own language starts, if it starts one. `following` is the rest of the file, when it's known.
+	fn region_start(&self, embedding: Embedding, line: &str, following: Option<&str>) -> Option<Region> {
 		let trimmed = line.trim_start();
 		let embedded = |language, end| Region::Embedded { language, state: CommentState::new(), end };
 		match embedding {
@@ -246,9 +260,11 @@ impl<'a> Classifier<'a> {
 				let Some(end) = rest.find('>') else {
 					return Some(Region::OpeningTag { tag, attributes: rest.to_string() });
 				};
-				// A self-closing or one-line element (`<script src="app.js"></script>`) is just markup.
-				(!rest[..end].ends_with('/') && !End::Tag(tag).closes(&rest[end + 1..]))
-					.then(|| element_region(tag, &rest[..end], &rest[end + 1..]))
+				// A self-closing or one-line element (`<script src="app.js"></script>`) is just markup, and so is an element that's never closed.
+				(!rest[..end].ends_with('/')
+					&& !End::Tag(tag).closes(&rest[end + 1..])
+					&& following.is_none_or(|following| End::Tag(tag).closes(following)))
+				.then(|| element_region(tag, &rest[..end], &rest[end + 1..]))
 			}
 		}
 	}
@@ -578,6 +594,18 @@ mod tests {
 
 	/// A PHP file's HTML counts as HTML, and the scripts in it as theirs, whatever language is innermost.
 	#[test]
+	fn a_script_tag_that_never_closes_is_text() {
+		let html = language_named("HTML").unwrap();
+		let utf8 = FileEncoding { encoding: encoding_rs::UTF_8, bom_len: 0 };
+		let never_closed =
+			count_lines(html, utf8, b"<p>a page can write <script> as text</p>\n<p>// and this is the page</p>\n");
+		assert_eq!(never_closed.embedded.total(), 0);
+		assert_eq!(never_closed.lines.code, 2);
+		let closed_later = count_lines(html, utf8, b"<script>\n// a comment\nrun();\n</script>\n");
+		assert_eq!(closed_later.embedded.total(), 2);
+	}
+
+	#[test]
 	fn php_markup_counts_as_html_and_its_scripts_as_theirs() {
 		let php = language_named("PHP").unwrap();
 		let mut classifier = Classifier::new(php);
@@ -831,8 +859,10 @@ mod tests {
 				let text: String = (0..next(80)).map(|_| pieces[next(pieces.len())]).collect();
 				let mut classifier = Classifier::new(language);
 				let mut expected = LineCounts::default();
+				let mut start = 0;
 				for (i, line) in text.split_inclusive('\n').enumerate() {
-					expected.add(classifier.classify(line, i == 0));
+					start += line.len();
+					expected.add(classifier.classify_before(line, i == 0, Some(&text[start..])));
 				}
 				let utf8 = FileEncoding { encoding: encoding_rs::UTF_8, bom_len: 0 };
 				assert_eq!(count_lines(language, utf8, text.as_bytes()).lines, expected, "{}: {text:?}", language.name);

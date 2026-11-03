@@ -107,8 +107,9 @@ pub(super) fn classify_with_strings(
 					// An escaped quote outside a string (in a regex or sigil like `~r[\"]`, or a shell's `\'`) doesn't open one.
 					let escaped = start > 0
 						&& (delimiter.escape == Some(bytes[start - 1]) || strings.escapes.contains(&bytes[start - 1]));
-					// A quote that doesn't look like a char literal (a Rust lifetime like `'a`) is just code.
-					let char_mismatch = delimiter.char_literal && !looks_like_char(bytes, end);
+					// A quote that doesn't look like a char literal (a Rust lifetime like `'a`), or an HTML attribute's value, is just code.
+					let char_mismatch = (delimiter.char_literal && !looks_like_char(bytes, end))
+						|| (delimiter.attribute && bytes[..start].trim_ascii_end().last() != Some(&b'='));
 					// A docstring is a string that starts its line; after code (`x = """`) it's an ordinary string.
 					let doc_string = delimiter.doc && !has_code;
 					has_code |= !doc_string;
