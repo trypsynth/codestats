@@ -8,7 +8,10 @@ use super::{
 	line_classifier::{CommentState, LineType, classify_line, is_blank},
 	stats::Embedded,
 };
-use crate::langs::{Embedding, Language, detect_language, get_candidates, language_named};
+use crate::langs::{
+	Embedding, Language, detect_language, get_candidates, language_named,
+	matchers::{ByteSet, LanguageMatchers},
+};
 
 /// Classifies a file's lines in order, following the regions its language embeds others in.
 pub(super) struct Classifier<'a> {
@@ -99,6 +102,15 @@ impl<'a> Classifier<'a> {
 	/// Whether the next line starts in the file's own language, outside any comment or string.
 	pub(super) const fn is_clear(&self) -> bool {
 		matches!(self.region, Region::Host) && self.state.is_clear()
+	}
+
+	/// While the next line starts inside a comment or string of the file's own language: the bytes one of them would need to end there, and what a line without them counts as.
+	#[inline]
+	pub(super) fn what_ends_this<'m>(&self, matchers: &'m LanguageMatchers) -> Option<(&'m ByteSet, LineType)> {
+		if !matches!(self.region, Region::Host) {
+			return None;
+		}
+		self.state.what_ends_this(matchers)
 	}
 
 	#[inline]

@@ -1,12 +1,17 @@
 use memchr::memchr;
 
+#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
+use super::masks::BlockScanner;
 use super::{
 	embedded::{Classifier, RegionStarts, contains_pair, region_starts},
 	encoding::{self, FileEncoding, decode_bytes},
 	line_classifier::{LineType, is_blank, is_plain_line_comment},
 	stats::{FileCounts, LineCounts},
 };
-use crate::langs::{Language, matchers::language_matchers};
+use crate::langs::{
+	Language,
+	matchers::{ByteSet, language_matchers},
+};
 
 /// Count the lines of a file's contents.
 pub(super) fn count_lines(language: &Language, encoding: FileEncoding, bytes: &[u8]) -> FileCounts {
@@ -33,37 +38,40 @@ pub(super) fn count_lines(language: &Language, encoding: FileEncoding, bytes: &[
 /// Outside comments and strings, the lines before the next byte that could open one can only be code or blank, so they're swept without classifying each; only lines that might hold a marker go through the classifier.
 fn count_text(text: &str, language: &Language, counts: &mut LineCounts, classifier: &mut Classifier) {
 	let bytes = text.as_bytes();
-	let openers = &language_matchers(language).openers;
+	let matchers = language_matchers(language);
+	let openers = &matchers.openers;
 	// Neither markers that only count in the first column nor the starts of embedded regions are among the openers. Regions that start a line are checked for line by line; languages with other kinds classify every line.
 	let (can_sweep, region_starts) = language.embedding.map_or((true, None), |embedding| {
 		region_starts(embedding).map_or((false, None), |starts| (true, Some(starts)))
 	});
 	let can_sweep = can_sweep && language.column_one_comments.is_empty();
-	let plain_comments = language.embedding.is_none() && !language.line_comments.is_empty();
-	let quick = language_matchers(language)
+	// A line starting with a marker isn't always a comment where the preprocessor reads it (`# define` in assembly).
+	let plain_comments = language.embedding.is_none() && !language.line_comments.is_empty() && !language.c_preprocessor;
+	let quick = matchers
 		.strings
 		.as_ref()
 		.filter(|_| language.embedding.is_none())
 		.and_then(|strings| strings.quick.as_ref().map(|quick| (quick, strings)));
+	// Regions are checked for line by line, which the masks don't help with.
+	#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
+	let mut scanner = region_starts.is_none().then(|| BlockScanner::new(bytes)).flatten();
+	#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
+	let openers_suit = BlockScanner::suits(openers.bytes());
 	let mut pos = 0;
 	while pos < bytes.len() {
 		// The first line goes through the classifier, which checks it for a shebang.
 		if can_sweep && pos > 0 && classifier.is_clear() {
 			loop {
-				let stop = openers.find(&bytes[pos..]).map_or(bytes.len(), |i| pos + i);
-				let mut at_stop = false;
-				while pos < stop {
-					let end = line_end(bytes, pos);
-					if region_starts.is_some_and(|starts| may_start_region(&bytes[pos..end], starts)) {
-						break;
-					}
-					if end > stop {
-						at_stop = true;
-						break;
-					}
-					counts.add(if is_blank(&bytes[pos..end]) { LineType::Blank } else { LineType::Code });
-					pos = end;
-				}
+				#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
+				let at_stop = if let Some(scanner) = scanner.as_mut().filter(|_| openers_suit) {
+					let (next, at_stop) = scanner.sweep(pos, openers.bytes(), LineType::Code, counts);
+					pos = next;
+					at_stop
+				} else {
+					sweep_by_search(bytes, openers, region_starts, &mut pos, counts)
+				};
+				#[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
+				let at_stop = sweep_by_search(bytes, openers, region_starts, &mut pos, counts);
 				// A line stopped at only for its strings, which all close on it, is code like the others, and the sweep carries on after it.
 				let end = line_end(bytes, pos);
 				if at_stop {
@@ -85,11 +93,49 @@ fn count_text(text: &str, language: &Language, counts: &mut LineCounts, classifi
 				break;
 			}
 		}
+		// Inside a comment or a string, lines holding none of the bytes that could end it stay inside it.
+		#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
+		if can_sweep
+			&& pos > 0
+			&& !classifier.is_clear()
+			&& let Some(scanner) = &mut scanner
+			&& let Some((searched, with_text)) = classifier.what_ends_this(matchers)
+			&& BlockScanner::suits(searched.bytes())
+		{
+			(pos, _) = scanner.sweep(pos, searched.bytes(), with_text, counts);
+			if pos >= bytes.len() {
+				break;
+			}
+		}
 		let end = line_end(bytes, pos);
 		// Lines end at a `\n`, which is never inside a multi-byte character, so each is valid UTF-8 on its own.
 		counts.add(classifier.classify_before(&text[pos..end], pos == 0, Some(&text[end..])));
 		pos = end;
 	}
+}
+
+/// Count the lines from `pos` up to the first that might hold a marker or start a region, finding them by search. Returns whether it stopped at a marker, and leaves `pos` at the line it stopped at or the end of `bytes`.
+fn sweep_by_search(
+	bytes: &[u8],
+	openers: &ByteSet,
+	region_starts: Option<RegionStarts>,
+	pos: &mut usize,
+	counts: &mut LineCounts,
+) -> bool {
+	let stop = openers.find(&bytes[*pos..]).map_or(bytes.len(), |i| *pos + i);
+	while *pos < stop {
+		let end = line_end(bytes, *pos);
+		if region_starts.is_some_and(|starts| may_start_region(&bytes[*pos..end], starts)) {
+			return false;
+		}
+		if end > stop {
+			return true;
+		}
+		counts.add(if is_blank(&bytes[*pos..end]) { LineType::Blank } else { LineType::Code });
+		*pos = end;
+	}
+	// Any line left starts with the marker.
+	*pos < bytes.len()
 }
 
 /// Whether `line` might start an embedded region: its first byte after whitespace is one that can, or isn't ASCII and so might be Unicode whitespace hiding one, which the classifier sorts out.
@@ -193,6 +239,16 @@ mod tests {
 				assert_eq!(got, expected, "{}: {text:?}", language.name);
 			}
 		}
+	}
+
+	/// Preprocessor directives are code where `#` also starts comments, whichever way a line reaches the classifier.
+	#[test]
+	fn assembly_directives_stay_code_when_swept() {
+		let assembly = crate::langs::language_named("Assembly").unwrap();
+		let text = "mov r0, r1\n#define X 1\n# include <a.h>\n# a comment\nmov r1, r2\n";
+		let mut counts = LineCounts::default();
+		count_text(text, assembly, &mut counts, &mut Classifier::new(assembly));
+		assert_eq!((counts.code, counts.comment), (4, 1));
 	}
 
 	/// A region's opening line must stop the sweep whatever whitespace it's indented with, as `str::trim_start` would skip it.

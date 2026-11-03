@@ -377,29 +377,32 @@ struct OutrightWin {
 
 /// A search for any of a set of keywords through a sample: vectorized where the machine and the keywords allow it, as the automaton looks at every byte of what's nearly always a sample without any.
 enum KeywordSearcher {
-	Packed(packed::Searcher),
+	Packed(packed::Searcher, Vec<Finder<'static>>),
 	Automaton(AhoCorasick),
 }
 
 impl KeywordSearcher {
-	fn new(keywords: &[&str], case_sensitive: bool) -> Self {
-		let packed = case_sensitive.then(|| packed::Searcher::new(keywords.iter().copied())).flatten();
-		packed.map_or_else(
-			|| {
-				Self::Automaton(
-					AhoCorasick::builder()
-						.ascii_case_insensitive(!case_sensitive)
-						.build(keywords)
-						.expect("AhoCorasick should never fail to build with valid keywords"),
-				)
-			},
-			Self::Packed,
+	fn new(keywords: &[&'static str], case_sensitive: bool) -> Self {
+		if case_sensitive {
+			// A keyword of two bytes would have the search stop at every pair of letters like it, so those are looked for on their own.
+			let (short, long): (Vec<&str>, Vec<&str>) = keywords.iter().partition(|keyword| keyword.len() < 3);
+			if let Some(searcher) = packed::Searcher::new(long.iter().copied()) {
+				return Self::Packed(searcher, short.into_iter().map(Finder::new).collect());
+			}
+		}
+		Self::Automaton(
+			AhoCorasick::builder()
+				.ascii_case_insensitive(!case_sensitive)
+				.build(keywords)
+				.expect("AhoCorasick should never fail to build with valid keywords"),
 		)
 	}
 
 	fn is_match(&self, content: &str) -> bool {
 		match self {
-			Self::Packed(searcher) => searcher.find(content).is_some(),
+			Self::Packed(searcher, short) => {
+				searcher.find(content).is_some() || short.iter().any(|finder| finder.find(content.as_bytes()).is_some())
+			}
 			Self::Automaton(automaton) => automaton.is_match(content),
 		}
 	}
@@ -411,7 +414,7 @@ fn build_outright_win(candidates: &[&'static Language]) -> Option<OutrightWin> {
 	let (&default, None) = (defaults.next()?, defaults.next()) else {
 		return None;
 	};
-	let mut keywords: Vec<&str> = Vec::new();
+	let mut keywords: Vec<&'static str> = Vec::new();
 	for other in candidates.iter().filter(|other| !std::ptr::eq(**other, default)) {
 		if !same_comments(default, other)
 			|| other.line_block_comments != default.line_block_comments

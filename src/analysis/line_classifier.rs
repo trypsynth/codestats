@@ -5,7 +5,7 @@ use memchr::memchr2;
 use self::strings::classify_with_strings;
 use crate::langs::{
 	Language, is_shebang_for,
-	matchers::{BlockCommentMatchers, LanguageMatchers, language_matchers},
+	matchers::{BlockCommentMatchers, ByteSet, LanguageMatchers, language_matchers},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -144,6 +144,25 @@ impl CommentState {
 			self.holes.clear();
 			self.string = None;
 		}
+	}
+
+	/// The bytes a line would need to end the block comment or multi-line string the next line starts in, and what a line without them counts as. `None` outside those, or where a line takes more than that to judge.
+	#[inline]
+	pub(crate) fn what_ends_this<'m>(&self, matchers: &'m LanguageMatchers) -> Option<(&'m ByteSet, LineType)> {
+		if self.heredoc.is_some() || !self.holes.is_empty() || !matches!(self.carried, Carried::Nothing) {
+			return None;
+		}
+		if self.is_in_comment() {
+			return matchers.block_comments.as_ref().map(|block| (block.ending_bytes(self.pair), LineType::Comment));
+		}
+		let index = self.string?;
+		if self.string_close.is_some() {
+			return None;
+		}
+		let strings = matchers.strings.as_ref()?;
+		strings
+			.multiline_ending_bytes(index)
+			.map(|bytes| (bytes, if self.doc_string { LineType::Comment } else { LineType::Code }))
 	}
 
 	/// Whether the next line starts outside any comment or string.

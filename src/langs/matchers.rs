@@ -35,6 +35,11 @@ impl ByteSet {
 		Self { bytes, table }
 	}
 
+	/// The bytes in the set.
+	pub(crate) fn bytes(&self) -> &[u8] {
+		&self.bytes
+	}
+
 	/// Whether `haystack` contains any byte of the set.
 	#[inline]
 	pub(crate) fn any_in(&self, haystack: &[u8]) -> bool {
@@ -234,6 +239,8 @@ pub enum Token {
 #[derive(Debug)]
 pub struct StringMatchers {
 	tokens: AhoCorasick,
+	/// For each string that spans lines, a byte of what would end it or open a hole in it.
+	multiline_ending: Vec<Option<ByteSet>>,
 	/// A cheap test for lines that are plain code although they hold strings, so they needn't go through the classifier.
 	pub(crate) quick: Option<QuickLines>,
 	/// The same tokens by their first byte, where every token starts with punctuation, so the next one is found by a vectorized search for those bytes and a look at the few tokens starting with the one found. On short lines that's much cheaper than the automaton's setup.
@@ -247,6 +254,11 @@ pub struct StringMatchers {
 }
 
 impl StringMatchers {
+	/// The bytes a line would need to end the multi-line string `index`, or open a hole in it; `None` for a string that ends with its line.
+	pub(crate) fn multiline_ending_bytes(&self, index: usize) -> Option<&ByteSet> {
+		self.multiline_ending[index].as_ref()
+	}
+
 	/// Whether `line` contains any byte that could open a string.
 	#[inline]
 	pub(crate) fn may_contain_string(&self, line: &[u8]) -> bool {
@@ -351,6 +363,8 @@ impl StringMatchers {
 pub struct BlockCommentMatchers {
 	start_automaton: AhoCorasick,
 	pairs: Vec<BlockCommentPair>,
+	/// For each pair, a byte of what would end or nest it: the last of its end, as the first of `*/` is on every line of many comments.
+	ending_bytes: Vec<ByteSet>,
 }
 
 /// A single block comment delimiter pair. Once a comment is open, only its own end (and its own start, if it nests) matter.
@@ -362,6 +376,11 @@ struct BlockCommentPair {
 }
 
 impl BlockCommentMatchers {
+	/// The bytes a line would need to end the comment `pair` opened, or nest another in it.
+	pub(crate) fn ending_bytes(&self, pair: usize) -> &ByteSet {
+		&self.ending_bytes[pair]
+	}
+
 	/// Find the first block comment start, returning its position, length, and pair index.
 	#[inline]
 	pub(crate) fn find_block_start(&self, line: &str) -> Option<(usize, usize, usize)> {
@@ -418,7 +437,15 @@ fn build_language_matchers(lang: &Language) -> LanguageMatchers {
 			.iter()
 			.map(|&(start, end, nests)| BlockCommentPair { start: Finder::new(start), end: Finder::new(end), nests })
 			.collect();
-		Some(BlockCommentMatchers { start_automaton, pairs })
+		let ending_bytes = lang
+			.block_comments
+			.iter()
+			.map(|&(start, end, nests)| {
+				let last = |marker: &str| marker.as_bytes().last().copied();
+				ByteSet::new(last(end).into_iter().chain(last(start).filter(|_| nests)))
+			})
+			.collect();
+		Some(BlockCommentMatchers { start_automaton, pairs, ending_bytes })
 	};
 	let strings = (!lang.strings.is_empty() || lang.heredoc.is_some()).then(|| build_string_matchers(lang));
 	let openers = ByteSet::covering(
@@ -481,7 +508,21 @@ fn build_string_matchers(lang: &Language) -> StringMatchers {
 		.collect();
 	escapes.sort_unstable();
 	escapes.dedup();
-	StringMatchers { tokens, quick, starts, kinds, closes, open_bytes, escapes }
+	let multiline_ending = lang
+		.strings
+		.iter()
+		.map(|delimiter| {
+			delimiter.multiline.then(|| {
+				let last_of_close = delimiter.close.as_bytes().last().copied();
+				ByteSet::new(
+					last_of_close
+						.into_iter()
+						.chain(delimiter.interpolation.and_then(|hole| hole.as_bytes().first().copied())),
+				)
+			})
+		})
+		.collect();
+	StringMatchers { tokens, multiline_ending, quick, starts, kinds, closes, open_bytes, escapes }
 }
 
 #[cfg(test)]
