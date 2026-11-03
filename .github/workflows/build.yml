@@ -1,0 +1,81 @@
+name: Build
+on:
+  workflow_call:
+jobs:
+  profile:
+    name: Take the PGO profile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools
+      - name: Take the profile
+        run: scripts/pgo-profile.sh cs.profdata
+      - uses: actions/upload-artifact@v7
+        with:
+          name: pgo-profile
+          path: cs.profdata
+  build:
+    name: Build (${{ matrix.target }})
+    needs: profile
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Linux builds name the oldest glibc they'll run on, which is as far back as Rust itself goes.
+        include:
+          - { target: x86_64-unknown-linux-gnu, build: x86_64-unknown-linux-gnu.2.17 }
+          - { target: aarch64-unknown-linux-gnu, build: aarch64-unknown-linux-gnu.2.17 }
+          - { target: x86_64-unknown-linux-musl, build: x86_64-unknown-linux-musl }
+          - { target: aarch64-unknown-linux-musl, build: aarch64-unknown-linux-musl }
+          - { target: x86_64-pc-windows-gnu, build: x86_64-pc-windows-gnu }
+          - { target: aarch64-pc-windows-gnullvm, build: aarch64-pc-windows-gnullvm }
+          - { target: x86_64-apple-darwin, build: x86_64-apple-darwin }
+          - { target: aarch64-apple-darwin, build: aarch64-apple-darwin }
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: goto-bus-stop/setup-zig@v2
+        with:
+          zig-version: master
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.target }}-cargo-
+      - uses: actions/download-artifact@v8
+        with:
+          name: pgo-profile
+      - name: Install cargo-zigbuild
+        run: cargo install cargo-zigbuild --force
+      - name: Build
+        env:
+          RUSTC_WRAPPER: ${{ github.workspace }}/scripts/pgo-rustc.sh
+          RUSTFLAGS: -Cprofile-use=${{ github.workspace }}/cs.profdata
+        run: cargo zigbuild --release --locked --target ${{ matrix.build }}
+      - name: Copy binary (Unix)
+        if: "!contains(matrix.target, 'windows')"
+        run: cp target/${{ matrix.target }}/release/cs cs-${{ matrix.target }}
+      - name: Copy binary (Windows)
+        if: contains(matrix.target, 'windows')
+        run: cp target/${{ matrix.target }}/release/cs.exe cs-${{ matrix.target }}.exe
+      - name: Upload artifact (Unix)
+        if: "!contains(matrix.target, 'windows')"
+        uses: actions/upload-artifact@v7
+        with:
+          name: cs-${{ matrix.target }}
+          path: cs-${{ matrix.target }}
+      - name: Upload artifact (Windows)
+        if: contains(matrix.target, 'windows')
+        uses: actions/upload-artifact@v7
+        with:
+          name: cs-${{ matrix.target }}
+          path: cs-${{ matrix.target }}.exe

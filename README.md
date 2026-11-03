@@ -31,12 +31,16 @@ Download the binary for your platform from [GitHub Releases](https://github.com/
 
 | Platform | Download |
 | --- | --- |
-| Linux x86_64 | [cs-x86_64-unknown-linux-musl](https://github.com/trypsynth/codestats/releases/latest/download/cs-x86_64-unknown-linux-musl) |
-| Linux ARM64 | [cs-aarch64-unknown-linux-musl](https://github.com/trypsynth/codestats/releases/latest/download/cs-aarch64-unknown-linux-musl) |
+| Linux x86_64 | [cs-x86_64-unknown-linux-gnu](https://github.com/trypsynth/codestats/releases/latest/download/cs-x86_64-unknown-linux-gnu) |
+| Linux ARM64 | [cs-aarch64-unknown-linux-gnu](https://github.com/trypsynth/codestats/releases/latest/download/cs-aarch64-unknown-linux-gnu) |
+| Linux x86_64, static (musl) | [cs-x86_64-unknown-linux-musl](https://github.com/trypsynth/codestats/releases/latest/download/cs-x86_64-unknown-linux-musl) |
+| Linux ARM64, static (musl) | [cs-aarch64-unknown-linux-musl](https://github.com/trypsynth/codestats/releases/latest/download/cs-aarch64-unknown-linux-musl) |
 | macOS Intel | [cs-x86_64-apple-darwin](https://github.com/trypsynth/codestats/releases/latest/download/cs-x86_64-apple-darwin) |
 | macOS Apple Silicon | [cs-aarch64-apple-darwin](https://github.com/trypsynth/codestats/releases/latest/download/cs-aarch64-apple-darwin) |
 | Windows x86_64 | [cs-x86_64-pc-windows-gnu.exe](https://github.com/trypsynth/codestats/releases/latest/download/cs-x86_64-pc-windows-gnu.exe) |
 | Windows ARM64 | [cs-aarch64-pc-windows-gnullvm.exe](https://github.com/trypsynth/codestats/releases/latest/download/cs-aarch64-pc-windows-gnullvm.exe) |
+
+The standard Linux binaries need glibc 2.17 or later and run faster than the static ones. Use the static binaries on systems without glibc, such as Alpine.
 
 On Linux and macOS, make the binary executable and move it to a directory on your `PATH`:
 
@@ -51,7 +55,7 @@ sudo mv cs-* /usr/local/bin/cs
 cargo install codestats
 ```
 
-This requires Rust 1.88 or later. The minimum Rust version only increases in minor releases, never in patch releases.
+This requires Rust 1.88 or later. Release binaries are built with profile-guided optimization, so they run faster than a build from `cargo install`. The minimum Rust version only increases in minor releases, never in patch releases.
 
 ### Build from source
 
@@ -302,7 +306,7 @@ To ignore linguist attributes, pass `--no-gitattributes`.
 
 ### Memory-mapped files
 
-codestats memory-maps files of 256 KB or larger, which makes reading them faster. Don't modify files while codestats is counting them.
+codestats memory-maps files of 64 KB or larger, which makes reading them faster. Don't modify files while codestats is counting them.
 
 ### Threads
 
