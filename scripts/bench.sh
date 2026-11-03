@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Benchmarks codestats against tokei, scc and gocloc on pinned commits of public repositories and prints the README tables.
-# Needs git, cargo, hyperfine, jq, tokei, scc and gocloc. Usage: scripts/bench.sh [clone directory]
+# Benchmarks codestats against mezura, tokei, scc, and gocloc on pinned commits of public repositories and prints the README tables.
+# Needs git, hyperfine, jq, and the other tools on PATH. Usage: CS=<release binary> scripts/bench.sh [clone directory]
+# Without CS, it builds the binary with cargo, which leaves out the release's PGO and so isn't what users download.
 
 repos=(
 	"BurntSushi/ripgrep 91f5d22ef48bde459d90a8c7dbeab416e97d0f2b"
@@ -12,12 +13,15 @@ repos=(
 	"rust-lang/rust 92b5b8c87c61b20adc9001b41baf587634a74734"
 	"torvalds/linux d89e1d186ec9271bf78e62771779e9fc03bf0fc3"
 )
-tools=(codestats tokei scc gocloc)
+tools=(codestats mezura tokei scc gocloc)
 root=$(cd "$(dirname "$0")/.." && pwd)
 dir=$(realpath -m "${1:-$root/target/bench-repos}")
 mkdir -p "$dir/results"
-cargo build --release --quiet --manifest-path "$root/Cargo.toml" || exit 1
-cs=$root/target/release/cs
+cs=${CS:-}
+if [[ -z $cs ]]; then
+	cargo build --release --quiet --manifest-path "$root/Cargo.toml" || exit 1
+	cs=$root/target/release/cs
+fi
 
 for entry in "${repos[@]}"; do
 	read -r repo sha <<<"$entry"
@@ -28,16 +32,22 @@ for entry in "${repos[@]}"; do
 		git init -q "$dir/$name" && git -C "$dir/$name" fetch -q --depth 1 "https://github.com/$repo" "$sha" &&
 			git -C "$dir/$name" checkout -q FETCH_HEAD || exit 1
 	fi
-	runs=10
-	[[ $name == linux || $name == rust ]] && runs=5
+	runs=5
+	[[ $name == linux || $name == rust ]] && runs=3
 	echo "Benchmarking $name" >&2
-	args=()
+	# Half the runs in each order, so no tool always goes first on a cool processor.
+	forward=()
+	backward=()
 	for tool in "${tools[@]}"; do
 		bin=$tool
 		[[ $tool == codestats ]] && bin=$cs
-		args+=(-n "$tool" "$bin $dir/$name")
+		forward+=(-n "$tool" "$bin $dir/$name")
+		backward=(-n "$tool" "$bin $dir/$name" "${backward[@]}")
 	done
-	hyperfine -N --warmup 2 --runs "$runs" --export-json "$dir/results/$name.json" "${args[@]}" >/dev/null || exit 1
+	hyperfine -N --warmup 4 --runs "$runs" --export-json "$dir/results/$name.forward.json" "${forward[@]}" >/dev/null || exit 1
+	hyperfine -N --warmup 4 --runs "$runs" --export-json "$dir/results/$name.backward.json" "${backward[@]}" >/dev/null || exit 1
+	jq -s --arg tools "${tools[*]}" '[.[].results[]] as $all | {results: [$tools | split(" ")[] as $tool | {measurements: [$all[] | select(.name == $tool) | .measurements[]]}]}' \
+		"$dir/results/$name.forward.json" "$dir/results/$name.backward.json" >"$dir/results/$name.json" || exit 1
 	"$cs" "$dir/$name" -q -o json-compact | jq -c .totals >"$dir/results/$name.summary.json"
 done
 

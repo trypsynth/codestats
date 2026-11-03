@@ -326,35 +326,67 @@ To run LineJudge locally:
 
 ## Benchmarks
 
-These times were measured with [hyperfine](https://github.com/sharkdp/hyperfine), using `hyperfine -N --warmup 2 --runs 10` for each tool (5 runs for rust and linux), with each tool on its default settings and the files in the file cache. [`scripts/bench.sh`](scripts/bench.sh) pins the commit of each repository and reproduces these tables.
+All times are for files already in the file cache, on an AMD Ryzen 7 PRO 5850U (8 cores, 16 threads) with 32 GB of RAM. They use the x86-64 Linux glibc binary that CI built at commit `fb4d9d0`, which is the same build a release ships.
+
+### Equal work
+
+In these tables, every tool counts the same files. [linebench](https://github.com/loc-conformance/linebench) pins each repository's commit, turns off each tool's filters, and checks that each tool's file and line counts are within 1% of the repository's.
 
 Mean time:
 
-| Repository | Files | Lines | codestats | tokei | scc | gocloc |
+| Repository | Files | Lines | codestats | mezura | scc | tokei |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| [ripgrep](https://github.com/BurntSushi/ripgrep) | 154 | 65K | **6.4 ms** | 10 ms | 12 ms | 40 ms |
-| [cli](https://github.com/cli/cli) | 1,125 | 321K | **10 ms** | 23 ms | 19 ms | 113 ms |
-| [nvda](https://github.com/nvaccess/nvda) | 1,158 | 1.6M | **15 ms** | 48 ms | 22 ms | 138 ms |
-| [wxWidgets](https://github.com/wxWidgets/wxWidgets) | 4,922 | 2.4M | **41 ms** | 149 ms | 108 ms | 457 ms |
-| [cpython](https://github.com/python/cpython) | 5,176 | 3.0M | **39 ms** | 139 ms | 85 ms | 673 ms |
-| [kubernetes](https://github.com/kubernetes/kubernetes) | 27,174 | 7.3M | **101 ms** | 356 ms | 222 ms | 2.04 s |
-| [rust](https://github.com/rust-lang/rust) | 42,485 | 5.3M | **135 ms** | 457 ms | 235 ms | 2.43 s |
-| [linux](https://github.com/torvalds/linux) | 93,350 | 44M | **502 ms** | 1.53 s | 984 ms | 11.0 s |
+| [cpython](https://github.com/python/cpython) | 3,554 | 2.2M | **20 ms** | 25 ms | 54 ms | 109 ms |
+| [jdk](https://github.com/openjdk/jdk) | 61,420 | 13M | **129 ms** | 151 ms | 339 ms | 871 ms |
+| [linux](https://github.com/torvalds/linux) | 63,738 | 36M | **220 ms** | 239 ms | 624 ms | 1.11 s |
 
 Peak memory:
 
-| Repository | codestats | tokei | scc | gocloc |
+| Repository | codestats | mezura | scc | tokei |
 | --- | ---: | ---: | ---: | ---: |
-| [ripgrep](https://github.com/BurntSushi/ripgrep) | **7.5 MB** | 7.7 MB | 26 MB | 29 MB |
-| [cli](https://github.com/cli/cli) | **7.7 MB** | 8.0 MB | 33 MB | 36 MB |
-| [nvda](https://github.com/nvaccess/nvda) | **18 MB** | 30 MB | 38 MB | 38 MB |
-| [wxWidgets](https://github.com/wxWidgets/wxWidgets) | **17 MB** | 128 MB | 74 MB | 40 MB |
-| [cpython](https://github.com/python/cpython) | **12 MB** | 24 MB | 65 MB | 45 MB |
-| [kubernetes](https://github.com/kubernetes/kubernetes) | **17 MB** | 66 MB | 99 MB | 52 MB |
-| [rust](https://github.com/rust-lang/rust) | **27 MB** | 86 MB | 130 MB | 67 MB |
-| [linux](https://github.com/torvalds/linux) | **72 MB** | 234 MB | 373 MB | 110 MB |
+| [cpython](https://github.com/python/cpython) | **12 MB** | 18 MB | 46 MB | 17 MB |
+| [jdk](https://github.com/openjdk/jdk) | **19 MB** | 28 MB | 94 MB | 56 MB |
+| [linux](https://github.com/torvalds/linux) | **72 MB** | 119 MB | 350 MB | 251 MB |
 
-Measured with codestats 0.9.1, tokei 15.0.0, scc 4.1.0, gocloc 0.7.0, and hyperfine 2.0.0 on an AMD Ryzen 7 PRO 5850U (8 cores, 16 threads) with 32 GB of RAM. File and line counts are from codestats. The tools don't all count the same files; for example, codestats skips generated files.
+To reproduce these tables, run the following command with linebench 0.3.1, after running `linebench fetch --counters all --corpus all`:
+
+```sh
+linebench run cpython,linux,jdk --counters scc,tokei,mezura,codestats@dev --given codestats@dev=path/to/cs --definition codestats@dev=.linebench/codestats.toml --add .linebench
+```
+
+Each tool ran 30 times, half of them in reverse order. These tables measure codestats, mezura 3.3.0, scc 4.1.0, and tokei 15.0.0.
+
+### Default settings
+
+In these tables, every tool runs with no flags, which is how most people use it. The tools don't count the same files, so compare these times with care. For example, mezura counts 253K lines in nvda, where codestats counts 1.6M, because it leaves out Gettext translation files. The file and line counts in the table are from codestats.
+
+Mean time:
+
+| Repository | Files | Lines | codestats | mezura | tokei | scc | gocloc |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| [ripgrep](https://github.com/BurntSushi/ripgrep) | 154 | 65K | **5.9 ms** | 6.9 ms | 9.0 ms | 12 ms | 39 ms |
+| [cli](https://github.com/cli/cli) | 1,102 | 312K | **9.0 ms** | 10 ms | 21 ms | 19 ms | 115 ms |
+| [nvda](https://github.com/nvaccess/nvda) | 1,158 | 1.6M | 14 ms | **9.6 ms** | 45 ms | 23 ms | 142 ms |
+| [wxWidgets](https://github.com/wxWidgets/wxWidgets) | 4,491 | 2.3M | 32 ms | **25 ms** | 85 ms | 112 ms | 484 ms |
+| [cpython](https://github.com/python/cpython) | 4,947 | 2.5M | **30 ms** | 31 ms | 145 ms | 88 ms | 721 ms |
+| [kubernetes](https://github.com/kubernetes/kubernetes) | 22,693 | 5.2M | 74 ms | **73 ms** | 300 ms | 240 ms | 2.15 s |
+| [rust](https://github.com/rust-lang/rust) | 44,334 | 5.1M | 113 ms | **104 ms** | 404 ms | 254 ms | 2.54 s |
+| [linux](https://github.com/torvalds/linux) | 92,811 | 44M | **322 ms** | 338 ms | 1.44 s | 1.04 s | 11.3 s |
+
+Peak memory:
+
+| Repository | codestats | mezura | tokei | scc | gocloc |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| [ripgrep](https://github.com/BurntSushi/ripgrep) | 8.3 MB | 8.5 MB | **7.9 MB** | 27 MB | 29 MB |
+| [cli](https://github.com/cli/cli) | 8.8 MB | 9.7 MB | **8.1 MB** | 32 MB | 36 MB |
+| [nvda](https://github.com/nvaccess/nvda) | 19 MB | **9.8 MB** | 26 MB | 39 MB | 37 MB |
+| [wxWidgets](https://github.com/wxWidgets/wxWidgets) | **20 MB** | 20 MB | 24 MB | 74 MB | 40 MB |
+| [cpython](https://github.com/python/cpython) | **15 MB** | 22 MB | 24 MB | 65 MB | 45 MB |
+| [kubernetes](https://github.com/kubernetes/kubernetes) | **19 MB** | 24 MB | 64 MB | 100 MB | 53 MB |
+| [rust](https://github.com/rust-lang/rust) | **31 MB** | 45 MB | 97 MB | 129 MB | 66 MB |
+| [linux](https://github.com/torvalds/linux) | **82 MB** | 180 MB | 278 MB | 385 MB | 110 MB |
+
+To reproduce these tables, run `CS=path/to/cs scripts/bench.sh`, which pins each repository's commit. It uses hyperfine 2.0.0 and these tools: mezura 3.3.0, tokei 15.0.0, scc 4.1.0, and gocloc 0.7.0.
 
 ## License
 
