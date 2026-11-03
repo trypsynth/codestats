@@ -83,6 +83,17 @@ cs src tests build.rs
 
 codestats adds the counts of all the paths together. Each file shows with the path that you gave (for example, `src/main.rs`). If you give a path two times, or a path that is in a different path that you gave, codestats counts its files one time only.
 
+### Count the files in a list
+
+```bash
+git ls-files -z | cs -
+fd -e rs | cs -
+```
+
+The path `-` tells codestats to read the paths from standard input. Put one path on each line, or end each path with a NUL character. codestats counts each file in the list one time. It walks each directory in the list.
+
+codestats applies the same filters as in a walk, but it does not apply `.gitignore`. For example, it does not count hidden files unless you use `-H`. A symbolic link to a file counts as the file. codestats follows a symbolic link to a directory only with `--symlinks`.
+
 ### Show the counts for each file in `src/`, as JSON
 
 ```bash
@@ -203,7 +214,7 @@ When we rename a JSON field, remove a JSON field, or change what a JSON field me
 
 ## Common flags
 
-Usage: `cs [OPTIONS] [PATH]...`. If you do not give a path, codestats counts the current directory.
+Usage: `cs [OPTIONS] [PATH]...`. If you do not give a path, codestats counts the current directory. If the path is `-`, codestats reads the paths from standard input.
 
 - `-q, --quiet`: Show only the totals. Do not show the languages.
 - `-v, --verbose`: Show the counts for each file, and the languages.

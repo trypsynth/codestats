@@ -12,7 +12,7 @@ mod langs;
 mod swar;
 
 use std::{
-	io::{self, Write as _},
+	io::{self, Read as _, Write as _},
 	path::PathBuf,
 };
 
@@ -68,14 +68,26 @@ fn run() -> Result<()> {
 		}
 	}
 	let config = cli::merge_config(base_config(&cli.analyze.source)?, &cli.analyze, &matches)?;
-	ensure_path(&config)?;
-	let roots = roots(&config);
-	let mut results = AnalysisResults::default();
-	for root in &roots {
-		let analyzer = CodeAnalyzer::new(root, (&config).into());
-		let analyzer = if roots.len() > 1 { analyzer.showing_root() } else { analyzer };
-		results.merge(analyzer.analyze()?);
-	}
+	let reads_list = config.paths.iter().any(|path| path.as_os_str() == "-");
+	let (roots, results) = if reads_list {
+		ensure!(
+			config.paths.len() == 1,
+			"`-` reads the paths to count from standard input, so it can't be given with other paths"
+		);
+		let mut list = Vec::new();
+		io::stdin().lock().read_to_end(&mut list).context("couldn't read the paths from standard input")?;
+		(config.paths.clone(), analysis::count_listed(&analysis::parse_list(&list), &(&config).into())?)
+	} else {
+		ensure_path(&config)?;
+		let roots = roots(&config);
+		let mut results = AnalysisResults::default();
+		for root in &roots {
+			let analyzer = CodeAnalyzer::new(root, (&config).into());
+			let analyzer = if roots.len() > 1 { analyzer.showing_root() } else { analyzer };
+			results.merge(analyzer.analyze()?);
+		}
+		(roots, results)
+	};
 	let view_options: ViewOptions = (&config).into();
 	let mut stdout = io::stdout();
 	display::write_output(config.display.output, &results, &roots, view_options, &mut stdout)?;
@@ -121,6 +133,7 @@ fn run_diff(args: &DiffArgs, matches: &ArgMatches) -> Result<()> {
 	let [path] = &config.paths[..] else {
 		bail!("`cs diff` compares one path at a time");
 	};
+	ensure!(path.as_os_str() != "-", "`cs diff` can't read its paths from standard input");
 	ensure_path(&config)?;
 	let from = count_snapshot(path, &Snapshot::Revision(&args.from), &config.analysis, false)
 		.with_context(|| format!("couldn't read revision `{}`", args.from))?;

@@ -113,7 +113,8 @@ pub struct SourceArgs {
 	/// Path to configuration file (TOML format)
 	#[arg(short = 'c', long = "config")]
 	pub config: Option<PathBuf>,
-	/// The paths to analyze: directories or files, counted together
+	/// The paths to analyze: directories or files, counted together. `-` reads them from standard input, one per line or
+	/// NUL-separated, as from `git ls-files -z`
 	#[arg(value_name = "PATH", default_value = ".", num_args = 1..)]
 	pub paths: Vec<PathBuf>,
 	/// Count generated files, which are excluded by default: lockfiles, minified assets, and files whose header says

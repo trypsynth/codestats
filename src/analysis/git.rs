@@ -57,13 +57,13 @@ fn locate(root: &Path) -> (PathBuf, PathBuf) {
 
 /// A path as git prints it with `-z`: raw bytes on Unix, UTF-8 elsewhere.
 #[cfg(unix)]
-fn path_from_git(bytes: &[u8]) -> PathBuf {
+pub(super) fn path_from_git(bytes: &[u8]) -> PathBuf {
 	use std::os::unix::ffi::OsStrExt as _;
 	PathBuf::from(std::ffi::OsStr::from_bytes(bytes))
 }
 
 #[cfg(not(unix))]
-fn path_from_git(bytes: &[u8]) -> PathBuf {
+pub(super) fn path_from_git(bytes: &[u8]) -> PathBuf {
 	PathBuf::from(String::from_utf8_lossy(bytes).into_owned())
 }
 
@@ -297,7 +297,7 @@ impl<'a> Counter<'a> {
 }
 
 /// The filters a walk of the root applies, for a list of paths relative to it.
-struct PathFilter {
+pub(super) struct PathFilter {
 	exclusions: Option<Override>,
 	include_hidden: bool,
 	max_depth: Option<usize>,
@@ -306,7 +306,7 @@ struct PathFilter {
 }
 
 impl PathFilter {
-	fn new(dir: &Path, config: &AnalysisConfig, single_file: bool) -> Result<Self> {
+	pub(super) fn new(dir: &Path, config: &AnalysisConfig, single_file: bool) -> Result<Self> {
 		Ok(Self {
 			exclusions: exclusions(dir, config)?,
 			include_hidden: config.include_hidden,
@@ -316,7 +316,7 @@ impl PathFilter {
 	}
 
 	/// `excluded_dirs` remembers which directories are excluded, since nearby files share them.
-	fn allows(&self, path: &Path, excluded_dirs: &mut HashMap<PathBuf, bool>) -> bool {
+	pub(super) fn allows(&self, path: &Path, excluded_dirs: &mut HashMap<PathBuf, bool>) -> bool {
 		if self.single_file {
 			return true;
 		}

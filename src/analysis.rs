@@ -16,10 +16,12 @@ pub mod generated;
 mod git;
 mod line_classifier;
 mod line_counter;
+mod list;
 mod pipeline;
 pub mod stats;
 
 pub use analyzer::CodeAnalyzer;
 pub use git::{Snapshot, count_snapshot};
 pub use line_classifier::LineType;
+pub use list::{count_listed, parse_list};
 pub use stats::{AnalysisResults, Embedded, FileStats, LanguageStats, LineCounts};
