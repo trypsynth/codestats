@@ -1,6 +1,9 @@
 //! Generates the Rust source for the static `LANGUAGES` table.
 
-use std::fmt::{Display, Write as _};
+use std::{
+	collections::BTreeMap,
+	fmt::{Display, Write as _},
+};
 
 use crate::config::{LanguageConfig, RequireKeywords, StringSpec};
 
@@ -68,8 +71,62 @@ pub fn render_languages(languages: &[LanguageConfig]) -> String {
 	for (index, lang) in languages.iter().enumerate() {
 		render_language(&mut output, index, lang);
 	}
-	output.push_str("];\n");
+	output.push_str("];\n\n");
+	render_pattern_tables(&mut output, languages);
 	output
+}
+
+/// Render the tables that take a file name to its languages, so the program has nothing to build when it starts.
+fn render_pattern_tables(output: &mut String, languages: &[LanguageConfig]) {
+	let mut filenames: BTreeMap<String, Vec<usize>> = BTreeMap::new();
+	let mut extensions: BTreeMap<String, Vec<usize>> = BTreeMap::new();
+	let mut prefixes = Vec::new();
+	for (index, lang) in languages.iter().enumerate() {
+		for pattern in &lang.file_patterns {
+			if let Some(prefix) = pattern.strip_suffix(".*") {
+				prefixes.push((format!("{prefix}."), index));
+			} else if let Some(extension) = pattern.strip_prefix("*.") {
+				extensions.entry(extension.to_ascii_lowercase()).or_default().push(index);
+			} else {
+				filenames.entry(pattern.clone()).or_default().push(index);
+			}
+		}
+	}
+	render_table(output, "FILENAMES", &filenames);
+	render_table(output, "EXTENSIONS", &extensions);
+	let _ = writeln!(output, "pub static PREFIXES: &[(&str, u16)] = &{prefixes:?};");
+}
+
+/// A hash table with linear probing, in the layout `NameTable` reads. All its names are in one string, and its parts are plain numbers, so the loader has nothing in it to relocate.
+fn render_table(output: &mut String, name: &str, entries: &BTreeMap<String, Vec<usize>>) {
+	let mut names = String::new();
+	let mut name_ends = Vec::new();
+	let mut langs = Vec::new();
+	let mut lang_ends = Vec::new();
+	for (key, indexes) in entries {
+		names.push_str(key);
+		name_ends.push(names.len());
+		langs.extend_from_slice(indexes);
+		lang_ends.push(langs.len());
+	}
+	let mut slots = vec![0; (entries.len() * 2).next_power_of_two()];
+	let mask = slots.len() - 1;
+	for (entry, key) in entries.keys().enumerate() {
+		let mut slot = name_hash(key) as usize & mask;
+		while slots[slot] != 0 {
+			slot = (slot + 1) & mask;
+		}
+		slots[slot] = entry + 1;
+	}
+	let _ = writeln!(
+		output,
+		"pub static {name}: NameTable = NameTable {{ names: {names:?}, name_ends: &{name_ends:?}, langs: &{langs:?}, lang_ends: &{lang_ends:?}, slots: &{slots:?} }};"
+	);
+}
+
+/// FNV-1a, as `NameTable` computes it at run time.
+fn name_hash(name: &str) -> u32 {
+	name.bytes().fold(0x811c_9dc5, |hash, byte| (hash ^ u32::from(byte)).wrapping_mul(0x0100_0193))
 }
 
 fn render_struct(output: &mut String, name: &str, doc: &str, derives: &str, fields: &[(&str, &str)]) {

@@ -3,7 +3,7 @@
 use std::{
 	env,
 	ffi::OsStr,
-	fs::{File, FileType},
+	fs::{self, File, FileType},
 	io::{BufRead, BufReader},
 	path::{Path, PathBuf},
 	sync::Arc,
@@ -14,6 +14,8 @@ use ignore::{
 	gitignore::{Gitignore, GitignoreBuilder},
 	overrides::Override,
 };
+
+const EXCLUDES_KEY: &[u8] = b"excludesfile";
 
 /// What's true of the whole walk.
 pub(super) struct Shared {
@@ -43,7 +45,50 @@ impl Shared {
 
 /// The rules from git's global ignore file, whose paths are relative to the working directory. Without one, they can't be matched.
 fn global_rules() -> Gitignore {
-	env::current_dir().map_or_else(|_| Gitignore::empty(), |cwd| GitignoreBuilder::new(cwd).build_global().0)
+	let path = global_ignore_path();
+	let cwd = env::current_dir();
+	let (Some(path), Ok(cwd)) = (path.filter(|path| path.is_file()), cwd) else {
+		return Gitignore::empty();
+	};
+	let mut builder = GitignoreBuilder::new(cwd);
+	let _ = builder.add(path);
+	builder.build().unwrap_or_else(|_| Gitignore::empty())
+}
+
+/// The file that git's `core.excludesFile` names, looking through its config files in order of priority, or else the file git uses by default.
+fn global_ignore_path() -> Option<PathBuf> {
+	let nonempty = |name| env::var_os(name).filter(|value| !value.is_empty()).map(PathBuf::from);
+	let config_home = nonempty("XDG_CONFIG_HOME").or_else(|| env::home_dir().map(|home| home.join(".config")));
+	let configs = [
+		nonempty("GIT_CONFIG_GLOBAL"),
+		env::home_dir().map(|home| home.join(".gitconfig")),
+		config_home.as_ref().map(|dir| dir.join("git/config")),
+		Some(nonempty("GIT_CONFIG_SYSTEM").unwrap_or_else(|| PathBuf::from("/etc/gitconfig"))),
+	];
+	configs
+		.into_iter()
+		.flatten()
+		.find_map(|config| excludes_file_in(&fs::read(config).ok()?))
+		.or_else(|| config_home.map(|dir| dir.join("git/ignore")))
+}
+
+/// The `excludesfile` setting in a git config file's contents, in whatever section. A full parser isn't worth it: this is what the `ignore` crate reads, without the regular expression that costs a noticeable part of a small run.
+fn excludes_file_in(config: &[u8]) -> Option<PathBuf> {
+	config.split(|&byte| byte == b'\n').find_map(|line| {
+		let line = line.trim_ascii();
+		let rest =
+			line.get(EXCLUDES_KEY.len()..).filter(|_| line[..EXCLUDES_KEY.len()].eq_ignore_ascii_case(EXCLUDES_KEY))?;
+		let value = rest.trim_ascii_start().strip_prefix(b"=")?.trim_ascii();
+		let value = value.strip_prefix(b"\"").unwrap_or(value).trim_ascii_start();
+		let value = value.strip_suffix(b"\"").unwrap_or(value).trim_ascii_end();
+		if value.is_empty() || value.iter().any(u8::is_ascii_whitespace) {
+			return None;
+		}
+		let value = str::from_utf8(value).ok()?;
+		Some(PathBuf::from(
+			env::home_dir().map_or_else(|| value.to_string(), |home| value.replace('~', &home.to_string_lossy())),
+		))
+	})
 }
 
 /// The rules in the directories above `root`, if any.
@@ -292,4 +337,22 @@ fn strip_start<'a>(prefix: &Path, path: &'a Path) -> Option<&'a Path> {
 
 fn is_hidden(path: &Path) -> bool {
 	path.file_name().is_some_and(|name| name.as_encoded_bytes().starts_with(b"."))
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn excludes_file_is_read_from_git_config() {
+		let found = |config: &str| excludes_file_in(config.as_bytes());
+		assert_eq!(found("[core]\n\texcludesFile = /a/b\n"), Some(PathBuf::from("/a/b")));
+		assert_eq!(found("[core]\nexcludesfile=/a/b\r\n"), Some(PathBuf::from("/a/b")));
+		assert_eq!(found("EXCLUDESFILE = \"/a/b\"  \n"), Some(PathBuf::from("/a/b")));
+		assert_eq!(found("[user]\n\tname = Quin\n"), None);
+		assert_eq!(found("excludesfile = /has space\nexcludesfile = /second\n"), Some(PathBuf::from("/second")));
+		assert_eq!(found("excludesfile =\n"), None);
+		assert_eq!(found("excludesfilesomething = /a\n"), None);
+		assert_eq!(found(""), None);
+	}
 }

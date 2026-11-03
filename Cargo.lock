@@ -183,7 +183,6 @@ dependencies = [
  "clap_complete",
  "crossbeam-deque",
  "encoding_rs",
- "globset",
  "ignore",
  "indexmap",
  "json5",

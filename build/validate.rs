@@ -139,6 +139,14 @@ impl Validator {
 
 	fn record_patterns(&mut self, lang: &LanguageConfig) {
 		for pattern in &lang.file_patterns {
+			// The generated tables hold exact names, extensions, and prefixes, which is all a lookup has to do.
+			let literal = pattern.strip_prefix("*.").or_else(|| pattern.strip_suffix(".*")).unwrap_or(pattern);
+			if literal.is_empty() || literal.contains(['*', '?', '[', '{']) {
+				self.errors.push(format!(
+					"Pattern '{pattern}' of {} must be an exact name, `*.extension`, or `prefix.*`",
+					lang.name
+				));
+			}
 			let (names, all_have_keywords) = self.patterns.entry(pattern.clone()).or_insert((Vec::new(), true));
 			names.push(lang.name.clone());
 			*all_have_keywords &= !lang.keywords.words().is_empty();
