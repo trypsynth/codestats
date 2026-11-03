@@ -328,7 +328,8 @@ mod tests {
 		let (args, matches) = parse_cli(&["cs"]);
 		let merged = merge_config(config, &args, &matches).expect("merge config");
 		let parent = config_path.parent().expect("config parent");
-		assert_eq!(merged.paths, [parent.join("src"), PathBuf::from("/abs")]);
+		// On Windows, a path that starts with a slash stays on the config's drive.
+		assert_eq!(merged.paths, [parent.join("src"), parent.join("/abs")]);
 	}
 
 	#[test]
