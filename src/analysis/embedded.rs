@@ -224,7 +224,7 @@ impl<'a> Classifier<'a> {
 						if is_blank(line.as_bytes()) {
 							return LineType::Blank;
 						}
-						if line.trim_start().starts_with(':') {
+						if is_directive_option(line) {
 							return LineType::Code;
 						}
 						*preamble = false;
@@ -602,6 +602,13 @@ fn attribute<'a>(attributes: &'a str, name: &str) -> Option<&'a str> {
 
 fn starts_with_ignore_case(bytes: &[u8], prefix: &[u8]) -> bool {
 	bytes.get(..prefix.len()).is_some_and(|start| start.eq_ignore_ascii_case(prefix))
+}
+
+/// A reStructuredText directive option, like `:linenos:` or `:caption: Text`, which names itself between two colons.
+fn is_directive_option(line: &str) -> bool {
+	line.trim_start().strip_prefix(':').and_then(|rest| rest.split_once(':')).is_some_and(|(name, _)| {
+		!name.is_empty() && name.bytes().all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_')
+	})
 }
 
 #[cfg(test)]

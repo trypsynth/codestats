@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Added 176 languages, including 1C Enterprise, Asymptote, Dune, GAMS, Mermaid, MiniZinc, NetLogo, POV-Ray SDL, SourcePawn, SurrealQL, Toit, XS, Zeek, and Yul
+- Added about 260 extensions and filenames for existing languages, including `.escript`, `.bats`, `.gltf`, `.sublime-settings`, `.containerfile`, `.tm`, and `.spacemacs`
+- Added Raku's `` #`[ ``, `` #`{ ``, and `` #`< `` comments, longer Luau block comments, Cabal block comments, and GraphQL descriptions as comments
+- Fixed the first line of a reStructuredText code block being skipped when it starts with `:`
+
 ## 1.0.1
 
 - A language name that doesn't exist in `--lang`, `--exclude-lang`, or a config file now prints a warning
