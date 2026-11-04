@@ -114,6 +114,12 @@
 		block_comments: [["{-", "-}"]],
 		nested_blocks: true,
 	},
+	"Agena": {
+		file_patterns: ["*.agn"],
+		line_comments: ["#"],
+		block_comments: [["#/", "/#"], ["/*", "*/"]],
+		strings: ["\""],
+	},
 	"AGS Script": {
 		file_patterns: ["*.ash"],
 		line_comments: ["//"],
@@ -204,6 +210,11 @@
 	"Arc": {
 		file_patterns: ["*.arc"],
 		line_comments: [";"],
+	},
+	"ArkScript": {
+		file_patterns: ["*.ark"],
+		line_comments: ["#"],
+		strings: ["\""],
 	},
 	"ArkTs": {
 		file_patterns: ["*.ets"],
@@ -338,6 +349,12 @@
 	},
 	"BBCode": {
 		file_patterns: ["*.bbcode"],
+	},
+	"bc": {
+		file_patterns: ["*.bc"],
+		line_comments: ["#"],
+		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"BCPL": {
 		file_patterns: ["*.bcpl"],
@@ -922,6 +939,12 @@
 		file_patterns: ["*.dust"],
 		block_comments: [["{!", "!}"]],
 	},
+	"Dyalect": {
+		file_patterns: ["*.dy"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+		strings: ["\""],
+	},
 	"Dylan": {
 		file_patterns: ["*.dylan", "*.lid", "*.dyl", "*.intr"],
 		line_comments: ["//"],
@@ -1058,6 +1081,17 @@
 		block_comments: [["/*", "*/"]],
 		shebangs: ["#!/usr/bin/env factor"],
 	},
+	"Falcon": {
+		file_patterns: ["*.fal"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+		strings: ["\""],
+	},
+	"Fancy": {
+		file_patterns: ["*.fy", "*.fancypack"],
+		line_comments: ["#"],
+		strings: ["\""],
+	},
 	"Fantom": {
 		file_patterns: ["*.fan"],
 		line_comments: ["//", "**"],
@@ -1143,6 +1177,12 @@
 		block_comments: [["{-", "-}"]],
 		nested_blocks: true,
 		keywords: ["module", "import", "data", "class", "instance", "native", "pure"],
+	},
+	"Frink": {
+		file_patterns: ["*.frink"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"Futhark": {
 		file_patterns: ["*.fut"],
@@ -1437,6 +1477,10 @@
 		file_patterns: ["*.hoon"],
 		line_comments: ["::"],
 	},
+	"Hope": {
+		file_patterns: ["*.hop"],
+		line_comments: ["!"],
+	},
 	"HTML": {
 		file_patterns: ["*.html", "*.htm", "*.xht", "*.xhtml", "*.xhtm", "*.hta", "*.shtml", "*.jshtm"],
 		block_comments: [["<!--", "-->"]],
@@ -1651,6 +1695,12 @@
 		file_patterns: ["*.jq"],
 		line_comments: ["#"],
 	},
+	"Jsish": {
+		file_patterns: ["*.jsi"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+		strings: ["\""],
+	},
 	"JSLT": {
 		file_patterns: ["*.jslt"],
 		line_comments: ["//"],
@@ -1791,6 +1841,12 @@
 		block_comments: [["/*", "*/"]],
 		strings: ["\""],
 	},
+	"langur": {
+		file_patterns: ["*.langur"],
+		line_comments: ["#"],
+		block_comments: [["/*", "*/"]],
+		strings: ["\""],
+	},
 	"Lasso": {
 		file_patterns: ["*.lasso", "*.las", "*.lasso9", "*.lasso8"],
 		line_comments: ["//"],
@@ -1855,6 +1911,12 @@
 		file_patterns: ["*.ligo", "*.mligo", "*.jsligo", "*.religo"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"], ["(*", "*)"]],
+	},
+	"Lily": {
+		file_patterns: ["*.lily"],
+		line_comments: ["#"],
+		block_comments: [["#[", "]#"]],
+		strings: ["\""],
 	},
 	"LilyPond": {
 		file_patterns: ["*.ly", "*.ily"],
@@ -1931,6 +1993,11 @@
 	"LookML": {
 		file_patterns: ["*.lkml", "*.lookml"],
 		line_comments: ["#"],
+		strings: ["\""],
+	},
+	"LotusScript": {
+		file_patterns: ["*.lss"],
+		line_comments: ["'"],
 		strings: ["\""],
 	},
 	"LPC": {
@@ -2051,6 +2118,12 @@
 		file_patterns: ["*.mcfunction"],
 		line_comments: ["#"],
 	},
+	"MEL": {
+		file_patterns: ["*.mel"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+		strings: ["\""],
+	},
 	"Menhir": {
 		file_patterns: ["*.menhir"],
 		line_comments: ["//"],
@@ -2114,6 +2187,11 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
+	"Mirah": {
+		file_patterns: ["*.mirah"],
+		line_comments: ["#"],
+		strings: ["\""],
+	},
 	"Miranda": {
 		file_patterns: ["*.m"],
 		line_comments: ["||"],
@@ -2169,6 +2247,12 @@
 		file_patterns: ["*.mc"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+	},
+	"Monte": {
+		file_patterns: ["*.mt"],
+		line_comments: ["#"],
+		block_comments: [["/**", "*/"]],
+		strings: ["\""],
 	},
 	"Moo": {
 		file_patterns: ["*.moo"],
@@ -2236,6 +2320,11 @@
 		line_comments: ["%"],
 		block_comments: [["<!--", "-->"]],
 	},
+	"Nanoquery": {
+		file_patterns: ["*.nq"],
+		line_comments: ["//"],
+		strings: ["\""],
+	},
 	"NASL": {
 		file_patterns: ["*.nasl"],
 		line_comments: ["#"],
@@ -2245,9 +2334,20 @@
 		file_patterns: ["*.nasm"],
 		line_comments: [";"],
 	},
+	"NATURAL": {
+		file_patterns: ["*.nsp", "*.nsn", "*.nss4"],
+		line_comments: ["/*"],
+		column_one_comments: ["*"],
+	},
 	"Nearley": {
 		file_patterns: ["*.ne"],
 		line_comments: ["#"],
+	},
+	"Neko": {
+		file_patterns: ["*.neko"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"Nemerle": {
 		file_patterns: ["*.n"],
@@ -2272,6 +2372,13 @@
 	"NetLogo": {
 		file_patterns: ["*.nlogo", "*.nls"],
 		line_comments: [";"],
+		strings: ["\""],
+	},
+	"NetRexx": {
+		file_patterns: ["*.nrx"],
+		line_comments: ["--"],
+		block_comments: [["/*", "*/"]],
+		nested_blocks: true,
 		strings: ["\""],
 	},
 	"Newspeak": {
@@ -2365,6 +2472,12 @@
 		block_comments: [["(*", "*)"]],
 		nested_blocks: true,
 	},
+	"Objeck": {
+		file_patterns: ["*.obs"],
+		line_comments: ["#"],
+		block_comments: [["#~", "~#"]],
+		strings: ["\""],
+	},
 	"Objective-C": {
 		file_patterns: ["*.m", "*.h", "*.pch"],
 		line_comments: ["//"],
@@ -2408,6 +2521,11 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
+	},
+	"Oforth": {
+		file_patterns: ["*.of"],
+		line_comments: ["//"],
+		strings: ["\""],
 	},
 	"Ohm": {
 		file_patterns: ["*.ohm"],
@@ -2647,6 +2765,12 @@
 		line_comments: ["'"],
 		block_comments: [["/'", "'/"]],
 	},
+	"Pluto": {
+		file_patterns: ["*.pluto"],
+		line_comments: ["--"],
+		block_comments: [["--[[", "]]"], ["--[=[", "]=]"], ["--[==[", "]==]"], ["--[===[", "]===]"]],
+		strings: ["\""],
+	},
 	"PogoScript": {
 		file_patterns: ["*.pogo"],
 		line_comments: ["//"],
@@ -2821,6 +2945,10 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
+	"Quackery": {
+		file_patterns: ["*.qky"],
+		block_comments: [["( ", ")"]],
+	},
 	"QuakeC": {
 		file_patterns: ["*.qc"],
 		line_comments: ["//"],
@@ -2935,6 +3063,10 @@
 		file_patterns: ["*.rst", "*.rest", "*.rst.txt", "*.rest.txt"],
 		embedding: "restructuredtext",
 	},
+	"Retro": {
+		file_patterns: ["*.retro"],
+		block_comments: [["( ", ")"]],
+	},
 	"REXX": {
 		file_patterns: ["*.rexx", "*.rex", "*.pprx", "*.arexx"],
 		line_comments: ["--"],
@@ -3034,6 +3166,12 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
+	"Sather": {
+		file_patterns: ["*.sa"],
+		keywords: {words: ["end;"], required: "always"},
+		line_comments: ["--"],
+		strings: ["\""],
+	},
 	"Scala": {
 		file_patterns: ["*.scala", "*.sc", "build.sbt", "*.sbt", "*.kojo"],
 		line_comments: ["//"],
@@ -3083,6 +3221,11 @@
 		file_patterns: ["*.self"],
 		block_comments: [["\"", "\""]],
 	},
+	"SETL": {
+		file_patterns: ["*.setl"],
+		line_comments: ["--", "$"],
+		strings: ["\""],
+	},
 	"ShaderLab": {
 		file_patterns: ["*.shader"],
 		line_comments: ["//"],
@@ -3097,10 +3240,22 @@
 		line_comments: ["\\\\"],
 		block_comments: [["\\*", "*\\"]],
 	},
+	"Sidef": {
+		file_patterns: ["*.sf"],
+		keywords: {words: ["func", "say", "var"], required: "always"},
+		line_comments: ["#"],
+		block_comments: [["#`{", "}"], ["#`(", ")"], ["#`[", "]"]],
+		strings: ["\""],
+	},
 	"Sieve": {
 		file_patterns: ["*.sieve"],
 		line_comments: ["#"],
 		block_comments: [["/*", "*/"]],
+	},
+	"Simula": {
+		file_patterns: ["*.sim"],
+		block_comments: [["!", ";"], ["COMMENT", ";"]],
+		strings: ["\""],
 	},
 	"Singularity": {
 		file_patterns: ["Singularity"],
@@ -3175,6 +3330,10 @@
 	"SNOBOL": {
 		file_patterns: ["*.sno", "*.snob", "*.snobol"],
 		line_comments: ["*"],
+	},
+	"SNOBOL4": {
+		file_patterns: ["*.spt"],
+		column_one_comments: ["*"],
 	},
 	"Solidity": {
 		file_patterns: ["*.sol"],
@@ -3441,6 +3600,11 @@
 		line_comments: ["#"],
 		strings: [{open: "\"\"\"", multiline: true}, {open: "'''", escape: null, multiline: true}, "\"", {open: "'", escape: null}],
 	},
+	"TorqueScript": {
+		file_patterns: ["*.tscript"],
+		line_comments: ["//"],
+		strings: ["\""],
+	},
 	"Treetop": {
 		file_patterns: ["*.treetop"],
 		line_comments: ["#"],
@@ -3470,6 +3634,10 @@
 		file_patterns: ["*.txl"],
 		line_comments: ["%"],
 		strings: ["\""],
+	},
+	"TXR": {
+		file_patterns: ["*.txr"],
+		line_comments: ["@#", "@;"],
 	},
 	"txt2tags": {
 		file_patterns: ["*.t2t"],
@@ -3807,6 +3975,12 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
+	"Yacas": {
+		file_patterns: ["*.ys"],
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+		strings: ["\""],
+	},
 	"Yacc": {
 		file_patterns: ["*.y", "*.yacc"],
 		line_comments: ["//"],
@@ -3885,6 +4059,13 @@
 		line_comments: ["#"],
 		strings: ["\""],
 	},
+	"zkl": {
+		file_patterns: ["*.zkl"],
+		line_comments: ["//", "#"],
+		block_comments: [["/*", "*/"]],
+		nested_blocks: true,
+		strings: ["\""],
+	},
 	"ZoKrates": {
 		file_patterns: ["*.zok"],
 		line_comments: ["//"],
@@ -3893,6 +4074,11 @@
 	"Zon": {
 		file_patterns: ["*.zon"],
 		line_comments: ["//", "///", "//!"],
+	},
+	"Zonnon": {
+		file_patterns: ["*.znn"],
+		block_comments: [["(*", "*)"]],
+		nested_blocks: true,
 	},
 	"ZSH": {
 		file_patterns: ["*.zsh", ".zlogin", ".zlogout", ".zprofile", ".zshenv", ".zshrc", "*.zsh-theme"],
