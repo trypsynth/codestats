@@ -424,3 +424,16 @@ fn paths_from_standard_input_are_titled_in_words() {
 	assert!(report("html").contains("Codestats for standard input"));
 	assert!(report("json-compact").contains(r#""paths":["-"]"#));
 }
+
+#[test]
+fn an_xml_declaration_outweighs_a_code_extension() {
+	let root = scratch_dir("an_xml_declaration_outweighs_a_code_extension");
+	fs::write(root.join("app_en.ts"), "<?xml version=\"1.0\"?>\n<!-- note -->\n<TS/>\n").unwrap();
+	fs::write(root.join("app.ts"), "// note\nlet a = 1;\n").unwrap();
+	let output = cs().arg(&root).args(["-o", "json-compact"]).output().unwrap();
+	let report: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+	let languages: Vec<&str> =
+		report["languages"].as_array().unwrap().iter().map(|l| l["name"].as_str().unwrap()).collect();
+	assert_eq!(languages.len(), 2, "{languages:?}");
+	assert!(languages.contains(&"XML") && languages.contains(&"TypeScript"), "{languages:?}");
+}

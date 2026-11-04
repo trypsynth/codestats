@@ -128,8 +128,21 @@ fn count_contents(
 		let wide_sample = &bytes[..bytes.len().min(DETECTION_WINDOW)];
 		detection = langs::detect_language(candidates, Some(&decode_bytes(wide_sample, encoding, true)));
 	}
-	let language = detection.language.filter(|&language| languages.allows(language))?;
+	let detected = detection.language?;
+	let body = &sample_bytes[encoding.bom_len.min(sample_bytes.len())..];
+	let language = xml_document_instead_of(detected, body).filter(|&language| languages.allows(language))?;
 	Some((language, line_counter::count_lines(language, encoding, bytes)))
+}
+
+/// XML, for a file named like code that opens with an XML declaration (Qt's `.ts` translations aren't TypeScript), or else
+/// the detected language. Languages that can hold markup keep their files.
+fn xml_document_instead_of(detected: &'static Language, body: &[u8]) -> Option<&'static Language> {
+	let holds_markup =
+		detected.embedding.is_some() || detected.block_comments.iter().any(|&(start, ..)| start == "<!--");
+	if holds_markup || !body.starts_with(b"<?xml") {
+		return Some(detected);
+	}
+	langs::language_named("XML")
 }
 
 /// Analyze a single file and merge its statistics into `results`.

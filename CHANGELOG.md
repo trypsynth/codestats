@@ -2,9 +2,11 @@
 
 ## Unreleased
 
-- Added 176 languages, including 1C Enterprise, Asymptote, Dune, GAMS, Mermaid, MiniZinc, NetLogo, POV-Ray SDL, SourcePawn, SurrealQL, Toit, XS, Zeek, and Yul
+- Added 177 languages, including 1C Enterprise, Asymptote, Dune, GAMS, Mermaid, MiniZinc, NetLogo, POV-Ray SDL, SourcePawn, SurrealQL, Toit, XS, Zeek, and Yul
 - Added about 260 extensions and filenames for existing languages, including `.escript`, `.bats`, `.gltf`, `.sublime-settings`, `.containerfile`, `.tm`, and `.spacemacs`
 - Added Raku's `` #`[ ``, `` #`{ ``, and `` #`< `` comments, longer Luau block comments, Cabal block comments, and GraphQL descriptions as comments
+- A file that starts with an XML declaration counts as XML even if its extension belongs to a code language, such as Qt's `.ts` translations
+- `.pl` files with Prolog's `:-` count as Prolog, `.tpl` files with `{{` as Go Template, and `.cls` files with Apex's `public class` as Apex. Also added shared extensions for Beef (`.bf`), Hack (`.hh`), IDL (`.pro`), KCL (`.k`), Logos (`.x`), re2c (`.re`), and Roff (`.nr`)
 - Fixed the first line of a reStructuredText code block being skipped when it starts with `:`
 
 ## 1.0.1

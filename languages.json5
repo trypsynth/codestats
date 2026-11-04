@@ -136,6 +136,7 @@
 	},
 	"Alex": {
 		file_patterns: ["*.x"],
+		keywords: ["%wrapper", "$white", "@string"],
 		line_comments: ["--"],
 		block_comments: [["{-", "-}"]],
 		nested_blocks: true,
@@ -181,7 +182,8 @@
 		line_comments: ["#"],
 	},
 	"Apex": {
-		file_patterns: ["*.apex", "*.apexcls", "*.trigger"],
+		file_patterns: ["*.apex", "*.apexcls", "*.trigger", "*.cls"],
+		keywords: {words: ["System.debug", "@isTest", "public class", "global class", "with sharing", "private class", "@AuraEnabled"], required: "shared"},
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
@@ -352,7 +354,8 @@
 		line_comments: [";"],
 	},
 	"Beef": {
-		file_patterns: ["*.beef"],
+		file_patterns: ["*.beef", "*.bf"],
+		keywords: {words: ["namespace", "using System", "public class", "static void"], required: "shared"},
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
@@ -1257,7 +1260,8 @@
 		strings: ["\"", {open: "'", char: true}, {open: "`", escape: null, multiline: true}],
 	},
 	"Go Template": {
-		file_patterns: ["*.gohtml", "*.gotmpl", "*.gotxt", "*.tmpl"],
+		file_patterns: ["*.gohtml", "*.gotmpl", "*.gotxt", "*.tmpl", "*.tpl"],
+		keywords: {words: ["{{"], required: "shared"},
 		block_comments: [["{{/*", "*/}}"], ["{{- /*", "*/ -}}"]],
 		embedding: "html",
 	},
@@ -1349,7 +1353,8 @@
 		line_comments: ["#!"],
 	},
 	"Hack": {
-		file_patterns: ["*.hhi", "*.hack"],
+		file_patterns: ["*.hhi", "*.hack", "*.hh"],
+		keywords: {words: ["<?hh"], required: "shared"},
 		line_comments: ["//", "#"],
 		block_comments: [["/*", "*/"]],
 	},
@@ -1462,7 +1467,8 @@
 		keywords: ["procedure", "end", "every", "suspend", "fail", "return", "local", "static", "global"],
 	},
 	"IDL": {
-		file_patterns: ["*.idl", "*.widl", "*.dlm"],
+		file_patterns: ["*.idl", "*.widl", "*.dlm", "*.pro"],
+		keywords: {words: ["compile_opt", "endfor", "endif", "endelse"], required: "shared"},
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
@@ -1650,7 +1656,7 @@
 		line_comments: ["//"],
 	},
 	"JSON": {
-		file_patterns: ["*.json", "*.geojson", "*.ndjson", "*.jsonl", "package-lock.json", "composer.lock", "flake.lock", "deno.lock", "*.webmanifest", "*.topojson", "*.mcmeta", "*.uplugin", "*.uproject", "*.gltf", "*.har", "*.sarif", "*.tfstate", "*.tfstate.backup", "*.arb", "*.webapp", "*.4dform", "*.4dproject", "*.ldtk", "*.ldtkl", ".arcconfig", "*.yyp"],
+		file_patterns: ["*.json", "*.geojson", "*.ndjson", "*.jsonl", "package-lock.json", "composer.lock", "flake.lock", "deno.lock", "*.webmanifest", "*.topojson", "*.mcmeta", "*.uplugin", "*.uproject", "*.gltf", "*.har", "*.sarif", "*.tfstate", "*.tfstate.backup", "*.arb", "*.webapp", "*.4dform", "*.4dproject", "*.ldtk", "*.ldtkl", ".arcconfig", "*.yyp", "Pipfile.lock"],
 	},
 	"JSON5": {
 		file_patterns: ["*.json5"],
@@ -1694,6 +1700,7 @@
 	},
 	"K": {
 		file_patterns: ["*.k"],
+		keywords: ["/:", "\\:"],
 		line_comments: ["/ "],
 	},
 	"Kaitai Struct": {
@@ -1705,7 +1712,8 @@
 		line_comments: ["#"],
 	},
 	"KCL": {
-		file_patterns: ["*.kcl"],
+		file_patterns: ["*.kcl", "*.k"],
+		keywords: {words: ["schema", "mixin"], required: "shared"},
 		line_comments: ["#"],
 	},
 	"Kconfig": {
@@ -1904,7 +1912,8 @@
 		line_comments: [";"],
 	},
 	"Logos": {
-		file_patterns: ["*.xm", "*.xi"],
+		file_patterns: ["*.xm", "*.xi", "*.x"],
+		keywords: {words: ["%hook", "%ctor", "%orig", "%group"], required: "shared"},
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		strings: ["\""],
@@ -2724,10 +2733,10 @@
 		line_comments: ["#"],
 	},
 	"Prolog": {
-		file_patterns: ["*.pro", "*.P", "*.prolog", "*.yap"],
+		file_patterns: ["*.pro", "*.P", "*.prolog", "*.yap", "*.pl"],
 		line_comments: ["%"],
 		block_comments: [["/*", "*/"]],
-		keywords: [":-", "?-", "assert", "retract", "findall", "bagof"],
+		keywords: {words: [":-", "?-", "findall", "bagof", "retract"], required: "shared"},
 	},
 	"Promela": {
 		file_patterns: ["*.pml", "*.promela", "*.prom"],
@@ -2869,6 +2878,13 @@
 		keywords: ["@page", "@model", "@inject", "@code", "@functions"],
 		embedding: "html",
 	},
+	"re2c": {
+		file_patterns: ["*.re"],
+		keywords: {words: ["/*!re2c", "/*!max", "/*!stags", "#include"], required: "shared"},
+		line_comments: ["//"],
+		block_comments: [["/*", "*/"]],
+		strings: ["\""],
+	},
 	"REALbasic": {
 		file_patterns: ["*.rbbas", "*.rbfrm", "*.rbmnu", "*.rbres", "*.rbtbar"],
 		line_comments: ["'", "//"],
@@ -2876,6 +2892,7 @@
 	},
 	"ReasonML": {
 		file_patterns: ["*.re", "*.rei"],
+		keywords: ["let", "switch", "module", "type"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 	},
@@ -2956,9 +2973,9 @@
 		block_comments: [["(", ")"]],
 	},
 	"Roff": {
-		file_patterns: ["*.roff", "*.troff", "*.man", "*.1", "*.2", "*.3", "*.4", "*.5", "*.6", "*.7", "*.8", "*.1in", "*.1m", "*.1x", "*.3in", "*.3m", "*.3p", "*.3pm", "*.3qt", "*.3x", "*.tmac", "*.me", "*.mdoc"],
+		file_patterns: ["*.roff", "*.troff", "*.man", "*.1", "*.2", "*.3", "*.4", "*.5", "*.6", "*.7", "*.8", "*.1in", "*.1m", "*.1x", "*.3in", "*.3m", "*.3p", "*.3pm", "*.3qt", "*.3x", "*.tmac", "*.me", "*.mdoc", "*.nr"],
 		line_comments: [".\\\"", "\\\""],
-		keywords: [".TH", ".SH", ".TP", ".PP", ".SS"],
+		keywords: {words: [".TH", ".SH", ".TP", ".PP", ".SS", ".de", ".nr"], required: "shared"},
 	},
 	"RON": {
 		file_patterns: ["*.ron"],
@@ -3131,6 +3148,7 @@
 	},
 	"Smarty": {
 		file_patterns: ["*.tpl", "*.smarty"],
+		keywords: ["{$", "{if", "{foreach", "{include"],
 		block_comments: [["{*", "*}"]],
 		embedding: "html",
 	},
@@ -3419,7 +3437,7 @@
 		strings: ["\""],
 	},
 	"TOML": {
-		file_patterns: ["*.toml", "Cargo.lock", "poetry.lock", "Pipfile.lock", "uv.lock", "Pipfile", "Cargo.toml.orig", "*.toml.example"],
+		file_patterns: ["*.toml", "Cargo.lock", "poetry.lock", "uv.lock", "Pipfile", "Cargo.toml.orig", "*.toml.example"],
 		line_comments: ["#"],
 		strings: [{open: "\"\"\"", multiline: true}, {open: "'''", escape: null, multiline: true}, "\"", {open: "'", escape: null}],
 	},
