@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.1
 
 - A language name that doesn't exist in `--lang`, `--exclude-lang`, or a config file now prints a warning
 - Markdown and HTML reports say how many languages or directories `--top-languages` and `--min-lines` left out
