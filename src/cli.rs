@@ -7,6 +7,7 @@ use crate::{
 	completions::Shell,
 	config::Config,
 	display::{IndentStyle, LanguageSortKey, NumberStyle, OutputFormat, SizeStyle, SortDirection, Verbosity},
+	langs::language_named,
 };
 
 /// A tool for analyzing code statistics across different programming languages
@@ -265,6 +266,11 @@ fn merge_shared(mut config: Config, source: &SourceArgs, format: &FormatArgs, ma
 		config.analysis.include_languages.is_empty() || config.analysis.exclude_languages.is_empty(),
 		"Config cannot set both include_languages and exclude_languages"
 	);
+	for name in config.analysis.include_languages.iter().chain(&config.analysis.exclude_languages) {
+		if language_named(name).is_none() {
+			eprintln!("Warning: no language is named `{name}`. Run `cs langs` to list them.");
+		}
+	}
 	Ok(config)
 }
 

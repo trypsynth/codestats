@@ -166,9 +166,10 @@ impl HumanFormatter {
 		for line_type in language.line_types() {
 			writeln!(
 				writer,
-				"{i2}{}: {} lines ({}%).",
+				"{i2}{}: {} {} ({}%).",
 				line_type.kind.title_label(),
 				ctx.number(line_type.count),
+				pluralize(line_type.count, "line", "lines"),
 				ctx.percent(line_type.percentage)
 			)?;
 		}
@@ -241,9 +242,10 @@ impl HumanFormatter {
 		for line_type in dir.line_types() {
 			writeln!(
 				writer,
-				"{i2}{}: {} lines ({}%).",
+				"{i2}{}: {} {} ({}%).",
 				line_type.kind.title_label(),
 				ctx.number(line_type.count),
+				pluralize(line_type.count, "line", "lines"),
 				ctx.percent(line_type.percentage)
 			)?;
 		}
@@ -266,9 +268,10 @@ impl HumanFormatter {
 			let file_pct = percentage(file.counts.total, summary.counts.total);
 			writeln!(
 				writer,
-				"{i2}{}: {} lines, {} ({}% of total lines).",
+				"{i2}{}: {} {}, {} ({}% of total lines).",
 				file.path,
 				ctx.number(file.counts.total),
+				pluralize(file.counts.total, "line", "lines"),
 				file.size_human,
 				ctx.percent(file_pct)
 			)?;

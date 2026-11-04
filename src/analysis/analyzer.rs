@@ -16,7 +16,10 @@ use super::{
 	stats::AnalysisResults,
 	walk::{self, WalkOptions},
 };
-use crate::{config::AnalyzerConfig, display::Verbosity};
+use crate::{
+	config::AnalyzerConfig,
+	display::{Verbosity, formatting::pluralize},
+};
 
 /// A worker thread's own results, handed to the shared sink once when the worker finishes, so threads don't contend on a lock per file.
 struct LocalAggregator<'a> {
@@ -124,10 +127,11 @@ impl CodeAnalyzer {
 		});
 		let skipped = error_counter.load(Ordering::Relaxed);
 		if skipped > 0 {
+			let entries = pluralize(skipped, "entry", "entries");
 			if verbosity == Verbosity::Verbose {
-				eprintln!("Skipped {skipped} entries due to errors.");
+				eprintln!("Skipped {skipped} {entries} due to errors.");
 			} else {
-				eprintln!("Skipped {skipped} entries due to errors (re-run with --verbose for details).");
+				eprintln!("Skipped {skipped} {entries} due to errors (re-run with --verbose for details).");
 			}
 		}
 		results.set_skipped_entries(skipped);

@@ -25,7 +25,7 @@ use anyhow::{Context as _, Result, anyhow, bail, ensure};
 use clap::ArgMatches;
 use cli::{Cli, Commands, DiffArgs, SourceArgs};
 use config::Config;
-use display::{Versions, ViewOptions};
+use display::{Versions, ViewOptions, formatting::pluralize};
 use terminal_size::terminal_size;
 
 fn main() -> Result<()> {
@@ -103,7 +103,8 @@ fn run() -> Result<()> {
 	display::write_output(config.display.output, &results, &roots, view_options, &mut stdout)?;
 	stdout.flush()?;
 	if config.analysis.fail_on_error && results.skipped_entries() > 0 {
-		return Err(anyhow!("Skipped {} entries due to errors", results.skipped_entries()));
+		let skipped = results.skipped_entries();
+		return Err(anyhow!("Skipped {skipped} {} due to errors", pluralize(skipped, "entry", "entries")));
 	}
 	Ok(())
 }
@@ -159,7 +160,7 @@ fn run_diff(args: &DiffArgs, matches: &ArgMatches) -> Result<()> {
 	stdout.flush()?;
 	let skipped = from.skipped_entries() + to.skipped_entries();
 	if config.analysis.fail_on_error && skipped > 0 {
-		return Err(anyhow!("Skipped {skipped} entries due to errors"));
+		return Err(anyhow!("Skipped {skipped} {} due to errors", pluralize(skipped, "entry", "entries")));
 	}
 	Ok(())
 }

@@ -16,7 +16,8 @@ use crate::{
 /// Escape Markdown table cells by escaping the pipe separator.
 #[askama::filter_fn]
 pub fn md_escape(value: &str, _values: &dyn Values) -> AskamaResult<String> {
-	Ok(value.replace('|', "\\|"))
+	// A line break would end the table row.
+	Ok(value.replace('|', "\\|").replace(['\r', '\n'], " "))
 }
 
 mod filters {

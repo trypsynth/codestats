@@ -347,3 +347,37 @@ fn ext_counts_only_those_extensions_and_git_internals_never_count() {
 	assert_eq!(files(&["--ext", "rs"]), 1);
 	assert_eq!(files(&["--ext", ".RS,toml"]), 2);
 }
+
+#[test]
+fn an_unknown_language_is_warned_about() {
+	let root = scratch_dir("an_unknown_language_is_warned_about");
+	fs::write(root.join("main.rs"), "fn main() {}\n").unwrap();
+	let warnings = |flag: &str, name: &str| {
+		let output = cs().arg(&root).args([flag, name, "-q"]).output().unwrap();
+		assert!(output.status.success());
+		String::from_utf8(output.stderr).unwrap()
+	};
+	assert!(warnings("--lang", "rust,nosuch").contains("no language is named `nosuch`"));
+	assert!(warnings("--exclude-lang", "nosuch").contains("no language is named `nosuch`"));
+	assert_eq!(warnings("--lang", "RUST"), "");
+}
+
+#[cfg(unix)]
+#[test]
+fn markdown_rows_survive_a_line_break_in_a_file_name() {
+	let root = scratch_dir("markdown_rows_survive_a_line_break_in_a_file_name");
+	fs::write(root.join("a\nb.rs"), "fn main() {}\n").unwrap();
+	let output = cs().arg(&root).args(["-v", "-o", "markdown"]).output().unwrap();
+	let report = String::from_utf8(output.stdout).unwrap();
+	assert!(report.contains("| a b.rs | 1 |"), "{report}");
+}
+
+#[test]
+fn one_line_is_not_written_as_lines() {
+	let root = scratch_dir("one_line_is_not_written_as_lines");
+	fs::write(root.join("main.rs"), "fn main() {}\n").unwrap();
+	let output = cs().arg(&root).arg("-v").output().unwrap();
+	let report = String::from_utf8(output.stdout).unwrap();
+	assert!(report.contains("main.rs: 1 line,"), "{report}");
+	assert!(report.contains("Code: 1 line ("), "{report}");
+}

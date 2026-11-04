@@ -16,7 +16,10 @@ use super::{
 	pipeline::{self, FileFilter},
 	stats::AnalysisResults,
 };
-use crate::{config::AnalyzerConfig, display::Verbosity};
+use crate::{
+	config::AnalyzerConfig,
+	display::{Verbosity, formatting::pluralize},
+};
 
 /// How many listed paths a worker takes at a time.
 const BATCH: usize = 256;
@@ -109,7 +112,8 @@ pub fn count_listed(paths: &[PathBuf], config: &AnalyzerConfig) -> Result<Analys
 	}
 	if skipped > 0 {
 		eprintln!(
-			"Skipped {skipped} listed files due to errors{}.",
+			"Skipped {skipped} listed {} due to errors{}.",
+			pluralize(skipped, "file", "files"),
 			if verbose { "" } else { " (re-run with --verbose for details)" }
 		);
 	}
