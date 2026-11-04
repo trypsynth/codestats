@@ -69,7 +69,7 @@ impl MarkdownFormatter {
 		let line_breakdown = summary.line_breakdown_parts(false, ctx);
 		let totals = summary.percentage_parts(ctx);
 		let template = MarkdownTemplate {
-			title: &report.analysis_path,
+			title: report.title(),
 			summary,
 			ctx,
 			line_breakdown,

@@ -7,6 +7,7 @@
 - Fixed "No recognized programming languages found" when `--min-lines` hides every language
 - Fixed a line break in a file name splitting a row of a Markdown table
 - Fixed "1 lines" and "Skipped 1 entries" in messages
+- Reports on paths from standard input are titled "standard input" instead of "-" in human, Markdown, and HTML output
 - Nested comments repeated on one long line no longer take quadratic time: a 600 KB line went from about 1 s to 5 ms
 
 ## 1.0.0

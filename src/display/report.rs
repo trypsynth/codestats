@@ -41,6 +41,12 @@ pub struct ReportData<'a> {
 }
 
 impl<'a> ReportData<'a> {
+	/// What the report is about, in words. CSV, TSV, and JSON keep the path as given.
+	#[must_use]
+	pub fn title(&self) -> &str {
+		if self.analysis_path == "-" { "standard input" } else { &self.analysis_path }
+	}
+
 	/// A sentence saying how many entries `--top-languages` and `--min-lines` left out of the breakdown.
 	#[must_use]
 	pub fn hidden_note(&self, by_dir: bool) -> Option<String> {

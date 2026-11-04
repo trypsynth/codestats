@@ -66,7 +66,7 @@ impl HumanFormatter {
 		writeln!(
 			writer,
 			"Codestats for {}: {} {}, {} total {}, {} total size.",
-			report.analysis_path,
+			report.title(),
 			ctx.number(summary.total_files),
 			pluralize(summary.total_files, "file", "files"),
 			ctx.number(summary.counts.total),

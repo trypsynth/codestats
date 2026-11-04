@@ -55,7 +55,7 @@ impl HtmlFormatter {
 		let parts = report.summary.percentage_parts(ctx);
 		let totals = parts.join(", ");
 		let template = ReportTemplate {
-			title: &report.analysis_path,
+			title: report.title(),
 			summary: &report.summary,
 			totals,
 			languages: &report.languages,

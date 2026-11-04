@@ -1,5 +1,6 @@
 use std::{
 	fs,
+	io::Write,
 	path::{Path, PathBuf},
 	process::{Command, Stdio},
 };
@@ -401,4 +402,25 @@ fn hidden_languages_are_mentioned_in_every_report() {
 	assert!(all_hidden.contains("(2 languages not shown)"), "{all_hidden}");
 	assert!(!all_hidden.contains("No recognized"), "{all_hidden}");
 	assert!(report(&["--by-dir", "-o", "markdown", "--min-lines", "9"]).contains("1 directory not shown."));
+}
+
+#[test]
+fn paths_from_standard_input_are_titled_in_words() {
+	let root = scratch_dir("paths_from_standard_input_are_titled_in_words");
+	fs::write(root.join("main.rs"), "fn main() {}\n").unwrap();
+	let report = |format: &str| {
+		let mut child = cs()
+			.current_dir(&root)
+			.args(["-", "-q", "-o", format])
+			.stdin(Stdio::piped())
+			.stdout(Stdio::piped())
+			.spawn()
+			.unwrap();
+		child.stdin.take().unwrap().write_all(b"main.rs\n").unwrap();
+		String::from_utf8(child.wait_with_output().unwrap().stdout).unwrap()
+	};
+	assert!(report("human").starts_with("Codestats for standard input:"));
+	assert!(report("markdown").contains("Codestats for `standard input`"));
+	assert!(report("html").contains("Codestats for standard input"));
+	assert!(report("json-compact").contains(r#""paths":["-"]"#));
 }
