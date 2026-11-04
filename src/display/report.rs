@@ -41,6 +41,17 @@ pub struct ReportData<'a> {
 }
 
 impl<'a> ReportData<'a> {
+	/// A sentence saying how many entries `--top-languages` and `--min-lines` left out of the breakdown.
+	#[must_use]
+	pub fn hidden_note(&self, by_dir: bool) -> Option<String> {
+		let (count, singular, plural) = if by_dir {
+			(self.dirs_hidden?, "directory", "directories")
+		} else {
+			(self.languages_hidden?, "language", "languages")
+		};
+		Some(format!("{count} {} not shown.", pluralize_fn(count as u64, singular, plural)))
+	}
+
 	#[must_use]
 	pub fn from_results(
 		results: &'a AnalysisResults,

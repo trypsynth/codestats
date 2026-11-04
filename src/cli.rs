@@ -86,7 +86,7 @@ pub struct AnalyzeArgs {
 	#[arg(long)]
 	pub git: bool,
 	/// Follow symbolic links and include their targets in the analysis.
-	/// Use with caution as this can lead to infinite loops with circular symlinks
+	/// A link to one of its own parent directories is skipped with an error
 	#[arg(long)]
 	pub symlinks: bool,
 	#[command(flatten)]

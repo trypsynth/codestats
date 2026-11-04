@@ -43,14 +43,14 @@ impl OutputFormatter for HumanFormatter {
 			return Ok(());
 		}
 		if view_options.by_dir {
-			if report.directories.is_empty() {
+			if report.directories.is_empty() && report.dirs_hidden.is_none() {
 				writeln!(writer, "No recognized programming languages found.")?;
 			} else {
 				Self::write_dir_breakdown(&report, &ctx, writer)?;
 			}
 			return Ok(());
 		}
-		if report.languages.is_empty() {
+		if report.languages.is_empty() && report.languages_hidden.is_none() {
 			writeln!(writer, "No recognized programming languages found.")?;
 			return Ok(());
 		}

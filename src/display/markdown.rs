@@ -40,6 +40,7 @@ struct MarkdownTemplate<'a> {
 	by_dir: bool,
 	embedded: Vec<EmbeddedRow<'a>>,
 	show_files: bool,
+	hidden_note: Option<String>,
 }
 
 pub struct MarkdownFormatter;
@@ -79,6 +80,7 @@ impl MarkdownFormatter {
 			by_dir: ctx.options.by_dir,
 			embedded: report.embedded_rows(),
 			show_files: verbosity == Verbosity::Verbose,
+			hidden_note: report.hidden_note(ctx.options.by_dir),
 		};
 		let rendered = template.render()?;
 		// Askama drops the template's final newline.

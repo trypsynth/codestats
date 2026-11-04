@@ -23,6 +23,7 @@ struct ReportTemplate<'a> {
 	embedded: Vec<EmbeddedRow<'a>>,
 	ctx: &'a FormatterContext,
 	show_files: bool,
+	hidden_note: Option<String>,
 }
 
 pub struct HtmlFormatter;
@@ -64,6 +65,7 @@ impl HtmlFormatter {
 			embedded: report.embedded_rows(),
 			ctx,
 			show_files: verbosity == Verbosity::Verbose,
+			hidden_note: report.hidden_note(ctx.options.by_dir),
 		};
 		let rendered = template.render()?;
 		writer.write_all(rendered.as_bytes())?;

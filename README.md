@@ -179,7 +179,7 @@ If you don't give a path, codestats counts the current directory. If the path is
 - `--max-depth <N>`: descend at most N directory levels.
 - `--min-lines <N>`: hide languages with fewer than N lines.
 - `-H, --hidden`: include hidden files and directories. The `.git` directory is always skipped.
-- `--symlinks`: follow symbolic links. Links that form a loop make the walk run forever.
+- `--symlinks`: follow symbolic links. A link to one of its own parent directories is skipped and reported as an error.
 - `-e, --exclude <PATTERN>`: exclude files and directories that match a glob pattern. Repeatable.
 - `-L, --lang <LANGUAGE>`: count only this language. Repeatable, or comma-separated. Can't be combined with `--exclude-lang`.
 - `--exclude-lang <LANGUAGE>`: don't count this language. Repeatable, or comma-separated. Can't be combined with `--lang`.
@@ -192,6 +192,7 @@ If you don't give a path, codestats counts the current directory. If the path is
 - `-t, --top-languages <N>`: show only the N largest languages. N must be at least 1; to show only the totals, use `--quiet`.
 - `-D, --by-dir`: show counts by directory instead of by language.
 - `-o, --output <human|json|json-compact|csv|tsv|markdown|html>`: the output format. Default: `human`.
+- `--indent <tab|1-8>`: the indentation of human-readable output, as a tab or a number of spaces. Default: `tab`.
 - `--fail-on-error`: exit with an error if any file couldn't be read.
 - `-c, --config <PATH>`: use this configuration file.
 - `-h, --help`: show help.
@@ -234,6 +235,8 @@ respect_gitattributes = true  # Use the linguist attributes in .gitattributes fi
 git_tracked_only = false  # true counts only the files git tracks.
 include_hidden = true
 follow_symlinks = false
+include_generated = false
+max_depth = 5
 exclude_patterns = ["languages.json5", "*.tmp", "node_modules/*"]  # File names or glob patterns.
 include_languages = ["rust", "python"]  # Count only these languages.
 # exclude_languages = ["markdown", "toml"]  # Or skip these. You can't set both.
@@ -248,7 +251,9 @@ sort_by = "files"
 sort_direction = "desc"
 output = "human"
 top_languages = 10
+min_lines = 100
 by_dir = false
+indent = "tab"
 ```
 
 ## Generated files

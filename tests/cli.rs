@@ -381,3 +381,24 @@ fn one_line_is_not_written_as_lines() {
 	assert!(report.contains("main.rs: 1 line,"), "{report}");
 	assert!(report.contains("Code: 1 line ("), "{report}");
 }
+
+#[test]
+fn hidden_languages_are_mentioned_in_every_report() {
+	let root = scratch_dir("hidden_languages_are_mentioned_in_every_report");
+	fs::write(root.join("main.rs"), "fn main() {}\n").unwrap();
+	fs::write(root.join("main.py"), "x = 1\n").unwrap();
+	let report = |args: &[&str]| {
+		let output = cs().arg(&root).args(args).output().unwrap();
+		String::from_utf8(output.stdout).unwrap()
+	};
+	for format in ["markdown", "html"] {
+		assert!(report(&["-o", format, "-t", "1"]).contains("1 language not shown."), "{format}");
+		let all_hidden = report(&["-o", format, "--min-lines", "9"]);
+		assert!(all_hidden.contains("2 languages not shown."), "{all_hidden}");
+		assert!(!all_hidden.contains("No recognized"), "{all_hidden}");
+	}
+	let all_hidden = report(&["--min-lines", "9"]);
+	assert!(all_hidden.contains("(2 languages not shown)"), "{all_hidden}");
+	assert!(!all_hidden.contains("No recognized"), "{all_hidden}");
+	assert!(report(&["--by-dir", "-o", "markdown", "--min-lines", "9"]).contains("1 directory not shown."));
+}
