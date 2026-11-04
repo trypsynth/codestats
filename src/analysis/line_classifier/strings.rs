@@ -7,8 +7,19 @@ use super::{
 };
 use crate::langs::{
 	Heredoc, Language,
-	matchers::{LanguageMatchers, StringMatchers, Token},
+	matchers::{LanguageMatchers, NestedSearch, StringMatchers, Token},
 };
+
+/// The next end of the open comment in `rest`, or its next nested start.
+#[inline]
+fn find_comment_edge(
+	rest: &str,
+	pair: usize,
+	matchers: &LanguageMatchers,
+	search: &mut NestedSearch,
+) -> Option<(usize, usize, bool)> {
+	matchers.block_comments.as_ref()?.find_block_end_or_nested_start(rest, pair, search)
+}
 
 /// Classify a line in a language with string literals, scanning left to right so comment markers inside strings are ignored. String contents count as code.
 pub(super) fn classify_with_strings(
@@ -26,14 +37,11 @@ pub(super) fn classify_with_strings(
 	let bytes = line.as_bytes();
 	let mut pos = 0;
 	let mut has_code = false;
+	let mut search = NestedSearch::default();
 	while pos < line.len() {
 		if state.is_in_comment() {
 			// Strings aren't lexed inside comments, so only the open comment's own end (or nested start) matters.
-			let Some((found, len, nested)) = matchers
-				.block_comments
-				.as_ref()
-				.and_then(|block| block.find_block_end_or_nested_start(&line[pos..], state.pair))
-			else {
+			let Some((found, len, nested)) = find_comment_edge(&line[pos..], state.pair, matchers, &mut search) else {
 				break;
 			};
 			if nested {

@@ -5,7 +5,7 @@ use memchr::memchr2;
 use self::strings::classify_with_strings;
 use crate::langs::{
 	Language, is_shebang_for,
-	matchers::{BlockCommentMatchers, ByteSet, LanguageMatchers, language_matchers},
+	matchers::{BlockCommentMatchers, ByteSet, LanguageMatchers, NestedSearch, language_matchers},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -185,6 +185,7 @@ fn handle_block_comments<'a>(
 ) -> (&'a str, bool) {
 	let mut line_remainder = line;
 	let mut has_code = false;
+	let mut search = NestedSearch::default();
 	while !line_remainder.is_empty() {
 		if !comment_state.is_in_comment() {
 			if let Some((pos, start_len, pair)) = block_matchers.find_block_start(line_remainder) {
@@ -201,7 +202,7 @@ fn handle_block_comments<'a>(
 				break;
 			}
 		} else if let Some((pos, len, found_nested_start)) =
-			block_matchers.find_block_end_or_nested_start(line_remainder, comment_state.pair)
+			block_matchers.find_block_end_or_nested_start(line_remainder, comment_state.pair, &mut search)
 		{
 			if found_nested_start {
 				comment_state.enter_nested_block();
@@ -598,6 +599,23 @@ mod tests {
 	#[case::code_after_docstring(&["\"\"\"Doc.\"\"\"; x = 1"], &[LineType::Code])]
 	fn python_docstrings(#[case] lines: &[&str], #[case] expected: &[LineType]) {
 		assert_eq!(classify_all("Python", lines), expected);
+	}
+
+	#[rstest]
+	#[case::closes_each_level(&["/* a /* b */ c */ x"], &[LineType::Code])]
+	#[case::stays_open(&["/* a /* b */ c", "d */ e */ x"], &[LineType::Comment, LineType::Code])]
+	#[case::reopens(&["/* /* */ */ /* /* */", "*/"], &[LineType::Comment, LineType::Comment])]
+	#[case::shared_slash(&["/*/ /* */ */"], &[LineType::Comment])]
+	fn nested_comments_on_one_line(#[case] lines: &[&str], #[case] expected: &[LineType]) {
+		assert_eq!(classify_all("Rust", lines), expected);
+	}
+
+	#[test]
+	fn nested_comments_on_one_line_take_linear_time() {
+		let line = "/*x".repeat(1_000_000);
+		let start = std::time::Instant::now();
+		assert_eq!(classify_all("Rust", &[&line]), [LineType::Comment]);
+		assert!(start.elapsed().as_secs() < 10, "took {:?}", start.elapsed());
 	}
 
 	#[test]

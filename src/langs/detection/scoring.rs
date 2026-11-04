@@ -317,8 +317,9 @@ fn block_end(
 	let finder = matchers.block_comments.as_ref().expect("a block comment start was found");
 	let mut pos = start + len;
 	let mut depth = 1;
+	let mut search = crate::langs::matchers::NestedSearch::default();
 	while depth > 0 {
-		let Some((found, len, nested)) = finder.find_block_end_or_nested_start(&rest[pos..], pair) else {
+		let Some((found, len, nested)) = finder.find_block_end_or_nested_start(&rest[pos..], pair, &mut search) else {
 			return (start, rest.len());
 		};
 		depth = if nested { depth + 1 } else { depth - 1 };

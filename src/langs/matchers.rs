@@ -414,19 +414,60 @@ impl BlockCommentMatchers {
 
 	/// Find the end of the open comment from `pair`, or a nested start if that pair nests. Returns the position, length, and whether it was a nested start.
 	#[inline]
-	pub(crate) fn find_block_end_or_nested_start(&self, line: &str, pair: usize) -> Option<(usize, usize, bool)> {
-		let pair = &self.pairs[pair];
+	pub(crate) fn find_block_end_or_nested_start(
+		&self,
+		line: &str,
+		index: usize,
+		search: &mut NestedSearch,
+	) -> Option<(usize, usize, bool)> {
+		let pair = &self.pairs[index];
 		let bytes = line.as_bytes();
-		let end_match = pair.end.find(bytes).map(|pos| (pos, pair.end.needle().len(), false));
 		if !pair.nests {
-			return end_match;
+			return pair.end.find(bytes).map(|pos| (pos, pair.end.needle().len(), false));
 		}
-		let start_match = pair.start.find(bytes).map(|pos| (pos, pair.start.needle().len(), true));
+		if search.pair != index {
+			*search = NestedSearch { pair: index, ..NestedSearch::default() };
+		}
+		let end_match = search.end.find(&pair.end, bytes).map(|pos| (pos, pair.end.needle().len(), false));
+		let start_match = search.start.find(&pair.start, bytes).map(|pos| (pos, pair.start.needle().len(), true));
 		match (start_match, end_match) {
 			(Some(s), Some(e)) => Some(if s.0 < e.0 { s } else { e }),
 			(s, e) => s.or(e),
 		}
 	}
+}
+
+/// What's known of the next match in the rest of a line, which only ever gets shorter.
+#[derive(Clone, Copy, Default)]
+enum NextMatch {
+	#[default]
+	Unknown,
+	Absent,
+	/// How far the match is from the end of the line.
+	BeforeEnd(usize),
+}
+
+impl NextMatch {
+	#[inline]
+	fn find(&mut self, finder: &Finder<'_>, rest: &[u8]) -> Option<usize> {
+		match *self {
+			Self::Absent => None,
+			Self::BeforeEnd(distance) if distance <= rest.len() => Some(rest.len() - distance),
+			_ => {
+				let found = finder.find(rest);
+				*self = found.map_or(Self::Absent, |pos| Self::BeforeEnd(rest.len() - pos));
+				found
+			}
+		}
+	}
+}
+
+/// Remembers matches between searches of one line, so that a line of many nested openers isn't searched to its end at each one.
+#[derive(Clone, Copy, Default)]
+pub struct NestedSearch {
+	pair: usize,
+	end: NextMatch,
+	start: NextMatch,
 }
 
 /// Matchers are built the first time a language is seen, so startup doesn't pay for all ~550 languages.
