@@ -130,16 +130,28 @@ fn count_contents(
 	}
 	let detected = detection.language?;
 	let body = &sample_bytes[encoding.bom_len.min(sample_bytes.len())..];
-	let language = xml_document_instead_of(detected, body).filter(|&language| languages.allows(language))?;
+	let language =
+		xml_document_instead_of(detected, body, encoding.encoding).filter(|&language| languages.allows(language))?;
 	Some((language, line_counter::count_lines(language, encoding, bytes)))
 }
 
 /// XML, for a file named like code that opens with an XML declaration (Qt's `.ts` translations aren't TypeScript), or else
 /// the detected language. Languages that can hold markup keep their files.
-fn xml_document_instead_of(detected: &'static Language, body: &[u8]) -> Option<&'static Language> {
+fn xml_document_instead_of(
+	detected: &'static Language,
+	body: &[u8],
+	encoding: &'static encoding_rs::Encoding,
+) -> Option<&'static Language> {
 	let holds_markup =
 		detected.embedding.is_some() || detected.block_comments.iter().any(|&(start, ..)| start == "<!--");
-	if holds_markup || !body.starts_with(b"<?xml") {
+	let declaration: &[u8] = if encoding == encoding_rs::UTF_16LE {
+		b"<\0?\0x\0m\0l\0"
+	} else if encoding == encoding_rs::UTF_16BE {
+		b"\0<\0?\0x\0m\0l"
+	} else {
+		b"<?xml"
+	};
+	if holds_markup || !body.starts_with(declaration) {
 		return Some(detected);
 	}
 	langs::language_named("XML")

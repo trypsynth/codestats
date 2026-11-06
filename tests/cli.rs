@@ -430,12 +430,24 @@ fn an_xml_declaration_outweighs_a_code_extension() {
 	let root = scratch_dir("an_xml_declaration_outweighs_a_code_extension");
 	fs::write(root.join("app_en.ts"), "<?xml version=\"1.0\"?>\n<!-- note -->\n<TS/>\n").unwrap();
 	fs::write(root.join("app.ts"), "// note\nlet a = 1;\n").unwrap();
-	let output = cs().arg(&root).args(["-o", "json-compact"]).output().unwrap();
+	// Windows tools often write XML as UTF-16, in either byte order.
+	let document = "<?xml version=\"1.0\"?>\r\n<TS/>\r\n";
+	let little: Vec<u8> = [0xFF, 0xFE].into_iter().chain(document.encode_utf16().flat_map(u16::to_le_bytes)).collect();
+	let big: Vec<u8> = [0xFE, 0xFF].into_iter().chain(document.encode_utf16().flat_map(u16::to_be_bytes)).collect();
+	fs::write(root.join("app_de.ts"), little).unwrap();
+	fs::write(root.join("app_fr.ts"), big).unwrap();
+	let output = cs().arg(&root).args(["-o", "json-compact", "--no-config"]).output().unwrap();
 	let report: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
-	let languages: Vec<&str> =
-		report["languages"].as_array().unwrap().iter().map(|l| l["name"].as_str().unwrap()).collect();
-	assert_eq!(languages.len(), 2, "{languages:?}");
-	assert!(languages.contains(&"XML") && languages.contains(&"TypeScript"), "{languages:?}");
+	let files = |name: &str| {
+		report["languages"]
+			.as_array()
+			.unwrap()
+			.iter()
+			.find(|l| l["name"] == name)
+			.map(|l| l["file_count"].as_u64().unwrap())
+	};
+	assert_eq!(files("XML"), Some(3), "{report}");
+	assert_eq!(files("TypeScript"), Some(1), "{report}");
 }
 
 #[test]
