@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.1.0
 
 - Added `--no-config`, which reads no configuration file
 - Added strings to Clojure, F#, and Odin, so a comment marker inside a multi-line string no longer counts as a comment
