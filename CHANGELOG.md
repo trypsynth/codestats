@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Added `--no-config`, which reads no configuration file
+- Added strings to Clojure, F#, and Odin, so a comment marker inside a multi-line string no longer counts as a comment
 - Added 211 languages, including 1C Enterprise, Asymptote, bc, Dune, GAMS, Mermaid, MiniZinc, NetLogo, POV-Ray SDL, Simula, SourcePawn, SurrealQL, Toit, XS, Yul, and Zeek
 - Added about 290 extensions and filenames for existing languages, including `.escript`, `.bats`, `.gltf`, `.sublime-settings`, `.containerfile`, `.tm`, and `.spacemacs`
 - Added Raku's `` #`[ ``, `` #`{ ``, and `` #`< `` comments, longer Luau block comments, Cabal block comments, and GraphQL descriptions as comments

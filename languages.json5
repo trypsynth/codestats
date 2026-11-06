@@ -667,6 +667,7 @@
 		file_patterns: ["*.clj", "*.cljs", "*.cljc", "*.edn", "*.cljx", "*.cljscm", "*.cl2", "*.hic", "*.clje", "*.cljr", "build.boot"],
 		line_comments: [";"],
 		shebangs: ["#!/usr/bin/env clojure", "#!/usr/bin/clojure"],
+		strings: [{open: "\"", multiline: true}],
 	},
 	"Clue": {
 		file_patterns: ["*.clue"],
@@ -1068,6 +1069,16 @@
 		line_comments: ["//"],
 		block_comments: [["(*", "*)"]],
 		nested_blocks: true,
+		strings: [
+			{open: "\"", multiline: true},
+			{open: "'", char: true},
+			{open: "@\"", close: "\"", escape: "\"", multiline: true},
+			{open: "\"\"\"", escape: null, multiline: true},
+			{open: "$\"", close: "\"", multiline: true, interpolation: "{"},
+			{open: "$@\"", close: "\"", escape: "\"", multiline: true, interpolation: "{"},
+			{open: "@$\"", close: "\"", escape: "\"", multiline: true, interpolation: "{"},
+			{open: "$\"\"\"", close: "\"\"\"", escape: null, multiline: true, interpolation: "{"},
+		],
 	},
 	"F*": {
 		file_patterns: ["*.fst", "*.fsti"],
@@ -2521,6 +2532,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
+		strings: ["\"", {open: "'", char: true}, {open: "`", escape: null, multiline: true}],
 	},
 	"Oforth": {
 		file_patterns: ["*.of"],
