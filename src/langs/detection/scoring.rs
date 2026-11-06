@@ -176,7 +176,8 @@ impl Seen {
 	}
 }
 
-static SCORING_MATCHERS: LazyLock<Vec<OnceLock<ScoringMatchers>>> =
+/// Boxed for the same reason as `LANGUAGE_MATCHERS`: an empty slot is then only a pointer.
+static SCORING_MATCHERS: LazyLock<Vec<OnceLock<Box<ScoringMatchers>>>> =
 	LazyLock::new(|| LANGUAGES.iter().map(|_| OnceLock::new()).collect());
 
 fn scoring_matchers(lang: &Language) -> &'static ScoringMatchers {
@@ -185,7 +186,7 @@ fn scoring_matchers(lang: &Language) -> &'static ScoringMatchers {
 	if LANGUAGES.get(lang.index).is_none_or(|real| !std::ptr::eq(lang, real)) {
 		return Box::leak(Box::new(build_scoring_matchers(lang)));
 	}
-	SCORING_MATCHERS[lang.index].get_or_init(|| build_scoring_matchers(lang))
+	SCORING_MATCHERS[lang.index].get_or_init(|| Box::new(build_scoring_matchers(lang)))
 }
 
 fn build_scoring_matchers(lang: &Language) -> ScoringMatchers {

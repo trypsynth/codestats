@@ -470,14 +470,14 @@ pub struct NestedSearch {
 	start: NextMatch,
 }
 
-/// Matchers are built the first time a language is seen, so startup doesn't pay for all ~550 languages.
-static LANGUAGE_MATCHERS: LazyLock<Vec<OnceLock<LanguageMatchers>>> =
+/// Matchers are built the first time a language is seen, so startup doesn't pay for all ~780 languages. Each is boxed so that an empty slot is a pointer, not a whole set of matchers, as startup writes every slot.
+static LANGUAGE_MATCHERS: LazyLock<Vec<OnceLock<Box<LanguageMatchers>>>> =
 	LazyLock::new(|| LANGUAGES.iter().map(|_| OnceLock::new()).collect());
 
 #[inline]
 #[must_use]
 pub fn language_matchers(lang: &Language) -> &'static LanguageMatchers {
-	LANGUAGE_MATCHERS[lang.index].get_or_init(|| build_language_matchers(lang))
+	LANGUAGE_MATCHERS[lang.index].get_or_init(|| Box::new(build_language_matchers(lang)))
 }
 
 fn build_language_matchers(lang: &Language) -> LanguageMatchers {
