@@ -1,61 +1,22 @@
 // Language definitions, compiled into codestats by build.rs. Entries must stay in alphabetical order.
 //
 // Fields:
-//   file_patterns        Required. Exact filenames (`Makefile`, matched case-sensitively), extensions (`*.rs`, matched
-//                        case-insensitively), or other globs (`Kconfig.*`). When patterns from several languages match a
-//                        file, only the most specific ones count: exact filenames beat globs, and `*.blade.php` beats `*.php`.
-//   line_comments        Markers that start a comment running to the end of the line. Markers made of letters (`REM`)
-//                        must be followed by a non-letter.
-//   block_comments       [start, end] pairs. A comment only closes with the end of the pair that opened it.
-//   nested_blocks        `true` if all block comments nest, or a list of the start markers that do (D: ["/+"]).
-//   column_one_comments  Markers that only count in the first column, like fixed-form Fortran's `C`.
-//   shebangs             Shebang prefixes that identify the language for files without a known extension.
-//   keywords             Used to choose between languages that share a pattern; every language sharing a pattern needs
-//                        some. Words match whole tokens case-insensitively; anything with punctuation (`@interface`,
-//                        `:=`) matches as text. On a tie, a language whose keywords aren't required wins, then the one
-//                        with fewer keywords, so a language that extends another should list the base language's
-//                        keywords plus its own. When all the languages sharing a pattern write comments the same way,
-//                        keywords inside comments don't count. A list of words, or the full form
-//                        {words, required, case_sensitive}:
-//                          required: "shared" only picks the language, where its pattern is shared, when a keyword
-//                            matches that not every other language sharing it has (junk-drawer extensions like `.inc`,
-//                            and C++ in a `.h`); when nothing matches, the sharing language without required keywords is
-//                            the default. "always" holds the language to that even for a pattern only it has, for one
-//                            that other files often use too (RPM Spec's `.spec`), which are then left uncounted.
-//                          case_sensitive: word keywords only match in the case they're written (C's `virtual`, but
-//                            not `VIRTUAL`).
-//   shebang_overrides    A file with this language's extension that starts with a shebang is the shebang's language
-//                        (BRLTTY runs contraction tables that are programs, like a `.ctb` Python script).
-//   strings              String literals, so comment markers inside them are ignored and their contents count as code.
-//                        `"\""` is a one-line string with a `\` escape. The full form is
-//                        {open, close (defaults to open), escape (`null` for raw strings, or the quote itself for
-//                        doubled quotes like 'it''s'), multiline, char, doc, delimited, attribute}. `char` only
-//                        opens a string when it looks like a char literal (so Rust's `'a` lifetimes stay code). `doc`
-//                        makes a string that starts a line count as a comment, like Python docstrings. `delimited`
-//                        puts a delimiter of the writer's choosing between the opener and a `(`, and the string ends
-//                        at `)`, that delimiter and the close, like C++'s `R"xy(...)xy"`. `attribute` strings only
-//                        open right after an `=`, as HTML attribute values do, so an apostrophe in text opens nothing.
-//                        `interpolation` names what opens a hole of code in the string (`${`, `#{`, C#'s `{`, Swift's
-//                        `\(`), which runs to the bracket matching the opener's last one; strings and comments in it
-//                        are read as code's. A doubled one-character opener, like C#'s `{{`, is text.
-//   c_preprocessor       The file goes through the C preprocessor although `#` also starts comments (assembly `.S`
-//                        files), so directives like `# define` or `# if defined(X)` count as code.
-//   regex_literals       `/.../` regex literals (JavaScript), so quotes or `/*` inside them are ignored. A `/` starts a
-//                        regex after an operator, opening bracket or keyword like `return`; otherwise it's division.
-//   line_block_comments  Block comments whose markers only count at the start of a line, with no indentation before
-//                        them (Perl's POD, from `=pod` to `=cut`), so an indented `=cut` in the documentation is text.
-//   line_blocks_alone    The line block comments' markers also have to be alone on their line, spaces aside (MATLAB's
-//                        `%{` and `%}`), so `%{ note` is an ordinary comment.
-//   line_splices         A backslash ending a line joins it to the next, as in C, so a line comment ending in one
-//                        carries on onto the next line.
-//   heredoc              The language's heredocs, whose body runs from the next line to the line holding just the
-//                        terminator named after the opener: "shell" (`<<EOF`, `<< 'EOF'`), "perl" (`<<EOF`, `<< "EOF"`),
-//                        "ruby" (`<<~EOF`, with no space, as `x << y` appends) or "php" (`<<<EOT`).
-//   embedding            Regions written in other languages, counted by those languages' rules: "html" (`<script>`
-//                        and `<style>` elements), "astro" (those plus a TypeScript frontmatter), "markdown" (fenced
-//                        code blocks, and YAML or TOML frontmatter), "asciidoc" (`[source,python]` blocks and fenced
-//                        code blocks), "org" (`#+BEGIN_SRC python` blocks), "restructuredtext" (`.. code-block::`
-//                        directives) or "php" (the HTML outside `<?php ... ?>` tags, with its own elements).
+// file_patterns: Required. Exact filenames, matched case-sensitively, extensions, matched case-insensitively, or other globs. When patterns from several languages match a file, only the most specific ones count: exact filenames beat globs, and longer extensions beat shorter ones.
+// line_comments: Markers that start a comment running to the end of the line. A marker made of letters must be followed by a non-letter.
+// block_comments: Start and end pairs. A comment only closes with the end of the pair that opened it.
+// nested_blocks: `true` if all block comments nest, or a list of the start markers that do.
+// column_one_comments: Markers that only start a comment in the first column.
+// shebangs: Shebang prefixes that identify the language for files without a known extension.
+// keywords: Words or text that choose between languages sharing a pattern, which every language sharing one needs. Words match whole tokens case-insensitively, and anything with punctuation matches as text. On a tie, a language whose keywords aren't required wins, then the one with fewer keywords, so a language that extends another should list the base language's keywords plus its own. When all the languages sharing a pattern write comments the same way, keywords inside comments don't count. Either a list, or {words, required, case_sensitive}, where required is "shared" to only pick the language on a shared pattern when a keyword matches that not every other language sharing it has, or "always" to hold the language to that even on a pattern only it has, leaving files without a match uncounted, and case_sensitive makes words match only in the case they're written.
+// shebang_overrides: A file with this language's extension that starts with a shebang is the shebang's language.
+// strings: String literals, so comment markers inside them are ignored and their contents count as code. Either an opening quote, which is a one-line string with a backslash escape, or {open, close, escape, multiline, char, doc, delimited, attribute, interpolation}: close defaults to open; escape is `null` for raw strings, or the quote itself for doubled quotes; char only opens a string that looks like a character literal; doc makes a string that starts a line count as a comment; delimited puts a delimiter of the writer's choosing between the opener and a `(`, and the string ends at `)`, that delimiter, and the close; attribute only opens a string right after an `=`; interpolation names what opens a hole of code in the string, which runs to the bracket matching the opener's last one, with strings and comments in it read as code's, and a doubled one-character opener is text.
+// c_preprocessor: The file goes through the C preprocessor although `#` also starts comments, so directives count as code.
+// regex_literals: `/.../` regular expression literals, so quotes or comment markers inside them are ignored. A `/` starts one after an operator, opening bracket, or keyword, and is division otherwise.
+// line_block_comments: Block comments whose markers only count at the start of a line, with no indentation before them.
+// line_blocks_alone: The line block comments' markers also have to be alone on their line, spaces aside.
+// line_splices: A backslash ending a line joins it to the next, so a line comment ending in one carries on onto the next line.
+// heredoc: The language's heredocs, whose body runs from the next line to the line holding just the terminator named after the opener: "shell", "perl", "ruby", or "php".
+// embedding: Regions written in other languages, counted by those languages' rules: "html" for `<script>` and `<style>` elements, "astro" for those plus a TypeScript frontmatter, "markdown" for fenced code blocks and YAML or TOML frontmatter, "asciidoc" for source blocks and fenced code blocks, "org" for source blocks, "restructuredtext" for code block directives, or "php" for the HTML outside PHP tags.
 {
 	"1C Enterprise": {
 		file_patterns: ["*.bsl", "*.os"],
