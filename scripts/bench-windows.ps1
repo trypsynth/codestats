@@ -46,17 +46,24 @@ function Fetch($url, $file) {
 # The binaries. mezura only ships for x86-64, which runs under emulation on ARM.
 $target = if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { 'cs-aarch64-pc-windows-gnullvm.exe' } else { 'cs-x86_64-pc-windows-gnu.exe' }
 $base = 'https://github.com/trypsynth/codestats/releases/download'
-# Always the latest nightly, unlike the pinned downloads below.
+# Always the latest nightly, unlike the pinned downloads below. The nightly is rebuilt on every push, so its commit is recorded.
 Remove-Item 'cs-new.exe' -ErrorAction SilentlyContinue
 Fetch "$base/nightly/$target" 'cs-new.exe'
-Fetch "$base/v0.9.1/$target" 'cs-091.exe'
-Fetch 'https://github.com/subamanis/mezura/releases/download/v3.3.0/mezura-v3.3.0-windows-x86_64.zip' 'mezura.zip'
-if (-not (Test-Path 'mezura-unpacked')) {
-	Expand-Archive -Path 'mezura.zip' -DestinationPath 'mezura-unpacked'
+try {
+	$nightly = Invoke-RestMethod -Uri 'https://api.github.com/repos/trypsynth/codestats/releases/tags/nightly' -Headers @{ 'User-Agent' = 'codestats-bench' }
+	$commit = if ($nightly.body -match 'Commit:\*\*\s*([0-9a-f]{7,40})') { $Matches[1].Substring(0, 7) } else { 'unknown' }
+	Say "Nightly commit: $commit"
+} catch {
+	Say 'Nightly commit: could not be read'
 }
-$mezura = (Get-ChildItem -Path 'mezura-unpacked' -Recurse -Filter 'mezura.exe' | Select-Object -First 1).FullName
+Fetch "$base/v1.0.1/$target" 'cs-101.exe'
+Fetch 'https://github.com/subamanis/mezura/releases/download/v3.4.0/mezura-v3.4.0-windows-x86_64.zip' 'mezura-3.4.0.zip'
+if (-not (Test-Path 'mezura-3.4.0')) {
+	Expand-Archive -Path 'mezura-3.4.0.zip' -DestinationPath 'mezura-3.4.0'
+}
+$mezura = (Get-ChildItem -Path 'mezura-3.4.0' -Recurse -Filter 'mezura.exe' | Select-Object -First 1).FullName
 $new = Join-Path $root 'cs-new.exe'
-$old = Join-Path $root 'cs-091.exe'
+$old = Join-Path $root 'cs-101.exe'
 
 # The repositories, at the commits scripts/bench.sh pins.
 $repositories = @(
@@ -137,18 +144,22 @@ function Get-Counts($exe, $line, $isMezura) {
 	}
 }
 
+Say "codestats new: $((Invoke-Tool $new '--version').Output.Trim())"
+Say "codestats 1.0.1: $((Invoke-Tool $old '--version').Output.Trim())"
+Say "mezura: $((Invoke-Tool $mezura '--version').Output.Trim())"
+
 $newJson = '-o json-compact'
 $mezuraJson = '--output json'
 $mezuraSame = '--no-gitignore --no-ignore-files --search-in-dotted --no-local --no-default-config --hide keywords,tests --count-minified --count-generated --count-not-code --counting region --no-shebang'
 
 Compare-Tools 'Startup: --version' @(
 	@{ Name = 'codestats new'; Exe = $new; Line = '--version' },
-	@{ Name = 'codestats 0.9.1'; Exe = $old; Line = '--version' },
+	@{ Name = 'codestats 1.0.1'; Exe = $old; Line = '--version' },
 	@{ Name = 'mezura'; Exe = $mezura; Line = '--version' }
 ) 50
 Compare-Tools 'Startup: an empty directory' @(
 	@{ Name = 'codestats new'; Exe = $new; Line = "`"$empty`" $newJson" },
-	@{ Name = 'codestats 0.9.1'; Exe = $old; Line = "`"$empty`" $newJson" },
+	@{ Name = 'codestats 1.0.1'; Exe = $old; Line = "`"$empty`" $newJson" },
 	@{ Name = 'mezura'; Exe = $mezura; Line = "`"$empty`" $mezuraJson" }
 ) 50
 
@@ -156,18 +167,18 @@ foreach ($repository in $repositories) {
 	$dir = Join-Path $root $repository.Name
 	Compare-Tools "$($repository.Name), default settings" @(
 		@{ Name = 'codestats new'; Exe = $new; Line = "`"$dir`" $newJson" },
-		@{ Name = 'codestats 0.9.1'; Exe = $old; Line = "`"$dir`" $newJson" },
+		@{ Name = 'codestats 1.0.1'; Exe = $old; Line = "`"$dir`" $newJson" },
 		@{ Name = 'mezura'; Exe = $mezura; Line = "`"$dir`" $mezuraJson" }
 	) $repository.Rounds
 	$newDefault = "`"$dir`" $newJson"
 	$mezuraDefault = "`"$dir`" $mezuraJson"
 	Say "  counted by codestats new: $(Get-Counts $new $newDefault $false)"
-	Say "  counted by codestats 0.9.1: $(Get-Counts $old $newDefault $false)"
+	Say "  counted by codestats 1.0.1: $(Get-Counts $old $newDefault $false)"
 	Say "  counted by mezura: $(Get-Counts $mezura $mezuraDefault $true)"
 
 	# mezura's --languages leaves out Markdown and TOML, so only repositories without them in Ext get equal-work runs.
 	if (-not $repository.Ext) { continue }
-	$newSame = "`"$dir`" --ext $($repository.Ext) --no-gitignore --hidden --include-generated --no-gitattributes $newJson"
+	$newSame = "`"$dir`" --ext $($repository.Ext) --no-gitignore --hidden --include-generated --no-gitattributes --no-config $newJson"
 	$mezuraEqual = "`"$dir`" --languages $($repository.Ext) $mezuraSame $mezuraJson"
 	Compare-Tools "$($repository.Name), equal work" @(
 		@{ Name = 'codestats new'; Exe = $new; Line = $newSame },

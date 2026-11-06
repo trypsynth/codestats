@@ -32,10 +32,10 @@ for entry in "${repos[@]}"; do
 		git init -q "$dir/$name" && git -C "$dir/$name" fetch -q --depth 1 "https://github.com/$repo" "$sha" &&
 			git -C "$dir/$name" checkout -q FETCH_HEAD || exit 1
 	fi
-	runs=5
-	[[ $name == linux || $name == rust ]] && runs=3
+	rounds=10
+	[[ $name == linux || $name == rust ]] && rounds=5
 	echo "Benchmarking $name" >&2
-	# Half the runs in each order, so no tool always goes first on a cool processor.
+	# A processor slows down as it heats up, which favors whichever tool runs first in a long block of runs. Short rounds of two runs per tool, in an order that flips each round, with a pause between rounds, spread that evenly.
 	forward=()
 	backward=()
 	for tool in "${tools[@]}"; do
@@ -44,10 +44,17 @@ for entry in "${repos[@]}"; do
 		forward+=(-n "$tool" "$bin $dir/$name")
 		backward=(-n "$tool" "$bin $dir/$name" "${backward[@]}")
 	done
-	hyperfine -N --warmup 4 --runs "$runs" --export-json "$dir/results/$name.forward.json" "${forward[@]}" >/dev/null || exit 1
-	hyperfine -N --warmup 4 --runs "$runs" --export-json "$dir/results/$name.backward.json" "${backward[@]}" >/dev/null || exit 1
+	rm -f "$dir/results/$name".round-*.json
+	for ((round = 0; round < rounds; round++)); do
+		order=("${forward[@]}")
+		((round % 2)) && order=("${backward[@]}")
+		warmup=0
+		((round == 0)) && warmup=4
+		hyperfine -N --warmup "$warmup" --runs 2 --export-json "$dir/results/$name.round-$round.json" "${order[@]}" >/dev/null || exit 1
+		sleep 2
+	done
 	jq -s --arg tools "${tools[*]}" '[.[].results[]] as $all | {results: [$tools | split(" ")[] as $tool | {measurements: [$all[] | select(.name == $tool) | .measurements[]]}]}' \
-		"$dir/results/$name.forward.json" "$dir/results/$name.backward.json" >"$dir/results/$name.json" || exit 1
+		"$dir/results/$name".round-*.json >"$dir/results/$name.json" || exit 1
 	"$cs" "$dir/$name" -q -o json-compact | jq -c .totals >"$dir/results/$name.summary.json"
 done
 
@@ -77,7 +84,8 @@ table() {
 			def megabytes: . / 1e6 | if . < 10 then "\(fixed(1)) MB" else "\(fixed(0)) MB" end;
 			def lines: if . >= 1e7 then "\(. / 1e6 | fixed(0))M" elif . >= 1e6 then "\(. / 1e6 | fixed(1))M" else "\(. / 1e3 | fixed(0))K" end;
 			def grouped: tostring | until(test("^\\d{4}"; "") | not; sub("(?<a>\\d)(?<b>\\d{3})(?<c>(,\\d{3})*)$"; "\(.a),\(.b)\(.c)"));
-			[.results[] | [.measurements[] | if $metric == "time" then .time_wall_clock.value else .memory_peak_resident.value end] | add / length] as $values
+			def median: sort | length as $n | if $n % 2 == 1 then .[$n / 2 | floor] else (.[$n / 2 - 1] + .[$n / 2]) / 2 end;
+			[.results[] | [.measurements[] | if $metric == "time" then .time_wall_clock.value else .memory_peak_resident.value end] | median] as $values
 			| ($values | min) as $best
 			| [$values[] | (if $metric == "time" then seconds else megabytes end) as $cell | if . == $best then "**\($cell)**" else $cell end] as $cells
 			| ($repo | split("/")[1]) as $name
@@ -88,6 +96,6 @@ table() {
 	done
 }
 
-table time "Mean wall time:"
+table time "Median wall time:"
 echo
-table memory "Peak memory:"
+table memory "Median peak memory:"
