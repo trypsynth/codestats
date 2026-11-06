@@ -1,3 +1,8 @@
+// Adapted from mezura (https://github.com/subamanis/mezura): the block masks and `scan_block` from
+// mezura-core/src/engine/masks.rs, and `BlockScanner::sweep` from `MaskedLines::book_plain_lines` in
+// mezura-core/src/engine/file_parser.rs. Used under the MIT license.
+// Copyright (c) 2021 Petros Papatheodorou
+
 //! Sweeping plain lines a 64-byte block at a time. One pass over a block answers three questions for each of its bytes, as bitmasks: is it a newline, could it start a marker, and is it anything but whitespace. Lines without a marker are then counted off the masks, with no search per line.
 
 #[cfg(target_arch = "aarch64")]
