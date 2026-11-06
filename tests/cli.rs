@@ -437,3 +437,20 @@ fn an_xml_declaration_outweighs_a_code_extension() {
 	assert_eq!(languages.len(), 2, "{languages:?}");
 	assert!(languages.contains(&"XML") && languages.contains(&"TypeScript"), "{languages:?}");
 }
+
+#[test]
+fn no_config_ignores_the_configuration_in_the_working_directory() {
+	let root = scratch_dir("no_config_ignores_the_configuration_in_the_working_directory");
+	fs::write(root.join("main.rs"), "fn main() {}\n").unwrap();
+	fs::write(root.join("main.py"), "print(1)\n").unwrap();
+	fs::write(root.join(".codestats.toml"), "[analysis]\ninclude_languages = [\"Rust\"]\n").unwrap();
+	let files = |extra: &[&str]| {
+		let output = cs().current_dir(&root).args(["-o", "json"]).args(extra).output().unwrap();
+		assert!(output.status.success(), "stderr: {}", String::from_utf8_lossy(&output.stderr));
+		serde_json::from_slice::<serde_json::Value>(&output.stdout).unwrap()["totals"]["file_count"].as_u64().unwrap()
+	};
+	assert_eq!(files(&[]), 1);
+	assert_eq!(files(&["--no-config"]), 2);
+	let both = cs().current_dir(&root).args(["--no-config", "--config", ".codestats.toml"]).output().unwrap();
+	assert_eq!(both.status.code(), Some(2));
+}

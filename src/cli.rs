@@ -110,10 +110,14 @@ pub struct AnalyzeArgs {
 
 /// Which files are counted: shared by the main command and `cs diff`.
 #[derive(clap::Args)]
+#[expect(clippy::struct_excessive_bools, reason = "CLI flags are inherently boolean")]
 pub struct SourceArgs {
 	/// Path to configuration file (TOML format)
 	#[arg(short = 'c', long = "config")]
 	pub config: Option<PathBuf>,
+	/// Don't read any configuration file, so only the defaults and the command line apply
+	#[arg(long, conflicts_with = "config")]
+	pub no_config: bool,
 	/// The paths to analyze: directories or files, counted together. `-` reads them from standard input, one per line or
 	/// NUL-separated, as from `git ls-files -z`
 	#[arg(value_name = "PATH", default_value = ".", num_args = 1..)]

@@ -195,6 +195,7 @@ If you don't give a path, codestats counts the current directory. If the path is
 - `--indent <tab|1-8>`: the indentation of human-readable output, as a tab or a number of spaces. Default: `tab`.
 - `--fail-on-error`: exit with an error if any file couldn't be read.
 - `-c, --config <PATH>`: use this configuration file.
+- `--no-config`: don't read any configuration file.
 - `-h, --help`: show help.
 - `-V, --version`: show the version.
 
@@ -222,6 +223,8 @@ codestats uses the first of these files that exists:
 3. `./codestats.toml`
 4. `~/.config/codestats/config.toml`
 5. `~/.codestats.toml`
+
+To ignore all of these files, for example in a benchmark or a script that has to behave the same on every machine, pass `--no-config`.
 
 ### Example configuration
 

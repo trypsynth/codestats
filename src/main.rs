@@ -109,8 +109,11 @@ fn run() -> Result<()> {
 	Ok(())
 }
 
-/// The config file given with `-c`, or else the one discovered.
+/// The config file given with `-c`, the defaults with `--no-config`, or else the file discovered.
 fn base_config(source: &SourceArgs) -> Result<Config> {
+	if source.no_config {
+		return Ok(Config::default());
+	}
 	source.config.as_ref().map_or_else(config_discovery::load_default, Config::from_file)
 }
 
