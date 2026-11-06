@@ -466,3 +466,22 @@ fn no_config_ignores_the_configuration_in_the_working_directory() {
 	let both = cs().current_dir(&root).args(["--no-config", "--config", ".codestats.toml"]).output().unwrap();
 	assert_eq!(both.status.code(), Some(2));
 }
+
+#[test]
+fn project_files_visual_studio_wrote_count_as_generated() {
+	let root = scratch_dir("project_files_visual_studio_wrote_count_as_generated");
+	fs::write(
+		root.join("Old.csproj"),
+		"<?xml version=\"1.0\"?>\n<Project xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">\n</Project>\n",
+	)
+	.unwrap();
+	fs::write(root.join("New.csproj"), "<Project Sdk=\"Microsoft.NET.Sdk\">\n</Project>\n").unwrap();
+	fs::write(root.join("App.sln"), "Microsoft Visual Studio Solution File, Format Version 12.00\n").unwrap();
+	let files = |extra: &[&str]| {
+		let output = cs().arg(&root).args(["-o", "json-compact", "--no-config"]).args(extra).output().unwrap();
+		let report: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+		report["totals"]["file_count"].as_u64().unwrap()
+	};
+	assert_eq!(files(&[]), 1);
+	assert_eq!(files(&["--include-generated"]), 3);
+}

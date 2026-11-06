@@ -6,7 +6,7 @@ use super::{
 	attributes::{Attributes, DirCache},
 	encoding::{decode_bytes, detect_encoding, is_probably_binary},
 	file_io::{self, FileSource},
-	generated::{has_generated_header, is_generated_name},
+	generated::{has_generated_header, is_generated_name, is_visual_studio_project},
 	line_counter,
 	stats::{AnalysisResults, FileCounts},
 };
@@ -78,8 +78,9 @@ pub fn count_bytes(
 	languages: FileFilter,
 	cache: &mut DirCache,
 ) -> Option<(&'static Language, FileCounts)> {
-	let (candidates, languages) = judge_name(path, &detection_name(path)?, languages, cache)?;
-	count_contents(&candidates, bytes, languages)
+	let name = detection_name(path)?;
+	let (candidates, languages) = judge_name(path, &name, languages, cache)?;
+	count_contents(&candidates, &name, bytes, languages)
 }
 
 /// Whether a file named `path` could be counted, judging by its name and attributes alone: false when they leave it out, or its only possible language is filtered out and a shebang couldn't claim it, so its contents needn't be read.
@@ -99,6 +100,7 @@ fn may_be_script(language: &Language, bytes: &[u8]) -> bool {
 
 fn count_contents(
 	candidates: &[&'static Language],
+	name: &str,
 	bytes: &[u8],
 	languages: FileFilter,
 ) -> Option<(&'static Language, FileCounts)> {
@@ -108,7 +110,8 @@ fn count_contents(
 	}
 	let sample_bytes = file_io::sample(bytes);
 	let encoding = detect_encoding(&sample_bytes);
-	if is_probably_binary(&sample_bytes, encoding) || (!languages.include_generated && has_generated_header(bytes)) {
+	let generated = || has_generated_header(bytes) || is_visual_studio_project(name, bytes);
+	if is_probably_binary(&sample_bytes, encoding) || (!languages.include_generated && generated()) {
 		return None;
 	}
 	// A single candidate decides by name alone, unless the file might be a script claimed by its shebang, so only decode the sample when content has a say.
@@ -196,7 +199,7 @@ pub fn process_file(
 		file.rewind()?;
 	}
 	let source = FileSource::open(file, file_size, file_path)?;
-	if let Some((language, counts)) = count_contents(&candidates, &source, languages) {
+	if let Some((language, counts)) = count_contents(&candidates, &filename, &source, languages) {
 		results.add_file(language, counts, file_size, collect_details.then(|| display_path(file_path, display_root)));
 	}
 	Ok(())

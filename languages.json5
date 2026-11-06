@@ -914,6 +914,10 @@
 		file_patterns: [".env", ".env.*"],
 		line_comments: ["#"],
 	},
+	"DotNet Resource": {
+		file_patterns: ["*.resx"],
+		block_comments: [["<!--", "-->"]],
+	},
 	"Dream Maker": {
 		file_patterns: ["*.dm", "*.dme"],
 		line_comments: ["//"],
@@ -1252,6 +1256,10 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["init", "uses", "def", "prop", "construct"],
+	},
+	"Gettext": {
+		file_patterns: ["*.po", "*.pot"],
+		line_comments: ["#"],
 	},
 	"Gherkin": {
 		file_patterns: ["*.feature", "*.story"],
@@ -3933,7 +3941,7 @@
 		line_comments: ["//"],
 	},
 	"XML": {
-		file_patterns: ["*.xml", "*.xsl", "*.xslt", "*.xsd", "*.ps1xml", "*.cdxml", "*.plist", "*.fxml", "*.admx", ".classpath", ".project", ".cproject", "*.storyboard", "*.xib", "*.natvis", "*.vsixmanifest", "*.vstemplate", "*.kml", "*.rss", "*.rdf", "*.urdf", "*.xacro", "*.x3d", "*.xul", "*.ui", "*.glade", "*.jrxml", "*.pom", "*.mxml", "*.uxml", "*.xmi", "*.dtd", "*.tmlanguage", "*.tmtheme", "*.tmpreferences", "*.tmsnippet", "*.tmcommand", "*.sublime-snippet", "*.launch", "*.iml", "*.scxml", "*.wxml", "*.ant", "*.axml", "*.atom", "*.ccproj", "*.ccxml", "*.cproject", "*.cscfg", "*.csdef", "*.ct", "*.depproj", "*.dita", "*.ditamap", "*.ditaval", "*.gmx", "*.builds", "*.dotsettings", "*.filters", "*.shproj", "*.wsf", "*.pt", "*.dll.config", "*.csproj.user"],
+		file_patterns: ["*.xml", "*.xsl", "*.xslt", "*.xsd", "*.ps1xml", "*.cdxml", "*.plist", "*.fxml", "*.admx", "*.adml", ".classpath", ".project", ".cproject", "*.storyboard", "*.xib", "*.natvis", "*.vsixmanifest", "*.vstemplate", "*.kml", "*.rss", "*.rdf", "*.urdf", "*.xacro", "*.x3d", "*.xul", "*.ui", "*.glade", "*.jrxml", "*.pom", "*.mxml", "*.uxml", "*.xmi", "*.dtd", "*.tmlanguage", "*.tmtheme", "*.tmpreferences", "*.tmsnippet", "*.tmcommand", "*.sublime-snippet", "*.launch", "*.iml", "*.scxml", "*.wxml", "*.ant", "*.axml", "*.atom", "*.ccproj", "*.ccxml", "*.cproject", "*.cscfg", "*.csdef", "*.ct", "*.depproj", "*.dita", "*.ditamap", "*.ditaval", "*.gmx", "*.builds", "*.dotsettings", "*.filters", "*.xliff", "*.xlf", "*.shproj", "*.wsf", "*.pt", "*.dll.config", "*.csproj.user"],
 		block_comments: [["<!--", "-->"]],
 	},
 	"Xojo": {
