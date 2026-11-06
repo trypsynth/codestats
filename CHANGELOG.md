@@ -5,8 +5,9 @@
 - Added `--no-config`, which reads no configuration file
 - Added strings to Clojure, F#, and Odin, so a comment marker inside a multi-line string no longer counts as a comment
 - Starts faster and uses about 1 MB less memory, which saves 10% on small repositories
-- Added 211 languages, including 1C Enterprise, Asymptote, bc, Dune, GAMS, Mermaid, MiniZinc, NetLogo, POV-Ray SDL, Simula, SourcePawn, SurrealQL, Toit, XS, Yul, and Zeek
-- Added about 290 extensions and filenames for existing languages, including `.escript`, `.bats`, `.gltf`, `.sublime-settings`, `.containerfile`, `.tm`, and `.spacemacs`
+- Gettext translation files (`.po` and `.pot`) are no longer counted, as translations aren't code. `rebar.lock` now counts as generated
+- Added 208 languages, including 1C Enterprise, Asymptote, bc, Dune, GAMS, Mermaid, MiniZinc, NetLogo, POV-Ray SDL, Simula, SourcePawn, SurrealQL, Toit, XS, Yul, and Zeek
+- Added about 270 extensions and filenames for existing languages, including `.escript`, `.bats`, `.rbi`, `.sublime-settings`, `.containerfile`, `.tm`, and `.spacemacs`
 - Added Raku's `` #`[ ``, `` #`{ ``, and `` #`< `` comments, longer Luau block comments, Cabal block comments, and GraphQL descriptions as comments
 - A file that starts with an XML declaration, in UTF-8 or UTF-16, counts as XML even if its extension belongs to a code language, such as Qt's `.ts` translations
 - `.pl` files with Prolog's `:-` count as Prolog, `.tpl` files with `{{` as Go Template, and `.cls` files with Apex's `public class` as Apex. Also added shared extensions for Beef (`.bf`), Hack (`.hh`), IDL (`.pro`), KCL (`.k`), Logos (`.x`), re2c (`.re`), and Roff (`.nr`)

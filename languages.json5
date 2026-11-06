@@ -1257,10 +1257,6 @@
 		block_comments: [["/*", "*/"]],
 		keywords: ["init", "uses", "def", "prop", "construct"],
 	},
-	"Gettext": {
-		file_patterns: ["*.po", "*.pot"],
-		line_comments: ["#"],
-	},
 	"Gherkin": {
 		file_patterns: ["*.feature", "*.story"],
 		line_comments: ["#"],
@@ -1469,10 +1465,6 @@
 		file_patterns: ["*.hjson"],
 		line_comments: ["//", "#"],
 		block_comments: [["/*", "*/"]],
-	},
-	"hledger": {
-		file_patterns: ["*.hledger"],
-		line_comments: [";", "#"],
 	},
 	"HLSL": {
 		file_patterns: ["*.hlsl", "*.fx", "*.fxh", "*.hlsli", "*.cginc", "*.fxsub", "*.usf", "*.ush"],
@@ -1717,7 +1709,7 @@
 		line_comments: ["//"],
 	},
 	"JSON": {
-		file_patterns: ["*.json", "*.geojson", "*.ndjson", "*.jsonl", "package-lock.json", "composer.lock", "flake.lock", "deno.lock", "*.webmanifest", "*.topojson", "*.mcmeta", "*.uplugin", "*.uproject", "*.gltf", "*.har", "*.sarif", "*.tfstate", "*.tfstate.backup", "*.arb", "*.webapp", "*.4dform", "*.4dproject", "*.ldtk", "*.ldtkl", ".arcconfig", "*.yyp", "Pipfile.lock"],
+		file_patterns: ["*.json", "*.geojson", "*.ndjson", "*.jsonl", "package-lock.json", "composer.lock", "flake.lock", "deno.lock", "*.webmanifest", "*.topojson", "*.mcmeta", "*.uplugin", "*.uproject", "*.webapp", "*.4dform", "*.4dproject", ".arcconfig", "*.yyp", "Pipfile.lock"],
 	},
 	"JSON5": {
 		file_patterns: ["*.json5"],
@@ -1876,19 +1868,11 @@
 		file_patterns: ["*.ld", "*.lds"],
 		block_comments: [["/*", "*/"]],
 	},
-	"LDIF": {
-		file_patterns: ["*.ldif"],
-		line_comments: ["#"],
-	},
 	"Lean": {
 		file_patterns: ["*.lean", "*.hlean"],
 		line_comments: ["--"],
 		block_comments: [["/-", "-/"]],
 		nested_blocks: true,
-	},
-	"Ledger": {
-		file_patterns: ["*.ledger", "*.journal", "*.ldg"],
-		line_comments: [";", "#"],
 	},
 	"Leo": {
 		file_patterns: ["*.leo"],
@@ -2188,7 +2172,7 @@
 		keywords: ["# Microsoft Developer Studio", "TARGTYPE", "CFG=", "!IF", "PROP", "Package Owner"],
 	},
 	"MiniZinc": {
-		file_patterns: ["*.mzn", "*.dzn"],
+		file_patterns: ["*.mzn"],
 		line_comments: ["%"],
 		block_comments: [["/*", "*/"]],
 		strings: ["\""],
@@ -2814,7 +2798,7 @@
 		block_comments: [["/*", "*/"]],
 	},
 	"PostScript": {
-		file_patterns: ["*.ps", "*.eps", "*.epsi", "*.pfa"],
+		file_patterns: ["*.ps", "*.eps"],
 		line_comments: ["%"],
 	},
 	"POV-Ray SDL": {
@@ -3953,7 +3937,7 @@
 		line_comments: ["//"],
 	},
 	"XML": {
-		file_patterns: ["*.xml", "*.xsl", "*.xslt", "*.xsd", "*.ps1xml", "*.cdxml", "*.plist", "*.fxml", "*.admx", "*.adml", ".classpath", ".project", ".cproject", "*.storyboard", "*.xib", "*.natvis", "*.vsixmanifest", "*.vstemplate", "*.kml", "*.rss", "*.rdf", "*.urdf", "*.xacro", "*.x3d", "*.xul", "*.ui", "*.glade", "*.jrxml", "*.pom", "*.mxml", "*.uxml", "*.xmi", "*.dtd", "*.tmlanguage", "*.tmtheme", "*.tmpreferences", "*.tmsnippet", "*.tmcommand", "*.sublime-snippet", "*.launch", "*.iml", "*.scxml", "*.wxml", "*.ant", "*.axml", "*.atom", "*.ccproj", "*.ccxml", "*.clixml", "*.cproject", "*.cscfg", "*.csdef", "*.ct", "*.depproj", "*.dita", "*.ditamap", "*.ditaval", "*.fods", "*.fodt", "*.gir", "*.gmx", "*.gpx", "*.builds", "*.dotsettings", "*.filters", "*.xliff", "*.xlf", "*.osm", "*.shproj", "*.wsf", "*.pt", "*.dll.config", "*.csproj.user"],
+		file_patterns: ["*.xml", "*.xsl", "*.xslt", "*.xsd", "*.ps1xml", "*.cdxml", "*.plist", "*.fxml", "*.admx", "*.adml", ".classpath", ".project", ".cproject", "*.storyboard", "*.xib", "*.natvis", "*.vsixmanifest", "*.vstemplate", "*.kml", "*.rss", "*.rdf", "*.urdf", "*.xacro", "*.x3d", "*.xul", "*.ui", "*.glade", "*.jrxml", "*.pom", "*.mxml", "*.uxml", "*.xmi", "*.dtd", "*.tmlanguage", "*.tmtheme", "*.tmpreferences", "*.tmsnippet", "*.tmcommand", "*.sublime-snippet", "*.launch", "*.iml", "*.scxml", "*.wxml", "*.ant", "*.axml", "*.atom", "*.ccproj", "*.ccxml", "*.cproject", "*.cscfg", "*.csdef", "*.ct", "*.depproj", "*.dita", "*.ditamap", "*.ditaval", "*.gmx", "*.builds", "*.dotsettings", "*.filters", "*.shproj", "*.wsf", "*.pt", "*.dll.config", "*.csproj.user"],
 		block_comments: [["<!--", "-->"]],
 	},
 	"Xojo": {

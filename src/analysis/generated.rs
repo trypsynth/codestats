@@ -12,6 +12,7 @@ const NAMES: &[&str] = &[
 	"Gemfile.lock",
 	"composer.lock",
 	"poetry.lock",
+	"rebar.lock",
 	"Pipfile.lock",
 	"uv.lock",
 	"mix.lock",
