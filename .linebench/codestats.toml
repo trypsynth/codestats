@@ -17,8 +17,8 @@ windows = "cs-x86_64-pc-windows-gnu.exe"
 args           = ["{target}"]
 json           = ["--output", "json-compact"]
 languages      = ["--ext", "{extensions}"]
-same-work      = ["--no-gitignore", "--hidden", "--include-generated", "--no-gitattributes"]
-same-work-note = "ignore files off, hidden files counted, generated files counted, linguist attributes off"
+same-work      = ["--no-gitignore", "--hidden", "--include-generated", "--no-gitattributes", "--no-config"]
+same-work-note = "ignore files off, hidden files counted, generated files counted, linguist attributes off, no configuration file read"
 
 [read]
 files    = "totals.file_count"

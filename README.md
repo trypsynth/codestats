@@ -334,7 +334,7 @@ Each tool is judged against its own declared rules, so a failure means that the 
 | Tool | Cases that agree, out of 95 |
 | --- | ---: |
 | codestats | **95** |
-| mezura 3.3.0 | 89 |
+| mezura 3.4.0 | 89 |
 | scc 4.1.0 | 71 |
 | tokei 15.0.0 | 45 |
 
@@ -348,27 +348,27 @@ To run LineJudge locally:
 
 ## Benchmarks
 
-All times are for files already in the file cache, on an AMD Ryzen 7 PRO 5850U (8 cores, 16 threads) with 32 GB of RAM. They use the x86-64 Linux glibc binary that CI built at commit `b84c4f0`, which is the same build a release ships.
+All times are for files already in the file cache, on an AMD Ryzen 7 PRO 5850U (8 cores, 16 threads) with 32 GB of RAM. They use the x86-64 Linux glibc binary that CI built at commit `b9f3f09`, which is the same build a release ships.
 
 ### Equal work
 
 In these tables, every tool counts the same files. [linebench](https://github.com/loc-conformance/linebench) pins each repository's commit, turns off each tool's filters, and checks that each tool's file and line counts are within 1% of the repository's.
 
-Mean time:
+Median time:
 
 | Repository | Files | Lines | codestats | mezura | scc | tokei |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| [cpython](https://github.com/python/cpython) | 3,554 | 2.2M | **18 ms** | 24 ms | 51 ms | 107 ms |
-| [jdk](https://github.com/openjdk/jdk) | 61,420 | 13M | **128 ms** | 154 ms | 345 ms | 881 ms |
-| [linux](https://github.com/torvalds/linux) | 63,738 | 36M | **217 ms** | 238 ms | 626 ms | 1.11 s |
+| [cpython](https://github.com/python/cpython) | 3,554 | 2.2M | **18 ms** | 23 ms | 50 ms | 105 ms |
+| [jdk](https://github.com/openjdk/jdk) | 61,420 | 13M | **117 ms** | 136 ms | 306 ms | 792 ms |
+| [linux](https://github.com/torvalds/linux) | 63,738 | 36M | **191 ms** | 214 ms | 553 ms | 977 ms |
 
-Peak memory:
+Median peak memory:
 
 | Repository | codestats | mezura | scc | tokei |
 | --- | ---: | ---: | ---: | ---: |
-| [cpython](https://github.com/python/cpython) | **12 MB** | 19 MB | 47 MB | 18 MB |
-| [jdk](https://github.com/openjdk/jdk) | **19 MB** | 28 MB | 95 MB | 57 MB |
-| [linux](https://github.com/torvalds/linux) | **81 MB** | 110 MB | 347 MB | 245 MB |
+| [cpython](https://github.com/python/cpython) | **11 MB** | 18 MB | 47 MB | 18 MB |
+| [jdk](https://github.com/openjdk/jdk) | **17 MB** | 28 MB | 94 MB | 56 MB |
+| [linux](https://github.com/torvalds/linux) | **93 MB** | 145 MB | 351 MB | 242 MB |
 
 To reproduce these tables, run the following command with linebench 0.3.1, after running `linebench fetch --counters all --corpus all`:
 
@@ -376,54 +376,56 @@ To reproduce these tables, run the following command with linebench 0.3.1, after
 linebench run cpython,linux,jdk --counters scc,tokei,mezura,codestats@dev --given codestats@dev=path/to/cs --definition codestats@dev=.linebench/codestats.toml --add .linebench
 ```
 
-Each tool ran 30 times, half of them in reverse order. These tables measure codestats, mezura 3.3.0, scc 4.1.0, and tokei 15.0.0.
+Each tool ran 30 times, half of them in reverse order. These tables measure codestats, mezura 3.4.0, scc 4.1.0, and tokei 15.0.0. linebench 0.3.1 fetches mezura 3.3.0, so these runs used the mezura definition from linebench's `dev-v0.4.0` branch, with `--given` pointing at mezura 3.4.0.
 
 ### Default settings
 
-In these tables, every tool runs with no flags, which is how most people use it. The tools don't count the same files, so compare these times with care. For example, mezura counts 253K lines in nvda, where codestats counts 1.6M, because it leaves out Gettext translation files. The file and line counts in the table are from codestats.
+In these tables, every tool runs with no flags, which is how most people use it. The tools don't count the same files, so compare these times with care. For example, mezura counts 40,234 files in rust, where codestats counts 44,338. The file and line counts in the table are from codestats.
 
-Mean time:
+Median time:
 
 | Repository | Files | Lines | codestats | mezura | tokei | scc | gocloc |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| [ripgrep](https://github.com/BurntSushi/ripgrep) | 154 | 65K | **3.8 ms** | 7.3 ms | 9.6 ms | 11 ms | 38 ms |
-| [cli](https://github.com/cli/cli) | 1,102 | 312K | **7.6 ms** | 11 ms | 19 ms | 18 ms | 112 ms |
-| [nvda](https://github.com/nvaccess/nvda) | 1,158 | 1.6M | 13 ms | **9.5 ms** | 41 ms | 23 ms | 136 ms |
-| [wxWidgets](https://github.com/wxWidgets/wxWidgets) | 4,491 | 2.3M | 29 ms | **25 ms** | 79 ms | 103 ms | 450 ms |
-| [cpython](https://github.com/python/cpython) | 4,947 | 2.5M | **25 ms** | 30 ms | 130 ms | 78 ms | 670 ms |
-| [kubernetes](https://github.com/kubernetes/kubernetes) | 22,693 | 5.2M | **66 ms** | 67 ms | 271 ms | 218 ms | 2.06 s |
-| [rust](https://github.com/rust-lang/rust) | 44,334 | 5.1M | **93 ms** | 94 ms | 381 ms | 230 ms | 2.48 s |
-| [linux](https://github.com/torvalds/linux) | 92,811 | 44M | **300 ms** | 323 ms | 1.39 s | 1.00 s | 11.2 s |
+| [ripgrep](https://github.com/BurntSushi/ripgrep) | 156 | 65K | **3.6 ms** | 6.2 ms | 9.1 ms | 11 ms | 38 ms |
+| [cli](https://github.com/cli/cli) | 1,102 | 312K | **6.8 ms** | 8.8 ms | 19 ms | 18 ms | 108 ms |
+| [nvda](https://github.com/nvaccess/nvda) | 1,088 | 298K | **7.4 ms** | 8.7 ms | 42 ms | 21 ms | 133 ms |
+| [wxWidgets](https://github.com/wxWidgets/wxWidgets) | 4,141 | 1.7M | 25 ms | **24 ms** | 78 ms | 100 ms | 436 ms |
+| [cpython](https://github.com/python/cpython) | 4,828 | 2.5M | **25 ms** | 27 ms | 128 ms | 78 ms | 641 ms |
+| [kubernetes](https://github.com/kubernetes/kubernetes) | 22,681 | 5.2M | **61 ms** | 63 ms | 259 ms | 210 ms | 1.95 s |
+| [rust](https://github.com/rust-lang/rust) | 44,338 | 5.1M | 90 ms | **87 ms** | 349 ms | 220 ms | 2.33 s |
+| [linux](https://github.com/torvalds/linux) | 92,882 | 44M | **260 ms** | 279 ms | 1.21 s | 885 ms | 10.7 s |
 
-Peak memory:
+Median peak memory:
 
 | Repository | codestats | mezura | tokei | scc | gocloc |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| [ripgrep](https://github.com/BurntSushi/ripgrep) | **7.4 MB** | 8.6 MB | 7.9 MB | 27 MB | 29 MB |
-| [cli](https://github.com/cli/cli) | **8.3 MB** | 9.7 MB | 8.3 MB | 32 MB | 36 MB |
-| [nvda](https://github.com/nvaccess/nvda) | 19 MB | **9.9 MB** | 27 MB | 38 MB | 38 MB |
-| [wxWidgets](https://github.com/wxWidgets/wxWidgets) | **19 MB** | 20 MB | 24 MB | 74 MB | 40 MB |
-| [cpython](https://github.com/python/cpython) | **14 MB** | 22 MB | 25 MB | 66 MB | 44 MB |
-| [kubernetes](https://github.com/kubernetes/kubernetes) | **19 MB** | 24 MB | 64 MB | 96 MB | 53 MB |
-| [rust](https://github.com/rust-lang/rust) | **33 MB** | 43 MB | 92 MB | 129 MB | 64 MB |
-| [linux](https://github.com/torvalds/linux) | **80 MB** | 179 MB | 285 MB | 385 MB | 111 MB |
+| [ripgrep](https://github.com/BurntSushi/ripgrep) | **6.7 MB** | 7.5 MB | 7.7 MB | 27 MB | 29 MB |
+| [cli](https://github.com/cli/cli) | **7.4 MB** | 8.5 MB | 8.2 MB | 32 MB | 37 MB |
+| [nvda](https://github.com/nvaccess/nvda) | **8.7 MB** | 8.9 MB | 26 MB | 38 MB | 38 MB |
+| [wxWidgets](https://github.com/wxWidgets/wxWidgets) | **17 MB** | 19 MB | 24 MB | 73 MB | 40 MB |
+| [cpython](https://github.com/python/cpython) | **13 MB** | 21 MB | 25 MB | 65 MB | 46 MB |
+| [kubernetes](https://github.com/kubernetes/kubernetes) | **17 MB** | 23 MB | 63 MB | 97 MB | 53 MB |
+| [rust](https://github.com/rust-lang/rust) | **29 MB** | 42 MB | 94 MB | 129 MB | 67 MB |
+| [linux](https://github.com/torvalds/linux) | **80 MB** | 171 MB | 292 MB | 375 MB | 112 MB |
 
-To reproduce these tables, run `CS=path/to/cs scripts/bench.sh`, which pins each repository's commit. It uses hyperfine 2.0.0 and these tools: mezura 3.3.0, tokei 15.0.0, scc 4.1.0, and gocloc 0.7.0.
+Each tool ran 20 times, or 10 times for rust and linux, in rounds of two runs per tool. The tools' order flips each round, with a pause between rounds, so a processor that slows down as it heats up doesn't favor one tool.
+
+To reproduce these tables, run `CS=path/to/cs scripts/bench.sh`, which pins each repository's commit. It uses hyperfine 2.0.0 and these tools: mezura 3.4.0, tokei 15.0.0, scc 4.1.0, and gocloc 0.7.0.
 
 ### Windows
 
-These times are from a different machine than the tables above, so don't compare the two. It has an AMD Ryzen 9 5950X (16 cores, 32 threads) and 128 GB of RAM, and runs Windows 11 with Microsoft Defender real-time protection on. They use the x86-64 Windows binary that CI built at commit `6234d74`, compared with mezura 3.3.0. Each time is a median of 10 to 40 runs for files already in the file cache, and includes about 14 ms to start a process.
+These times are from a different machine than the tables above, so don't compare the two. It has an AMD Ryzen 9 5950X (16 cores, 32 threads) and 128 GB of RAM, and runs Windows 11 with Microsoft Defender real-time protection on. They use the x86-64 Windows binary that CI built at commit `06a5dba`, compared with mezura 3.4.0. Each time is a median of 10 to 40 runs for files already in the file cache, and includes about 14 ms to start a process.
 
 | Repository | Files | Lines | Settings | codestats | mezura |
 | --- | ---: | ---: | --- | ---: | ---: |
-| [cpython](https://github.com/python/cpython) | 3,626 | 2.3M | Equal work | **46 ms** | 56 ms |
-| [kubernetes](https://github.com/kubernetes/kubernetes) | 18,399 | 5.6M | Equal work | **156 ms** | 168 ms |
-| [ripgrep](https://github.com/BurntSushi/ripgrep) | 154 | 65K | Default | **20 ms** | 33 ms |
-| [cli](https://github.com/cli/cli) | 1,102 | 312K | Default | **44 ms** | 53 ms |
-| [cpython](https://github.com/python/cpython) | 4,947 | 2.5M | Default | 71 ms | **64 ms** |
-| [kubernetes](https://github.com/kubernetes/kubernetes) | 22,697 | 5.2M | Default | 238 ms | **221 ms** |
+| [cpython](https://github.com/python/cpython) | 3,626 | 2.3M | Equal work | **48 ms** | 59 ms |
+| [kubernetes](https://github.com/kubernetes/kubernetes) | 18,399 | 5.6M | Equal work | **170 ms** | 182 ms |
+| [ripgrep](https://github.com/BurntSushi/ripgrep) | 156 | 65K | Default | **21 ms** | 34 ms |
+| [cli](https://github.com/cli/cli) | 1,102 | 312K | Default | **46 ms** | 52 ms |
+| [cpython](https://github.com/python/cpython) | 4,828 | 2.5M | Default | 69 ms | **64 ms** |
+| [kubernetes](https://github.com/kubernetes/kubernetes) | 22,685 | 5.2M | Default | 258 ms | **245 ms** |
 
-At default settings, the tools don't count the same files. For example, mezura counts 17,108 files in kubernetes, where codestats counts 22,697. The file and line counts in the table are from codestats.
+At default settings, the tools don't count the same files. For example, mezura counts 17,108 files in kubernetes, where codestats counts 22,685, a third more. The file and line counts in the table are from codestats.
 
 To reproduce this table, run `powershell -ExecutionPolicy Bypass -File scripts/bench-windows.ps1`.
 
