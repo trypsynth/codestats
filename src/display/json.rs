@@ -44,47 +44,15 @@ struct Group<'a> {
 	file_count: u64,
 	lines: LineCounts,
 	bytes: u64,
-	#[serde(skip_serializing_if = "Vec::is_empty")]
-	embedded: Vec<EmbeddedLanguage<'a>>,
+	/// Lines of code in another language within the group's lines, which they're also counted in.
+	#[serde(skip_serializing_if = "<[_]>::is_empty")]
+	embedded: &'a [EmbeddedRecord],
 	#[serde(skip_serializing_if = "Option::is_none")]
-	files: Option<Vec<File<'a>>>,
-}
-
-#[derive(Serialize)]
-struct File<'a> {
-	path: &'a str,
-	lines: LineCounts,
-	bytes: u64,
-	#[serde(skip_serializing_if = "Vec::is_empty")]
-	embedded: Vec<EmbeddedLanguage<'a>>,
-}
-
-/// Lines of code in another language within a language's or file's lines, which they're also counted in.
-#[derive(Serialize)]
-struct EmbeddedLanguage<'a> {
-	name: &'a str,
-	lines: LineCounts,
-}
-
-fn embedded(records: &[EmbeddedRecord]) -> Vec<EmbeddedLanguage<'_>> {
-	records.iter().map(|record| EmbeddedLanguage { name: record.name, lines: record.counts }).collect()
+	files: Option<&'a [FileRecord<'a>]>,
 }
 
 impl<'a> Report<'a> {
 	fn new(report: &'a ReportData, by_dir: bool) -> Self {
-		let files = |records: &'a Option<Vec<FileRecord>>| {
-			records.as_ref().map(|records| {
-				records
-					.iter()
-					.map(|file| File {
-						path: file.path,
-						lines: file.counts,
-						bytes: file.size,
-						embedded: embedded(&file.embedded),
-					})
-					.collect()
-			})
-		};
 		let summary = &report.summary;
 		Self {
 			schema_version: SCHEMA_VERSION,
@@ -98,8 +66,8 @@ impl<'a> Report<'a> {
 					file_count: lang.files,
 					lines: lang.counts,
 					bytes: lang.size,
-					embedded: embedded(&lang.embedded),
-					files: files(&lang.files_detail),
+					embedded: &lang.embedded,
+					files: lang.files_detail.as_deref(),
 				})
 				.collect(),
 			hidden_languages: report.languages_hidden.unwrap_or(0),
@@ -108,12 +76,12 @@ impl<'a> Report<'a> {
 					.directories
 					.iter()
 					.map(|dir| Group {
-						name: &dir.path,
+						name: dir.path,
 						file_count: dir.files,
 						lines: dir.counts,
 						bytes: dir.size,
-						embedded: Vec::new(),
-						files: files(&dir.files_detail),
+						embedded: &[],
+						files: dir.files_detail.as_deref(),
 					})
 					.collect()
 			}),

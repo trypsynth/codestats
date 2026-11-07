@@ -141,7 +141,7 @@ impl HumanFormatter {
 		let file_pct = percentage(language.files, summary.total_files);
 		let line_pct = percentage(language.counts.total, summary.counts.total);
 		let size_pct = percentage(language.size, summary.total_size);
-		let size_human = &language.size_human;
+		let size_human = ctx.size(language.size);
 		let file_pct_str = ctx.percent(file_pct);
 		let line_pct_str = ctx.percent(line_pct);
 		let size_pct_str = ctx.percent(size_pct);
@@ -221,7 +221,7 @@ impl HumanFormatter {
 		let file_pct = percentage(dir.files, summary.total_files);
 		let line_pct = percentage(dir.counts.total, summary.counts.total);
 		let size_pct = percentage(dir.size, summary.total_size);
-		let size_human = &dir.size_human;
+		let size_human = ctx.size(dir.size);
 		writeln!(writer, "{}:", dir.path)?;
 		writeln!(
 			writer,
@@ -272,7 +272,7 @@ impl HumanFormatter {
 				file.path,
 				ctx.number(file.counts.total),
 				pluralize(file.counts.total, "line", "lines"),
-				file.size_human,
+				ctx.size(file.size),
 				ctx.percent(file_pct)
 			)?;
 		}

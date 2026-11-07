@@ -22,13 +22,13 @@ pub fn md_escape(value: &str, _values: &dyn Values) -> AskamaResult<String> {
 
 mod filters {
 	pub use super::md_escape;
-	pub use crate::display::template_filters::{fmt_float, fmt_number, fmt_percent};
+	pub use crate::display::template_filters::{fmt_float, fmt_number, fmt_size};
 }
 
 #[derive(Template)]
 #[template(path = "report.md", escape = "none")]
 struct MarkdownTemplate<'a> {
-	title: &'a str,
+	title: std::borrow::Cow<'a, str>,
 	summary: &'a Summary,
 	ctx: &'a FormatterContext,
 	line_breakdown: Vec<String>,

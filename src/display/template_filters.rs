@@ -23,8 +23,8 @@ pub fn fmt_number(value: &u64, _values: &dyn Values, ctx: &FormatterContext) -> 
 ///
 /// Never returns an error; signature required by the askama filter API.
 #[askama::filter_fn]
-pub fn fmt_percent(value: &f64, _values: &dyn Values, ctx: &FormatterContext) -> Result<String> {
-	Ok(ctx.percent(*value))
+pub fn fmt_size(value: &u64, _values: &dyn Values, ctx: &FormatterContext) -> Result<String> {
+	Ok(ctx.size(*value))
 }
 
 /// # Errors

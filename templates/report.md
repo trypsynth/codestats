@@ -16,7 +16,7 @@
 | File | Total lines | Code lines | Comment lines | Blank lines | Shebang lines | Size |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 {%- for file in files %}
-| {{ file.path | md_escape }} | {{ file.counts.total | fmt_number(ctx) }} | {{ file.counts.code | fmt_number(ctx) }} | {{ file.counts.comment | fmt_number(ctx) }} | {{ file.counts.blank | fmt_number(ctx) }} | {{ file.counts.shebang | fmt_number(ctx) }} | {{ file.size_human | md_escape }} |
+| {{ file.path | md_escape }} | {{ file.counts.total | fmt_number(ctx) }} | {{ file.counts.code | fmt_number(ctx) }} | {{ file.counts.comment | fmt_number(ctx) }} | {{ file.counts.blank | fmt_number(ctx) }} | {{ file.counts.shebang | fmt_number(ctx) }} | {{ file.size | fmt_size(ctx) }} |
 {%- endfor %}
 {%- endmacro %}
 {%- if !show_breakdown %}
@@ -36,7 +36,7 @@ _No recognized programming languages found._
 | Directory | Files | Lines | Code % | Comment % | Blank % | Shebang % | Size |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 {%- for dir in directories %}
-| {{ dir.path | md_escape }} | {{ dir.files | fmt_number(ctx) }} | {{ dir.counts.total | fmt_number(ctx) }} | {{ dir.code_percentage | fmt_percent(ctx) }}% | {{ dir.comment_percentage | fmt_percent(ctx) }}% | {{ dir.blank_percentage | fmt_percent(ctx) }}% | {{ dir.shebang_percentage | fmt_percent(ctx) }}% | {{ dir.size_human | md_escape }} |
+| {{ dir.path | md_escape }} | {{ dir.files | fmt_number(ctx) }} | {{ dir.counts.total | fmt_number(ctx) }} | {{ dir.format_code_percentage(ctx) }}% | {{ dir.format_comment_percentage(ctx) }}% | {{ dir.format_blank_percentage(ctx) }}% | {{ dir.format_shebang_percentage(ctx) }}% | {{ dir.size | fmt_size(ctx) }} |
 {%- endfor %}
 {%- if let Some(note) = hidden_note %}
 
@@ -70,7 +70,7 @@ _No recognized programming languages found._
 | Language | Files | Lines | Average Lines per File | Code % | Comment % | Blank % | Shebang % | Size |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 {%- for lang in languages %}
-| {{ lang.name | md_escape }} | {{ lang.files | fmt_number(ctx) }} | {{ lang.counts.total | fmt_number(ctx) }} | {{ lang.avg_lines_per_file | fmt_float(1) }} | {{ lang.code_percentage | fmt_percent(ctx) }}% | {{ lang.comment_percentage | fmt_percent(ctx) }}% | {{ lang.blank_percentage | fmt_percent(ctx) }}% | {{ lang.shebang_percentage | fmt_percent(ctx) }}% | {{ lang.size_human | md_escape }} |
+| {{ lang.name | md_escape }} | {{ lang.files | fmt_number(ctx) }} | {{ lang.counts.total | fmt_number(ctx) }} | {{ lang.avg_lines_per_file | fmt_float(1) }} | {{ lang.format_code_percentage(ctx) }}% | {{ lang.format_comment_percentage(ctx) }}% | {{ lang.format_blank_percentage(ctx) }}% | {{ lang.format_shebang_percentage(ctx) }}% | {{ lang.size | fmt_size(ctx) }} |
 {%- endfor %}
 {%- if let Some(note) = hidden_note %}
 

@@ -86,7 +86,7 @@ impl<const DELIMITER: u8, E: FieldEscaper> SeparatedValuesFormatter<DELIMITER, E
 			Self::write_dir_table(&report.directories, ctx, writer)?;
 			writer.write_all(b"\n\n")?;
 			for dir in &report.directories {
-				Self::write_files_section(&dir.path, dir.files_detail.as_deref(), ctx, writer)?;
+				Self::write_files_section(dir.path, dir.files_detail.as_deref(), ctx, writer)?;
 			}
 		} else {
 			writer.write_all(b"Language breakdown:\n")?;
@@ -108,7 +108,7 @@ impl<const DELIMITER: u8, E: FieldEscaper> SeparatedValuesFormatter<DELIMITER, E
 	fn write_summary_section(report: &ReportData, ctx: &FormatterContext, output: &mut dyn Write) -> Result<()> {
 		output.write_all(b"Summary:\n")?;
 		Self::write_record(output, &["metric", "value", "percentage", "human_readable"])?;
-		Self::write_record(output, &["Analysis Path", report.analysis_path.as_str(), "", ""])?;
+		Self::write_record(output, &["Analysis Path", &report.analysis_paths.join(", "), "", ""])?;
 		for metric in report.summary.metrics() {
 			let value = ctx.number(metric.value);
 			let pct = metric.percentage.map(|pct| ctx.percent(pct)).unwrap_or_default();
@@ -153,7 +153,7 @@ impl<const DELIMITER: u8, E: FieldEscaper> SeparatedValuesFormatter<DELIMITER, E
 					&file_stat.format_blank_lines(ctx),
 					&file_stat.format_shebang_lines(ctx),
 					&file_stat.format_size(ctx),
-					&file_stat.size_human,
+					&file_stat.format_size_human(ctx),
 				],
 			)?;
 		}
@@ -237,7 +237,7 @@ impl<const DELIMITER: u8, E: FieldEscaper> SeparatedValuesFormatter<DELIMITER, E
 			Self::write_record(
 				output,
 				&[
-					&dir.path,
+					dir.path,
 					&dir.format_files(ctx),
 					&dir.format_lines(ctx),
 					&dir.format_code_lines(ctx),
@@ -245,7 +245,7 @@ impl<const DELIMITER: u8, E: FieldEscaper> SeparatedValuesFormatter<DELIMITER, E
 					&dir.format_blank_lines(ctx),
 					&dir.format_shebang_lines(ctx),
 					&dir.format_size(ctx),
-					&dir.size_human,
+					&dir.format_size_human(ctx),
 					&dir.format_code_percentage(ctx),
 					&dir.format_comment_percentage(ctx),
 					&dir.format_blank_percentage(ctx),
@@ -269,7 +269,7 @@ impl<const DELIMITER: u8, E: FieldEscaper> SeparatedValuesFormatter<DELIMITER, E
 				&lang.format_blank_lines(ctx),
 				&lang.format_shebang_lines(ctx),
 				&lang.format_size(ctx),
-				&lang.size_human,
+				&lang.format_size_human(ctx),
 				&lang.format_code_percentage(ctx),
 				&lang.format_comment_percentage(ctx),
 				&lang.format_blank_percentage(ctx),

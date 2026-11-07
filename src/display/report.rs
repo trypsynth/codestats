@@ -1,7 +1,10 @@
 use std::{
+	borrow::Cow,
 	collections::HashMap,
 	path::{Component, Path, PathBuf},
 };
+
+use serde::Serialize;
 
 use crate::{
 	analysis::{AnalysisResults, Embedded, FileStats, LanguageStats, LineCounts, LineType},
@@ -27,11 +30,36 @@ macro_rules! impl_formatters {
 	};
 }
 
+/// `format_*_percentage` methods for a record's `counts`.
+macro_rules! impl_percentages {
+	($type:ty) => {
+		impl $type {
+			#[must_use]
+			pub fn format_code_percentage(&self, ctx: &FormatterContext) -> String {
+				ctx.percent(self.counts.percentage(LineType::Code))
+			}
+
+			#[must_use]
+			pub fn format_comment_percentage(&self, ctx: &FormatterContext) -> String {
+				ctx.percent(self.counts.percentage(LineType::Comment))
+			}
+
+			#[must_use]
+			pub fn format_blank_percentage(&self, ctx: &FormatterContext) -> String {
+				ctx.percent(self.counts.percentage(LineType::Blank))
+			}
+
+			#[must_use]
+			pub fn format_shebang_percentage(&self, ctx: &FormatterContext) -> String {
+				ctx.percent(self.counts.percentage(LineType::Shebang))
+			}
+		}
+	};
+}
+
 #[derive(Debug)]
 pub struct ReportData<'a> {
-	/// The paths counted, joined for a title.
-	pub analysis_path: String,
-	/// The paths counted, one by one.
+	/// The paths counted.
 	pub analysis_paths: Vec<String>,
 	pub summary: Summary,
 	pub languages: Vec<LanguageRecord<'a>>,
@@ -43,8 +71,12 @@ pub struct ReportData<'a> {
 impl<'a> ReportData<'a> {
 	/// What the report is about, in words. CSV, TSV, and JSON keep the path as given.
 	#[must_use]
-	pub fn title(&self) -> &str {
-		if self.analysis_path == "-" { "standard input" } else { &self.analysis_path }
+	pub fn title(&self) -> Cow<'_, str> {
+		match &self.analysis_paths[..] {
+			[path] if path == "-" => Cow::Borrowed("standard input"),
+			[path] => Cow::Borrowed(path),
+			paths => Cow::Owned(paths.join(", ")),
+		}
 	}
 
 	/// A sentence saying how many entries `--top-languages` and `--min-lines` left out of the breakdown.
@@ -84,7 +116,6 @@ impl<'a> ReportData<'a> {
 		let languages_hidden = (languages_hidden > 0).then_some(languages_hidden);
 		let dirs_hidden = (dirs_hidden > 0).then_some(dirs_hidden);
 		Self {
-			analysis_path: paths.iter().map(|path| path.display().to_string()).collect::<Vec<_>>().join(", "),
 			analysis_paths: paths.iter().map(|path| path.display().to_string()).collect(),
 			summary,
 			languages,
@@ -118,10 +149,11 @@ pub struct EmbeddedRow<'a> {
 	pub counts: LineCounts,
 }
 
-/// Lines of one language embedded in a language's or file's code.
-#[derive(Debug)]
+/// Lines of one language embedded in a language's or file's code. Serializes as it appears in JSON.
+#[derive(Debug, Serialize)]
 pub struct EmbeddedRecord {
 	pub name: &'static str,
+	#[serde(rename = "lines")]
 	pub counts: LineCounts,
 }
 
@@ -255,7 +287,7 @@ fn file_records<'a>(mut files: Vec<&'a FileStats>, ctx: &FormatterContext) -> Ve
 		|file| sort_value(sort_key, file.path(), file.counts(), None, file.size()),
 		|a, b| a.path().cmp(b.path()),
 	);
-	files.into_iter().map(|file| FileRecord::from_stats(file, ctx)).collect()
+	files.into_iter().map(FileRecord::from_stats).collect()
 }
 
 #[derive(Debug)]
@@ -264,12 +296,7 @@ pub struct LanguageRecord<'a> {
 	pub files: u64,
 	pub counts: LineCounts,
 	pub size: u64,
-	pub size_human: String,
 	pub avg_lines_per_file: f64,
-	pub code_percentage: f64,
-	pub comment_percentage: f64,
-	pub blank_percentage: f64,
-	pub shebang_percentage: f64,
 	pub embedded: Vec<EmbeddedRecord>,
 	pub files_detail: Option<Vec<FileRecord<'a>>>,
 }
@@ -307,18 +334,12 @@ impl<'a> LanguageRecord<'a> {
 	fn from_stats(name: &'a str, stats: &'a LanguageStats, verbosity: Verbosity, ctx: &FormatterContext) -> Self {
 		let files_detail =
 			(verbosity == Verbosity::Verbose).then(|| file_records(stats.files_list().iter().collect(), ctx));
-		let counts = stats.counts();
 		Self {
 			name,
 			files: stats.files(),
-			counts: *counts,
+			counts: *stats.counts(),
 			size: stats.size(),
-			size_human: ctx.size(stats.size()),
 			avg_lines_per_file: stats.average_lines_per_file(),
-			code_percentage: counts.percentage(LineType::Code),
-			comment_percentage: counts.percentage(LineType::Comment),
-			blank_percentage: counts.percentage(LineType::Blank),
-			shebang_percentage: counts.percentage(LineType::Shebang),
 			embedded: embedded_records(stats.embedded()),
 			files_detail,
 		}
@@ -337,32 +358,34 @@ impl_formatters!(LanguageRecord<'_> {
 	format_blank_lines => counts.blank : number,
 	format_shebang_lines => counts.shebang : number,
 	format_size => size : number,
-	format_code_percentage => code_percentage : percent,
-	format_comment_percentage => comment_percentage : percent,
-	format_blank_percentage => blank_percentage : percent,
-	format_shebang_percentage => shebang_percentage : percent,
+	format_size_human => size : size,
 });
 
-#[derive(Debug)]
+/// One file's counts. Serializes as it appears in JSON.
+#[derive(Debug, Serialize)]
 pub struct FileRecord<'a> {
 	pub path: &'a str,
+	#[serde(rename = "lines")]
 	pub counts: LineCounts,
+	#[serde(rename = "bytes")]
 	pub size: u64,
-	pub size_human: String,
+	#[serde(skip_serializing_if = "Vec::is_empty")]
 	pub embedded: Vec<EmbeddedRecord>,
 }
 
 impl<'a> FileRecord<'a> {
-	fn from_stats(file: &'a FileStats, ctx: &FormatterContext) -> Self {
+	fn from_stats(file: &'a FileStats) -> Self {
 		Self {
 			path: file.path(),
 			counts: *file.counts(),
 			size: file.size(),
-			size_human: ctx.size(file.size()),
 			embedded: embedded_records(file.embedded()),
 		}
 	}
 }
+
+impl_percentages!(LanguageRecord<'_>);
+impl_percentages!(DirRecord<'_>);
 
 impl_formatters!(FileRecord<'_> {
 	format_total_lines => counts.total : number,
@@ -371,6 +394,7 @@ impl_formatters!(FileRecord<'_> {
 	format_blank_lines => counts.blank : number,
 	format_shebang_lines => counts.shebang : number,
 	format_size => size : number,
+	format_size_human => size : size,
 });
 
 impl_formatters!(DirRecord<'_> {
@@ -381,19 +405,18 @@ impl_formatters!(DirRecord<'_> {
 	format_blank_lines => counts.blank : number,
 	format_shebang_lines => counts.shebang : number,
 	format_size => size : number,
-	format_code_percentage => code_percentage : percent,
-	format_comment_percentage => comment_percentage : percent,
-	format_blank_percentage => blank_percentage : percent,
-	format_shebang_percentage => shebang_percentage : percent,
+	format_size_human => size : size,
 });
 
-fn dir_key(file_path_str: &str, root: &Path) -> String {
-	let path = Path::new(file_path_str);
+/// The first directory under `root` that `file_path` is in, or `(root)`.
+fn dir_key<'a>(file_path: &'a str, root: &Path) -> &'a str {
+	let path = Path::new(file_path);
 	let relative = path.strip_prefix(root).unwrap_or(path);
 	let mut components = relative.components();
 	match (components.next(), components.next()) {
-		(Some(Component::Normal(first)), Some(_)) => first.to_string_lossy().into_owned(),
-		_ => "(root)".to_owned(),
+		// A piece of a `str` is still one.
+		(Some(Component::Normal(first)), Some(_)) => first.to_str().unwrap_or("(root)"),
+		_ => "(root)",
 	}
 }
 
@@ -406,22 +429,17 @@ struct DirAccumulator<'a> {
 
 #[derive(Debug)]
 pub struct DirRecord<'a> {
-	pub path: String,
+	pub path: &'a str,
 	pub files: u64,
 	pub counts: LineCounts,
 	pub size: u64,
-	pub size_human: String,
-	pub code_percentage: f64,
-	pub comment_percentage: f64,
-	pub blank_percentage: f64,
-	pub shebang_percentage: f64,
 	pub files_detail: Option<Vec<FileRecord<'a>>>,
 }
 
 impl<'a> DirRecord<'a> {
 	fn from_results(results: &'a AnalysisResults, root: &Path, ctx: &FormatterContext) -> (Vec<Self>, usize) {
 		let verbose = ctx.options.verbosity == Verbosity::Verbose;
-		let mut map: HashMap<String, DirAccumulator<'a>> = HashMap::new();
+		let mut map: HashMap<&'a str, DirAccumulator<'a>> = HashMap::new();
 		for (_, stats) in results.languages() {
 			for file in stats.files_list() {
 				let acc = map.entry(dir_key(file.path(), root)).or_default();
@@ -433,28 +451,20 @@ impl<'a> DirRecord<'a> {
 		let total = map.len();
 		let mut records: Vec<_> = map
 			.into_iter()
-			.map(|(path, acc)| {
-				let counts = acc.counts;
-				Self {
-					files: acc.files.len() as u64,
-					counts,
-					size: acc.size,
-					size_human: ctx.size(acc.size),
-					code_percentage: counts.percentage(LineType::Code),
-					comment_percentage: counts.percentage(LineType::Comment),
-					blank_percentage: counts.percentage(LineType::Blank),
-					shebang_percentage: counts.percentage(LineType::Shebang),
-					files_detail: verbose.then(|| file_records(acc.files, ctx)),
-					path,
-				}
+			.map(|(path, acc)| Self {
+				path,
+				files: acc.files.len() as u64,
+				counts: acc.counts,
+				size: acc.size,
+				files_detail: verbose.then(|| file_records(acc.files, ctx)),
 			})
 			.collect();
 		let sort_key = ctx.options.language_sort_key;
 		apply_sort(
 			&mut records,
 			ctx.options.sort_direction,
-			|r| sort_value(sort_key, &r.path, &r.counts, Some(r.files), r.size),
-			|a, b| a.path.cmp(&b.path),
+			|r| sort_value(sort_key, r.path, &r.counts, Some(r.files), r.size),
+			|a, b| a.path.cmp(b.path),
 		);
 		if let Some(min) = ctx.options.min_lines {
 			records.retain(|r| r.counts.total >= min);

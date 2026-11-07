@@ -12,7 +12,7 @@ use crate::{
 #[derive(Template)]
 #[template(path = "report.html", escape = "html")]
 struct ReportTemplate<'a> {
-	title: &'a str,
+	title: std::borrow::Cow<'a, str>,
 	summary: &'a Summary,
 	totals: String,
 	languages: &'a [LanguageRecord<'a>],
@@ -29,7 +29,7 @@ struct ReportTemplate<'a> {
 pub struct HtmlFormatter;
 
 mod filters {
-	pub use crate::display::template_filters::{fmt_float, fmt_number, fmt_percent};
+	pub use crate::display::template_filters::{fmt_float, fmt_number, fmt_size};
 }
 
 impl OutputFormatter for HtmlFormatter {
