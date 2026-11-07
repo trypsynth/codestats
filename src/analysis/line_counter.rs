@@ -169,7 +169,7 @@ fn lines(bytes: &[u8]) -> impl Iterator<Item = std::ops::Range<usize>> + '_ {
 		if start >= bytes.len() {
 			return None;
 		}
-		let end = memchr(b'\n', &bytes[start..]).map_or(bytes.len(), |pos| start + pos + 1);
+		let end = line_end(bytes, start);
 		let line = start..end;
 		start = end;
 		Some(line)

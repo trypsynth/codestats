@@ -85,12 +85,17 @@ pub fn count_bytes(
 
 /// Whether a file named `path` could be counted, judging by its name and attributes alone: false when they leave it out, or its only possible language is filtered out and a shebang couldn't claim it, so its contents needn't be read.
 pub fn could_count(path: &Path, languages: FileFilter, cache: &mut DirCache) -> bool {
-	detection_name(path).and_then(|name| judge_name(path, &name, languages, cache)).is_some_and(
-		|(candidates, languages)| match candidates[..] {
-			[language] => languages.allows(language) || language.shebang_overrides,
-			_ => true,
-		},
-	)
+	detection_name(path)
+		.and_then(|name| judge_name(path, &name, languages, cache))
+		.is_some_and(|(candidates, languages)| worth_reading(&candidates, languages))
+}
+
+/// Whether a file with these candidates is worth reading: false when its only candidate is filtered out and a shebang couldn't claim it.
+fn worth_reading(candidates: &[&Language], languages: FileFilter) -> bool {
+	match candidates {
+		[language] => languages.allows(language) || language.shebang_overrides,
+		_ => true,
+	}
 }
 
 /// Whether a file whose name says `language` might be a script its shebang claims instead: only where the language allows it, and only if it starts with `#!`.
@@ -114,12 +119,10 @@ fn count_contents(
 	if is_probably_binary(&sample_bytes, encoding) || (!languages.include_generated && generated()) {
 		return None;
 	}
+	let body = sample_bytes.get(encoding.bom_len..).unwrap_or_default();
 	// A single candidate decides by name alone, unless the file might be a script claimed by its shebang, so only decode the sample when content has a say.
 	let content_decides = match candidates {
-		[language] => {
-			language.require_keywords == RequireKeywords::Always
-				|| may_be_script(language, &sample_bytes[encoding.bom_len.min(sample_bytes.len())..])
-		}
+		[language] => language.require_keywords == RequireKeywords::Always || may_be_script(language, body),
 		_ => true,
 	};
 	let mut detection = langs::detect_language(
@@ -132,7 +135,6 @@ fn count_contents(
 		detection = langs::detect_language(candidates, Some(&decode_bytes(wide_sample, encoding, true)));
 	}
 	let detected = detection.language?;
-	let body = &sample_bytes[encoding.bom_len.min(sample_bytes.len())..];
 	let language =
 		xml_document_instead_of(detected, body, encoding.encoding).filter(|&language| languages.allows(language))?;
 	Some((language, line_counter::count_lines(language, encoding, bytes)))
@@ -175,10 +177,7 @@ pub fn process_file(
 	let Some((candidates, languages)) = judge_name(file_path, &filename, languages, cache) else {
 		return Ok(());
 	};
-	if let [language] = candidates[..]
-		&& !languages.allows(language)
-		&& !language.shebang_overrides
-	{
+	if !worth_reading(&candidates, languages) {
 		return Ok(());
 	}
 	let mut file = File::open(file_path).with_context(|| format!("Failed to open file {}", file_path.display()))?;
