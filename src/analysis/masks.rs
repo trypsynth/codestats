@@ -45,6 +45,8 @@ impl<'a> BlockScanner<'a> {
 		// Every 64-bit Arm has NEON.
 		#[cfg(target_arch = "aarch64")]
 		let suited = true;
+		#[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
+		let suited = false;
 		suited.then_some(Self { bytes, loaded: (usize::MAX, &[]), masks: Masks::default() })
 	}
 
@@ -182,6 +184,12 @@ fn scan_block(block: &[u8; BLOCK], searched: &[u8]) -> Masks {
 	let (tab, up_to_return) = (vdupq_n_u8(b'\t'), vdupq_n_u8(b'\r' - b'\t'));
 	let whitespace = chunks.map(|chunk| vorrq_u8(vcleq_u8(vsubq_u8(chunk, tab), up_to_return), vceqq_u8(chunk, space)));
 	Masks { newlines, candidates: bits(hits), text: !bits(whitespace) }
+}
+
+/// Never called: other machines get no scanner.
+#[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
+unsafe fn scan_block(_: &[u8; BLOCK], _: &[u8]) -> Masks {
+	unreachable!("`BlockScanner::new` makes no scanner on this machine")
 }
 
 /// One bit per byte of four comparison results, which NEON has no single instruction for: each byte keeps its own bit of its position, and three pairwise additions pack them together.

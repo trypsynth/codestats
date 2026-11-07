@@ -1,11 +1,10 @@
 use memchr::memchr;
 
-#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
-use super::masks::BlockScanner;
 use super::{
 	embedded::{Classifier, RegionStarts, contains_pair, region_starts},
 	encoding::{self, FileEncoding, decode_bytes},
 	line_classifier::{LineType, is_blank, is_plain_line_comment},
+	masks::BlockScanner,
 	stats::{FileCounts, LineCounts},
 };
 use crate::langs::{
@@ -53,9 +52,7 @@ fn count_text(text: &str, language: &Language, counts: &mut LineCounts, classifi
 		.filter(|_| language.embedding.is_none())
 		.and_then(|strings| strings.quick.as_ref().map(|quick| (quick, strings)));
 	// Regions are checked for line by line, which the masks don't help with.
-	#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
 	let mut scanner = region_starts.is_none().then(|| BlockScanner::new(bytes)).flatten();
-	#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
 	let openers_suit = BlockScanner::suits(openers.bytes());
 	let mut next_opener = 0;
 	let mut pos = 0;
@@ -63,7 +60,6 @@ fn count_text(text: &str, language: &Language, counts: &mut LineCounts, classifi
 		// The first line goes through the classifier, which checks it for a shebang.
 		if can_sweep && pos > 0 && classifier.is_clear() {
 			loop {
-				#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
 				let at_stop = if let Some(scanner) = scanner.as_mut().filter(|_| openers_suit) {
 					let (next, at_stop) = scanner.sweep(pos, openers.bytes(), LineType::Code, counts);
 					pos = next;
@@ -71,8 +67,6 @@ fn count_text(text: &str, language: &Language, counts: &mut LineCounts, classifi
 				} else {
 					sweep_by_search(bytes, openers, region_starts, &mut next_opener, &mut pos, counts)
 				};
-				#[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
-				let at_stop = sweep_by_search(bytes, openers, region_starts, &mut next_opener, &mut pos, counts);
 				// A line stopped at only for its strings, which all close on it, is code like the others, and the sweep carries on after it.
 				let end = line_end(bytes, pos);
 				if at_stop {
@@ -95,7 +89,6 @@ fn count_text(text: &str, language: &Language, counts: &mut LineCounts, classifi
 			}
 		}
 		// Inside a comment or a string, lines holding none of the bytes that could end it stay inside it.
-		#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
 		if can_sweep
 			&& pos > 0
 			&& !classifier.is_clear()
