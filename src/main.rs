@@ -61,7 +61,7 @@ fn run() -> Result<()> {
 				return Ok(());
 			}
 			Commands::Langs => {
-				let mut stdout = io::stdout();
+				let mut stdout = io::BufWriter::new(io::stdout().lock());
 				let terminal_width = terminal_size().map_or(80, |(w, _)| usize::from(w.0));
 				langs::print_all_languages(&mut stdout, terminal_width)?;
 				stdout.flush()?;
@@ -99,7 +99,8 @@ fn run() -> Result<()> {
 		(roots, results)
 	};
 	let view_options: ViewOptions = (&config).into();
-	let mut stdout = io::stdout();
+	// Standard output flushes at every newline, which costs a system call per line of a long report.
+	let mut stdout = io::BufWriter::new(io::stdout().lock());
 	display::write_output(config.display.output, &results, &roots, view_options, &mut stdout)?;
 	stdout.flush()?;
 	if config.analysis.fail_on_error && results.skipped_entries() > 0 {
@@ -158,7 +159,7 @@ fn run_diff(args: &DiffArgs, matches: &ArgMatches) -> Result<()> {
 		None => count_snapshot(path, &Snapshot::WorkingTree { submodules: false }, &config.analysis, false)?,
 	};
 	let versions = Versions { from_name: &args.from, to_name: args.to.as_deref(), from: &from, to: &to };
-	let mut stdout = io::stdout();
+	let mut stdout = io::BufWriter::new(io::stdout().lock());
 	display::write_diff(config.display.output, &versions, path, (&config).into(), &mut stdout)?;
 	stdout.flush()?;
 	let skipped = from.skipped_entries() + to.skipped_entries();
