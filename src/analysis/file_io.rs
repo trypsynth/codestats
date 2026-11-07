@@ -12,25 +12,27 @@ use memmap2::Mmap;
 /// Files larger than this threshold are memory-mapped instead of read into memory.
 const MMAP_THRESHOLD: u64 = 64 * 1024;
 /// Size of sample chunks extracted from files for binary/language detection. For large files, we sample from both the start and middle of the file.
-const SAMPLE_SIZE: usize = 4 * 1024;
-const MAX_SAMPLE: usize = SAMPLE_SIZE * 2;
+pub(super) const SAMPLE_SIZE: usize = 4 * 1024;
 
-/// Stack-allocated sample buffer; avoids a heap allocation per file during detection.
-pub(super) struct SampleBuf {
-	data: [u8; MAX_SAMPLE],
-	len: usize,
+/// The start of a file, or its start and middle, for binary and language detection.
+#[expect(
+	clippy::large_enum_variant,
+	reason = "boxing the sample would cost the allocation it is on the stack to avoid"
+)]
+pub(super) enum Sample<'a> {
+	/// A file no longer than a sample is its own.
+	Whole(&'a [u8]),
+	/// The start and middle of a longer file, copied together on the stack.
+	Parts([u8; SAMPLE_SIZE * 2]),
 }
 
-impl SampleBuf {
-	const fn new() -> Self {
-		Self { data: [0u8; MAX_SAMPLE], len: 0 }
-	}
-}
-
-impl Deref for SampleBuf {
+impl Deref for Sample<'_> {
 	type Target = [u8];
 	fn deref(&self) -> &[u8] {
-		&self.data[..self.len]
+		match self {
+			Self::Whole(bytes) => bytes,
+			Self::Parts(data) => data,
+		}
 	}
 }
 
@@ -52,7 +54,7 @@ impl FileSource {
 		if file_size >= MMAP_THRESHOLD {
 			// SAFETY: Memory-mapping is safe under these conditions:
 			// 1. We only read from the mmap, never write.
-			// 2. The mapping is dropped before returning, so no references escape.
+			// 2. The caller only borrows the bytes while the `FileSource` lives.
 			// 3. ASSUMPTION: The file will not be modified by external processes during analysis. This is a reasonable assumption for typical code analysis workflows where files are stable during the scan. However, concurrent modifications by other processes could cause undefined behavior.
 			let mmap = unsafe { Mmap::map(&file) }
 				.with_context(|| format!("Failed to memory-map file {}", file_path.display()))?;
@@ -65,11 +67,9 @@ impl FileSource {
 		}
 	}
 
-	/// Read just the start of a file, for files whose name matches no language and that are only worth reading in full if they begin with a shebang.
-	pub(super) fn head(file: &mut File) -> std::io::Result<SampleBuf> {
-		let mut sample = SampleBuf::new();
-		sample.len = file.read(&mut sample.data[..SAMPLE_SIZE])?;
-		Ok(sample)
+	/// Read just the start of a file into `head`, returning how many bytes it holds, for files whose name matches no language and that are only worth reading in full if they begin with a shebang.
+	pub(super) fn head(file: &mut File, head: &mut [u8; SAMPLE_SIZE]) -> std::io::Result<usize> {
+		file.read(head)
 	}
 }
 
@@ -112,64 +112,32 @@ fn read_into(file: &mut File, size: usize, buffer: &mut Vec<u8>) -> std::io::Res
 	Ok(len)
 }
 
-fn sample_ranges(file_len: u64) -> (usize, Option<(u64, usize)>) {
-	let start_len = usize::try_from(file_len.min(SAMPLE_SIZE as u64))
-		.expect("SAMPLE_SIZE is 4096, well within usize range on any supported platform");
-	if file_len <= SAMPLE_SIZE as u64 {
-		return (start_len, None);
-	}
-	let mut mid_offset = (file_len.saturating_sub(SAMPLE_SIZE as u64)) / 2;
-	if mid_offset % 2 == 1 {
-		// Keep UTF-16 code units aligned when sampling from the middle.
-		mid_offset = mid_offset.saturating_sub(1);
-	}
-	let mid_len = usize::try_from((mid_offset + SAMPLE_SIZE as u64).min(file_len) - mid_offset)
-		.expect("result is bounded by SAMPLE_SIZE (4096), well within usize range");
-	(start_len, Some((mid_offset, mid_len)))
+/// Where the middle sample of a file of `len` bytes starts, or `None` if the file is no longer than one sample. The offset is even, keeping UTF-16 code units whole.
+const fn middle(len: usize) -> Option<usize> {
+	if len <= SAMPLE_SIZE { None } else { Some(((len - SAMPLE_SIZE) / 2) & !1) }
 }
 
 /// The start and middle of a file's contents, for binary and language detection.
-pub(super) fn sample(file_bytes: &[u8]) -> SampleBuf {
-	let mut buf = SampleBuf::new();
-	let (start_len, mid_range) = sample_ranges(file_bytes.len() as u64);
-	buf.data[..start_len].copy_from_slice(&file_bytes[..start_len]);
-	buf.len = start_len;
-	if let Some((mid_offset, mid_len)) = mid_range {
-		let offset =
-			usize::try_from(mid_offset).expect("mid_offset derives from file_bytes.len() which is already a usize");
-		buf.data[buf.len..buf.len + mid_len].copy_from_slice(&file_bytes[offset..offset + mid_len]);
-		buf.len += mid_len;
-	}
-	buf
+pub(super) fn sample(file_bytes: &[u8]) -> Sample<'_> {
+	let Some(middle) = middle(file_bytes.len()) else {
+		return Sample::Whole(file_bytes);
+	};
+	let mut data = [0; SAMPLE_SIZE * 2];
+	data[..SAMPLE_SIZE].copy_from_slice(&file_bytes[..SAMPLE_SIZE]);
+	data[SAMPLE_SIZE..].copy_from_slice(&file_bytes[middle..middle + SAMPLE_SIZE]);
+	Sample::Parts(data)
 }
 
 #[cfg(test)]
 mod tests {
-	use rstest::rstest;
-
 	use super::*;
 
-	#[rstest]
-	#[case::small(100, 100, true)]
-	#[case::exact(SAMPLE_SIZE as u64, SAMPLE_SIZE, true)]
-	fn test_sample_ranges_no_mid(#[case] file_len: u64, #[case] expected_start: usize, #[case] mid_is_none: bool) {
-		let (start_len, mid) = sample_ranges(file_len);
-		assert_eq!(start_len, expected_start);
-		assert_eq!(mid.is_none(), mid_is_none);
-	}
-
 	#[test]
-	fn test_sample_ranges_large_file() {
-		let file_size = 100_000u64;
-		let (start_len, mid) = sample_ranges(file_size);
-		assert_eq!(start_len, SAMPLE_SIZE);
-		let (mid_offset, mid_len) = mid.expect("should have mid range");
-		// Mid offset should be roughly in the middle
-		assert!(mid_offset > 0);
-		assert!(mid_offset < file_size - SAMPLE_SIZE as u64);
-		assert_eq!(mid_len, SAMPLE_SIZE);
-		// Offset should be even for UTF-16 alignment
-		assert_eq!(mid_offset % 2, 0);
+	fn middle_sample_starts_halfway_at_an_even_offset() {
+		assert_eq!(middle(100), None);
+		assert_eq!(middle(SAMPLE_SIZE), None);
+		assert_eq!(middle(SAMPLE_SIZE + 3), Some(0));
+		assert_eq!(middle(100_000), Some(47_952));
 	}
 
 	#[test]
@@ -202,10 +170,7 @@ mod tests {
 	fn test_sample_from_slice_large() {
 		let data: Vec<u8> = (0u8..=255).cycle().take(10_000).collect();
 		let samples = sample(&data);
-		// Should have start sample + mid sample
-		assert!(samples.len() > SAMPLE_SIZE);
-		assert!(samples.len() <= SAMPLE_SIZE * 2);
-		// First SAMPLE_SIZE bytes should match
 		assert_eq!(&samples[..SAMPLE_SIZE], &data[..SAMPLE_SIZE]);
+		assert_eq!(&samples[SAMPLE_SIZE..], &data[2952..2952 + SAMPLE_SIZE]);
 	}
 }

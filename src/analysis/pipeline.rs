@@ -188,11 +188,13 @@ pub fn process_file(
 	// A file whose name matches no language, or only ones that are filtered out, counts only if it starts with a shebang, so check that before reading it all, or weighing its content between candidates that can't count anyway.
 	let needs_shebang = !candidates.iter().any(|&language| languages.allows(language));
 	if needs_shebang && file_size > 0 {
-		let head =
-			FileSource::head(&mut file).with_context(|| format!("Failed to read file {}", file_path.display()))?;
-		let encoding = detect_encoding(&head);
-		if is_probably_binary(&head, encoding)
-			|| langs::detect_language(&[], Some(&decode_bytes(&head, encoding, true))).language.is_none()
+		let mut head = [0; file_io::SAMPLE_SIZE];
+		let len = FileSource::head(&mut file, &mut head)
+			.with_context(|| format!("Failed to read file {}", file_path.display()))?;
+		let head = &head[..len];
+		let encoding = detect_encoding(head);
+		if is_probably_binary(head, encoding)
+			|| langs::detect_language(&[], Some(&decode_bytes(head, encoding, true))).language.is_none()
 		{
 			return Ok(());
 		}
