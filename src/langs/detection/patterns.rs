@@ -1,9 +1,11 @@
+use std::borrow::Cow;
+
 use super::super::data::{EXTENSIONS, FILENAMES, LANGUAGES, Language, PREFIXES};
 
 /// Collects the languages matched by the most specific patterns seen so far.
 struct BestMatches {
 	specificity: usize,
-	langs: Vec<u16>,
+	langs: Vec<&'static Language>,
 }
 
 impl BestMatches {
@@ -13,7 +15,7 @@ impl BestMatches {
 			self.langs.clear();
 		}
 		if specificity == self.specificity {
-			self.langs.extend_from_slice(langs);
+			self.langs.extend(langs.iter().map(|&index| &LANGUAGES[usize::from(index)]));
 		}
 	}
 }
@@ -25,7 +27,12 @@ pub fn get_candidates(filename: &str) -> Vec<&'static Language> {
 	if let Some(langs) = FILENAMES.get(filename) {
 		best.consider(usize::MAX, langs);
 	}
-	let lower = filename.to_ascii_lowercase();
+	// Most names are already lowercase, and needn't be copied.
+	let lower = if filename.bytes().any(|b| b.is_ascii_uppercase()) {
+		Cow::Owned(filename.to_ascii_lowercase())
+	} else {
+		Cow::Borrowed(filename)
+	};
 	for (dot, _) in lower.match_indices('.') {
 		let extension = &lower[dot + 1..];
 		if let Some(langs) = EXTENSIONS.get(extension) {
@@ -38,9 +45,9 @@ pub fn get_candidates(filename: &str) -> Vec<&'static Language> {
 			best.consider(prefix.len(), &[lang]);
 		}
 	}
-	best.langs.sort_unstable();
-	best.langs.dedup();
-	best.langs.into_iter().map(|index| &LANGUAGES[usize::from(index)]).collect()
+	best.langs.sort_unstable_by_key(|language| language.index);
+	best.langs.dedup_by_key(|language| language.index);
+	best.langs
 }
 
 #[cfg(test)]
