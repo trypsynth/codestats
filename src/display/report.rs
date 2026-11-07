@@ -324,7 +324,7 @@ impl<'a> LanguageRecord<'a> {
 		if let Some(n) = ctx.options.top_languages {
 			stats_vec.truncate(n);
 		}
-		let hidden = total.saturating_sub(stats_vec.len());
+		let hidden = total - stats_vec.len();
 		let records =
 			stats_vec.into_iter().map(|(name, stats)| Self::from_stats(name, stats, verbosity, ctx)).collect();
 		(records, hidden)
@@ -445,7 +445,7 @@ impl<'a> DirRecord<'a> {
 				let acc = map.entry(dir_key(file.path(), root)).or_default();
 				acc.files.push(file);
 				acc.counts.merge(file.counts());
-				acc.size = acc.size.saturating_add(file.size());
+				acc.size += file.size();
 			}
 		}
 		let total = map.len();
@@ -472,7 +472,7 @@ impl<'a> DirRecord<'a> {
 		if let Some(n) = ctx.options.top_languages {
 			records.truncate(n);
 		}
-		let hidden = total.saturating_sub(records.len());
+		let hidden = total - records.len();
 		(records, hidden)
 	}
 

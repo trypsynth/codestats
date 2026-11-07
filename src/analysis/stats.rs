@@ -38,11 +38,11 @@ impl LineCounts {
 	}
 
 	pub(crate) const fn merge(&mut self, other: &Self) {
-		self.total = self.total.saturating_add(other.total);
-		self.code = self.code.saturating_add(other.code);
-		self.comment = self.comment.saturating_add(other.comment);
-		self.blank = self.blank.saturating_add(other.blank);
-		self.shebang = self.shebang.saturating_add(other.shebang);
+		self.total += other.total;
+		self.code += other.code;
+		self.comment += other.comment;
+		self.blank += other.blank;
+		self.shebang += other.shebang;
 	}
 
 	#[must_use]
@@ -155,9 +155,9 @@ pub struct LanguageStats {
 
 impl LanguageStats {
 	fn add_file(&mut self, counts: FileCounts, size: u64, path: Option<String>) {
-		self.files = self.files.saturating_add(1);
+		self.files += 1;
 		self.counts.merge(&counts.lines);
-		self.size = self.size.saturating_add(size);
+		self.size += size;
 		self.embedded.merge(&counts.embedded);
 		if let Some(path) = path {
 			self.file_list.push(FileStats { path, counts: counts.lines, size, embedded: counts.embedded });
@@ -165,9 +165,9 @@ impl LanguageStats {
 	}
 
 	fn merge(&mut self, mut other: Self) {
-		self.files = self.files.saturating_add(other.files);
+		self.files += other.files;
 		self.counts.merge(&other.counts);
-		self.size = self.size.saturating_add(other.size);
+		self.size += other.size;
 		self.embedded.merge(&other.embedded);
 		self.file_list.append(&mut other.file_list);
 	}
@@ -230,17 +230,17 @@ impl AnalysisResults {
 		if self.language_stats.len() <= language.index {
 			self.language_stats.resize_with(language.index + 1, LanguageStats::default);
 		}
-		self.total_files = self.total_files.saturating_add(1);
+		self.total_files += 1;
 		self.counts.merge(&counts.lines);
-		self.total_size = self.total_size.saturating_add(size);
+		self.total_size += size;
 		self.language_stats[language.index].add_file(counts, size, path);
 	}
 
 	pub(crate) fn merge(&mut self, other: Self) {
-		self.total_files = self.total_files.saturating_add(other.total_files);
+		self.total_files += other.total_files;
 		self.counts.merge(&other.counts);
-		self.total_size = self.total_size.saturating_add(other.total_size);
-		self.skipped_entries = self.skipped_entries.saturating_add(other.skipped_entries);
+		self.total_size += other.total_size;
+		self.skipped_entries += other.skipped_entries;
 		if self.language_stats.len() < other.language_stats.len() {
 			self.language_stats.resize_with(other.language_stats.len(), LanguageStats::default);
 		}
@@ -324,13 +324,6 @@ mod tests {
 		let mut a = counts(19, 10, 5, 3, 1);
 		a.merge(&counts(38, 20, 10, 6, 2));
 		assert_eq!(a, counts(57, 30, 15, 9, 3));
-	}
-
-	#[test]
-	fn test_line_counts_merge_saturating() {
-		let mut a = counts(0, u64::MAX - 1, 0, 0, 0);
-		a.merge(&counts(0, 10, 0, 0, 0));
-		assert_eq!(a.code, u64::MAX);
 	}
 
 	#[test]
