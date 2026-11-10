@@ -1,17 +1,4 @@
 {
 	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
-	"extends": ["config:recommended", "schedule:daily"],
-	"packageRules": [
-		{
-			"matchManagers": ["cargo"],
-			"groupName": "cargo dependencies"
-		},
-		{
-			"matchManagers": ["github-actions"],
-			"groupName": "GitHub Actions"
-		}
-	],
-	"lockFileMaintenance": {
-		"enabled": true
-	}
+	"extends": ["github>accessware/.github"]
 }
