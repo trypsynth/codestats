@@ -64,6 +64,8 @@ impl<'a> BlockScanner<'a> {
 	}
 
 	/// Count the lines from `pos` up to the first holding a `searched` byte, each as `with_text`, or blank if it's only whitespace. Returns where that line starts and `true`, or the end of the bytes and `false` if there's no such line.
+	///
+	/// A block's lines are counted together, off the masks, as which of them are blank is too irregular to branch on line by line.
 	pub(super) fn sweep(
 		&mut self,
 		pos: usize,
@@ -72,42 +74,50 @@ impl<'a> BlockScanner<'a> {
 		counts: &mut LineCounts,
 	) -> (usize, bool) {
 		let mut start = pos;
+		let (mut lines, mut lines_with_text) = (0, 0);
+		// Whether the line the block starts in has text in earlier blocks.
 		let mut has_text = false;
 		let mut block = pos / BLOCK * BLOCK;
-		self.load(block, searched);
-		let from = !0u64 << (pos - block);
-		let Masks { mut newlines, mut candidates, mut text } = self.masks;
-		newlines &= from;
-		candidates &= from;
-		text &= from;
-		loop {
-			while newlines != 0 {
-				let newline = newlines.trailing_zeros();
-				let below = (1u64 << newline) - 1;
-				if candidates & below != 0 {
-					return (start, true);
-				}
-				counts.add(if has_text || text & below != 0 { with_text } else { LineType::Blank });
-				has_text = false;
-				start = block + newline as usize + 1;
-				text &= !(below | (1u64 << newline));
-				newlines &= newlines - 1;
+		let mut from = !0u64 << (pos - block);
+		let stopped = loop {
+			self.load(block, searched);
+			let Masks { newlines, candidates, text } = self.masks;
+			let (newlines, candidates, text) = (newlines & from, candidates & from, text & from);
+			from = !0;
+			// The lines ending before the first candidate; the one holding it stops the sweep.
+			let ended = newlines & candidates.wrapping_sub(1) & !candidates;
+			if ended != 0 {
+				lines += ended.count_ones();
+				lines_with_text += (ended & with_text_before(newlines, text, has_text)).count_ones();
+				let last = ended.ilog2();
+				start = block + last as usize + 1;
+				has_text = text & !(u64::MAX >> (63 - last)) != 0;
+			} else {
+				has_text |= text != 0;
 			}
 			if candidates != 0 {
-				return (start, true);
+				break (start, true);
 			}
-			has_text |= text != 0;
 			block += BLOCK;
 			if block >= self.bytes.len() {
 				if start < self.bytes.len() {
-					counts.add(if has_text { with_text } else { LineType::Blank });
+					lines += 1;
+					lines_with_text += u32::from(has_text);
 				}
-				return (self.bytes.len(), false);
+				break (self.bytes.len(), false);
 			}
-			self.load(block, searched);
-			Masks { newlines, candidates, text } = self.masks;
-		}
+		};
+		counts.add_many(with_text, u64::from(lines_with_text));
+		counts.add_many(LineType::Blank, u64::from(lines - lines_with_text));
+		stopped
 	}
+}
+
+/// The newlines ending a line with text: one after a text byte, or the first after the block's start if `carried`, the line it starts in having text already.
+///
+/// The bytes between two newlines are a run of ones in `!newlines`, and adding the run's text bytes to it carries a one out of the run's top onto its newline exactly when there's at least one. A carry stops at the newline, which is a zero.
+const fn with_text_before(newlines: u64, text: u64, carried: bool) -> u64 {
+	(!newlines).wrapping_add(text).wrapping_add(carried as u64)
 }
 
 /// The masks of the block at `start`. A block running past the end of `bytes`, the last of a file, says nothing about the bytes it lacks.

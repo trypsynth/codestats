@@ -37,6 +37,17 @@ impl LineCounts {
 		self.total += 1;
 	}
 
+	/// Count `n` lines of one type.
+	pub(crate) const fn add_many(&mut self, line_type: LineType, n: u64) {
+		match line_type {
+			LineType::Code => self.code += n,
+			LineType::Comment => self.comment += n,
+			LineType::Blank => self.blank += n,
+			LineType::Shebang => self.shebang += n,
+		}
+		self.total += n;
+	}
+
 	pub(crate) const fn merge(&mut self, other: &Self) {
 		self.total += other.total;
 		self.code += other.code;
