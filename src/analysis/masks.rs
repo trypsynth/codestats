@@ -41,7 +41,10 @@ impl<'a> BlockScanner<'a> {
 	/// A scanner over `bytes`, or `None` where the machine doesn't suit it.
 	pub(super) fn new(bytes: &'a [u8]) -> Option<Self> {
 		#[cfg(target_arch = "x86_64")]
-		let suited = is_x86_feature_detected!("avx2");
+		let suited = is_x86_feature_detected!("avx2")
+			&& is_x86_feature_detected!("popcnt")
+			&& is_x86_feature_detected!("lzcnt")
+			&& is_x86_feature_detected!("bmi1");
 		// Every 64-bit Arm has NEON.
 		#[cfg(target_arch = "aarch64")]
 		let suited = true;
@@ -67,6 +70,38 @@ impl<'a> BlockScanner<'a> {
 	///
 	/// A block's lines are counted together, off the masks, as which of them are blank is too irregular to branch on line by line.
 	pub(super) fn sweep(
+		&mut self,
+		pos: usize,
+		searched: &'a [u8],
+		with_text: LineType,
+		counts: &mut LineCounts,
+	) -> (usize, bool) {
+		// SAFETY: a scanner only exists once `BlockScanner::new` has found these features.
+		#[cfg(target_arch = "x86_64")]
+		return unsafe { self.sweep_avx2(pos, searched, with_text, counts) };
+		#[cfg(not(target_arch = "x86_64"))]
+		self.sweep_blocks(pos, searched, with_text, counts)
+	}
+
+	/// The sweep built with the features `scan_block` and the bit counts need, so that both are inlined into its loop rather than called once per block.
+	#[cfg(target_arch = "x86_64")]
+	#[target_feature(enable = "avx2,popcnt,lzcnt,bmi1")]
+	fn sweep_avx2(
+		&mut self,
+		pos: usize,
+		searched: &'a [u8],
+		with_text: LineType,
+		counts: &mut LineCounts,
+	) -> (usize, bool) {
+		self.sweep_blocks(pos, searched, with_text, counts)
+	}
+
+	#[expect(
+		clippy::inline_always,
+		reason = "it must take on the features of `sweep_avx2`, which only inlining gives it"
+	)]
+	#[inline(always)]
+	fn sweep_blocks(
 		&mut self,
 		pos: usize,
 		searched: &'a [u8],
