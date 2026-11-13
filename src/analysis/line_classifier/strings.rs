@@ -30,13 +30,17 @@ pub(super) fn classify_with_strings(
 	strings: &StringMatchers,
 	state: &mut CommentState,
 ) -> LineType {
-	if state.heredoc.is_some() {
-		continue_heredoc(line, indented, state);
-		return LineType::Code;
-	}
 	let bytes = line.as_bytes();
-	let mut pos = 0;
-	let mut has_code = false;
+	// Code may follow a heredoc's terminator on its line (`EOT; // c` in PHP), so the line is read on from there.
+	let mut pos = if state.heredoc.is_some() {
+		let Some(end) = heredoc_end(line, indented, state) else {
+			return LineType::Code;
+		};
+		end
+	} else {
+		0
+	};
+	let mut has_code = pos > 0;
 	let mut search = NestedSearch::default();
 	while pos < line.len() {
 		if state.is_in_comment() {
@@ -167,16 +171,16 @@ fn hole_bracket(
 	Some(at + 1)
 }
 
-/// A line in a heredoc's body, which is a string up to the line that's just its terminator, indented only where the heredoc allows it.
-fn continue_heredoc(line: &str, indented: bool, state: &mut CommentState) {
-	if let Some(heredoc) = &state.heredoc
-		&& (heredoc.indented || !indented)
-		&& line
-			.strip_prefix(&*heredoc.terminator)
-			.is_some_and(|rest| !rest.as_bytes().first().is_some_and(|&b| is_word_char(b)))
-	{
-		state.heredoc = None;
+/// Where a line in a heredoc's body ends the heredoc: past its terminator, if the line starts with it, indented only where the heredoc allows it. Otherwise the line is all string.
+fn heredoc_end(line: &str, indented: bool, state: &mut CommentState) -> Option<usize> {
+	let heredoc = state.heredoc.as_ref()?;
+	let rest = line.strip_prefix(&*heredoc.terminator).filter(|_| heredoc.indented || !indented)?;
+	if rest.as_bytes().first().is_some_and(|&b| is_word_char(b)) {
+		return None;
 	}
+	let end = heredoc.terminator.len();
+	state.heredoc = None;
+	Some(end)
 }
 
 /// Where the open string `index` ends on `line` after `from`: the position past its closer, or past the opener of an interpolation hole, with whether it's a hole.

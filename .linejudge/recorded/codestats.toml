@@ -1,6 +1,6 @@
 counter = "codestats"
 version = "codestats 1.1.0"
-measured-with = "linejudge 0.3.0"
+measured-with = "linejudge 0.4.0"
 
 [answer.1010-code_then_comment_on_one_line.default]
 counted = { lines = 2, code = 2, comments = 0, blanks = 0 }
@@ -71,6 +71,9 @@ counted = { lines = 6, code = 2, comments = 4, blanks = 0 }
 [answer.1230-a_comment_word_at_the_head_of_a_longer_word.default]
 counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
 
+[answer.1235-one_symbol_for_a_line_comment_and_a_string.default]
+counted = { lines = 2, code = 1, comments = 1, blanks = 0 }
+
 [answer.1240-a_comment_opener_inside_a_vector_type.default]
 counted = { lines = 10, code = 6, comments = 4, blanks = 0 }
 
@@ -79,6 +82,9 @@ counted = { lines = 15, code = 3, comments = 5, blanks = 7 }
 
 [answer.1280-matlab_block_markers_sharing_their_line.default]
 counted = { lines = 7, code = 2, comments = 5, blanks = 0 }
+
+[answer.1290-block_comment_opening_on_the_64th_byte.default]
+counted = { lines = 4, code = 1, comments = 3, blanks = 0 }
 
 [answer.2010-comment_symbol_inside_string.default]
 counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
@@ -104,11 +110,23 @@ counted = { lines = 3, code = 1, comments = 2, blanks = 0 }
 [answer.2060-backtick_template_holding_a_comment.default]
 counted = { lines = 4, code = 4, comments = 0, blanks = 0 }
 
+[answer.2062-template_hole_written_over_several_lines.default]
+counted = { lines = 6, code = 4, comments = 2, blanks = 0 }
+
+[answer.2064-template_inside_a_template_hole.default]
+counted = { lines = 5, code = 4, comments = 1, blanks = 0 }
+
 [answer.2072-verbatim_string_holding_a_doubled_quote.default]
 counted = { lines = 6, code = 5, comments = 1, blanks = 0 }
 
 [answer.2077-interpolation_hole_holding_the_strings_own_quote.default]
 counted = { lines = 6, code = 5, comments = 1, blanks = 0 }
+
+[answer.2078-raw_interpolated_string_opened_by_a_dollar_and_three_quotes.default]
+counted = { lines = 6, code = 5, comments = 1, blanks = 0 }
+
+[answer.2079-doubled_brace_in_an_interpolated_string.default]
+counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
 
 [answer.2080-odd_triple_quote_count.default]
 counted = { lines = 6, code = 5, comments = 1, blanks = 0 }
@@ -155,17 +173,26 @@ counted = { lines = 3, code = 1, comments = 2, blanks = 0 }
 [answer.2190-triple_quote_read_as_three_short_ones.default]
 counted = { lines = 5, code = 5, comments = 0, blanks = 0 }
 
+[answer.2200-line_string_holding_a_comment_symbol_and_a_quote.default]
+counted = { lines = 7, code = 5, comments = 2, blanks = 0 }
+
 [answer.3010-escaped_quote_before_comment.default]
 counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
 
+[answer.3015-escaped_quote_inside_an_interpolated_string.default]
+counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
+
+[answer.3017-escaped_hole_opener_inside_a_template.default]
+counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
+
 [answer.3020-multiline_string_ending_in_backslash.default]
-counted = { lines = 5, code = 2, comments = 3, blanks = 0 }
+counted = { lines = 7, code = 4, comments = 3, blanks = 0 }
 
 [answer.3030-raw_string_ending_in_backslash.default]
 counted = { lines = 2, code = 1, comments = 1, blanks = 0 }
 
 [answer.3050-verbatim_string_ending_in_a_backslash.default]
-counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
+counted = { lines = 5, code = 4, comments = 1, blanks = 0 }
 
 [answer.3070-backslash_before_a_closing_quote_in_sql.default]
 counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
@@ -183,7 +210,7 @@ counted = { lines = 3, code = 1, comments = 2, blanks = 0 }
 counted = { lines = 7, code = 3, comments = 4, blanks = 0 }
 
 [answer.4030-character_written_with_a_backslash.default]
-counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
+counted = { lines = 5, code = 4, comments = 1, blanks = 0 }
 
 [answer.4040-escaped_apostrophe_outside_quotes.default]
 counted = { lines = 4, code = 2, comments = 2, blanks = 0 }
@@ -201,7 +228,7 @@ counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
 counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
 
 [answer.4080-primed_identifier_and_apostrophe.default]
-counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
+counted = { lines = 5, code = 4, comments = 1, blanks = 0 }
 
 [answer.4090-transpose_operator_and_char.default]
 counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
@@ -289,6 +316,12 @@ counted-regions = [
     { language = "HTML", lines = 2, code = 1, comments = 1, blanks = 0 },
 ]
 
+[answer.6115-php_closing_tag_on_the_closing_line_of_a_heredoc.default]
+counted = { lines = 7, code = 6, comments = 1, blanks = 0 }
+counted-regions = [
+    { language = "HTML", lines = 1, code = 0, comments = 1, blanks = 0 },
+]
+
 [answer.6120-script_inside_html_inside_php.default]
 counted = { lines = 11, code = 10, comments = 1, blanks = 0 }
 counted-regions = [
@@ -301,6 +334,12 @@ counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
 
 [answer.7020-regex_holding_a_comment_opener.default]
 counted = { lines = 4, code = 3, comments = 1, blanks = 0 }
+
+[answer.7030-block_comment_where_a_pattern_may_begin.default]
+counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
+
+[answer.7040-slash_after_a_name_divides.default]
+counted = { lines = 3, code = 2, comments = 1, blanks = 0 }
 
 [answer.8010-punctuation_only_line.default]
 counted = { lines = 3, code = 3, comments = 0, blanks = 0 }

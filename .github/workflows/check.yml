@@ -63,7 +63,7 @@ jobs:
     name: LineJudge
     runs-on: ubuntu-latest
     env:
-      LINEJUDGE_VERSION: v0.3.0
+      LINEJUDGE_VERSION: v0.4.0
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable

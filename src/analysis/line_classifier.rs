@@ -132,6 +132,12 @@ impl CommentState {
 		}
 	}
 
+	/// Whether the next line is in a heredoc's body.
+	#[must_use]
+	pub(crate) const fn is_in_heredoc(&self) -> bool {
+		self.heredoc.is_some()
+	}
+
 	#[must_use]
 	#[inline]
 	const fn is_in_string(&self) -> bool {
@@ -686,6 +692,7 @@ mod tests {
 	#[case::ruby_singleton_class("Ruby", &["class << self", "# c"], &[LineType::Code, LineType::Comment])]
 	#[case::crystal_append_constant("Crystal", &["types << FFI::Type.pointer", "# c"], &[LineType::Code, LineType::Comment])]
 	#[case::php("PHP", &["$s = <<<EOT", "# not a comment", "EOT;", "# c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
+	#[case::php_comment_after_terminator("PHP", &["$s = <<<EOT", "x", "EOT; /* c", "# not a comment */", "# c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Comment, LineType::Comment])]
 	#[case::in_comment("Bash", &["# cat <<EOF", "# c"], &[LineType::Comment, LineType::Comment])]
 	#[case::ruby_singleton_class_unspaced("Ruby", &["class <<self", "# c"], &[LineType::Code, LineType::Comment])]
 	// A plain `<<` heredoc only closes at its word at the start of a line; `<<~` and `<<-` also behind spaces.

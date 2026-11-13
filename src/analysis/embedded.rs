@@ -291,7 +291,8 @@ impl<'a> Classifier<'a> {
 				self.embedded.merge(&markup.into_embedded());
 			}
 		}
-		let starts_clear = in_markup || self.state.is_clear();
+		// A heredoc's terminator line is clear from its terminator on, which holds no `?>`.
+		let starts_clear = in_markup || self.state.is_clear() || self.state.is_in_heredoc();
 		let line_type = classify_line(line, self.language, &mut self.state, is_first_line);
 		// Only a line with a closing tag can leave PHP, and only where the tag isn't in a string or block comment.
 		if starts_clear
@@ -700,6 +701,7 @@ mod tests {
 	#[case::php_markup("PHP", "<?php\n?>\n<p>hi</p>\n<!-- c -->\n<?php\necho \"hi\"; // c\n?>", &[Code, Code, Code, Comment, Code, Code, Code])]
 	#[case::php_starts_in_markup("PHP", "<!-- c -->\n<?php // c\n# c\n", &[Comment, Code, Comment])]
 	#[case::php_closer_in_a_string("PHP", "<?php\n$s = \"\n?>\n# not html\";\n// c", &[Code, Code, Code, Code, Comment])]
+	#[case::php_closer_after_a_heredoc("PHP", "<?php\n$s = <<<EOT\n?>\nEOT; ?>\n<!-- c -->\n<?php\necho 1;", &[Code, Code, Code, Code, Comment, Code, Code])]
 	#[case::php_closer_in_a_one_line_string("PHP", "<?php\n$h = \"<?x ?>\";\n// c\n/* ?> */\n# c", &[Code, Code, Comment, Comment, Comment])]
 	#[case::php_closer_in_a_line_comment("PHP", "<?php\n// c ?>\n<!-- c -->", &[Code, Comment, Comment])]
 	#[case::php_inline_tags("PHP", "<?php\n?>\n<p><?= $x ?></p>\n<!-- c -->", &[Code, Code, Code, Comment])]
