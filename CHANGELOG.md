@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Writes reports faster and with less memory: `-v -o json` over 100,000 files went from 750 ms to 190 ms, and verbose human, CSV, and compact JSON reports take about 30% less time
+- Builds on processors without AVX2 or NEON, such as RISC-V, where 1.1.0 failed to compile
+- Fixed code after a heredoc's terminator on the same line being ignored, so a PHP `?>` there left the rest of the page counted as PHP
+
 ## 1.1.0
 
 - Added `--no-config`, which reads no configuration file
