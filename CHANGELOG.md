@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Writes reports faster and with less memory: `-v -o json` over 100,000 files went from 750 ms to 190 ms, and verbose human, CSV, and compact JSON reports take about 30% less time
+- Counts large repositories faster: the Linux kernel's C files take about 10% less time and cpython's about 11% less. Lines are counted a block at a time, and files up to 256 KB are read instead of memory-mapped
 - Builds on processors without AVX2 or NEON, such as RISC-V, where 1.1.0 failed to compile
 - Fixed code after a heredoc's terminator on the same line being ignored, so a PHP `?>` there left the rest of the page counted as PHP
 
