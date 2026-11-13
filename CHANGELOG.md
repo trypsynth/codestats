@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.1.1
 
 - Writes reports faster and with less memory: `-v -o json` over 100,000 files went from 750 ms to 190 ms, and verbose human, CSV, and compact JSON reports take about 30% less time
 - Counts large repositories faster: the Linux kernel's C files take about 10% less time and cpython's about 11% less. Lines are counted a block at a time, and files up to 256 KB are read instead of memory-mapped
