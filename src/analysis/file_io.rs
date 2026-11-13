@@ -9,8 +9,10 @@ use std::{
 use anyhow::{Context as _, Result};
 use memmap2::Mmap;
 
-/// Files larger than this threshold are memory-mapped instead of read into memory.
-const MMAP_THRESHOLD: u64 = 64 * 1024;
+/// Files larger than this threshold are memory-mapped instead of read into memory. Mapping and unmapping each take the process's memory map lock, which the threads then queue on, so mid-sized files are cheaper to read.
+const MMAP_THRESHOLD: u64 = 256 * 1024;
+/// Where a file's bytes start in the read buffer. Copying a file out of the page cache to a page-aligned buffer, at the same offset in each page as its source, runs at a fraction of the usual speed on AMD's Zen 3 processors at least, and the allocator gives a large buffer a page-aligned start.
+const BUFFER_OFFSET: usize = 64;
 /// Size of sample chunks extracted from files for binary/language detection. For large files, we sample from both the start and middle of the file.
 pub(super) const SAMPLE_SIZE: usize = 4 * 1024;
 
@@ -43,7 +45,7 @@ thread_local! {
 
 /// A file's contents: read into memory when small, memory-mapped when large.
 pub(super) enum FileSource {
-	/// The buffer, and how many of its bytes this file filled.
+	/// The buffer, and how many of its bytes after [`BUFFER_OFFSET`] this file filled.
 	Read(Vec<u8>, usize),
 	Mapped(Mmap),
 }
@@ -77,7 +79,7 @@ impl Deref for FileSource {
 	type Target = [u8];
 	fn deref(&self) -> &[u8] {
 		match self {
-			Self::Read(buffer, len) => &buffer[..*len],
+			Self::Read(buffer, len) => &buffer[BUFFER_OFFSET..BUFFER_OFFSET + *len],
 			Self::Mapped(mmap) => mmap,
 		}
 	}
@@ -91,18 +93,19 @@ impl Drop for FileSource {
 	}
 }
 
-/// Read `file` into `buffer`, returning how many bytes it holds. A file that gives up the `size` it reported needs no further `read` to find its end, which `read_to_end` would make after several smaller ones. One reporting no size, as files in `/proc` do, is read to its end.
+/// Read `file` into `buffer` from [`BUFFER_OFFSET`] on, returning how many bytes it holds. A file that gives up the `size` it reported needs no further `read` to find its end, which `read_to_end` would make after several smaller ones. One reporting no size, as files in `/proc` do, is read to its end.
 fn read_into(file: &mut File, size: usize, buffer: &mut Vec<u8>) -> std::io::Result<usize> {
 	if size == 0 {
-		buffer.clear();
+		buffer.resize(BUFFER_OFFSET, 0);
 		return file.read_to_end(buffer);
 	}
-	if buffer.len() < size {
-		buffer.resize(size, 0);
+	let end = BUFFER_OFFSET + size;
+	if buffer.len() < end {
+		buffer.resize(end, 0);
 	}
 	let mut len = 0;
 	while len < size {
-		match file.read(&mut buffer[len..size]) {
+		match file.read(&mut buffer[BUFFER_OFFSET + len..end]) {
 			Ok(0) => break,
 			Ok(read) => len += read,
 			Err(err) if err.kind() == ErrorKind::Interrupted => {}
@@ -145,10 +148,10 @@ mod tests {
 		let path = std::env::temp_dir().join(format!("codestats_read_into_test_{}", std::process::id()));
 		std::fs::write(&path, b"hello world").unwrap();
 		// The buffer's longer than the file, as it is after a bigger one, and its old contents don't show.
-		let mut buffer = vec![b'x'; 64];
+		let mut buffer = vec![b'x'; BUFFER_OFFSET + 64];
 		let mut read = |size| {
 			let len = read_into(&mut File::open(&path).unwrap(), size, &mut buffer).unwrap();
-			buffer[..len].to_vec()
+			buffer[BUFFER_OFFSET..BUFFER_OFFSET + len].to_vec()
 		};
 		assert_eq!(read(11), b"hello world");
 		// It shrank since the size was taken, or grew, or reports no size.
