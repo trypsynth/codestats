@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- The binary is about 160 KB smaller, as it no longer depends on encoding_rs and num-format
+
 ## 1.1.2
 
 - Fixed shell comments being found inside words, so `${#files[@]}`, `$#`, and `a#b` no longer hide the rest of their line, such as a heredoc opener
