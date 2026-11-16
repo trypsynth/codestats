@@ -1,7 +1,5 @@
 use std::cmp::Ordering;
 
-use num_format::{CustomFormat, Grouping, ToFormattedString};
-
 use super::options::{IndentStyle, NumberStyle, SizeStyle, SortDirection, ViewOptions};
 
 #[derive(Debug, Clone)]
@@ -14,9 +12,9 @@ pub struct FormatterContext {
 
 impl FormatterContext {
 	#[must_use]
-	pub fn new(options: ViewOptions) -> Self {
+	pub const fn new(options: ViewOptions) -> Self {
 		let number = NumberFormatter::new(options.number_style);
-		let size = SizeFormatter::new(options.size_style, number.clone());
+		let size = SizeFormatter::new(options.size_style, number);
 		let percent = PercentFormatter::new(options.percent_precision);
 		Self { options, number, size, percent }
 	}
@@ -45,40 +43,38 @@ impl FormatterContext {
 	}
 }
 
-#[derive(Debug, Clone)]
-pub enum NumberFormatter {
-	Plain,
-	// Box to keep enum variant sizes balanced (clippy::large_enum_variant).
-	Formatted(Box<CustomFormat>),
+/// Writes numbers with a separator between each group of three digits, or with none.
+#[derive(Debug, Clone, Copy)]
+pub struct NumberFormatter {
+	separator: Option<char>,
 }
 
 impl NumberFormatter {
-	/// # Panics
-	///
-	/// Panics if the `num_format` custom format builder produces an invalid configuration,
-	/// which cannot happen with the separator strings used here.
 	#[must_use]
-	pub fn new(style: NumberStyle) -> Self {
+	pub const fn new(style: NumberStyle) -> Self {
 		let separator = match style {
-			NumberStyle::Plain => return Self::Plain,
-			NumberStyle::Comma => ",",
-			NumberStyle::Underscore => "_",
-			NumberStyle::Space => " ",
+			NumberStyle::Plain => None,
+			NumberStyle::Comma => Some(','),
+			NumberStyle::Underscore => Some('_'),
+			NumberStyle::Space => Some(' '),
 		};
-		let format = CustomFormat::builder()
-			.grouping(Grouping::Standard)
-			.separator(separator)
-			.build()
-			.expect("static separator strings are always valid");
-		Self::Formatted(Box::new(format))
+		Self { separator }
 	}
 
 	#[must_use]
-	pub fn format(&self, value: u64) -> String {
-		match self {
-			Self::Plain => value.to_string(),
-			Self::Formatted(format) => value.to_formatted_string(format.as_ref()),
+	pub fn format(self, value: u64) -> String {
+		let digits = value.to_string();
+		let Some(separator) = self.separator else {
+			return digits;
+		};
+		let mut out = String::with_capacity(digits.len() + digits.len() / 3);
+		for (i, digit) in digits.chars().enumerate() {
+			if i > 0 && (digits.len() - i).is_multiple_of(3) {
+				out.push(separator);
+			}
+			out.push(digit);
 		}
+		out
 	}
 }
 
@@ -190,6 +186,8 @@ mod tests {
 	#[case(NumberStyle::Comma, 1_234_567, "1,234,567")]
 	#[case(NumberStyle::Underscore, 1_234_567, "1_234_567")]
 	#[case(NumberStyle::Space, 1_234_567, "1 234 567")]
+	#[case(NumberStyle::Comma, 100_000, "100,000")]
+	#[case(NumberStyle::Comma, u64::MAX, "18,446,744,073,709,551,615")]
 	fn test_number_formatter(#[case] style: NumberStyle, #[case] value: u64, #[case] expected: &str) {
 		let fmt = NumberFormatter::new(style);
 		assert_eq!(fmt.format(value), expected);
