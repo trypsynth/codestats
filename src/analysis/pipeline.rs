@@ -4,7 +4,7 @@ use anyhow::{Context as _, Result};
 
 use super::{
 	attributes::{Attributes, DirCache},
-	encoding::{decode_bytes, detect_encoding, is_probably_binary},
+	encoding::{Encoding, decode_bytes, detect_encoding, is_probably_binary},
 	file_io::{self, FileSource},
 	generated::{has_generated_header, is_generated_name, is_visual_studio_project},
 	line_counter,
@@ -142,16 +142,12 @@ fn count_contents(
 
 /// XML, for a file named like code that opens with an XML declaration (Qt's `.ts` translations aren't TypeScript), or else
 /// the detected language. Languages that can hold markup keep their files.
-fn xml_document_instead_of(
-	detected: &'static Language,
-	body: &[u8],
-	encoding: &'static encoding_rs::Encoding,
-) -> Option<&'static Language> {
+fn xml_document_instead_of(detected: &'static Language, body: &[u8], encoding: Encoding) -> Option<&'static Language> {
 	let holds_markup =
 		detected.embedding.is_some() || detected.block_comments.iter().any(|&(start, ..)| start == "<!--");
-	let declaration: &[u8] = if encoding == encoding_rs::UTF_16LE {
+	let declaration: &[u8] = if encoding == Encoding::Utf16Le {
 		b"<\0?\0x\0m\0l\0"
-	} else if encoding == encoding_rs::UTF_16BE {
+	} else if encoding == Encoding::Utf16Be {
 		b"\0<\0?\0x\0m\0l"
 	} else {
 		b"<?xml"

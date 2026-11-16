@@ -274,7 +274,7 @@ mod tests {
 	#[test]
 	fn invalid_utf8_counts_like_valid_text() {
 		let rust = crate::langs::LANGUAGES.iter().find(|l| l.name == "Rust").unwrap();
-		let utf8 = FileEncoding { encoding: encoding_rs::UTF_8, bom_len: 0 };
+		let utf8 = FileEncoding { encoding: crate::analysis::encoding::Encoding::Utf8, bom_len: 0 };
 		let valid = count_lines(rust, utf8, b"// note\nlet x = 1;\n\n").lines;
 		let invalid = count_lines(rust, utf8, b"// not\xFFe\nlet x = 1;\n\n").lines;
 		assert_eq!(valid, invalid);
@@ -284,7 +284,7 @@ mod tests {
 	#[test]
 	fn bom_is_not_part_of_the_first_line() {
 		let python = crate::langs::LANGUAGES.iter().find(|l| l.name == "Python").unwrap();
-		let with_bom = FileEncoding { encoding: encoding_rs::UTF_8, bom_len: 3 };
+		let with_bom = FileEncoding { encoding: crate::analysis::encoding::Encoding::Utf8, bom_len: 3 };
 		let counts = count_lines(python, with_bom, b"\xEF\xBB\xBF#!/usr/bin/env python\nx = 1\n").lines;
 		assert_eq!(counts.shebang, 1);
 		assert_eq!(counts.code, 1);

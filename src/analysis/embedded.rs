@@ -662,7 +662,7 @@ mod tests {
 	fn elements_that_never_close_take_linear_time(#[case] language: &str, #[case] piece: &str) {
 		let text = piece.repeat(1_000_000 / piece.len());
 		let start = std::time::Instant::now();
-		let utf8 = FileEncoding { encoding: encoding_rs::UTF_8, bom_len: 0 };
+		let utf8 = FileEncoding { encoding: crate::analysis::encoding::Encoding::Utf8, bom_len: 0 };
 		count_lines(language_named(language).unwrap(), utf8, text.as_bytes());
 		assert!(start.elapsed().as_secs() < 10, "took {:?}", start.elapsed());
 	}
@@ -713,7 +713,7 @@ mod tests {
 	#[test]
 	fn a_script_tag_that_never_closes_is_text() {
 		let html = language_named("HTML").unwrap();
-		let utf8 = FileEncoding { encoding: encoding_rs::UTF_8, bom_len: 0 };
+		let utf8 = FileEncoding { encoding: crate::analysis::encoding::Encoding::Utf8, bom_len: 0 };
 		let never_closed =
 			count_lines(html, utf8, b"<p>a page can write <script> as text</p>\n<p>// and this is the page</p>\n");
 		assert_eq!(never_closed.embedded.total(), 0);
@@ -981,7 +981,7 @@ mod tests {
 					start += line.len();
 					expected.add(classifier.classify_before(line, i == 0, Some(&text[start..])));
 				}
-				let utf8 = FileEncoding { encoding: encoding_rs::UTF_8, bom_len: 0 };
+				let utf8 = FileEncoding { encoding: crate::analysis::encoding::Encoding::Utf8, bom_len: 0 };
 				assert_eq!(count_lines(language, utf8, text.as_bytes()).lines, expected, "{}: {text:?}", language.name);
 			}
 		}

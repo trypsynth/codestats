@@ -1,6 +1,5 @@
 use std::borrow::Cow;
 
-use encoding_rs::{CoderResult, Decoder, Encoding, UTF_8, UTF_16BE, UTF_16LE};
 use memchr::memchr;
 
 use super::{
@@ -11,12 +10,61 @@ use crate::langs::Language;
 
 /// Percentage of non-text bytes in a sample that indicates a binary file.
 const BINARY_THRESHOLD_PERCENT: usize = 20;
-/// Chunk size for incremental UTF-16 decoding.
+/// How much decoded UTF-16 text to gather before counting its lines.
 const UTF16_DECODE_CHUNK_SIZE: usize = 8 * 1024;
+
+/// The encodings codestats reads: UTF-8, which also stands for anything else ASCII-compatible, or UTF-16.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) enum Encoding {
+	Utf8,
+	Utf16Le,
+	Utf16Be,
+}
+
+impl Encoding {
+	/// The encoding a byte order mark at the start of `bytes` names, and the mark's length.
+	const fn for_bom(bytes: &[u8]) -> Option<(Self, usize)> {
+		match bytes {
+			[0xEF, 0xBB, 0xBF, ..] => Some((Self::Utf8, 3)),
+			[0xFF, 0xFE, ..] => Some((Self::Utf16Le, 2)),
+			[0xFE, 0xFF, ..] => Some((Self::Utf16Be, 2)),
+			_ => None,
+		}
+	}
+
+	/// Decode `bytes`, replacing what isn't valid with U+FFFD. A byte order mark at the start is dropped, and decides the encoding.
+	fn decode(self, bytes: &[u8]) -> Cow<'_, str> {
+		let (encoding, bytes) = match Self::for_bom(bytes) {
+			Some((encoding, len)) => (encoding, &bytes[len..]),
+			None => (self, bytes),
+		};
+		match encoding {
+			Self::Utf8 => String::from_utf8_lossy(bytes),
+			Self::Utf16Le | Self::Utf16Be => {
+				let mut text = String::with_capacity(bytes.len());
+				encoding.decode_utf16_into(bytes, &mut text);
+				Cow::Owned(text)
+			}
+		}
+	}
+
+	/// Append UTF-16 `bytes` to `output`, with U+FFFD for an unpaired surrogate or a trailing odd byte.
+	fn decode_utf16_into(self, bytes: &[u8], output: &mut String) {
+		let (pairs, odd) = bytes.as_chunks::<2>();
+		let units = pairs.iter().map(|&pair| match self {
+			Self::Utf16Be => u16::from_be_bytes(pair),
+			_ => u16::from_le_bytes(pair),
+		});
+		output.extend(char::decode_utf16(units).map(|c| c.unwrap_or(char::REPLACEMENT_CHARACTER)));
+		if !odd.is_empty() {
+			output.push(char::REPLACEMENT_CHARACTER);
+		}
+	}
+}
 
 #[derive(Clone, Copy)]
 pub(super) struct FileEncoding {
-	pub(super) encoding: &'static Encoding,
+	pub(super) encoding: Encoding,
 	pub(super) bom_len: usize,
 }
 
@@ -24,7 +72,7 @@ pub(super) fn detect_encoding(samples: &[u8]) -> FileEncoding {
 	if let Some((encoding, bom_len)) = Encoding::for_bom(samples) {
 		FileEncoding { encoding, bom_len }
 	} else {
-		detect_utf16_without_bom(samples).unwrap_or(FileEncoding { encoding: UTF_8, bom_len: 0 })
+		detect_utf16_without_bom(samples).unwrap_or(FileEncoding { encoding: Encoding::Utf8, bom_len: 0 })
 	}
 }
 
@@ -33,8 +81,7 @@ pub(super) fn decode_bytes(bytes: &[u8], encoding: FileEncoding, strip_bom: bool
 	if strip_bom && encoding.bom_len > 0 && slice.len() >= encoding.bom_len {
 		slice = &slice[encoding.bom_len..];
 	}
-	let (decoded, _, _) = encoding.encoding.decode(slice);
-	decoded
+	encoding.encoding.decode(slice)
 }
 
 pub(super) fn is_probably_binary(sample: &[u8], encoding: FileEncoding) -> bool {
@@ -60,8 +107,8 @@ pub(super) fn is_probably_binary(sample: &[u8], encoding: FileEncoding) -> bool 
 	non_text * 100 / sample.len() > BINARY_THRESHOLD_PERCENT
 }
 
-pub(super) fn is_utf16(encoding: &'static Encoding) -> bool {
-	encoding == UTF_16LE || encoding == UTF_16BE
+pub(super) fn is_utf16(encoding: Encoding) -> bool {
+	encoding != Encoding::Utf8
 }
 
 fn detect_utf16_without_bom(samples: &[u8]) -> Option<FileEncoding> {
@@ -83,9 +130,9 @@ fn detect_utf16_without_bom(samples: &[u8]) -> Option<FileEncoding> {
 		return None;
 	}
 	let (encoding, text_byte) = if zero_odd >= zero_even.saturating_mul(2) {
-		(UTF_16LE, 0)
+		(Encoding::Utf16Le, 0)
 	} else if zero_even >= zero_odd.saturating_mul(2) {
-		(UTF_16BE, 1)
+		(Encoding::Utf16Be, 1)
 	} else {
 		return None;
 	};
@@ -105,31 +152,31 @@ pub(super) fn count_utf16(language: &Language, encoding: FileEncoding, bytes: &[
 	let mut line_counts = LineCounts::default();
 	let mut classifier = Classifier::new(language);
 	let mut is_first_line = true;
-	let mut decoder = encoding.encoding.new_decoder_without_bom_handling();
 	let mut pending = String::new();
 	let text = bytes.get(encoding.bom_len..).unwrap_or_default();
-	for chunk in text.chunks(UTF16_DECODE_CHUNK_SIZE) {
-		decode_to_string(&mut decoder, chunk, false, &mut pending);
-		drain_lines(&mut pending, &mut line_counts, &mut classifier, &mut is_first_line, false);
+	// Each chunk ends just past a line feed, so no code unit or surrogate pair is split between two.
+	let mut rest = text;
+	while !rest.is_empty() {
+		let cut = chunk_end(rest, encoding.encoding);
+		encoding.encoding.decode_utf16_into(&rest[..cut], &mut pending);
+		rest = &rest[cut..];
+		drain_lines(&mut pending, &mut line_counts, &mut classifier, &mut is_first_line, rest.is_empty());
 	}
-	decode_to_string(&mut decoder, &[], true, &mut pending);
-	drain_lines(&mut pending, &mut line_counts, &mut classifier, &mut is_first_line, true);
 	FileCounts { lines: line_counts, embedded: classifier.into_embedded() }
 }
 
-fn decode_to_string(decoder: &mut Decoder, chunk: &[u8], last: bool, output: &mut String) {
-	let mut offset = 0;
-	loop {
-		// Room for the worst case, which includes bytes held back from the previous chunk, such as a trailing odd byte that becomes a three-byte U+FFFD. With any less, the decoder can report a full output without consuming anything, forever.
-		output.reserve(
-			decoder.max_utf8_buffer_length(chunk.len() - offset).expect("a chunk's decoded length fits in memory"),
-		);
-		let (result, read, _) = decoder.decode_to_string(&chunk[offset..], output, last);
-		offset += read;
-		if result == CoderResult::InputEmpty {
-			break;
-		}
+/// Where to end the next chunk of UTF-16 `text`: just past a line feed after the first [`UTF16_DECODE_CHUNK_SIZE`] bytes, or at the end.
+fn chunk_end(text: &[u8], encoding: Encoding) -> usize {
+	if text.len() <= UTF16_DECODE_CHUNK_SIZE {
+		return text.len();
 	}
+	let line_feed = if encoding == Encoding::Utf16Be { [0, b'\n'] } else { [b'\n', 0] };
+	text[UTF16_DECODE_CHUNK_SIZE..]
+		.as_chunks::<2>()
+		.0
+		.iter()
+		.position(|&unit| unit == line_feed)
+		.map_or(text.len(), |at| UTF16_DECODE_CHUNK_SIZE + at * 2 + 2)
 }
 
 fn drain_lines(
@@ -168,13 +215,13 @@ mod tests {
 	use super::*;
 
 	#[rstest]
-	#[case::non_utf8_text_is_not_flagged_as_binary(UTF_8, 0, vec![0xC3, 0x28, b'a', b'b'], false)]
-	#[case::null_bytes_are_flagged_as_binary(UTF_8, 0, vec![0x00, b'a', b'b', b'c'], true)]
-	#[case::empty_sample_is_not_binary(UTF_8, 0, vec![], false)]
-	#[case::utf16_is_never_binary(UTF_16LE, 0, vec![0x00, 0x00, 0x00, 0x00], false)]
-	#[case::high_control_chars_flagged_binary(UTF_8, 0, vec![0x01, 0x02, 0x03, b'a', b'b', b'c', b'd', b'e', b'f', b'g'], true)]
+	#[case::non_utf8_text_is_not_flagged_as_binary(Encoding::Utf8, 0, vec![0xC3, 0x28, b'a', b'b'], false)]
+	#[case::null_bytes_are_flagged_as_binary(Encoding::Utf8, 0, vec![0x00, b'a', b'b', b'c'], true)]
+	#[case::empty_sample_is_not_binary(Encoding::Utf8, 0, vec![], false)]
+	#[case::utf16_is_never_binary(Encoding::Utf16Le, 0, vec![0x00, 0x00, 0x00, 0x00], false)]
+	#[case::high_control_chars_flagged_binary(Encoding::Utf8, 0, vec![0x01, 0x02, 0x03, b'a', b'b', b'c', b'd', b'e', b'f', b'g'], true)]
 	fn test_is_probably_binary(
-		#[case] encoding: &'static Encoding,
+		#[case] encoding: Encoding,
 		#[case] bom_len: usize,
 		#[case] sample: Vec<u8>,
 		#[case] expected: bool,
@@ -184,15 +231,15 @@ mod tests {
 	}
 
 	#[rstest]
-	#[case::detect_utf16_le_without_bom(vec![b'a', 0x00, b'b', 0x00, b'c', 0x00, b'd', 0x00], UTF_16LE, 0)]
-	#[case::detect_utf16_be_without_bom(vec![0x00, b'a', 0x00, b'b', 0x00, b'c', 0x00, b'd'], UTF_16BE, 0)]
-	#[case::detect_utf8_bom(vec![0xEF, 0xBB, 0xBF, b'h', b'e', b'l', b'l', b'o'], UTF_8, 3)]
-	#[case::detect_utf16_le_bom(vec![0xFF, 0xFE, b'h', 0x00, b'e', 0x00], UTF_16LE, 2)]
-	#[case::detect_utf16_be_bom(vec![0xFE, 0xFF, 0x00, b'h', 0x00, b'e'], UTF_16BE, 2)]
-	#[case::detect_plain_utf8_default(b"hello world".to_vec(), UTF_8, 0)]
+	#[case::detect_utf16_le_without_bom(vec![b'a', 0x00, b'b', 0x00, b'c', 0x00, b'd', 0x00], Encoding::Utf16Le, 0)]
+	#[case::detect_utf16_be_without_bom(vec![0x00, b'a', 0x00, b'b', 0x00, b'c', 0x00, b'd'], Encoding::Utf16Be, 0)]
+	#[case::detect_utf8_bom(vec![0xEF, 0xBB, 0xBF, b'h', b'e', b'l', b'l', b'o'], Encoding::Utf8, 3)]
+	#[case::detect_utf16_le_bom(vec![0xFF, 0xFE, b'h', 0x00, b'e', 0x00], Encoding::Utf16Le, 2)]
+	#[case::detect_utf16_be_bom(vec![0xFE, 0xFF, 0x00, b'h', 0x00, b'e'], Encoding::Utf16Be, 2)]
+	#[case::detect_plain_utf8_default(b"hello world".to_vec(), Encoding::Utf8, 0)]
 	fn test_detect_encoding(
 		#[case] sample: Vec<u8>,
-		#[case] expected_encoding: &'static Encoding,
+		#[case] expected_encoding: Encoding,
 		#[case] expected_bom_len: usize,
 	) {
 		let result = detect_encoding(&sample);
@@ -201,21 +248,17 @@ mod tests {
 	}
 
 	#[rstest]
-	#[case::utf16_le(UTF_16LE, true)]
-	#[case::utf16_be(UTF_16BE, true)]
-	#[case::utf8(UTF_8, false)]
-	fn test_is_utf16(#[case] encoding: &'static Encoding, #[case] expected: bool) {
+	#[case::utf16_le(Encoding::Utf16Le, true)]
+	#[case::utf16_be(Encoding::Utf16Be, true)]
+	#[case::utf8(Encoding::Utf8, false)]
+	fn test_is_utf16(#[case] encoding: Encoding, #[case] expected: bool) {
 		assert_eq!(is_utf16(encoding), expected);
 	}
 
 	#[rstest]
-	#[case::le(UTF_16LE, &[0xFF, 0xFE], u16::to_le_bytes as fn(u16) -> [u8; 2])]
-	#[case::be(UTF_16BE, &[0xFE, 0xFF], u16::to_be_bytes as fn(u16) -> [u8; 2])]
-	fn count_utf16_across_chunks(
-		#[case] encoding: &'static Encoding,
-		#[case] bom: &[u8],
-		#[case] to_bytes: fn(u16) -> [u8; 2],
-	) {
+	#[case::le(Encoding::Utf16Le, &[0xFF, 0xFE], u16::to_le_bytes as fn(u16) -> [u8; 2])]
+	#[case::be(Encoding::Utf16Be, &[0xFE, 0xFF], u16::to_be_bytes as fn(u16) -> [u8; 2])]
+	fn count_utf16_across_chunks(#[case] encoding: Encoding, #[case] bom: &[u8], #[case] to_bytes: fn(u16) -> [u8; 2]) {
 		// Big enough to span several decode chunks, ending in a line with no newline.
 		let text = format!("{}x = 1", "x = 1\n// note\n\n".repeat(1000));
 		let mut bytes = bom.to_vec();
@@ -232,7 +275,7 @@ mod tests {
 		// A JSON test case with an unescaped NUL in a string.
 		let sample = b"[\"a\0a\"]";
 		let encoding = detect_encoding(sample);
-		assert_eq!(encoding.encoding, UTF_8);
+		assert_eq!(encoding.encoding, Encoding::Utf8);
 		assert!(is_probably_binary(sample, encoding));
 	}
 
@@ -243,7 +286,7 @@ mod tests {
 	#[case::nearly_full_output(b"[\"a\0a\"]".as_slice(), 1)]
 	fn utf16_with_a_trailing_odd_byte_finishes(#[case] bytes: &[u8], #[case] lines: u64) {
 		let language = crate::langs::LANGUAGES.iter().find(|l| l.name == "Rust").unwrap();
-		let counts = count_utf16(language, FileEncoding { encoding: UTF_16LE, bom_len: 0 }, bytes).lines;
+		let counts = count_utf16(language, FileEncoding { encoding: Encoding::Utf16Le, bom_len: 0 }, bytes).lines;
 		assert_eq!(counts.total, lines);
 	}
 
@@ -252,7 +295,7 @@ mod tests {
 		// A table of u16/u32 values has a zero high byte in every pair, just like ASCII text in UTF-16LE.
 		let sample: Vec<u8> = (0u16..2048).flat_map(|n| (n % 200).to_le_bytes()).collect();
 		let encoding = detect_encoding(&sample);
-		assert_eq!(encoding.encoding, UTF_8);
+		assert_eq!(encoding.encoding, Encoding::Utf8);
 		assert!(is_probably_binary(&sample, encoding));
 	}
 
@@ -261,7 +304,7 @@ mod tests {
 		let sample: Vec<u8> =
 			"fn main() {\n\tprintln!(\"hi\");\r\n}\n".repeat(50).encode_utf16().flat_map(u16::to_le_bytes).collect();
 		let encoding = detect_encoding(&sample);
-		assert_eq!(encoding.encoding, UTF_16LE);
+		assert_eq!(encoding.encoding, Encoding::Utf16Le);
 		assert!(!is_probably_binary(&sample, encoding));
 	}
 
@@ -276,7 +319,7 @@ mod tests {
 	#[test]
 	fn decode_bytes_strips_bom() {
 		let bytes = [0xEF, 0xBB, 0xBF, b'h', b'i'];
-		let encoding = FileEncoding { encoding: UTF_8, bom_len: 3 };
+		let encoding = FileEncoding { encoding: Encoding::Utf8, bom_len: 3 };
 		let decoded = decode_bytes(&bytes, encoding, true);
 		assert_eq!(&*decoded, "hi");
 	}
@@ -284,10 +327,9 @@ mod tests {
 	#[test]
 	fn decode_bytes_without_strip_includes_full_content() {
 		let bytes = [0xEF, 0xBB, 0xBF, b'h', b'i'];
-		let encoding = FileEncoding { encoding: UTF_8, bom_len: 3 };
+		let encoding = FileEncoding { encoding: Encoding::Utf8, bom_len: 3 };
 		let decoded = decode_bytes(&bytes, encoding, false);
-		// Without stripping, the full content is decoded (BOM may or may not appear
-		// depending on encoding_rs behavior, but content should be present)
-		assert!(decoded.contains("hi"));
+		// A byte order mark at the start of what's decoded is dropped all the same.
+		assert_eq!(&*decoded, "hi");
 	}
 }
