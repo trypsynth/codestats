@@ -34,6 +34,12 @@ pub struct LanguageConfig {
 	pub regex_literals: bool,
 	#[serde(default)]
 	pub line_splices: bool,
+	#[serde(default)]
+	pub word_comments: bool,
+	#[serde(default)]
+	pub operator_symbols: String,
+	#[serde(default)]
+	pub operators: Vec<String>,
 	#[serde(default, deserialize_with = "deserialize_block_comments")]
 	pub line_block_comments: Vec<(String, String)>,
 	#[serde(default)]

@@ -199,6 +199,11 @@ fn handle_block_comments<'a>(
 				if find_line_comment(line_remainder, lang, matchers).is_some_and(|line_pos| line_pos < pos) {
 					break;
 				}
+				if let Some(len) = operator_at(line_remainder, pos, lang) {
+					has_code = true;
+					line_remainder = &line_remainder[pos + len..];
+					continue;
+				}
 				if pos > 0 && contains_non_whitespace(&line_remainder[..pos]) {
 					has_code = true;
 				}
@@ -221,6 +226,12 @@ fn handle_block_comments<'a>(
 		}
 	}
 	(line_remainder, has_code)
+}
+
+/// The length of the operator at `pos` in `line` that starts with a block comment's opener, like F#'s `(*)`, if there's one there.
+#[inline]
+fn operator_at(line: &str, pos: usize, lang: &Language) -> Option<usize> {
+	lang.operators.iter().find(|op| line[pos..].starts_with(*op)).map(|op| op.len())
 }
 
 /// Whether a line is a C preprocessor directive written with a space after the `#` (`# define X`), in a language where `#` also starts comments. Directives that read like English (`# if the value...`) only count when followed by a condition.
@@ -254,7 +265,13 @@ fn find_line_comment(line: &str, lang: &Language, matchers: &LanguageMatchers) -
 	line_comments
 		.find_iter(line)
 		.find(|matched| {
-			is_valid_line_comment_match(line, matched.end(), lang.line_comments[matched.pattern().as_usize()])
+			is_valid_line_comment_match(
+				line,
+				matched.start(),
+				matched.end(),
+				lang.line_comments[matched.pattern().as_usize()],
+				lang,
+			)
 		})
 		.map(|matched| matched.start())
 }
@@ -265,7 +282,7 @@ fn starts_with_line_comment(line: &str, lang: &Language) -> bool {
 	lang.line_comments
 		.iter()
 		.find(|marker| starts_with(line, marker))
-		.is_some_and(|marker| is_valid_line_comment_match(line, marker.len(), marker))
+		.is_some_and(|marker| is_valid_line_comment_match(line, 0, marker.len(), marker, lang))
 }
 
 /// `str::starts_with` for markers: they're a few bytes long, so comparing them byte by byte beats a call to `memcmp` on every comment line.
@@ -455,14 +472,26 @@ const fn is_word_char(b: u8) -> bool {
 	b.is_ascii_alphanumeric() || b == b'_'
 }
 
+/// Whether the line comment marker `token`, found in `line` from `start` to `end`, starts a comment there: a marker made of letters needs a non-letter after it, a word comment needs the start of a word (a shell's `${#files}` is code), and a marker followed by an operator symbol is part of that operator (Haskell's `-->`).
 #[inline]
-const fn is_valid_line_comment_match(line: &str, end: usize, token: &str) -> bool {
+fn is_valid_line_comment_match(line: &str, start: usize, end: usize, token: &str, lang: &Language) -> bool {
+	let bytes = line.as_bytes();
 	let Some(&first) = token.as_bytes().first() else {
 		return false;
 	};
-	if is_word_char(first) {
-		let bytes = line.as_bytes();
-		if end < bytes.len() && is_word_char(bytes[end]) {
+	if is_word_char(first) && bytes.get(end).is_some_and(|&b| is_word_char(b)) {
+		return false;
+	}
+	if lang.word_comments
+		&& start > 0
+		&& !matches!(bytes[start - 1], b' ' | b'\t' | b';' | b'&' | b'|' | b'(' | b')' | b'`')
+	{
+		return false;
+	}
+	if !lang.operator_symbols.is_empty() {
+		let last = token.as_bytes()[token.len() - 1];
+		let after = bytes[end..].iter().find(|&&b| b != last);
+		if after.is_some_and(|b| lang.operator_symbols.contains(b)) {
 			return false;
 		}
 	}
@@ -575,6 +604,23 @@ mod tests {
 		let lang = crate::langs::LANGUAGES.iter().find(|l| l.name == lang_name).unwrap();
 		let mut state = CommentState::new();
 		lines.iter().enumerate().map(|(i, line)| classify_line(line, lang, &mut state, i == 0)).collect()
+	}
+
+	#[rstest]
+	#[case::quotes_inside_a_command_substitution(&["x=\"$(tr -d '\"')\"", "# c"], &[LineType::Code, LineType::Comment])]
+	#[case::escaped_quote_in_ansi_c_quoting(&["x=$'it\\'s'", "# c"], &[LineType::Code, LineType::Comment])]
+	fn shell_quoting(#[case] lines: &[&str], #[case] expected: &[LineType]) {
+		assert_eq!(classify_all("Bash", lines), expected);
+	}
+
+	#[rstest]
+	#[case::fsharp_multiplication("F#", &["let p = List.fold (*) 1 xs", "let x = 2"], &[LineType::Code, LineType::Code])]
+	#[case::fsharp_comment("F#", &["let p = 1 (* a", "comment *)"], &[LineType::Code, LineType::Comment])]
+	#[case::haskell_arrow("Haskell", &["f = a --> b {- a", "comment -}"], &[LineType::Code, LineType::Comment])]
+	#[case::swift_quote_in_extended_string("Swift", &["let s = #\"say \"hi\"#; /* a", "comment */"], &[LineType::Code, LineType::Comment])]
+	#[case::shell_length_before_heredoc("Bash", &["echo ${#files[@]} <<'EOF'", "# data", "EOF"], &[LineType::Code, LineType::Code, LineType::Code])]
+	fn operators_spelled_like_comments(#[case] language: &str, #[case] lines: &[&str], #[case] expected: &[LineType]) {
+		assert_eq!(classify_all(language, lines), expected);
 	}
 
 	#[test]
@@ -739,12 +785,42 @@ mod tests {
 
 	#[test]
 	fn test_is_valid_line_comment_match() {
+		let batch = crate::langs::language_named("Batch").unwrap();
+		let c = crate::langs::language_named("C").unwrap();
 		// Word-char tokens need word boundary after
-		assert!(is_valid_line_comment_match("REM hello", 3, "REM"));
-		assert!(!is_valid_line_comment_match("REMEMBER", 3, "REM")); // no boundary
+		assert!(is_valid_line_comment_match("REM hello", 0, 3, "REM", batch));
+		assert!(!is_valid_line_comment_match("REMEMBER", 0, 3, "REM", batch)); // no boundary
 		// Symbol tokens don't need boundary
-		assert!(is_valid_line_comment_match("// test", 2, "//"));
-		assert!(is_valid_line_comment_match("//test", 2, "//"));
+		assert!(is_valid_line_comment_match("// test", 0, 2, "//", c));
+		assert!(is_valid_line_comment_match("//test", 0, 2, "//", c));
+	}
+
+	#[rstest]
+	#[case::hash_after_a_space("echo a # c", 7, true)]
+	#[case::hash_after_a_semicolon("x=1;# c", 4, true)]
+	#[case::hash_opening_a_command_substitution("cmd `# a note` \\", 5, true)]
+	#[case::hash_inside_a_word("echo a#b", 6, false)]
+	#[case::length_expansion("echo ${#files[@]}", 7, false)]
+	#[case::argument_count("echo $#", 6, false)]
+	fn shell_comments_start_words(#[case] line: &str, #[case] start: usize, #[case] expected: bool) {
+		let bash = crate::langs::language_named("Bash").unwrap();
+		assert_eq!(is_valid_line_comment_match(line, start, start + 1, "#", bash), expected);
+	}
+
+	#[rstest]
+	#[case::plain("x = 1 -- c", 6, true)]
+	#[case::more_dashes("--- c", 0, true)]
+	#[case::arrow_operator("a --> b", 2, false)]
+	#[case::longer_arrow("a ---> b", 2, false)]
+	#[case::pipe_operator("a --| b", 2, false)]
+	#[case::dashes_to_the_end("x ---", 2, true)]
+	fn haskell_dashes_before_a_symbol_are_an_operator(
+		#[case] line: &str,
+		#[case] start: usize,
+		#[case] expected: bool,
+	) {
+		let haskell = crate::langs::language_named("Haskell").unwrap();
+		assert_eq!(is_valid_line_comment_match(line, start, start + 2, "--", haskell), expected);
 	}
 
 	#[rstest]

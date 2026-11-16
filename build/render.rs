@@ -25,6 +25,12 @@ const LANGUAGE_FIELDS: &[(&str, &str)] = &[
 	("c_preprocessor", "bool"),
 	("regex_literals", "bool"),
 	("line_splices", "bool"),
+	// Line comment markers only start a comment at the start of a word.
+	("word_comments", "bool"),
+	// Bytes that, right after a line comment marker and any more of its last byte, make it an operator instead.
+	("operator_symbols", "&'static [u8]"),
+	// Operators starting with a block comment's opener, which are code.
+	("operators", "&'static [&'static str]"),
 	// Block comments whose markers only count at the start of a line, or alone on it with `line_blocks_alone`.
 	("line_block_comments", "&'static [(&'static str, &'static str)]"),
 	("line_blocks_alone", "bool"),
@@ -162,6 +168,9 @@ fn render_language(output: &mut String, index: usize, lang: &LanguageConfig) {
 	write_field(output, "c_preprocessor", lang.c_preprocessor);
 	write_field(output, "regex_literals", lang.regex_literals);
 	write_field(output, "line_splices", lang.line_splices);
+	write_field(output, "word_comments", lang.word_comments);
+	write_field(output, "operator_symbols", format_args!("b{:?}", lang.operator_symbols));
+	write_field(output, "operators", quoted_slice(&lang.operators));
 	write_field(
 		output,
 		"line_block_comments",

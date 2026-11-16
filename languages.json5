@@ -15,6 +15,9 @@
 // line_block_comments: Block comments whose markers only count at the start of a line, with no indentation before them.
 // line_blocks_alone: The line block comments' markers also have to be alone on their line, spaces aside.
 // line_splices: A backslash ending a line joins it to the next, so a line comment ending in one carries on onto the next line.
+// word_comments: Line comment markers only start a comment at the start of a word, as `#` does in shells, so `${#files}` and `a#b` are code.
+// operator_symbols: Symbols that make a line comment marker part of an operator when they follow it and any more of its last character, as `-->` is an operator in Haskell.
+// operators: Operators that start with a block comment's opener, which are code, as `(*)` is F#'s multiplication.
 // heredoc: The language's heredocs, whose body runs from the next line to the line holding just the terminator named after the opener: "shell", "perl", "ruby", or "php".
 // embedding: Regions written in other languages, counted by those languages' rules: "html" for `<script>` and `<style>` elements, "astro" for those plus a TypeScript frontmatter, "markdown" for fenced code blocks and YAML or TOML frontmatter, "asciidoc" for source blocks and fenced code blocks, "org" for source blocks, "restructuredtext" for code block directives, or "php" for the HTML outside PHP tags.
 {
@@ -296,8 +299,9 @@
 	"Bash": {
 		file_patterns: ["*.bash", "*.sh", ".profile", ".bash_logout", ".bash_profile", ".bashrc", ".bash_aliases", ".bash_login", "*.bats", "*.dash", "*.mksh", "*.sbatch", "*.slurm", "*.command", "*.sh.in", "APKBUILD", "*.exheres-0", "*.exlib", "*.pacscript"],
 		line_comments: ["#"],
+		word_comments: true,
 		shebangs: ["#!/bin/bash", "#!/usr/bin/env bash", "#!/bin/sh", "#!/usr/bin/env sh", "#!/bin/dash", "#!/usr/bin/env dash"],
-		strings: [{open: "\"", multiline: true}, {open: "'", escape: null, multiline: true}],
+		strings: [{open: "\"", multiline: true, interpolation: "$("}, {open: "'", escape: null, multiline: true}, {open: "$'", close: "'", multiline: true}],
 		heredoc: "shell",
 	},
 	"Batch": {
@@ -450,6 +454,7 @@
 	"C Shell": {
 		file_patterns: ["*.csh", ".cshrc", ".login"],
 		line_comments: ["#"],
+		word_comments: true,
 		shebangs: ["#!/bin/csh", "#!/usr/bin/env csh"],
 		heredoc: "shell",
 	},
@@ -1030,6 +1035,7 @@
 		line_comments: ["//"],
 		block_comments: [["(*", "*)"]],
 		nested_blocks: true,
+		operators: ["(*)"],
 		strings: [
 			{open: "\"", multiline: true},
 			{open: "'", char: true},
@@ -1098,6 +1104,7 @@
 	"Fish": {
 		file_patterns: ["*.fish"],
 		line_comments: ["#"],
+		word_comments: true,
 		shebangs: ["#!/bin/fish", "#!/usr/bin/env fish", "#!/usr/bin/fish"],
 		strings: [{open: "\"", multiline: true}, {open: "'", multiline: true}],
 	},
@@ -1404,6 +1411,8 @@
 	"Haskell": {
 		file_patterns: ["*.hs", "*.lhs", "*.hsc", "*.hs-boot", ".ghci", "*.lhs-boot"],
 		line_comments: ["--"],
+		// Two or more dashes followed by another symbol are an operator, like `-->`, not a comment.
+		operator_symbols: "!#$%&*+./<=>?@\\^|~:",
 		block_comments: [["{-", "-}"]],
 		nested_blocks: true,
 		shebangs: ["#!/usr/bin/env runhaskell"],
@@ -3426,7 +3435,13 @@
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
 		shebangs: ["#!/usr/bin/env swift", "#!/usr/bin/swift"],
-		strings: [{open: "\"", interpolation: "\\("}, {open: "\"\"\"", multiline: true, interpolation: "\\("}],
+		// A string between `#"` and `"#` takes no escapes but `\#`, so a lone `"` and `\` are text in it.
+		strings: [
+			{open: "\"", interpolation: "\\("},
+			{open: "\"\"\"", multiline: true, interpolation: "\\("},
+			{open: "#\"", close: "\"#", escape: null, interpolation: "\\#("},
+			{open: "#\"\"\"", close: "\"\"\"#", escape: null, multiline: true, interpolation: "\\#("},
+		],
 	},
 	"Swig": {
 		file_patterns: ["*.swg", "*.i", "*.swig"],
@@ -4044,8 +4059,9 @@
 	"ZSH": {
 		file_patterns: ["*.zsh", ".zlogin", ".zlogout", ".zprofile", ".zshenv", ".zshrc", "*.zsh-theme"],
 		line_comments: ["#"],
+		word_comments: true,
 		shebangs: ["#!/bin/zsh", "#!/usr/bin/env zsh", "#!/usr/bin/zsh"],
-		strings: [{open: "\"", multiline: true}, {open: "'", escape: null, multiline: true}],
+		strings: [{open: "\"", multiline: true, interpolation: "$("}, {open: "'", escape: null, multiline: true}, {open: "$'", close: "'", multiline: true}],
 		heredoc: "shell",
 	}
 }

@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Fixed shell comments being found inside words, so `${#files[@]}`, `$#`, and `a#b` no longer hide the rest of their line, such as a heredoc opener
+- Fixed quotes inside a shell `$(...)` in a double-quoted string ending that string, and `\'` ending a `$'...'` string. Many shell scripts now count more of their comments
+- Fixed Haskell operators that start with `--`, such as `-->`, being read as comments
+- Fixed F#'s `(*)` operator being read as the start of a block comment
+- Fixed a `"` inside a Swift string written between `#"` and `"#` ending the string
+
 ## 1.1.1
 
 - Writes reports faster and with less memory: `-v -o json` over 100,000 files went from 750 ms to 190 ms, and verbose human, CSV, and compact JSON reports take about 30% less time

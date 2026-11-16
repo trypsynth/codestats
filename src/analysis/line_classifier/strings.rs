@@ -4,6 +4,7 @@ use memchr::memmem;
 
 use super::{
 	CommentState, HeredocEnd, Hole, LineType, contains_non_whitespace, is_valid_line_comment_match, is_word_char,
+	operator_at,
 };
 use crate::langs::{
 	Heredoc, Language,
@@ -19,6 +20,23 @@ fn find_comment_edge(
 	search: &mut NestedSearch,
 ) -> Option<(usize, usize, bool)> {
 	matchers.block_comments.as_ref()?.find_block_end_or_nested_start(rest, pair, search)
+}
+
+/// Open the block comment whose opener starts at `start`, unless it begins an operator like F#'s `(*)`, which moves `pos` past the operator and returns `true`, as it's code.
+fn open_block_comment(
+	state: &mut CommentState,
+	lang: &Language,
+	line: &str,
+	start: usize,
+	pair: usize,
+	pos: &mut usize,
+) -> bool {
+	let Some(len) = operator_at(line, start, lang) else {
+		state.enter_first_block(pair);
+		return false;
+	};
+	*pos = start + len;
+	true
 }
 
 /// Classify a line in a language with string literals, scanning left to right so comment markers inside strings are ignored. String contents count as code.
@@ -90,14 +108,14 @@ pub(super) fn classify_with_strings(
 			pos = end;
 			match token {
 				Token::LineComment(i) => {
-					if is_valid_line_comment_match(line, end, lang.line_comments[i]) {
+					if is_valid_line_comment_match(line, start, end, lang.line_comments[i], lang) {
 						state.end_line_comment(line, lang);
 						state.end_one_line_holes(lang);
 						return if has_code { LineType::Code } else { LineType::Comment };
 					}
 					has_code = true;
 				}
-				Token::BlockComment(pair) => state.enter_first_block(pair),
+				Token::BlockComment(pair) => has_code |= open_block_comment(state, lang, line, start, pair, &mut pos),
 				Token::Regex => {
 					has_code = true;
 					// Skip a whole regex literal so quotes, backticks and `/*` inside it don't open anything; otherwise it's division.
