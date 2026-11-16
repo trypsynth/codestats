@@ -19,7 +19,7 @@ impl Shell {
 	/// Render completion scripts to stdout for the selected shell.
 	pub fn generate_completions(self) -> io::Result<()> {
 		let mut cmd = Cli::command();
-		let bin_name = cmd.get_name().to_string();
+		let bin_name = cmd.get_name().to_owned();
 		// Generated into memory and then written, since clap_complete panics when a write fails, as it does when the reader closes the pipe (`cs completions bash | head`).
 		let mut script = Vec::new();
 		match self {

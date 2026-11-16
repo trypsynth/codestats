@@ -90,7 +90,7 @@ fn excludes_file_in(config: &[u8]) -> Option<PathBuf> {
 		}
 		let value = str::from_utf8(value).ok()?;
 		Some(PathBuf::from(
-			env::home_dir().map_or_else(|| value.to_string(), |home| value.replace('~', &home.to_string_lossy())),
+			env::home_dir().map_or_else(|| value.to_owned(), |home| value.replace('~', &home.to_string_lossy())),
 		))
 	})
 }

@@ -1,4 +1,5 @@
 #![warn(clippy::all, clippy::cargo, clippy::nursery, clippy::pedantic, clippy::perf)]
+#![warn(clippy::allow_attributes_without_reason, clippy::str_to_string)]
 #![deny(warnings)]
 
 #[cfg(target_env = "musl")]

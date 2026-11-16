@@ -381,7 +381,7 @@ mod tests {
 		let config = Config::from_file(&config_path).expect("load config");
 		let (args, matches) = parse_cli(&["cs", "--exclude", "node_modules"]);
 		let merged = merge_config(config, &args, &matches).expect("merge config");
-		assert_eq!(merged.analysis.exclude_patterns, vec!["target".to_string(), "node_modules".to_string()]);
+		assert_eq!(merged.analysis.exclude_patterns, vec!["target".to_owned(), "node_modules".to_owned()]);
 	}
 
 	#[test]

@@ -1,10 +1,10 @@
 //! Askama template filters used by Markdown and HTML reports.
-// The askama `#[filter_fn]` macro generates wrapper functions that trigger these lints.
 #![allow(
 	clippy::inline_always,
 	clippy::missing_errors_doc,
 	clippy::trivially_copy_pass_by_ref,
-	clippy::unnecessary_wraps
+	clippy::unnecessary_wraps,
+	reason = "the askama `#[filter_fn]` macro generates wrapper functions that trigger these"
 )]
 
 use askama::{Result, Values};

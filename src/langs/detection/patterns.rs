@@ -60,7 +60,7 @@ mod tests {
 		for language in LANGUAGES {
 			for pattern in language.file_patterns {
 				let name =
-					pattern.strip_suffix('*').map_or_else(|| (*pattern).to_string(), |prefix| format!("{prefix}x"));
+					pattern.strip_suffix('*').map_or_else(|| (*pattern).to_owned(), |prefix| format!("{prefix}x"));
 				let name = name.strip_prefix('*').map_or_else(|| name.clone(), |rest| format!("x{rest}"));
 				assert!(
 					get_candidates(&name).iter().any(|candidate| candidate.name == language.name),

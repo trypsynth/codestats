@@ -333,7 +333,7 @@ impl<'a> Classifier<'a> {
 				let (tag, name_end) = self.find_element(line)?;
 				let rest = &line[name_end..];
 				let Some(end) = rest.find('>') else {
-					return Some(Region::OpeningTag { tag, attributes: rest.to_string() });
+					return Some(Region::OpeningTag { tag, attributes: rest.to_owned() });
 				};
 				// A self-closing or one-line element (`<script src="app.js"></script>`) is just markup, and so is an element that's never closed.
 				(!rest[..end].ends_with('/')
@@ -747,7 +747,7 @@ mod tests {
 
 	fn random_lines(pieces: &[&str], next: &mut impl FnMut(usize) -> usize) -> Vec<String> {
 		let text: String = (0..next(40)).map(|_| pieces[next(pieces.len())]).collect();
-		text.split('\n').map(str::to_string).collect()
+		text.split('\n').map(str::to_owned).collect()
 	}
 
 	/// A region of random text in `language`, appended to `lines` with the line types it should get.
@@ -798,7 +798,7 @@ mod tests {
 			embedded.add(language, line_type);
 		}
 		if let Some(closing) = syntax.closing {
-			lines.push(closing.to_string());
+			lines.push(closing.to_owned());
 			expected.push(Code);
 		}
 	}
@@ -840,7 +840,7 @@ mod tests {
 				indent: "",
 			},
 			Embedding::AsciiDoc => Syntax {
-				opening: vec![format!("[source,{name}]"), "----".to_string()],
+				opening: vec![format!("[source,{name}]"), "----".to_owned()],
 				closing: Some("----"),
 				end: End::Delimiter { marker: b'-', len: 4 },
 				indent: "",
@@ -852,7 +852,7 @@ mod tests {
 				indent: "",
 			},
 			Embedding::ReStructuredText => Syntax {
-				opening: vec![format!(".. code-block:: {name}"), "   :linenos:".to_string()],
+				opening: vec![format!(".. code-block:: {name}"), "   :linenos:".to_owned()],
 				closing: None,
 				end: End::Dedent { indent: 0, preamble: false, blanks: 0 },
 				indent: "   ",
@@ -896,7 +896,7 @@ mod tests {
 					&& next(2) == 0
 				{
 					let syntax = Syntax {
-						opening: vec!["---".to_string()],
+						opening: vec!["---".to_owned()],
 						closing: Some("---"),
 						end: End::Frontmatter("---"),
 						indent: "",
@@ -908,7 +908,7 @@ mod tests {
 					for _ in 0..next(3) {
 						let line = host_lines[next(host_lines.len())];
 						expected.push(classify_line(line, host, &mut CommentState::new(), false));
-						lines.push(line.to_string());
+						lines.push(line.to_owned());
 					}
 					let (syntax, language) = random_syntax(embedding, &mut next, &named);
 					push_region(&mut lines, &mut expected, &mut embedded, syntax, language, &mut next);

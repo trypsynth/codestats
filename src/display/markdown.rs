@@ -1,6 +1,9 @@
-#![expect(clippy::unnecessary_wraps)]
-// The askama `#[filter_fn]` macro generates code that triggers these lints.
-#![allow(clippy::inline_always, clippy::unused_self)]
+#![expect(clippy::unnecessary_wraps, reason = "askama filters must return a `Result`")]
+#![allow(
+	clippy::inline_always,
+	clippy::unused_self,
+	reason = "the askama `#[filter_fn]` macro generates code that triggers these"
+)]
 
 use std::{io::Write, path::PathBuf};
 
