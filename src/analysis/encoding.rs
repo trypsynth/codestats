@@ -39,7 +39,10 @@ impl Encoding {
 			None => (self, bytes),
 		};
 		match encoding {
-			Self::Utf8 => String::from_utf8_lossy(bytes),
+			// Nearly every sample is valid, and checking with SIMD first is several times faster than `from_utf8_lossy`'s own check.
+			Self::Utf8 => {
+				simdutf8::basic::from_utf8(bytes).map_or_else(|_| String::from_utf8_lossy(bytes), Cow::Borrowed)
+			}
 			Self::Utf16Le | Self::Utf16Be => {
 				let mut text = String::with_capacity(bytes.len());
 				encoding.decode_utf16_into(bytes, &mut text);
