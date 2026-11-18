@@ -62,8 +62,22 @@ struct Cell {
 
 #[derive(Deserialize, Default)]
 struct CellMetadata {
-	/// VS Code's notebooks give each cell a language.
+	/// VS Code's notebooks give each cell a language, though a Polyglot notebook's is `polyglot-notebook` for all of them.
 	vscode: Option<VsCode>,
+	/// Polyglot and .NET Interactive notebooks name each cell's kernel.
+	polyglot_notebook: Option<Polyglot>,
+	dotnet_interactive: Option<DotnetInteractive>,
+}
+
+#[derive(Deserialize)]
+struct Polyglot {
+	#[serde(rename = "kernelName")]
+	kernel_name: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct DotnetInteractive {
+	language: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -109,6 +123,8 @@ fn language_for(name: &str) -> Option<&'static Language> {
 		"latex" | "tex" => "TeX/LaTeX",
 		"wolfram language" | "wolfram" | "mathematica" => "Mathematica/Wolfram",
 		"powershell" | "pwsh" => "PowerShell",
+		"sage" | "sagemath" => "Python",
+		"common-lisp" | "sbcl" | "lisp" => "Common Lisp",
 		"sparql" => "SPARQL",
 		_ => name,
 	};
@@ -139,6 +155,8 @@ impl Notebook {
 		.flatten()
 		.find_map(language_for)
 		.or_else(|| kernelspec.and_then(|kernel| kernel.name.as_deref()).and_then(language_for_kernel))
+		// A notebook that names no kernel runs in Jupyter's default, Python.
+		.or_else(|| kernelspec.is_none().then(|| language_named("Python")).flatten())
 	}
 }
 
@@ -155,12 +173,17 @@ pub(super) fn count(bytes: &[u8]) -> Option<FileCounts> {
 			} else {
 				&cell.source
 			};
-			let cell_language = cell
-				.language
-				.as_deref()
-				.or_else(|| cell.metadata.vscode.as_ref().and_then(|vscode| vscode.language_id.as_deref()))
-				.and_then(language_for)
-				.or(kernel);
+			let metadata = &cell.metadata;
+			let cell_language = [
+				cell.language.as_deref(),
+				metadata.polyglot_notebook.as_ref().and_then(|polyglot| polyglot.kernel_name.as_deref()),
+				metadata.dotnet_interactive.as_ref().and_then(|dotnet| dotnet.language.as_deref()),
+				metadata.vscode.as_ref().and_then(|vscode| vscode.language_id.as_deref()),
+			]
+			.into_iter()
+			.flatten()
+			.find_map(language_for)
+			.or(kernel);
 			count_code(&source.text(), cell_language, &mut lines, &mut embedded);
 		} else {
 			// Markdown, raw, and nbformat 3's heading cells are the prose around the code.
@@ -176,9 +199,18 @@ pub(super) fn count(bytes: &[u8]) -> Option<FileCounts> {
 fn count_code(text: &str, language: Option<&'static Language>, lines: &mut LineCounts, embedded: &mut Embedded) {
 	let mut rest = text;
 	let mut language = language;
-	if let Some(magic) = text.strip_prefix("%%") {
+	// Jupyter's `%%bash` and Polyglot's `#!fsharp` name the cell's language on its first line.
+	if let Some(magic) = text.strip_prefix("%%").or_else(|| text.strip_prefix("#!")) {
 		let (line, after) = magic.split_once('\n').unwrap_or((magic, ""));
-		if let Some(named) = line.split_whitespace().next().and_then(language_for) {
+		let name = line.split_whitespace().next().unwrap_or_default();
+		if name == "markdown" {
+			lines.add(LineType::Code);
+			for line in after.lines() {
+				lines.add(if is_blank(line.as_bytes()) { LineType::Blank } else { LineType::Comment });
+			}
+			return;
+		}
+		if let Some(named) = language_for(name) {
 			lines.add(LineType::Code);
 			rest = after;
 			language = Some(named);
@@ -251,6 +283,25 @@ mod tests {
 		let (all, embedded) = counted(json);
 		assert_eq!(all, lines(4, 1, 0));
 		assert_eq!(embedded, [("Bash", lines(1, 1, 0)), ("Python", lines(2, 0, 0))]);
+	}
+
+	#[test]
+	fn polyglot_cells_name_their_own_kernel() {
+		let json = r##"{"metadata": {"kernelspec": {"language": "C#", "name": ".net-csharp"}}, "cells": [
+			{"cell_type": "code", "metadata": {"polyglot_notebook": {"kernelName": "fsharp"}, "vscode": {"languageId": "polyglot-notebook"}},
+			 "source": ["(* fsharp block\n", "comment *)\n", "let x = 1"]},
+			{"cell_type": "code", "metadata": {}, "source": ["#!pwsh\n", "# a comment\n", "Get-Item ."]},
+			{"cell_type": "code", "metadata": {}, "source": ["#!markdown\n", "Some prose."]}
+		]}"##;
+		let (all, embedded) = counted(json);
+		assert_eq!(all, lines(4, 4, 0));
+		assert_eq!(embedded, [("F#", lines(1, 2, 0)), ("PowerShell", lines(1, 1, 0))]);
+	}
+
+	#[test]
+	fn a_notebook_without_a_kernel_is_python() {
+		let json = r##"{"metadata": {}, "cells": [{"cell_type": "code", "source": "# c\nx = 1"}]}"##;
+		assert_eq!(counted(json).1, [("Python", lines(1, 1, 0))]);
 	}
 
 	#[test]
