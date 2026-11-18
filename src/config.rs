@@ -62,6 +62,8 @@ pub struct AnalysisConfig {
 	pub include_hidden: bool,
 	pub follow_symlinks: bool,
 	pub include_generated: bool,
+	/// Count vendored code: `third_party`, `node_modules`, and similar directories, and a `vendor` directory beside a manifest such as `go.mod`.
+	pub include_vendored: bool,
 	/// Only count files git tracks.
 	pub git_tracked_only: bool,
 	pub max_depth: Option<usize>,
@@ -82,6 +84,7 @@ impl Default for AnalysisConfig {
 			include_hidden: false,
 			follow_symlinks: false,
 			include_generated: false,
+			include_vendored: false,
 			git_tracked_only: false,
 			max_depth: None,
 			exclude_patterns: Vec::new(),

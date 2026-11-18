@@ -186,7 +186,7 @@ foreach ($repository in $repositories) {
 
 	# mezura's --languages leaves out Markdown and TOML, so only repositories without them in Ext get equal-work runs.
 	if (-not $repository.Ext) { continue }
-	$newSame = "`"$dir`" --ext $($repository.Ext) --no-gitignore --hidden --include-generated --no-gitattributes --no-config $newJson"
+	$newSame = "`"$dir`" --ext $($repository.Ext) --no-gitignore --hidden --include-generated --include-vendored --no-gitattributes --no-config $newJson"
 	$mezuraEqual = "`"$dir`" --languages $($repository.Ext) $mezuraSame $mezuraJson"
 	Compare-Tools "$($repository.Name), equal work" @(
 		@{ Name = 'codestats new'; Exe = $new; Line = $newSame },

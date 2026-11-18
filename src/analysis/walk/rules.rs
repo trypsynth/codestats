@@ -14,6 +14,8 @@ use ignore::{
 	overrides::Override,
 };
 
+use super::super::vendored;
+
 const EXCLUDES_KEY: &[u8] = b"excludesfile";
 
 /// What's true of the whole walk.
@@ -110,16 +112,19 @@ fn rules_above(root: &Path, errors: &mut Vec<Error>) -> Option<(Vec<DirRules>, P
 
 /// Which files of rules a directory listing showed.
 #[derive(Default)]
+#[expect(clippy::struct_excessive_bools, reason = "each says whether one kind of file is there")]
 pub(super) struct Found {
 	ignore: bool,
 	git_ignore: bool,
 	git: bool,
+	/// A manifest that makes a `vendor` directory beside it vendored, such as `go.mod`.
+	manifest: bool,
 }
 
 impl Found {
 	/// Without a listing, each has to be looked for.
 	const fn unknown() -> Self {
-		Self { ignore: true, git_ignore: true, git: true }
+		Self { ignore: true, git_ignore: true, git: true, manifest: false }
 	}
 
 	pub(super) fn note(&mut self, path: &Path) {
@@ -127,8 +132,12 @@ impl Found {
 			b".ignore" => self.ignore = true,
 			b".gitignore" => self.git_ignore = true,
 			b".git" => self.git = true,
-			_ => {}
+			name => self.manifest |= vendored::is_manifest(name),
 		}
+	}
+
+	pub(super) const fn manifest(&self) -> bool {
+		self.manifest
 	}
 
 	const fn any(&self) -> bool {

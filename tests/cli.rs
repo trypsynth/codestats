@@ -282,6 +282,50 @@ fn gitattributes_mark_files_from_above_and_below() {
 }
 
 #[test]
+fn vendored_directories_are_skipped_unless_included() {
+	let root = scratch_dir("vendored_directories_are_skipped_unless_included");
+	let git =
+		|args: &[&str]| assert!(Command::new("git").arg("-C").arg(&root).args(args).output().unwrap().status.success());
+	git(&["init", "-q"]);
+	for dir in ["vendor/lib", "vendor/ours", "third_party/zlib", "arch/vendor"] {
+		fs::create_dir_all(root.join(dir)).unwrap();
+	}
+	fs::write(root.join("go.mod"), "module example.com/app\n").unwrap();
+	fs::write(root.join(".gitattributes"), "vendor/ours/** -linguist-vendored\n").unwrap();
+	for file in ["main.go", "vendor/lib/lib.go", "vendor/ours/ours.go", "arch/vendor/cpu.go"] {
+		fs::write(root.join(file), "package main\n").unwrap();
+	}
+	fs::write(root.join("third_party/zlib/inflate.c"), "int inflate(void);\n").unwrap();
+	git(&["add", "."]);
+	let files = |dir: &str, extra: &[&str]| {
+		let output = cs().current_dir(root.join(dir)).args(["-v", "-o", "json"]).args(extra).output().unwrap();
+		assert!(output.status.success(), "stderr: {}", String::from_utf8_lossy(&output.stderr));
+		let report: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+		let mut paths: Vec<String> = report["languages"]
+			.as_array()
+			.unwrap()
+			.iter()
+			.flat_map(|lang| {
+				lang["files"].as_array().unwrap().iter().map(|file| file["path"].as_str().unwrap().replace('\\', "/"))
+			})
+			.filter(|path| path.ends_with(".go") || path.ends_with(".c"))
+			.collect();
+		paths.sort();
+		paths
+	};
+	// `arch/vendor` has no manifest beside it, and the attributes say `vendor/ours` isn't vendored.
+	let kept = ["arch/vendor/cpu.go", "main.go", "vendor/ours/ours.go"];
+	assert_eq!(files(".", &[]), kept);
+	assert_eq!(files(".", &["--git"]), kept);
+	let all =
+		["arch/vendor/cpu.go", "main.go", "third_party/zlib/inflate.c", "vendor/lib/lib.go", "vendor/ours/ours.go"];
+	assert_eq!(files(".", &["--include-vendored"]), all);
+	assert_eq!(files(".", &["--git", "--include-vendored"]), all);
+	// A vendored directory counted on its own is counted.
+	assert_eq!(files("third_party", &[]), ["zlib/inflate.c"]);
+}
+
+#[test]
 fn paths_can_come_from_standard_input() {
 	use std::io::Write as _;
 	let root = scratch_dir("paths_can_come_from_standard_input");

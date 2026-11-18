@@ -48,6 +48,7 @@ pub fn count_listed(paths: &[PathBuf], config: &AnalyzerConfig) -> Result<Analys
 		include: &analysis.include_languages,
 		exclude: &analysis.exclude_languages,
 		include_generated: analysis.include_generated,
+		include_vendored: analysis.include_vendored,
 		attributes: attributes.as_ref(),
 		extensions: &analysis.include_extensions,
 	};
@@ -72,8 +73,10 @@ pub fn count_listed(paths: &[PathBuf], config: &AnalyzerConfig) -> Result<Analys
 							if !filter.allows(path, &mut excluded_dirs) {
 								continue;
 							}
+							// A listed file was chosen by the list, wherever it is, as with `.gitignore`.
 							let counted = pipeline::process_file(
 								path,
+								false,
 								Path::new(""),
 								&mut results,
 								config.collect_file_details,

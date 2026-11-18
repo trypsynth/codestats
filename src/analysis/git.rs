@@ -2,7 +2,7 @@
 
 use std::{
 	borrow::Cow,
-	collections::HashMap,
+	collections::{HashMap, HashSet},
 	io::{BufRead as _, BufReader, ErrorKind, Read as _, Write as _},
 	path::{Component, Path, PathBuf},
 	process::{Child, ChildStdin, ChildStdout, Command, Stdio},
@@ -17,6 +17,7 @@ use super::{
 	attributes::{Attributes, DirCache},
 	pipeline::{self, FileFilter},
 	stats::AnalysisResults,
+	vendored,
 };
 use crate::config::AnalysisConfig;
 
@@ -79,6 +80,19 @@ pub enum Snapshot<'a> {
 struct Entry<'a> {
 	path: PathBuf,
 	object: &'a [u8],
+	/// Whether it's in a vendored directory.
+	vendored: bool,
+}
+
+/// The directories holding a manifest that makes a `vendor` directory beside it vendored, from a snapshot's records.
+fn manifest_dirs(records: &[&[u8]], snapshot: &Snapshot) -> HashSet<PathBuf> {
+	records
+		.iter()
+		.filter_map(|record| parse_record(record, snapshot).ok())
+		.map(|(_, _, path)| path_from_git(path))
+		.filter(|path| path.file_name().is_some_and(|name| vendored::is_manifest(name.as_encoded_bytes())))
+		.map(|path| path.parent().map(Path::to_path_buf).unwrap_or_default())
+		.collect()
 }
 
 /// Count the files git tracks under `root` in `snapshot`, with the walk's filters: exclusions, hidden files, depth and languages. `.gitignore` doesn't apply, since a tracked file is part of the repository whatever its patterns say. Symlinks aren't counted, nor are submodules unless asked for, since a revision's submodule contents aren't in this repository.
@@ -108,10 +122,12 @@ pub fn count_snapshot(
 		include: &config.include_languages,
 		exclude: &config.exclude_languages,
 		include_generated: config.include_generated,
+		include_vendored: config.include_vendored,
 		attributes: attributes.as_ref(),
 		extensions: &config.include_extensions,
 	};
 	let records: Vec<&[u8]> = listing.split(|&b| b == 0).filter(|record| !record.is_empty()).collect();
+	let manifests = manifest_dirs(&records, snapshot);
 	// Workers take batches from a shared counter, so they stay evenly loaded, and each batch is a run of nearby paths.
 	let next = AtomicUsize::new(0);
 	let threads = thread::available_parallelism().map_or(4, usize::from).min(records.len().div_ceil(BATCH)).max(1);
@@ -122,6 +138,7 @@ pub fn count_snapshot(
 					let mut counter = Counter::new(snapshot, &dir, root, languages, collect_details)?;
 					let mut excluded_dirs = HashMap::new();
 					let mut cache = DirCache::default();
+					let mut vendored_dir: Option<(PathBuf, bool)> = None;
 					let mut batch = Vec::with_capacity(BATCH);
 					loop {
 						let start = next.fetch_add(BATCH, Ordering::Relaxed);
@@ -138,10 +155,21 @@ pub fn count_snapshot(
 								continue;
 							}
 							let path = path_from_git(path);
-							if filter.allows(&path, &mut excluded_dirs)
-								&& pipeline::could_count(&dir.join(&path), languages, &mut cache)
-							{
-								batch.push(Entry { path, object });
+							if !filter.allows(&path, &mut excluded_dirs) {
+								continue;
+							}
+							// Paths come a directory at a time, so the last directory's answer is usually this one's.
+							let parent = path.parent().unwrap_or_else(|| Path::new(""));
+							let vendored = match &vendored_dir {
+								Some((last, vendored)) if last == parent => *vendored,
+								_ => {
+									let vendored = vendored::is_inside_vendored(&path, |dir| manifests.contains(dir));
+									vendored_dir = Some((parent.to_path_buf(), vendored));
+									vendored
+								}
+							};
+							if pipeline::could_count(&dir.join(&path), vendored, languages, &mut cache) {
+								batch.push(Entry { path, object, vendored });
 							}
 						}
 						counter.count(&batch, &mut cache)?;
@@ -227,6 +255,7 @@ impl<'a> Counter<'a> {
 					// A tracked file deleted from disk isn't there to count; other failures count as skipped.
 					if let Err(err) = pipeline::process_file(
 						&dir.join(&entry.path),
+						entry.vendored,
 						root,
 						results,
 						*collect_details,
@@ -267,7 +296,7 @@ impl<'a> Counter<'a> {
 					output.by_ref().take(size + 1).read_to_end(contents)?;
 					contents.pop();
 					if let Some((language, counts)) =
-						pipeline::count_bytes(&dir.join(&entry.path), contents, *languages, cache)
+						pipeline::count_bytes(&dir.join(&entry.path), entry.vendored, contents, *languages, cache)
 					{
 						results.add_file(
 							language,

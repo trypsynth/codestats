@@ -33,6 +33,9 @@ const DEFAULT_CONFIG_TEMPLATE: &str = "\
 # Count generated files (lockfiles, minified assets, files whose header says they're generated) excluded by default
 # include_generated = false
 
+# Count vendored code (third_party, node_modules, and vendor beside go.mod and similar) excluded by default
+# include_vendored = false
+
 # Only count files tracked by git, including in submodules
 # git_tracked_only = false
 

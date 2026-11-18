@@ -22,6 +22,8 @@ pub(super) use rules::strip_start;
 use rules::{Rules, Shared};
 use same_file::Handle;
 
+use super::vendored;
+
 /// How much work a worker holds before it wakes a sleeping one. Waking one for every new file costs more on large trees than the wait does.
 const WAKE_ABOVE: usize = 32;
 /// How long a sleeping worker waits before looking for work anyway, in case it missed being woken.
@@ -43,6 +45,8 @@ pub(super) struct Entry {
 	path: PathBuf,
 	file_type: FileType,
 	depth: usize,
+	/// Whether it's in a vendored directory below the root, or is one.
+	vendored: bool,
 	#[cfg(windows)]
 	hidden_attribute: bool,
 }
@@ -52,11 +56,17 @@ impl Entry {
 		&self.path
 	}
 
+	/// Whether the file is in a vendored directory below the root. The root itself never is, so naming one counts it.
+	pub(super) const fn vendored(&self) -> bool {
+		self.vendored
+	}
+
 	fn from_path(path: PathBuf, depth: usize) -> Result<Self, Error> {
 		match fs::metadata(&path) {
 			Ok(metadata) => Ok(Self {
 				file_type: metadata.file_type(),
 				depth,
+				vendored: false,
 				#[cfg(windows)]
 				hidden_attribute: has_hidden_attribute(&metadata),
 				path,
@@ -81,6 +91,14 @@ fn io_error(err: io::Error, path: PathBuf) -> Error {
 }
 
 /// Walk `root` on up to `options.threads` threads, giving each thread's `visit`, made by `make_visitor`, every regular file and error it finds. A `root` that's a file is visited whatever the ignore rules say.
+/// Where an entry of a directory sits: how deep, whether the directory is vendored, and whether it holds a manifest that makes a `vendor` directory in it vendored.
+#[derive(Clone, Copy)]
+struct Place {
+	depth: usize,
+	vendored: bool,
+	beside_manifest: bool,
+}
+
 pub(super) fn walk<V, F>(root: &Path, options: WalkOptions, make_visitor: &F)
 where
 	V: FnMut(Result<Entry, Error>),
@@ -217,8 +235,9 @@ where
 			}
 		}
 		let rules = parent_rules.for_child(&dir.path, &found, shared, self.pool.follow_links);
+		let place = Place { depth: dir.depth + 1, vendored: dir.vendored, beside_manifest: found.manifest() };
 		for (path, file_type, attribute) in entries {
-			self.queue(&rules, dir.depth + 1, path, file_type, attribute);
+			self.queue(&rules, place, path, file_type, attribute);
 		}
 	}
 
@@ -226,7 +245,7 @@ where
 	fn queue(
 		&mut self,
 		rules: &Arc<Rules>,
-		depth: usize,
+		place: Place,
 		path: PathBuf,
 		file_type: io::Result<FileType>,
 		attribute: bool,
@@ -242,7 +261,8 @@ where
 				return;
 			}
 		};
-		let entry = if self.pool.follow_links && file_type.is_symlink() {
+		let Place { depth, vendored, beside_manifest } = place;
+		let mut entry = if self.pool.follow_links && file_type.is_symlink() {
 			let entry = match Entry::from_path(path, depth) {
 				Ok(entry) => entry,
 				Err(err) => {
@@ -259,11 +279,11 @@ where
 			entry
 		} else {
 			#[cfg(windows)]
-			let entry = Entry { path, file_type, depth, hidden_attribute: attribute };
+			let entry = Entry { path, file_type, depth, vendored, hidden_attribute: attribute };
 			#[cfg(not(windows))]
 			let entry = {
 				let _ = attribute;
-				Entry { path, file_type, depth }
+				Entry { path, file_type, depth, vendored }
 			};
 			entry
 		};
@@ -274,6 +294,8 @@ where
 		if rules.skips(&entry.path, entry.is_dir(), hidden_attribute, self.pool.shared) {
 			return;
 		}
+		entry.vendored = vendored
+			|| (entry.is_dir() && vendored::is_vendored_dir(rules::listed_name(&entry.path), || beside_manifest));
 		if entry.is_dir() {
 			self.send(Work::Dir(entry, Arc::clone(rules)));
 		} else if entry.file_type.is_file() {

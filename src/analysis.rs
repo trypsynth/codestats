@@ -20,6 +20,7 @@ mod list;
 mod masks;
 mod pipeline;
 pub mod stats;
+mod vendored;
 mod walk;
 
 pub use analyzer::CodeAnalyzer;

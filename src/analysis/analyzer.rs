@@ -89,6 +89,7 @@ impl CodeAnalyzer {
 			include: &self.config.analysis.include_languages,
 			exclude: &self.config.analysis.exclude_languages,
 			include_generated: self.config.analysis.include_generated,
+			include_vendored: self.config.analysis.include_vendored,
 			attributes: attributes.as_ref(),
 			extensions: &self.config.analysis.include_extensions,
 		};
@@ -100,6 +101,7 @@ impl CodeAnalyzer {
 				Ok(entry) => {
 					if let Err(err) = pipeline::process_file(
 						entry.path(),
+						entry.vendored(),
 						root,
 						&mut aggregator.local,
 						collect_details,

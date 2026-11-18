@@ -22,8 +22,10 @@ use crate::langs::{Language, language_named};
 pub struct Verdict {
 	/// `linguist-generated`, or `-linguist-generated` (or `=false`) to say a file codestats would take for generated isn't.
 	pub generated: Option<bool>,
-	/// `linguist-vendored` or `linguist-documentation`: left out, as GitHub leaves them out of its statistics.
-	pub excluded: bool,
+	/// `linguist-vendored`, or `-linguist-vendored` (or `=false`) to say a file codestats would take for vendored isn't.
+	pub vendored: Option<bool>,
+	/// `linguist-documentation`: left out, as GitHub leaves it out of its statistics.
+	pub documentation: bool,
 	/// `linguist-language=Name`, when codestats knows a language by that name.
 	pub language: Option<&'static Language>,
 }
@@ -63,7 +65,8 @@ struct Dir {
 struct Rules {
 	place: Place,
 	generated: Gitignore,
-	excluded: Gitignore,
+	vendored: Gitignore,
+	documentation: Gitignore,
 	/// Patterns setting a language, in the file's order, so the last match wins.
 	languages: Vec<(Gitignore, &'static Language)>,
 }
@@ -128,8 +131,12 @@ impl Attributes {
 				verdict.generated = opinion(&rules.generated, &relative);
 				any |= verdict.generated.is_some();
 			}
-			if let Some(excluded) = opinion(&rules.excluded, &relative) {
-				verdict.excluded |= excluded;
+			if verdict.vendored.is_none() {
+				verdict.vendored = opinion(&rules.vendored, &relative);
+				any |= verdict.vendored.is_some();
+			}
+			if let Some(documentation) = opinion(&rules.documentation, &relative) {
+				verdict.documentation |= documentation;
 				any = true;
 			}
 			if verdict.language.is_none() {
@@ -265,7 +272,8 @@ fn parse(
 ) -> (Option<Rules>, HashMap<String, Vec<String>>) {
 	let mut own_macros: HashMap<String, Vec<String>> = HashMap::new();
 	let mut generated = GitignoreBuilder::new(".");
-	let mut excluded = GitignoreBuilder::new(".");
+	let mut vendored = GitignoreBuilder::new(".");
+	let mut documentation = GitignoreBuilder::new(".");
 	let mut languages = Vec::new();
 	let mut any = false;
 	for line in contents.lines() {
@@ -298,8 +306,11 @@ fn parse(
 				"linguist-generated" => {
 					any |= generated.add_line(None, &line).is_ok();
 				}
-				"linguist-vendored" | "linguist-documentation" => {
-					any |= excluded.add_line(None, &line).is_ok();
+				"linguist-vendored" => {
+					any |= vendored.add_line(None, &line).is_ok();
+				}
+				"linguist-documentation" => {
+					any |= documentation.add_line(None, &line).is_ok();
 				}
 				"linguist-language" => {
 					if let Some(language) = value.and_then(language_named) {
@@ -319,7 +330,8 @@ fn parse(
 	let rules = any.then(|| Rules {
 		place: place(),
 		generated: generated.build().unwrap_or_else(|_| Gitignore::empty()),
-		excluded: excluded.build().unwrap_or_else(|_| Gitignore::empty()),
+		vendored: vendored.build().unwrap_or_else(|_| Gitignore::empty()),
+		documentation: documentation.build().unwrap_or_else(|_| Gitignore::empty()),
 		languages,
 	});
 	(rules, own_macros)
@@ -385,10 +397,15 @@ mod tests {
 	}
 
 	#[test]
-	fn vendored_and_documentation_are_excluded() {
-		let files = [(".gitattributes", "lib/libc/** linguist-vendored\nruntime/doc/* linguist-documentation\n")];
-		assert!(verdict(&files, "lib/libc/include/stdio.h").is_some_and(|verdict| verdict.excluded));
-		assert!(verdict(&files, "runtime/doc/api.txt").is_some_and(|verdict| verdict.excluded));
+	fn vendored_and_documentation() {
+		let files = [(
+			".gitattributes",
+			"lib/libc/** linguist-vendored\nvendor/ours/** -linguist-vendored\nruntime/doc/* linguist-documentation\n",
+		)];
+		let vendored = |value| Some(Verdict { vendored: Some(value), ..Verdict::default() });
+		assert_eq!(verdict(&files, "lib/libc/include/stdio.h"), vendored(true));
+		assert_eq!(verdict(&files, "vendor/ours/lib.go"), vendored(false));
+		assert!(verdict(&files, "runtime/doc/api.txt").is_some_and(|verdict| verdict.documentation));
 		assert_eq!(verdict(&files, "lib/std/fs.zig"), None);
 	}
 

@@ -47,7 +47,7 @@ for entry in "${repos[@]}"; do
 		git -C "$dir" fetch -q --depth 1 "https://github.com/$repo" "$commit"
 		git -C "$dir" -c advice.detachedHead=false checkout -q FETCH_HEAD
 	fi
-	for flags in "" "--include-generated --no-gitignore --hidden --no-gitattributes"; do
+	for flags in "" "--include-generated --include-vendored --no-gitignore --hidden --no-gitattributes"; do
 		# Too many values to track is only a warning, and the profile is still useful.
 		# shellcheck disable=SC2086
 		"${run[@]}" "$dir" -o json-compact $flags >/dev/null 2> >(grep -v 'LLVM Profile Warning' >&2 || true)

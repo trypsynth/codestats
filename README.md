@@ -18,6 +18,7 @@ codestats counts the code, comment, blank, and shebang lines in a codebase by la
   - The code in literate Haskell, Agda, and Idris programs, whose prose counts as comments.
 - Respects `.gitignore` and `.ignore` files.
 - Skips generated files, such as lockfiles, minified scripts and styles, translations, IDE project files, and files marked `DO NOT EDIT`.
+- Skips vendored code, such as Go's `vendor` directory and `third_party`, as GitHub does.
 - Reads the linguist attributes in `.gitattributes` files, the same way GitHub does.
 - Filters by language, glob pattern, and directory depth.
 - Shows counts per file or per directory.
@@ -176,6 +177,7 @@ If you don't give a path, codestats counts the current directory. If the path is
 - `--no-gitignore`: ignore `.gitignore` files.
 - `--no-gitattributes`: ignore the linguist attributes in `.gitattributes` files. See [Linguist attributes](#linguist-attributes).
 - `--include-generated`: count generated files. See [Generated files](#generated-files).
+- `--include-vendored`: count vendored code. See [Vendored code](#vendored-code).
 - `--git`: count only the files that git tracks, including in submodules. `.gitignore` doesn't apply to tracked files.
 - `--max-depth <N>`: descend at most N directory levels.
 - `--min-lines <N>`: hide languages with fewer than N lines.
@@ -240,6 +242,7 @@ git_tracked_only = false  # true counts only the files git tracks.
 include_hidden = true
 follow_symlinks = false
 include_generated = false
+include_vendored = false
 max_depth = 5
 exclude_patterns = ["languages.json5", "*.tmp", "node_modules/*"]  # File names or glob patterns.
 include_languages = ["rust", "python"]  # Count only these languages.
@@ -283,6 +286,18 @@ A file counts as generated in any of these cases:
 
 A comment that only mentions generated code, such as `// Retrieves the auto-generated key`, doesn't make a file generated.
 
+## Vendored code
+
+By default, codestats skips vendored code: code that a project copies in from other projects. GitHub leaves it out of its language statistics too. To count it, pass `--include-vendored`.
+
+A file counts as vendored in any of these cases:
+
+- **Its linguist attribute says so.** See [Linguist attributes](#linguist-attributes).
+- **It's in a directory named for vendored code.** These are `third_party` and `3rdparty`, in any of their spellings, such as `third-party` or `ThirdParty`, and `node_modules`, `bower_components`, `Pods`, and `Carthage`.
+- **It's in a `vendor` directory beside a manifest that fills it.** The manifests are `go.mod`, `composer.json`, `Gemfile`, and `Cargo.toml`. Other `vendor` directories, such as `arch/riscv/include/asm/vendor` in Linux, usually hold the project's own code, so they're counted.
+
+A directory you name on the command line is counted even if it's vendored, so `cs vendor` counts what's in `vendor`. Files listed on standard input are counted wherever they are. To count the files in one vendored directory, mark them `-linguist-vendored`.
+
 ## Linguist attributes
 
 GitHub uses the linguist attributes in `.gitattributes` files for its language statistics, and codestats uses them the same way:
@@ -291,7 +306,8 @@ GitHub uses the linguist attributes in `.gitattributes` files for its language s
 | --- | --- |
 | `linguist-generated` | The file is generated, so it's skipped unless you pass `--include-generated`. |
 | `-linguist-generated` or `linguist-generated=false` | The file isn't generated, even if its name or header looks like it is. |
-| `linguist-vendored` | The file is skipped. |
+| `linguist-vendored` | The file is vendored, so it's skipped unless you pass `--include-vendored`. |
+| `-linguist-vendored` or `linguist-vendored=false` | The file isn't vendored, even if its directory looks like it is. |
 | `linguist-documentation` | The file is skipped. |
 | `linguist-language=Name` | The file is counted as `Name`, with the exceptions below. |
 

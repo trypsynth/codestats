@@ -15,12 +15,13 @@ use crate::langs::{self, Language, RequireKeywords};
 /// How much of a file to read when its extension is shared by several languages and its content decides.
 const DETECTION_WINDOW: usize = 64 * 1024;
 
-/// Which files count: the `--lang` and `--exclude-lang` filters, `--include-generated`, and the project's `.gitattributes`.
+/// Which files count: the `--lang` and `--exclude-lang` filters, `--include-generated`, `--include-vendored`, and the project's `.gitattributes`.
 #[derive(Clone, Copy)]
 pub struct FileFilter<'a> {
 	pub include: &'a [String],
 	pub exclude: &'a [String],
 	pub include_generated: bool,
+	pub include_vendored: bool,
 	pub attributes: Option<&'a Attributes>,
 	/// `--ext`: only files with these extensions count, when there are any.
 	pub extensions: &'a [String],
@@ -44,10 +45,11 @@ fn detection_name(path: &Path) -> Option<Cow<'_, str>> {
 	Some(path.extension().map_or(name, |ext| Cow::Owned(format!("file.{}", ext.to_string_lossy()))))
 }
 
-/// The languages a file named `name` at `path` could be, and the filter its contents are judged by, or `None` when its name and attributes leave it out: vendored or documentation, or generated and not included. A file whose attributes say it isn't generated is counted whatever its name or header say, and one whose attributes name its language is that language, unless its name gives exactly one language.
+/// The languages a file named `name` at `path` could be, and the filter its contents are judged by, or `None` when its name and attributes leave it out: documentation, or generated or vendored and not included. `vendored` says whether it's in a vendored directory. A file whose attributes say it isn't generated is counted whatever its name or header say, one whose attributes say it isn't vendored is counted wherever it is, and one whose attributes name its language is that language, unless its name gives exactly one language.
 fn judge_name<'a>(
 	path: &Path,
 	name: &str,
+	vendored: bool,
 	languages: FileFilter<'a>,
 	cache: &mut DirCache,
 ) -> Option<(Vec<&'static Language>, FileFilter<'a>)> {
@@ -59,7 +61,9 @@ fn judge_name<'a>(
 	}
 	let verdict = languages.attributes.and_then(|attributes| attributes.verdict(path, cache)).unwrap_or_default();
 	let generated = verdict.generated.unwrap_or_else(|| is_generated_name(name));
-	if verdict.excluded || (generated && !languages.include_generated) {
+	let vendored = verdict.vendored.unwrap_or(vendored);
+	if verdict.documentation || (generated && !languages.include_generated) || (vendored && !languages.include_vendored)
+	{
 		return None;
 	}
 	let include_generated = languages.include_generated || verdict.generated == Some(false);
@@ -74,19 +78,20 @@ fn judge_name<'a>(
 /// The language and line counts of a file named `path` with contents `bytes`, or `None` if it isn't counted: unrecognized, binary, or filtered out.
 pub fn count_bytes(
 	path: &Path,
+	vendored: bool,
 	bytes: &[u8],
 	languages: FileFilter,
 	cache: &mut DirCache,
 ) -> Option<(&'static Language, FileCounts)> {
 	let name = detection_name(path)?;
-	let (candidates, languages) = judge_name(path, &name, languages, cache)?;
+	let (candidates, languages) = judge_name(path, &name, vendored, languages, cache)?;
 	count_contents(&candidates, &name, bytes, languages)
 }
 
 /// Whether a file named `path` could be counted, judging by its name and attributes alone: false when they leave it out, or its only possible language is filtered out and a shebang couldn't claim it, so its contents needn't be read.
-pub fn could_count(path: &Path, languages: FileFilter, cache: &mut DirCache) -> bool {
+pub fn could_count(path: &Path, vendored: bool, languages: FileFilter, cache: &mut DirCache) -> bool {
 	detection_name(path)
-		.and_then(|name| judge_name(path, &name, languages, cache))
+		.and_then(|name| judge_name(path, &name, vendored, languages, cache))
 		.is_some_and(|(candidates, languages)| worth_reading(&candidates, languages))
 }
 
@@ -167,6 +172,7 @@ fn xml_document_instead_of(detected: &'static Language, body: &[u8], encoding: E
 /// Returns an error for I/O or decoding failures.
 pub fn process_file(
 	file_path: &Path,
+	vendored: bool,
 	display_root: &Path,
 	results: &mut AnalysisResults,
 	collect_details: bool,
@@ -174,7 +180,7 @@ pub fn process_file(
 	cache: &mut DirCache,
 ) -> Result<()> {
 	let filename = detection_name(file_path).context("Missing file name")?;
-	let Some((candidates, languages)) = judge_name(file_path, &filename, languages, cache) else {
+	let Some((candidates, languages)) = judge_name(file_path, &filename, vendored, languages, cache) else {
 		return Ok(());
 	};
 	if !worth_reading(&candidates, languages) {
@@ -238,17 +244,18 @@ mod tests {
 					include: &[],
 					exclude: &[],
 					include_generated: true,
+					include_vendored: false,
 					attributes: None,
 					extensions: &[],
 				};
 				let mut results = AnalysisResults::default();
-				process_file(&path, &root, &mut results, true, languages, &mut DirCache::default()).unwrap();
+				process_file(&path, false, &root, &mut results, true, languages, &mut DirCache::default()).unwrap();
 				let from_disk = results.languages().next().map(|(lang, stats)| {
 					let file = &stats.files_list()[0];
 					(lang.name, *file.counts(), file.embedded().clone())
 				});
 				let from_bytes =
-					count_bytes(&path, &std::fs::read(&path).unwrap(), languages, &mut DirCache::default())
+					count_bytes(&path, false, &std::fs::read(&path).unwrap(), languages, &mut DirCache::default())
 						.map(|(lang, counts)| (lang.name, counts.lines, counts.embedded));
 				assert_eq!(from_bytes, from_disk, "{}", path.display());
 				checked += 1;
