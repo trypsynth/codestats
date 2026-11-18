@@ -36,6 +36,7 @@
 		line_comments: ["\\"],
 		block_comments: [["(*", "*)"]],
 		nested_blocks: true,
+		strings: ["\""],
 	},
 	"ABAP": {
 		file_patterns: ["*.abap"],
@@ -45,6 +46,7 @@
 		file_patterns: ["*.asddls"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "'", escape: "'"}],
 	},
 	"ABNF": {
 		file_patterns: ["*.abnf"],
@@ -61,6 +63,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["package", "import", "function", "var", "flash.display", "Vector.<"],
+		strings: ["\"", "'"],
 	},
 	"Ada": {
 		file_patterns: ["*.ada", "*.adb", "*.ads", "*.pad"],
@@ -71,12 +74,14 @@
 		file_patterns: ["*.afl"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"Agda": {
 		file_patterns: ["*.agda", "*.lagda"],
 		line_comments: ["--"],
 		block_comments: [["{-", "-}"]],
 		nested_blocks: true,
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Agena": {
 		file_patterns: ["*.agn"],
@@ -110,15 +115,18 @@
 		line_comments: ["--"],
 		block_comments: [["{-", "-}"]],
 		nested_blocks: true,
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Algol 68": {
 		file_patterns: ["*.a68"],
 		block_comments: [["#", "#"], ["CO", "CO"], ["COMMENT", "COMMENT"]],
+		strings: [{open: "\"", escape: "\""}],
 	},
 	"Alloy": {
 		file_patterns: ["*.als"],
 		line_comments: ["//", "--"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"Amber": {
 		file_patterns: ["*.ab"],
@@ -130,22 +138,26 @@
 		line_comments: ["#"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["param", "var", "subject to", "minimize", "maximize", "set"],
+		strings: [{open: "\"", escape: "\""}, {open: "'", escape: "'"}],
 	},
 	"Android Interface Definition Language": {
 		file_patterns: ["*.aidl"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"AngelScript": {
 		file_patterns: ["*.as", "*.angelscript"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["funcdef", "shared", "mixin", "dictionary", "array<", "uint8", "int64"],
+		strings: [{open: "\"\"\"", multiline: true}, "\"", "'"],
 	},
 	"ANTLR": {
 		file_patterns: ["*.g4"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["'", "\""],
 	},
 	"Apache Config": {
 		file_patterns: [".htaccess", "httpd.conf", "apache2.conf"],
@@ -156,6 +168,7 @@
 		keywords: {words: ["System.debug", "@isTest", "public class", "global class", "with sharing", "private class", "@AuraEnabled"], required: "shared"},
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["'"],
 	},
 	"APL": {
 		file_patterns: ["*.apl", "*.aplf", "*.apls", "*.apla", "*.aplc", "*.apli", "*.apln", "*.aplo", "*.dyalog", "*.dyapp", "*.mipage"],
@@ -170,6 +183,7 @@
 		line_comments: ["--", "#"],
 		block_comments: [["(*", "*)"]],
 		shebangs: ["#!/usr/bin/env osascript", "#!/usr/bin/osascript"],
+		strings: ["\""],
 	},
 	"Arc": {
 		file_patterns: ["*.arc"],
@@ -184,6 +198,7 @@
 		file_patterns: ["*.ets"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", "'", {open: "`", multiline: true, interpolation: "${"}],
 	},
 	"Arturo": {
 		file_patterns: ["*.art"],
@@ -199,6 +214,7 @@
 		file_patterns: ["*.asn1", "*.asn"],
 		line_comments: ["--"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "\"", escape: "\"", multiline: true}],
 	},
 	"ASP": {
 		file_patterns: ["*.asp", "*.asa"],
@@ -213,6 +229,7 @@
 		file_patterns: ["*.aj"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Assembly": {
 		file_patterns: ["*.asm", "*.s", "*.S", "*.inc", "*.s65", "*.a65", "*.a51"],
@@ -220,6 +237,7 @@
 		block_comments: [["/*", "*/"]],
 		keywords: {words: ["%macro", "%endmacro", "%define", "%include", "%ifdef", "section ."], required: "shared"},
 		c_preprocessor: true,
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Astro": {
 		file_patterns: ["*.astro"],
@@ -236,26 +254,31 @@
 		file_patterns: ["*.dats", "*.hats", "*.sats", "*.atxt", "*.ats"],
 		line_comments: ["//"],
 		block_comments: [["(*", "*)"], ["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Augeas": {
 		file_patterns: ["*.aug"],
 		block_comments: [["(*", "*)"]],
 		nested_blocks: true,
+		strings: ["\""],
 	},
 	"Austral": {
 		file_patterns: ["*.aum", "*.aui"],
 		line_comments: ["--"],
 		block_comments: [["(*", "*)"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"AutoHotkey": {
 		file_patterns: ["*.ahk", "*.ahkl", "*.ah2", "*.ah1"],
 		line_comments: [";"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "\"", escape: "`"}],
 	},
 	"AutoIt": {
 		file_patterns: ["*.au3"],
 		line_comments: [";"],
 		block_comments: [["#comments-start", "#comments-end"], ["#cs", "#ce"]],
+		strings: [{open: "\"", escape: "\""}, {open: "'", escape: "'"}],
 	},
 	"Automake": {
 		file_patterns: ["*.am"],
@@ -271,6 +294,7 @@
 		file_patterns: ["*.avsc", "*.avdl", "*.avpr"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"AWK": {
 		file_patterns: ["*.awk", "*.gawk", "*.nawk", "*.mawk", "*.auk"],
@@ -285,6 +309,7 @@
 		file_patterns: ["*.b"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["auto", "break", "case", "default", "do", "else", "extern", "extrn", "for", "goto", "if", "main", "read", "return", "static", "switch", "while", "write"],
+		strings: [{open: "\"", escape: "*"}, {open: "'", escape: "*"}],
 	},
 	"Ballerina": {
 		file_patterns: ["*.bal"],
@@ -325,11 +350,13 @@
 		file_patterns: ["*.bcpl"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "\"", escape: "*"}, {open: "'", escape: "*"}],
 	},
 	"BCX/FreeBASIC": {
 		file_patterns: ["*.bas", "*.bi"],
 		line_comments: ["'", "rem", "REM", "Rem"],
 		block_comments: [["$comment", "$comment"], ["/'", "'/"]],
+		strings: [{open: "\"", escape: "\""}],
 	},
 	"Bean": {
 		file_patterns: ["*.bean", "*.beancount"],
@@ -340,6 +367,7 @@
 		keywords: {words: ["namespace", "using System", "public class", "static void"], required: "shared"},
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "@\"", escape: "\"", multiline: true}, {open: "\"\"\"", multiline: true}, "\"", {open: "'", char: true}],
 	},
 	"Befunge": {
 		file_patterns: ["*.befunge", "*.b93", "*.b98"],
@@ -358,6 +386,7 @@
 		file_patterns: ["*.bgt"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"BibTeX": {
 		file_patterns: ["*.bib", "*.bst", "*.bibtex"],
@@ -367,12 +396,14 @@
 		file_patterns: ["*.bicep", "*.bicepparam"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "'''", escape: null, multiline: true}, {open: "'", interpolation: "${"}],
 	},
 	"Bison": {
 		file_patterns: ["*.y", "*.yy", "*.bison"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["%token", "%type", "%start", "yyparse", "%define", "%code", "%require", "%language", "%skeleton", "%locations"],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"BitBake": {
 		file_patterns: ["*.bb", "*.bbappend", "*.bbclass", "*.inc"],
@@ -404,12 +435,14 @@
 		file_patterns: ["*.bsv"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"Boo": {
 		file_patterns: ["*.boo"],
 		line_comments: ["#", "//"],
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
+		strings: [{open: "\"\"\"", multiline: true}, {open: "'''", multiline: true}, "\"", "'"],
 	},
 	"Boogie": {
 		file_patterns: ["*.bpl"],
@@ -422,6 +455,7 @@
 		file_patterns: ["*.bsq"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", "'"],
 	},
 	"BQN": {
 		file_patterns: ["*.bqn"],
@@ -487,6 +521,7 @@
 		file_patterns: ["*.c2"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"C3": {
 		file_patterns: ["*.c3", "*.c3t", "*.c3i"],
@@ -500,6 +535,7 @@
 		file_patterns: ["*.cabal", "cabal.project", "cabal.project.freeze", "cabal.config"],
 		block_comments: [["{-", "-}"]],
 		line_comments: ["--"],
+		strings: ["\""],
 	},
 	"Caddyfile": {
 		file_patterns: ["Caddyfile", "*.caddyfile"],
@@ -509,6 +545,7 @@
 		file_patterns: ["*.cdc"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"Cairo": {
 		file_patterns: ["*.cairo"],
@@ -519,6 +556,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
+		strings: [{open: "\"\"\"", multiline: true, interpolation: "${"}, {open: "'''", multiline: true}, {open: "\"", interpolation: "${"}, {open: "'", interpolation: "${"}],
 	},
 	"CAP CDS": {
 		file_patterns: ["*.cds"],
@@ -548,6 +586,7 @@
 		file_patterns: ["*.cassius"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", "'"],
 	},
 	"Catala": {
 		file_patterns: ["*.catala_en", "*.catala_fr", "*.catala_pl"],
@@ -561,27 +600,32 @@
 		file_patterns: ["*.ceylon"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "\"\"\"", escape: null, multiline: true}, {open: "\"", multiline: true}, {open: "'", char: true}],
 	},
 	"Cg": {
 		file_patterns: ["*.cg", "*.cgfx"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"ChaiScript": {
 		file_patterns: ["*.chai"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "\"", interpolation: "${"}, {open: "'", char: true}],
 	},
 	"Chapel": {
 		file_patterns: ["*.chpl"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
+		strings: [{open: "\"\"\"", multiline: true}, {open: "'''", multiline: true}, "\"", "'"],
 	},
 	"ChucK": {
 		file_patterns: ["*.ck"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"CIL (SELinux)": {
 		file_patterns: ["*.cil"],
@@ -591,11 +635,13 @@
 		file_patterns: ["*.cilk", "*.cilkh"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Circom": {
 		file_patterns: ["*.circom"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"Cirru": {
 		file_patterns: ["*.cirru"],
@@ -618,6 +664,7 @@
 		file_patterns: ["*.icl", "*.dcl"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Click": {
 		file_patterns: ["*.click"],
@@ -655,6 +702,7 @@
 		file_patterns: ["*.cobra"],
 		line_comments: ["#"],
 		block_comments: [["/#", "#/"]],
+		strings: ["\"", "'"],
 	},
 	"Coconut": {
 		file_patterns: ["*.coco", "*.coconut"],
@@ -665,11 +713,13 @@
 		file_patterns: ["*.ql", "*.qll"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"CoffeeScript": {
 		file_patterns: ["*.coffee", "*.cjsx", "Cakefile", "*.iced", "*._coffee"],
 		line_comments: ["#"],
 		block_comments: [["###", "###"]],
+		strings: [{open: "\"\"\"", multiline: true, interpolation: "#{"}, {open: "'''", multiline: true}, {open: "\"", multiline: true, interpolation: "#{"}, {open: "'", multiline: true}],
 	},
 	"Cogent": {
 		file_patterns: ["*.cogent"],
@@ -687,6 +737,7 @@
 		nested_blocks: true,
 		shebangs: ["#!/usr/bin/env sbcl", "#!/usr/bin/sbcl"],
 		keywords: ["defun", "defvar", "defclass", "let", "lambda", "setf"],
+		strings: [{open: "\"", multiline: true}],
 	},
 	"Common Workflow Language": {
 		file_patterns: ["*.cwl"],
@@ -696,6 +747,7 @@
 		file_patterns: ["*.cps"],
 		block_comments: [["(*", "*)"]],
 		nested_blocks: true,
+		strings: [{open: "\"", escape: null}, {open: "'", escape: null}],
 	},
 	"Concerto": {
 		file_patterns: ["*.cto"],
@@ -713,6 +765,7 @@
 		block_comments: [["(*", "*)"]],
 		nested_blocks: true,
 		keywords: ["Theorem", "Lemma", "Proof", "Qed", "Inductive", "Definition", "Require"],
+		strings: [{open: "\"", escape: "\"", multiline: true}],
 	},
 	"CQL": {
 		file_patterns: ["*.cql"],
@@ -730,6 +783,7 @@
 		file_patterns: ["*.cson"],
 		line_comments: ["#"],
 		block_comments: [["###", "###"]],
+		strings: [{open: "\"\"\"", multiline: true, interpolation: "#{"}, {open: "'''", multiline: true}, {open: "\"", multiline: true, interpolation: "#{"}, {open: "'", multiline: true}],
 	},
 	"Csound": {
 		file_patterns: ["*.orc", "*.udo"],
@@ -747,6 +801,7 @@
 		file_patterns: ["*.sco"],
 		line_comments: [";"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"CSS": {
 		file_patterns: ["*.css", "*.postcss", "*.uss", "*.wxss"],
@@ -758,6 +813,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		line_splices: true,
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"CUE": {
 		file_patterns: ["*.cue"],
@@ -767,17 +823,20 @@
 		file_patterns: ["*.curl"],
 		line_comments: ["||"],
 		block_comments: [["|#", "#|"]],
+		strings: ["\""],
 	},
 	"Curry": {
 		file_patterns: ["*.curry"],
 		line_comments: ["--"],
 		block_comments: [["{-", "-}"]],
 		nested_blocks: true,
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Cyber": {
 		file_patterns: ["*.cy"],
 		line_comments: ["--"],
 		block_comments: [["--[[", "]]"]],
+		strings: ["\"", "'"],
 	},
 	"Cylc": {
 		file_patterns: ["*.cylc", "suite.rc"],
@@ -787,6 +846,7 @@
 		file_patterns: ["*.cypher", "*.cyp"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", "'", {open: "`", escape: "`"}],
 	},
 	"Cython": {
 		file_patterns: ["*.pyx", "*.pxd", "*.pxi"],
@@ -800,23 +860,27 @@
 		shebangs: ["#!/usr/bin/env rdmd", "#!/usr/bin/rdmd"],
 		// `.d` is also the dependency files compilers write for Make, which are lists of paths, so these keywords carry punctuation that paths don't. Doc comments count, since some modules open with pages of them.
 		keywords: {words: ["module ", "import ", "void ", "return ", "auto ", "struct ", "class ", "enum ", "alias ", "immutable ", "writeln(", ";", "@safe", "@nogc", "/**", "/++", "///"], required: "shared"},
+		strings: [{open: "\"", multiline: true}, {open: "'", char: true}, {open: "`", escape: null, multiline: true}, {open: "r\"", close: "\"", escape: null, multiline: true}],
 	},
 	"D2": {
 		file_patterns: ["*.d2"],
 		line_comments: ["#"],
 		block_comments: [["\"\"\"", "\"\"\""]],
+		strings: ["\""],
 	},
 	"Dafny": {
 		file_patterns: ["*.dfy"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
+		strings: [{open: "@\"", escape: "\"", multiline: true}, "\"", {open: "'", char: true}],
 	},
 	"DAML": {
 		file_patterns: ["*.daml"],
 		line_comments: ["--"],
 		block_comments: [["{-", "-}"]],
 		nested_blocks: true,
+		strings: ["\""],
 	},
 	"Dart": {
 		file_patterns: ["*.dart"],
@@ -836,6 +900,7 @@
 		file_patterns: ["*.dl", "*.datalog"],
 		line_comments: ["//", "%"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"DataWeave": {
 		file_patterns: ["*.dwl"],
@@ -847,22 +912,26 @@
 		file_patterns: ["*.dbml"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "'''", multiline: true}, "'", "\""],
 	},
 	"Delphi/Object Pascal": {
 		file_patterns: ["*.dpr", "*.dpk", "*.lpr"],
 		line_comments: ["//"],
 		block_comments: [["(*", "*)"], ["{", "}"]],
+		strings: [{open: "'", escape: "'"}],
 	},
 	"Device Tree": {
 		file_patterns: ["*.dts", "*.dtsi", "*.dtso"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Dhall": {
 		file_patterns: ["*.dhall"],
 		line_comments: ["--"],
 		block_comments: [["{-", "-}"]],
 		nested_blocks: true,
+		strings: [{open: "''", escape: null, multiline: true, interpolation: "${"}, {open: "\"", interpolation: "${"}],
 	},
 	"Diff": {
 		file_patterns: ["*.diff", "*.patch"],
@@ -889,6 +958,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
+		strings: [{open: "{\"", close: "\"}", multiline: true}, "\"", "'"],
 	},
 	"Drools": {
 		file_patterns: ["*.drl"],
@@ -916,11 +986,13 @@
 		file_patterns: ["*.dylan", "*.lid", "*.dyl", "*.intr"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"E": {
 		file_patterns: ["*.E"],
 		line_comments: ["#"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Earthfile": {
 		file_patterns: ["Earthfile", "*.earth", "*.earthfile"],
@@ -930,11 +1002,13 @@
 		file_patterns: ["*.eld", "*.ela", "*.elw"],
 		line_comments: ["//"],
 		block_comments: [["{", "}"]],
+		strings: [{open: "\"", escape: "\""}],
 	},
 	"EBNF": {
 		file_patterns: ["*.ebnf"],
 		line_comments: ["//"],
 		block_comments: [["(*", "*)"]],
+		strings: [{open: "\"", escape: null}, {open: "'", escape: null}],
 	},
 	"Ebuild": {
 		file_patterns: ["*.ebuild", "*.eclass"],
@@ -963,6 +1037,7 @@
 		file_patterns: ["*.effekt"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Eiffel": {
 		file_patterns: ["*.e"],
@@ -986,6 +1061,7 @@
 		line_comments: ["--"],
 		block_comments: [["{-", "-}"]],
 		nested_blocks: true,
+		strings: [{open: "\"\"\"", multiline: true}, "\"", {open: "'", char: true}],
 	},
 	"Elvish": {
 		file_patterns: ["*.elv"],
@@ -1004,11 +1080,13 @@
 		file_patterns: ["*.em"],
 		line_comments: ["#"],
 		block_comments: [["###", "###"]],
+		strings: [{open: "\"\"\"", multiline: true, interpolation: "#{"}, {open: "'''", multiline: true}, {open: "\"", multiline: true, interpolation: "#{"}, {open: "'", multiline: true}],
 	},
 	"Emojicode": {
 		file_patterns: ["*.emojic", "*.🍇"],
 		line_comments: ["💭"],
 		block_comments: [["💭🔜", "🔚💭"], ["📗", "📗"], ["📘", "📘"]],
+		strings: [{open: "🔤", escape: null}],
 	},
 	"ERB": {
 		file_patterns: ["*.erb", "*.html.erb", "*.erb.html", "*.rhtml"],
@@ -1025,6 +1103,7 @@
 		line_comments: ["--"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["procedure", "function", "end procedure", "end function", "with", "without"],
+		strings: [{open: "\"\"\"", escape: null, multiline: true}, {open: "`", escape: null, multiline: true}, "\"", {open: "'", char: true}],
 	},
 	"Expect": {
 		file_patterns: ["*.exp"],
@@ -1052,12 +1131,14 @@
 		line_comments: ["//"],
 		block_comments: [["(*", "*)"]],
 		nested_blocks: true,
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Factor": {
 		file_patterns: ["*.factor"],
 		line_comments: ["!", "#!"],
 		block_comments: [["/*", "*/"]],
 		shebangs: ["#!/usr/bin/env factor"],
+		strings: [{open: "\"", multiline: true}],
 	},
 	"Falcon": {
 		file_patterns: ["*.fal"],
@@ -1074,17 +1155,20 @@
 		file_patterns: ["*.fan"],
 		line_comments: ["//", "**"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "\"", multiline: true, interpolation: "${"}, {open: "'", char: true}, {open: "`", escape: null}],
 	},
 	"Faust": {
 		file_patterns: ["*.dsp"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["process =", "process=", "import(", "declare ", "library("],
+		strings: ["\""],
 	},
 	"Felix": {
 		file_patterns: ["*.flx", "*.flxh"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "\"\"\"", multiline: true}, {open: "'''", multiline: true}, "\"", "'"],
 	},
 	"Fennel": {
 		file_patterns: ["*.fnl", "*.fnlm"],
@@ -1112,12 +1196,14 @@
 		file_patterns: ["*.fbs"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"Flix": {
 		file_patterns: ["*.flix"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["def", "let", "enum", "match", "namespace", "use", "pub", "with", "forall"],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Flow9": {
 		file_patterns: ["*.flow"],
@@ -1135,6 +1221,7 @@
 		line_comments: ["\\ "],
 		block_comments: [["( ", ")"]],
 		keywords: ["DUP", "DROP", "SWAP", "OVER", "ROT", "VARIABLE", "CONSTANT", "CREATE"],
+		strings: [{open: "\"", escape: null}],
 	},
 	"Fortran": {
 		file_patterns: ["*.f90", "*.f95", "*.f03", "*.f08", "*.f15", "*.f18", "*.f23", "*.fpp"],
@@ -1156,6 +1243,7 @@
 		block_comments: [["{-", "-}"]],
 		nested_blocks: true,
 		keywords: ["module", "import", "data", "class", "instance", "native", "pure"],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Frink": {
 		file_patterns: ["*.frink"],
@@ -1203,6 +1291,7 @@
 		file_patterns: ["*.gdshader", "*.gdshaderinc"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"Gemini": {
 		file_patterns: ["*.gmi", "*.gemini"],
@@ -1224,6 +1313,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["init", "uses", "def", "prop", "construct"],
+		strings: [{open: "\"\"\"", escape: null, multiline: true}, "\"", {open: "'", char: true}],
 	},
 	"Gettext": {
 		file_patterns: ["*.po", "*.pot"],
@@ -1246,11 +1336,13 @@
 		file_patterns: ["*.glsl", "*.vert", "*.frag", "*.geom", "*.tesc", "*.tese", "*.comp", "*.rcall", "*.rmiss", "*.rchit", "*.fsh", "*.vsh", "*.fshader", "*.vshader", "*.gshader", "*.glslv", "*.frg", "*.rgen", "*.rint", "*.rahit", "*.vrx", "*.glslf", "*.geo", "*.fp", "*.vs"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"GML": {
 		file_patterns: ["*.gml"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", "'"],
 	},
 	"GN Build": {
 		file_patterns: ["*.gn", "*.gni"],
@@ -1304,22 +1396,26 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["package", "uses", "class", "function", "property", "enhancement", "var", "final"],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Grace": {
 		file_patterns: ["*.grace"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"Gradle": {
 		file_patterns: ["*.gradle"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "\"\"\"", multiline: true, interpolation: "${"}, {open: "'''", multiline: true}, {open: "\"", interpolation: "${"}, "'"],
 	},
 	"Grain": {
 		file_patterns: ["*.gr"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Grammatical Framework": {
 		file_patterns: ["*.gf"],
@@ -1332,16 +1428,19 @@
 		file_patterns: ["*.graphql", "*.gql", "*.graphqls"],
 		block_comments: [["\"\"\"", "\"\"\""]],
 		line_comments: ["#"],
+		strings: ["\""],
 	},
 	"Graphviz/DOT": {
 		file_patterns: ["*.dot", "*.gv"],
 		line_comments: ["//", "#"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"Gremlin": {
 		file_patterns: ["*.gremlin"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", "'"],
 	},
 	"Gren": {
 		file_patterns: ["*.gren"],
@@ -1376,6 +1475,7 @@
 		keywords: {words: ["<?hh"], required: "shared"},
 		line_comments: ["//", "#"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "\"", multiline: true}, {open: "'", multiline: true}],
 	},
 	"Haml": {
 		file_patterns: ["*.haml", "*.haml.deface"],
@@ -1397,12 +1497,14 @@
 		line_comments: ["--"],
 		block_comments: [["{-", "-}"]],
 		keywords: ["%name", "%tokentype", "%monad", "%lexer", "%error"],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Harbour": {
 		file_patterns: ["*.prg", "*.hb", "*.ch"],
 		line_comments: ["//", "&&", "*", "NOTE"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["FUNCTION", "PROCEDURE", "CLASS", "ENDCLASS", "METHOD", "DATA"],
+		strings: ["\"", "'"],
 	},
 	"Hare": {
 		file_patterns: ["*.ha"],
@@ -1422,12 +1524,15 @@
 		file_patterns: ["*.hx", "*.hxsl"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "\"", multiline: true}, {open: "'", multiline: true, interpolation: "${"}],
 	},
 	"HCL": {
 		file_patterns: ["*.hcl", ".terraform.lock.hcl", "*.nomad", "*.workflow"],
 		line_comments: ["#", "//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["job", "group", "task", "source", "build", "provisioner", "template"],
+		strings: [{open: "\"", interpolation: "${"}],
+		heredoc: "ruby",
 	},
 	"HiveQL": {
 		file_patterns: ["*.hql"],
@@ -1439,16 +1544,19 @@
 		file_patterns: ["*.hjson"],
 		line_comments: ["//", "#"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "'''", multiline: true}, "\"", "'"],
 	},
 	"HLSL": {
 		file_patterns: ["*.hlsl", "*.fx", "*.fxh", "*.hlsli", "*.cginc", "*.fxsub", "*.usf", "*.ush"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"HolyC": {
 		file_patterns: ["*.hc", "*.zc"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", "'"],
 	},
 	"Hoon": {
 		file_patterns: ["*.hoon"],
@@ -1481,6 +1589,7 @@
 		file_patterns: ["*.hylo"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"Icon": {
 		file_patterns: ["*.icn"],
@@ -1492,12 +1601,14 @@
 		keywords: {words: ["compile_opt", "endfor", "endif", "endelse"], required: "shared"},
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"Idris": {
 		file_patterns: ["*.idr", "*.lidr"],
 		line_comments: ["--"],
 		block_comments: [["{-", "-}"]],
 		nested_blocks: true,
+		strings: [{open: "\"\"\"", multiline: true}, "\"", {open: "'", char: true}],
 	},
 	"Ignore": {
 		file_patterns: [".gitignore", ".dockerignore", ".npmignore", ".eslintignore", ".prettierignore", "*.ignore", "*.dockerignore", ".agignore", ".atomignore", ".babelignore", ".bzrignore", ".cvsignore", ".eleventyignore", ".markdownlintignore", ".nodemonignore", ".rgignore", ".stylelintignore", ".vercelignore", ".vscodeignore", "gitignore-global", "gitignore_global", "*.gitignore"],
@@ -1533,6 +1644,7 @@
 		file_patterns: ["*.ni", "*.i7x"],
 		block_comments: [["[", "]"]],
 		nested_blocks: true,
+		strings: [{open: "\"", escape: null, multiline: true}],
 	},
 	"INI": {
 		file_patterns: ["*.ini", "*.cfg", "*.prefs", "buildozer.spec", "*.cnf", "*.desktop", "*.lektorproject", "*.dof", ".buckconfig", ".coveragerc", ".flake8", ".gitreview", ".npmrc", "npmrc", ".pylintrc", "pylintrc", ".wslconfig", "hgrc"],
@@ -1551,6 +1663,7 @@
 		file_patterns: ["*.iss", "*.ish"],
 		line_comments: [";", "//"],
 		block_comments: [["{", "}"], ["(*", "*)"]],
+		strings: [{open: "'", escape: "'"}, {open: "\"", escape: "\""}],
 	},
 	"INTERCAL": {
 		file_patterns: ["*.i", "*.intercal"],
@@ -1560,6 +1673,7 @@
 		file_patterns: ["*.io"],
 		line_comments: ["//", "#"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "\"\"\"", multiline: true}, "\""],
 	},
 	"Ioke": {
 		file_patterns: ["*.ik"],
@@ -1590,11 +1704,13 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
+		strings: ["\""],
 	},
 	"Jakt": {
 		file_patterns: ["*.jakt"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Janet": {
 		file_patterns: ["*.janet", "*.jdn"],
@@ -1633,6 +1749,7 @@
 		file_patterns: ["*.jss", "*.jsh"],
 		line_comments: ["//", ";"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"JCL": {
 		file_patterns: ["*.jcl", "*.jcls"],
@@ -1642,6 +1759,7 @@
 		file_patterns: ["*.flex", "*.jflex"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"Jinja2": {
 		file_patterns: ["*.j2", "*.jinja", "*.jinja2"],
@@ -1652,21 +1770,25 @@
 		file_patterns: ["*.jison"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", "'"],
 	},
 	"Jison Lex": {
 		file_patterns: ["*.jisonlex"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", "'"],
 	},
 	"Jolie": {
 		file_patterns: ["*.ol", "*.iol"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"Joy": {
 		file_patterns: ["*.joy"],
 		line_comments: ["#"],
 		block_comments: [["(*", "*)"]],
+		strings: ["\""],
 	},
 	"jq": {
 		file_patterns: ["*.jq"],
@@ -1701,11 +1823,13 @@
 		file_patterns: ["*.jsonnet", "*.libsonnet"],
 		line_comments: ["//", "#"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "|||", escape: null, multiline: true}, "\"", "'"],
 	},
 	"Jule": {
 		file_patterns: ["*.jule"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}, {open: "`", escape: null, multiline: true}],
 	},
 	"Julia": {
 		file_patterns: ["*.jl"],
@@ -1719,6 +1843,7 @@
 		file_patterns: ["*.julius"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", "'", {open: "`", multiline: true, interpolation: "${"}],
 	},
 	"Just": {
 		file_patterns: ["justfile", ".justfile", "*.just", "Justfile"],
@@ -1752,6 +1877,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
+		strings: [{open: "\"\"\"", multiline: true}, "\"", {open: "r#\"", close: "\"#", escape: null, multiline: true}, {open: "#\"", close: "\"#", escape: null, multiline: true}],
 	},
 	"KerboScript": {
 		file_patterns: ["*.ks"],
@@ -1767,11 +1893,13 @@
 		file_patterns: ["*.ktn"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Koka": {
 		file_patterns: ["*.kk", "*.kki"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}, {open: "r\"", close: "\"", escape: null}],
 	},
 	"Korn Shell": {
 		file_patterns: ["*.ksh"],
@@ -1803,6 +1931,7 @@
 		file_patterns: ["*.kql", "*.csl"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "```", escape: null, multiline: true}, "\"", "'"],
 	},
 	"KV Language": {
 		file_patterns: ["*.kv"],
@@ -1828,6 +1957,7 @@
 		file_patterns: ["*.lasso", "*.las", "*.lasso9", "*.lasso8"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", "'", {open: "`", escape: null, multiline: true}],
 	},
 	"Latte": {
 		file_patterns: ["*.latte"],
@@ -1841,12 +1971,14 @@
 	"LD Script": {
 		file_patterns: ["*.ld", "*.lds"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"Lean": {
 		file_patterns: ["*.lean", "*.hlean"],
 		line_comments: ["--"],
 		block_comments: [["/-", "-/"]],
 		nested_blocks: true,
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Leo": {
 		file_patterns: ["*.leo"],
@@ -1865,6 +1997,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["%%", "yy", "BEGIN", "ECHO"],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"LFE": {
 		file_patterns: ["*.lfe"],
@@ -1880,6 +2013,7 @@
 		file_patterns: ["*.ligo", "*.mligo", "*.jsligo", "*.religo"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"], ["(*", "*)"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Lily": {
 		file_patterns: ["*.lily"],
@@ -1891,6 +2025,7 @@
 		file_patterns: ["*.ly", "*.ily"],
 		line_comments: ["%"],
 		block_comments: [["%{", "%}"]],
+		strings: ["\""],
 	},
 	"Limbo": {
 		file_patterns: ["*.m"],
@@ -1902,6 +2037,7 @@
 		line_comments: ["//", "#"],
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
+		strings: ["\"", "'"],
 	},
 	"Liquid Templates": {
 		file_patterns: ["*.liquid"],
@@ -1923,6 +2059,7 @@
 		file_patterns: ["*.ls"],
 		line_comments: ["#"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "\"\"\"", multiline: true, interpolation: "#{"}, {open: "'''", multiline: true}, {open: "\"", multiline: true, interpolation: "#{"}, {open: "'", multiline: true}],
 	},
 	"LLVM IR": {
 		file_patterns: ["*.ll"],
@@ -1932,11 +2069,13 @@
 		file_patterns: ["*.td"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "[{", close: "}]", escape: null, multiline: true}, "\""],
 	},
 	"Lobster": {
 		file_patterns: ["*.lobster"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "\"\"\"", multiline: true}, "\"", {open: "'", char: true}],
 	},
 	"Logo": {
 		file_patterns: ["*.logo", "*.lg"],
@@ -1953,11 +2092,13 @@
 		file_patterns: ["*.lgt", "*.logtalk"],
 		line_comments: ["%"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", "'"],
 	},
 	"Lolcode": {
 		file_patterns: ["*.lol"],
 		line_comments: ["BTW"],
 		block_comments: [["OBTW", "TLDR"]],
+		strings: [{open: "\"", escape: ":"}],
 	},
 	"LookML": {
 		file_patterns: ["*.lkml", "*.lookml"],
@@ -1974,11 +2115,13 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: {words: ["inherit", "nomask", "varargs", "efun", "([", "::create(", "this_object()", "this_player()"], required: "shared", case_sensitive: true},
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"LSL": {
 		file_patterns: ["*.lsl", "*.lslp"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"Lua": {
 		file_patterns: ["*.lua", "*.wlua", "*.rockspec", ".luacheckrc", "*.nse", "*.rbxs", "*.pd_lua", "*.p8"],
@@ -1992,6 +2135,7 @@
 		line_comments: ["--"],
 		block_comments: [["--[[", "]]"], ["--[=[", "]=]"], ["--[==[", "]==]"]],
 		shebangs: ["#!/usr/bin/env luau"],
+		strings: ["\"", "'", {open: "[[", close: "]]", escape: null, multiline: true}, {open: "[=[", close: "]=]", escape: null, multiline: true}, {open: "[==[", close: "]==]", escape: null, multiline: true}, {open: "`"}],
 	},
 	"Lucid": {
 		file_patterns: ["*.luc"],
@@ -2001,6 +2145,7 @@
 		file_patterns: ["*.lucius"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", "'"],
 	},
 	"M4": {
 		file_patterns: ["*.m4", "configure.ac", "configure.in"],
@@ -2045,6 +2190,7 @@
 		line_comments: ["#"],
 		block_comments: [["(*", "*)"]],
 		keywords: ["proc", "end proc", "module", "end module", "local", "global"],
+		strings: ["\"", {open: "`", escape: null}],
 	},
 	"Markdown": {
 		file_patterns: ["*.md", "*.markdown", "*.mdx", "*.mdown", "*.mdwn", "*.mkd", "*.mkdn", "*.mkdown", "*.ronn", "*.rmd", "*.qmd", "*.livemd", "*.workbook", "*.mdtxt", "*.mdtext", "*.markdn"],
@@ -2061,6 +2207,7 @@
 		file_patterns: ["*.wl", "*.wls", "*.wlt"],
 		block_comments: [["(*", "*)"]],
 		nested_blocks: true,
+		strings: [{open: "\"", multiline: true}],
 	},
 	"MATLAB": {
 		file_patterns: ["*.m"],
@@ -2076,6 +2223,7 @@
 	"Maxima": {
 		file_patterns: ["*.mac", "*.wxm", "*.dem"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"MAXScript": {
 		file_patterns: ["*.mcr"],
@@ -2099,12 +2247,14 @@
 		block_comments: [["(*", "*)"], ["/*", "*/"]],
 		nested_blocks: true,
 		keywords: ["%%", "%token", "%start", "%left", "%right", "%nonassoc"],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Mercury": {
 		file_patterns: ["*.m"],
 		line_comments: ["%"],
 		block_comments: [["/*", "*/"]],
 		keywords: [":- module", ":- pred", ":- func", ":- type", "io.write_string"],
+		strings: ["\"", "'"],
 	},
 	"Mermaid": {
 		file_patterns: ["*.mmd", "*.mermaid"],
@@ -2124,6 +2274,7 @@
 		file_patterns: ["*.metal"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"MetaPost": {
 		file_patterns: ["*.mp"],
@@ -2139,6 +2290,7 @@
 		file_patterns: ["*.tz"],
 		line_comments: ["#"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"Microsoft Developer Studio": {
 		file_patterns: ["*.dsp"],
@@ -2155,6 +2307,7 @@
 		file_patterns: ["*.mint"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "`", escape: null, multiline: true}],
 	},
 	"Mirah": {
 		file_patterns: ["*.mirah"],
@@ -2185,11 +2338,13 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["model", "equation", "parameter", "connector", "within", "der(", "Real", "end"],
+		strings: [{open: "\"", multiline: true}],
 	},
 	"Modula-2/3": {
 		file_patterns: ["*.m3", "*.mi", "*.i3", "*.ig", "*.mg"],
 		block_comments: [["(*", "*)"]],
 		nested_blocks: true,
+		strings: ["\"", "'"],
 	},
 	"Module Definition": {
 		file_patterns: ["*.def"],
@@ -2216,6 +2371,7 @@
 		file_patterns: ["*.mc"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Monte": {
 		file_patterns: ["*.mt"],
@@ -2227,6 +2383,7 @@
 		file_patterns: ["*.moo"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"MoonBit": {
 		file_patterns: ["*.mbt", "*.mbti"],
@@ -2242,6 +2399,7 @@
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
 		keywords: ["actor", "shared", "async", "await", "stable", "Debug.print", "func"],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Motorola 68K Assembly": {
 		file_patterns: ["*.x68"],
@@ -2252,18 +2410,21 @@
 		file_patterns: ["*.move"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"MQL4": {
 		file_patterns: ["*.mq4", "*.mqh"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["#property", "OrderSend", "iMA", "AccountBalance"],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"MQL5": {
 		file_patterns: ["*.mq5"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["#property", "CTrade", "CPositionInfo", "input"],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"MSBuild": {
 		file_patterns: ["*.csproj", "*.vbproj", "*.fsproj", "*.props", "*.targets", "*.vcxproj", "*.vcxproj.filters", "*.vcproj", "*.proj", "*.wixproj", "*.msbuild", "*.ilproj"],
@@ -2278,6 +2439,7 @@
 		file_patterns: ["*.mun"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Mustache": {
 		file_patterns: ["*.mustache"],
@@ -2323,6 +2485,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
+		strings: [{open: "@\"", escape: "\"", multiline: true}, "\"", {open: "'", char: true}],
 	},
 	"NEON": {
 		file_patterns: ["*.neon"],
@@ -2353,11 +2516,13 @@
 	"Newspeak": {
 		file_patterns: ["*.ns", "*.ns2"],
 		block_comments: [["(*", "*)"]],
+		strings: [{open: "'", escape: "'", multiline: true}],
 	},
 	"Nextflow": {
 		file_patterns: ["*.nextflow", "*.nf", "nextflow.config"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "\"\"\"", multiline: true, interpolation: "${"}, {open: "'''", multiline: true}, {open: "\"", interpolation: "${"}, "'"],
 	},
 	"Nginx Config": {
 		file_patterns: ["nginx.conf", "*.nginx"],
@@ -2394,16 +2559,19 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["fn", "struct", "impl", "trait", "use", "mod", "let", "pub", "contract", "unconstrained"],
+		strings: ["\""],
 	},
 	"Not Quite Perl": {
 		file_patterns: ["*.nqp"],
 		line_comments: ["#"],
 		block_comments: [["=begin", "=end"]],
+		strings: ["\"", "'"],
 	},
 	"NSIS": {
 		file_patterns: ["*.nsi", "*.nsh"],
 		line_comments: [";", "#"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", "'", {open: "`"}],
 	},
 	"NuGet Config": {
 		file_patterns: ["nuget.config", "packages.config", "nugetdefaults.config"],
@@ -2428,6 +2596,7 @@
 		file_patterns: ["*.nvgt", ".nvgtrc"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "\"\"\"", multiline: true}, "\"", "'"],
 	},
 	"NWScript": {
 		file_patterns: ["*.nss"],
@@ -2440,6 +2609,7 @@
 		line_comments: [],
 		block_comments: [["(*", "*)"]],
 		nested_blocks: true,
+		strings: [{open: "\"", escape: null}, {open: "'", escape: null}],
 	},
 	"Objeck": {
 		file_patterns: ["*.obs"],
@@ -2467,6 +2637,7 @@
 		file_patterns: ["*.j", "*.sj"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", "'"],
 	},
 	"OCaml": {
 		file_patterns: ["*.ml", "*.mli", "*.mll", "*.mly", "*.eliom", "*.eliomi", "*.ml4"],
@@ -2512,11 +2683,13 @@
 		file_patterns: ["*.ooc"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Opa": {
 		file_patterns: ["*.opa"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"Opal": {
 		file_patterns: ["*.opal"],
@@ -2528,6 +2701,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["__kernel", "__global", "__local", "__constant", "get_global_id", "get_local_id", "barrier"],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"OpenEdge ABL": {
 		file_patterns: ["*.p", "*.w", "*.cls", "*.i"],
@@ -2535,16 +2709,19 @@
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
 		keywords: ["DEFINE", "VARIABLE", "PROCEDURE", "END PROCEDURE", "FOR EACH", "DO:", "NO-UNDO", "NO-LOCK"],
+		strings: [{open: "\"", escape: "~"}, {open: "'", escape: "~"}],
 	},
 	"OpenQASM": {
 		file_patterns: ["*.qasm"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"OpenSCAD": {
 		file_patterns: ["*.scad"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"OpenType Feature File": {
 		file_patterns: ["*.fea"],
@@ -2578,16 +2755,19 @@
 		line_comments: ["//"],
 		block_comments: [["(*", "*)"], ["{", "}"]],
 		nested_blocks: true,
+		strings: [{open: "'", escape: "'"}, "\""],
 	},
 	"Oz": {
 		file_patterns: ["*.oz"],
 		line_comments: ["%"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", "'", {open: "`"}],
 	},
 	"P4": {
 		file_patterns: ["*.p4", "*.p4i"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"Pact": {
 		file_patterns: ["*.pact"],
@@ -2608,6 +2788,7 @@
 		file_patterns: ["*.psl", "*.psi"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Parrot Assembly": {
 		file_patterns: ["*.pasm"],
@@ -2624,11 +2805,13 @@
 		line_comments: ["//"],
 		block_comments: [["(*", "*)"], ["{", "}"]],
 		keywords: {words: [":=", "end;", "begin", "procedure", "program"], required: "shared"},
+		strings: [{open: "'", escape: "'"}],
 	},
 	"Pawn": {
 		file_patterns: ["*.pwn", "*.pawn", "*.sma"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"PDDL": {
 		file_patterns: ["*.pddl"],
@@ -2638,11 +2821,13 @@
 		file_patterns: ["*.pegjs", "*.peggy"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", "'"],
 	},
 	"PeopleCode": {
 		file_patterns: ["*.ppl", "*.peoplecode"],
 		line_comments: ["REM"],
 		block_comments: [["/*", "*/"], ["<*", "*>"]],
+		strings: [{open: "\"", escape: "\""}, {open: "'", escape: "'"}],
 	},
 	"Pep/8": {
 		file_patterns: ["*.pep"],
@@ -2690,6 +2875,7 @@
 		line_comments: ["#"],
 		block_comments: [["#{", "}#"]],
 		keywords: ["de", "dm", "class", "rel"],
+		strings: [{open: "\"", multiline: true}],
 	},
 	"Pig Latin": {
 		file_patterns: ["*.pig"],
@@ -2701,6 +2887,7 @@
 		file_patterns: ["*.pike", "*.pmod"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Pine Script": {
 		file_patterns: ["*.pine"],
@@ -2714,14 +2901,17 @@
 		file_patterns: ["*.pkl"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "\"\"\"", multiline: true}, "\""],
 	},
 	"PL/I": {
 		file_patterns: ["*.pl1", "*.pli"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "'", escape: "'"}, {open: "\"", escape: "\""}],
 	},
 	"PL/M": {
 		file_patterns: ["*.plm"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "'", escape: "'"}],
 	},
 	"PL/SQL": {
 		file_patterns: ["*.pls", "*.plb", "*.pck", "*.pkb", "*.pks", "*.plsql", "*.bdy", "*.bod", "*.fnc", "*.prc", "*.spc", "*.trg", "*.tpb", "*.tps", "*.vw"],
@@ -2729,11 +2919,13 @@
 		block_comments: [["/*", "*/"]],
 		// Others use these extensions too, like Perl's `embed.fnc`.
 		keywords: {words: ["create or replace", "end;", "package body", "procedure", "exception", "pragma", "%type", "%rowtype"], required: "always"},
+		strings: [{open: "'", escape: "'"}, "\""],
 	},
 	"PlantUML": {
 		file_patterns: ["*.puml", "*.plantuml", "*.pu", "*.iuml", "*.wsd"],
 		line_comments: ["'"],
 		block_comments: [["/'", "'/"]],
+		strings: ["\""],
 	},
 	"Pluto": {
 		file_patterns: ["*.pluto"],
@@ -2745,11 +2937,13 @@
 		file_patterns: ["*.pogo"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", "'"],
 	},
 	"Poke": {
 		file_patterns: ["*.pk"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Polar": {
 		file_patterns: ["*.polar"],
@@ -2759,6 +2953,7 @@
 		file_patterns: ["*.pony"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "\"\"\"", multiline: true}, {open: "\"", multiline: true}, {open: "'", char: true}],
 	},
 	"Portugol": {
 		file_patterns: ["*.por"],
@@ -2770,6 +2965,7 @@
 		file_patterns: ["*.pcss", "*.sss"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", "'"],
 	},
 	"PostScript": {
 		file_patterns: ["*.ps", "*.eps"],
@@ -2792,6 +2988,7 @@
 		file_patterns: ["*.pbt", "*.pbw", "*.srd", "*.sru", "*.srw", "*.sra", "*.srf", "*.srm", "*.srs"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "\"", escape: "~"}, {open: "'", escape: "~"}],
 	},
 	"PowerShell": {
 		file_patterns: ["*.ps1", "*.psm1", "*.psd1", "*.pssc", "*.pscc", "*.psrc"],
@@ -2809,6 +3006,7 @@
 		file_patterns: ["*.prisma"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"Pro*C": {
 		file_patterns: ["*.pc"],
@@ -2821,6 +3019,7 @@
 		file_patterns: ["*.pde"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Procfile": {
 		file_patterns: ["Procfile"],
@@ -2831,11 +3030,13 @@
 		line_comments: ["%"],
 		block_comments: [["/*", "*/"]],
 		keywords: {words: [":-", "?-", "findall", "bagof", "retract"], required: "shared"},
+		strings: ["\"", "'", {open: "`"}],
 	},
 	"Promela": {
 		file_patterns: ["*.pml", "*.promela", "*.prom"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"PromQL": {
 		file_patterns: ["*.promql"],
@@ -2866,6 +3067,7 @@
 		line_comments: ["#"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["class", "define", "node", "package", "service", "file", "exec", "=>"],
+		strings: [{open: "\"", multiline: true, interpolation: "${"}, {open: "'", multiline: true}],
 	},
 	"PureBasic": {
 		file_patterns: ["*.pb", "*.pbi", "*.pbf"],
@@ -2876,11 +3078,13 @@
 		line_comments: ["--"],
 		block_comments: [["{-", "-}"]],
 		nested_blocks: true,
+		strings: [{open: "\"\"\"", escape: null, multiline: true}, "\"", {open: "'", char: true}],
 	},
 	"Pyret": {
 		file_patterns: ["*.arr"],
 		line_comments: ["#"],
 		block_comments: [["#|", "|#"]],
+		strings: [{open: "```", multiline: true}, "\"", "'"],
 	},
 	"Python": {
 		file_patterns: ["*.py", "*.pyi", "*.pyw", "*.py2", "*.py3", "*.pyz", "*.pyzw", ".gclient", "SConscript", "SConstruct", "sconscript", "sconstruct", "requirements.txt", ".pythonrc", "*.gyp", "*.gypi", "*.wsgi", "*.tac", "*.pyde", "*.pyt", "*.pyp", "*.xpy", "*.lmi", "*.ipy", "*.jy", "*.vpy", "wscript", "DEPS", ".pythonstartup"],
@@ -2904,6 +3108,7 @@
 		file_patterns: ["*.qcl"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"QMake": {
 		file_patterns: ["*.pro", "*.pri"],
@@ -2914,6 +3119,7 @@
 		file_patterns: ["*.qml", "*.qbs"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", "'", {open: "`", multiline: true, interpolation: "${"}],
 	},
 	"Quackery": {
 		file_patterns: ["*.qky"],
@@ -2929,11 +3135,13 @@
 		file_patterns: ["*.qnt"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"Quorum": {
 		file_patterns: ["*.quorum"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"R": {
 		file_patterns: ["*.r", "*.R", ".Rprofile", "*.rsx"],
@@ -2948,6 +3156,7 @@
 		block_comments: [["#|", "|#"]],
 		nested_blocks: true,
 		shebangs: ["#!/usr/bin/env racket"],
+		strings: [{open: "\"", multiline: true}],
 	},
 	"Raku": {
 		file_patterns: ["*.raku", "*.rakumod", "*.rakutest", "*.pm6", "*.pl6", "*.p6", "*.rakudoc", "*.6pl", "*.6pm", "*.p6l", "*.p6m"],
@@ -2963,6 +3172,7 @@
 		file_patterns: ["*.rsc"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"RAScript": {
 		file_patterns: ["*.rascript"],
@@ -2993,6 +3203,7 @@
 		keywords: ["let", "switch", "module", "type"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "\"", multiline: true}, {open: "'", char: true}, {open: "{|", close: "|}", escape: null, multiline: true}],
 	},
 	"Rebol": {
 		file_patterns: ["*.r", "*.reb", "*.rebol", "*.r2", "*.r3"],
@@ -3003,6 +3214,7 @@
 		file_patterns: ["*.red", "*.reds"],
 		line_comments: [";"],
 		block_comments: [["comment {", "}"]],
+		strings: [{open: "\"", escape: "^"}],
 	},
 	"Redcode": {
 		file_patterns: ["*.cw"],
@@ -3028,6 +3240,7 @@
 		file_patterns: ["*.res", "*.resi"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}, {open: "`", multiline: true, interpolation: "${"}],
 	},
 	"reStructuredText": {
 		file_patterns: ["*.rst", "*.rest", "*.rst.txt", "*.rest.txt"],
@@ -3042,16 +3255,19 @@
 		line_comments: ["--"],
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
+		strings: [{open: "\"", escape: "\""}, {open: "'", escape: "'"}],
 	},
 	"Rhai": {
 		file_patterns: ["*.rhai"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}, {open: "`", multiline: true, interpolation: "${"}],
 	},
 	"Ring": {
 		file_patterns: ["*.ring", "*.rh"],
 		line_comments: ["#", "//"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "\"", escape: null}, {open: "'", escape: null}, {open: "`", escape: null}],
 	},
 	"Riot": {
 		file_patterns: ["*.riot"],
@@ -3083,6 +3299,7 @@
 		file_patterns: ["*.ron"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}, {open: "r#\"", close: "\"#", escape: null, multiline: true}],
 	},
 	"RPG": {
 		file_patterns: ["*.rpg", "*.rpgle", "*.sqlrpgle", "*.rpgmod"],
@@ -3130,11 +3347,13 @@
 		file_patterns: ["*.sas"],
 		line_comments: ["*"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "'", escape: "'"}, {open: "\"", escape: "\""}],
 	},
 	"Sass": {
 		file_patterns: ["*.sass"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", "'"],
 	},
 	"Sather": {
 		file_patterns: ["*.sa"],
@@ -3162,6 +3381,7 @@
 		block_comments: [["#|", "|#"]],
 		nested_blocks: true,
 		shebangs: ["#!/usr/bin/env guile", "#!/usr/bin/guile", "#!/usr/bin/env scheme"],
+		strings: [{open: "\"", multiline: true}],
 	},
 	"Scilab": {
 		file_patterns: ["*.sci", "*.sce"],
@@ -3171,6 +3391,7 @@
 	"Scilla": {
 		file_patterns: ["*.scilla"],
 		block_comments: [["(*", "*)"]],
+		strings: ["\""],
 	},
 	"SCSS": {
 		file_patterns: ["*.scss"],
@@ -3186,10 +3407,12 @@
 		file_patterns: ["*.s7i", "*.sd7"],
 		line_comments: ["#"],
 		block_comments: [["(*", "*)"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Self": {
 		file_patterns: ["*.self"],
 		block_comments: [["\"", "\""]],
+		strings: ["'"],
 	},
 	"SETL": {
 		file_patterns: ["*.setl"],
@@ -3201,6 +3424,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["Shader", "SubShader", "Pass", "Properties", "Tags"],
+		strings: ["\""],
 	},
 	"Shakespeare": {
 		file_patterns: ["*.spl"],
@@ -3209,6 +3433,7 @@
 		file_patterns: ["*.shen"],
 		line_comments: ["\\\\"],
 		block_comments: [["\\*", "*\\"]],
+		strings: [{open: "\"", multiline: true}],
 	},
 	"Sidef": {
 		file_patterns: ["*.sf"],
@@ -3221,6 +3446,7 @@
 		file_patterns: ["*.sieve"],
 		line_comments: ["#"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"Simula": {
 		file_patterns: ["*.sim"],
@@ -3240,6 +3466,7 @@
 		file_patterns: ["*.il", "*.ils"],
 		line_comments: [";"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"Slang": {
 		file_patterns: ["*.slang"],
@@ -3261,6 +3488,7 @@
 		file_patterns: ["*.slint"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"Smali": {
 		file_patterns: ["*.smali"],
@@ -3270,6 +3498,7 @@
 		file_patterns: ["*.st"],
 		block_comments: [["\"", "\""]],
 		keywords: ["Object subclass:", "instanceVariableNames:", "classVariableNames:", "poolDictionaries:", "self", "super", "nil"],
+		strings: [{open: "'", escape: "'", multiline: true}],
 	},
 	"Smarty": {
 		file_patterns: ["*.tpl", "*.smarty"],
@@ -3281,11 +3510,13 @@
 		file_patterns: ["*.smithy"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "\"\"\"", multiline: true}, "\""],
 	},
 	"SmPL": {
 		file_patterns: ["*.cocci"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"SMT": {
 		file_patterns: ["*.smt2", "*.smt", "*.z3"],
@@ -3309,6 +3540,7 @@
 		file_patterns: ["*.sol"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", "'"],
 	},
 	"SourcePawn": {
 		file_patterns: ["*.sp"],
@@ -3329,6 +3561,7 @@
 		file_patterns: ["*.zed"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"SpiderBasic": {
 		file_patterns: ["*.sb", "*.sbi", "*.sbf", "*.sbp"],
@@ -3342,6 +3575,7 @@
 		file_patterns: ["*.sqf", "*.hqf"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "\"", escape: "\""}, {open: "'", escape: "'"}],
 	},
 	"SQL": {
 		file_patterns: ["*.sql", "*.ddl", "*.dml", "*.pgsql", "*.psql", "*.mysql", "*.udf", "*.viw", "*.dsql"],
@@ -3359,22 +3593,26 @@
 		file_patterns: ["*.nut"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "@\"", escape: "\"", multiline: true}, "\"", {open: "'", char: true}],
 	},
 	"Stan": {
 		file_patterns: ["*.stan"],
 		line_comments: ["//", "#"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"Standard ML": {
 		file_patterns: ["*.sml", "*.sig", "*.fun"],
 		line_comments: [],
 		block_comments: [["(*", "*)"]],
 		nested_blocks: true,
+		strings: ["\""],
 	},
 	"Stanza": {
 		file_patterns: ["*.stanza"],
 		line_comments: [";"],
 		block_comments: [["<doc>", "</doc>"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Starlark": {
 		file_patterns: ["*.star", "Tiltfile", "*.bxl", "WORKSPACE.bzlmod"],
@@ -3384,6 +3622,7 @@
 		file_patterns: ["*.do", "*.ado", "*.mata", "*.matah", "*.doh", "*.ihlp", "*.sthlp"],
 		line_comments: ["//", "*"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"Stratego": {
 		file_patterns: ["*.str"],
@@ -3396,17 +3635,20 @@
 		line_comments: ["//"],
 		block_comments: [["(*", "*)"]],
 		keywords: ["PROGRAM", "END_PROGRAM", "VAR", "END_VAR", "FUNCTION_BLOCK", "END_FUNCTION_BLOCK"],
+		strings: [{open: "'", escape: "$"}, {open: "\"", escape: "$"}],
 	},
 	"Stylus": {
 		file_patterns: ["*.styl"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", "'"],
 	},
 	"SuperCollider": {
 		file_patterns: ["*.sc", "*.scd"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["SinOsc", "SynthDef", "Server", ".ar", ".kr"],
+		strings: ["\"", "'"],
 	},
 	"SurrealQL": {
 		file_patterns: ["*.surql"],
@@ -3428,6 +3670,7 @@
 		file_patterns: ["*.sw"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Swift": {
 		file_patterns: ["*.swift", "*.swiftinterface"],
@@ -3448,6 +3691,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["%module", "%include", "%apply", "%typemap", "%inline", "%exception"],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"systemd": {
 		file_patterns: ["*.service", "*.socket", "*.timer", "*.mount", "*.automount", "*.device", "*.scope", "*.slice", "*.swap", "*.target", "*.path", "*.network", "*.link", "*.netdev", "*.nspawn"],
@@ -3460,11 +3704,13 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["logic", "modport", "interface", "typedef", "package", "virtual", "class", "constraint"],
+		strings: [{open: "\"\"\"", multiline: true}, "\""],
 	},
 	"T-SQL": {
 		file_patterns: ["*.tsql"],
 		line_comments: ["--"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "'", escape: "'"}, "\""],
 	},
 	"Tact": {
 		file_patterns: ["*.tact"],
@@ -3477,6 +3723,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["modify", "replace", "DefineAction", "VerbRule", "Thing", "gameMain"],
+		strings: [{open: "\"", multiline: true}, {open: "'", multiline: true}],
 	},
 	"Talon": {
 		file_patterns: ["*.talon"],
@@ -3499,11 +3746,13 @@
 		line_comments: ["--"],
 		block_comments: [["--[[", "]]"]],
 		keywords: ["local", "global", "record", "enum", "type", "function", "end", "require"],
+		strings: ["\"", "'", {open: "[[", close: "]]", escape: null, multiline: true}, {open: "[=[", close: "]=]", escape: null, multiline: true}, {open: "[==[", close: "]==]", escape: null, multiline: true}],
 	},
 	"Templ": {
 		file_patterns: ["*.templ"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"Tera": {
 		file_patterns: ["*.tera"],
@@ -3514,12 +3763,15 @@
 		line_comments: ["--"],
 		block_comments: [["--[[", "]]"]],
 		keywords: ["terra", "struct", "quote", "escape", "import"],
+		strings: ["\"", "'", {open: "[[", close: "]]", escape: null, multiline: true}, {open: "[=[", close: "]=]", escape: null, multiline: true}, {open: "[==[", close: "]==]", escape: null, multiline: true}],
 	},
 	"Terraform": {
 		file_patterns: ["*.tf", "*.tfvars", "*.tf.json", "*.tfvars.json", "*.tofu"],
 		line_comments: ["#", "//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["terraform", "provider", "resource", "variable", "module", "locals", "data"],
+		strings: [{open: "\"", interpolation: "${"}],
+		heredoc: "ruby",
 	},
 	"TeX/LaTeX": {
 		file_patterns: ["*.tex", "*.sty", "*.bbx", "*.cbx", "*.lbx", ".latexmkrc", "*.dtx", "*.ltx", "*.mkii", "*.mkiv", "*.mkvi", "*.ins"],
@@ -3542,6 +3794,7 @@
 		file_patterns: ["*.thrift"],
 		line_comments: ["#", "//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", "'"],
 	},
 	"TL-Verilog": {
 		file_patterns: ["*.tlv"],
@@ -3554,6 +3807,7 @@
 		line_comments: ["\\*"],
 		block_comments: [["(*", "*)"]],
 		nested_blocks: true,
+		strings: ["\""],
 	},
 	"Tmux": {
 		file_patterns: ["*.tmux", ".tmux.conf"],
@@ -3596,6 +3850,7 @@
 		line_comments: ["%"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["var", "put", "get", "loop", "exit", "proc", "fcn", "module"],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Turtle": {
 		file_patterns: ["*.ttl"],
@@ -3646,6 +3901,7 @@
 		file_patterns: ["*.um"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Ungrammar": {
 		file_patterns: ["*.ungram", "*.ungrammar"],
@@ -3667,6 +3923,7 @@
 		line_comments: ["--"],
 		block_comments: [["{-", "-}"]],
 		nested_blocks: true,
+		strings: [{open: "\"\"\"", multiline: true}, "\"", {open: "'", char: true}],
 	},
 	"Uno": {
 		file_patterns: ["*.uno"],
@@ -3679,12 +3936,14 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
+		strings: ["\"", "'"],
 	},
 	"Untyped Plutus Core": {
 		file_patterns: ["*.uplc"],
 		line_comments: ["--"],
 		block_comments: [["{-", "-}"]],
 		nested_blocks: true,
+		strings: ["\""],
 	},
 	"Ur/Web": {
 		file_patterns: ["*.ur", "*.urs"],
@@ -3702,16 +3961,19 @@
 		block_comments: [["/*", "*/"]],
 		keywords: ["fn", "struct", "enum", "pub", "mut", "module", "match"],
 		nested_blocks: true,
+		strings: [{open: "\"", interpolation: "${"}, {open: "'", interpolation: "${"}],
 	},
 	"Vala": {
 		file_patterns: ["*.vala", "*.vapi"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "\"\"\"", escape: null, multiline: true}, {open: "@\"", interpolation: "$("}, "\"", {open: "'", char: true}],
 	},
 	"Vale": {
 		file_patterns: ["*.vale"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"Varlink": {
 		file_patterns: ["*.varlink"],
@@ -3721,6 +3983,7 @@
 		file_patterns: ["*.vcl"],
 		line_comments: ["//", "#"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "{\"", close: "\"}", escape: null, multiline: true}, "\""],
 	},
 	"Velocity": {
 		file_patterns: ["*.vm", "*.vtl"],
@@ -3732,12 +3995,14 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["module", "endmodule", "always", "assign", "posedge", "negedge", "wire", "reg"],
+		strings: ["\""],
 	},
 	"Verilog-A": {
 		file_patterns: ["*.va", "*.vams"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["analog", "electrical", "voltage", "current", "ddt", "idt", "branch"],
+		strings: ["\""],
 	},
 	"Verse": {
 		file_patterns: ["*.verse"],
@@ -3745,11 +4010,13 @@
 		block_comments: [["<#", "#>"]],
 		nested_blocks: true,
 		keywords: ["module", "using", "var", "class", "struct", "interface", "for", "if", "return", "agent", "spawns"],
+		strings: ["\""],
 	},
 	"VHDL": {
 		file_patterns: ["*.vhd", "*.vhdl", "*.vhf", "*.vhi", "*.vho", "*.vhs", "*.vht", "*.vhw"],
 		line_comments: ["--"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "\"", escape: "\""}, {open: "'", char: true}],
 	},
 	"VHS Tape": {
 		file_patterns: ["*.tape"],
@@ -3815,6 +4082,7 @@
 		line_comments: [";;"],
 		block_comments: [["(;", ";)"]],
 		nested_blocks: true,
+		strings: ["\""],
 	},
 	"WebC": {
 		file_patterns: ["*.webc"],
@@ -3830,6 +4098,7 @@
 		file_patterns: ["*.webidl"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"Wenyan": {
 		file_patterns: ["*.wy"],
@@ -3859,6 +4128,7 @@
 		file_patterns: ["*.rc", "*.rc2"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Wisp": {
 		file_patterns: ["*.wisp"],
@@ -3891,16 +4161,19 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
+		strings: [{open: "\"\"\"", escape: null, multiline: true}, {open: "\"", interpolation: "%("}],
 	},
 	"X++": {
 		file_patterns: ["*.xpp"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "@\"", escape: "\"", multiline: true}, "\"", "'"],
 	},
 	"X10": {
 		file_patterns: ["*.x10"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"XAML": {
 		file_patterns: ["*.xaml"],
@@ -3939,6 +4212,7 @@
 		block_comments: [["(:", ":)"]],
 		nested_blocks: true,
 		keywords: ["declare", "namespace", "module", "import", "for", "let", "return", "where", "if", "then", "else"],
+		strings: [{open: "\"", escape: "\""}, {open: "'", escape: "'"}],
 	},
 	"XS": {
 		file_patterns: ["*.xs"],
@@ -3950,6 +4224,7 @@
 		file_patterns: ["*.xtend"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: [{open: "'''", escape: null, multiline: true}, "\"", "'"],
 	},
 	"Yacas": {
 		file_patterns: ["*.ys"],
@@ -3962,6 +4237,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["%token", "%type", "%start", "yyparse"],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"YAML": {
 		file_patterns: ["*.yaml", "*.yml", "*.yaml.tmpl", "*.yaml-tmpl", ".yamllint", ".clang-format", ".clang-tidy", ".gemrc", "pnpm-lock.yaml", "pubspec.lock", "Podfile.lock", "*.sublime-syntax", "*.sls", "*.reek", "*.rviz", "*.syntax", ".clangd", "CITATION.cff"],
@@ -3971,11 +4247,13 @@
 		file_patterns: ["*.yang"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", escape: null}],
 	},
 	"YARA": {
 		file_patterns: ["*.yar", "*.yara"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"YASnippet": {
 		file_patterns: ["*.yasnippet"],
@@ -3986,6 +4264,7 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		keywords: ["func", "struct", "extern", "local", "include", "require"],
+		strings: ["\""],
 	},
 	"Yuck": {
 		file_patterns: ["*.yuck"],
@@ -4011,11 +4290,13 @@
 		file_patterns: ["*.zs"],
 		line_comments: ["//", "#"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", "'"],
 	},
 	"Zephir": {
 		file_patterns: ["*.zep"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Zig": {
 		file_patterns: ["*.zig"],
@@ -4046,6 +4327,7 @@
 		file_patterns: ["*.zok"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		strings: ["\""],
 	},
 	"Zon": {
 		file_patterns: ["*.zon"],
@@ -4055,6 +4337,7 @@
 		file_patterns: ["*.znn"],
 		block_comments: [["(*", "*)"]],
 		nested_blocks: true,
+		strings: ["\""],
 	},
 	"ZSH": {
 		file_patterns: ["*.zsh", ".zlogin", ".zlogout", ".zprofile", ".zshenv", ".zshrc", "*.zsh-theme"],

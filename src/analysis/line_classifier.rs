@@ -721,6 +721,14 @@ mod tests {
 	#[case::pod_closes_only_unindented("Perl", &["=pod", "", "    =cut", "still pod", "=cut", "sub run { 1 }"], &[LineType::Comment, LineType::Blank, LineType::Comment, LineType::Comment, LineType::Comment, LineType::Code])]
 	#[case::matlab_block_markers_alone("MATLAB", &["%{", "%} not the end", "z = x;", "%}", "%{ note", "z = x + 1;"], &[LineType::Comment, LineType::Comment, LineType::Comment, LineType::Comment, LineType::Comment, LineType::Code])]
 	#[case::c_splice_ends_at_blank("C", &["// c \\", "", "int y;"], &[LineType::Comment, LineType::Blank, LineType::Code])]
+	#[case::d_block_opener_in_string("D", &["auto x = \"/*\";", "int y = 1;", "auto z = \"*/\";"], &[LineType::Code, LineType::Code, LineType::Code])]
+	#[case::solidity_single_quoted("Solidity", &["string a = '/*';", "uint b = 1;", "string c = '*/';"], &[LineType::Code, LineType::Code, LineType::Code])]
+	#[case::terraform_heredoc("Terraform", &["policy = <<-EOT", "  # not a comment", "  EOT", "# c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
+	#[case::terraform_hole("Terraform", &["name = \"${var.a}/*\"", "count = 1"], &[LineType::Code, LineType::Code])]
+	#[case::pascal_doubled_quote("Pascal", &["s := 'it''s {';", "x := 1;", "{ c }"], &[LineType::Code, LineType::Code, LineType::Comment])]
+	#[case::vhdl_attribute_is_not_a_char("VHDL", &["for i in a'range loop -- c", "s <= \"/*\";", "x <= '1';"], &[LineType::Code, LineType::Code, LineType::Code])]
+	#[case::lisp_quote_character("Common Lisp", &["(char= c #\\\")", "; c", "(f \"#|\")", "(g)"], &[LineType::Code, LineType::Comment, LineType::Code, LineType::Code])]
+	#[case::smalltalk_quote_in_string("Smalltalk", &["s := 'say \"hi'.", "x := 1.", "\"c\""], &[LineType::Code, LineType::Code, LineType::Comment])]
 	fn config_strings(#[case] language: &str, #[case] lines: &[&str], #[case] expected: &[LineType]) {
 		assert_eq!(classify_all(language, lines), expected);
 	}
