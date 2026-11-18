@@ -113,7 +113,7 @@ impl Source {
 fn language_for(name: &str) -> Option<&'static Language> {
 	let name = name.trim();
 	let canonical = match name.to_ascii_lowercase().as_str() {
-		"python2" | "python3" | "ipython" | "ipython3" | "pyspark" => "Python",
+		"python2" | "python3" | "ipython" | "ipython3" | "pyspark" | "sage" | "sagemath" => "Python",
 		"c++" | "cpp" | "c++11" | "c++14" | "c++17" | "c++20" | "xcpp" => "C++",
 		"csharp" | "c#" => "C#",
 		"fsharp" | "f#" => "F#",
@@ -123,7 +123,6 @@ fn language_for(name: &str) -> Option<&'static Language> {
 		"latex" | "tex" => "TeX/LaTeX",
 		"wolfram language" | "wolfram" | "mathematica" => "Mathematica/Wolfram",
 		"powershell" | "pwsh" => "PowerShell",
-		"sage" | "sagemath" => "Python",
 		"common-lisp" | "sbcl" | "lisp" => "Common Lisp",
 		"sparql" => "SPARQL",
 		_ => name,
