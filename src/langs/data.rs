@@ -19,6 +19,8 @@ pub enum Embedding {
 	Literate,
 	/// A Jupyter notebook, which is JSON: its code cells count as code in the kernel's language, its Markdown and raw cells count as comment, and its outputs aren't counted.
 	Notebook,
+	/// A cram test: lines indented two spaces and starting `$ ` or `> ` are shell commands, in Bash, other indented lines are the output they're expected to print, which counts as code, and unindented lines are prose, which counts as comment.
+	Cram,
 }
 
 /// When content has to show one of a language's keywords for a file to be that language.

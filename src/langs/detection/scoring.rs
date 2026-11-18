@@ -51,8 +51,8 @@ fn score_language(
 			score = score.saturating_add(COMMENT_MATCH_SCORE);
 		}
 	}
-	for (start, end) in &matchers.block_comments {
-		if start.find(bytes).is_some() && end.find(bytes).is_some() {
+	for (start, end, at_line_start) in &matchers.block_comments {
+		if has_block_comment(bytes, start, end, *at_line_start) {
 			score = score.saturating_add(COMMENT_MATCH_SCORE);
 		}
 	}
@@ -109,6 +109,18 @@ fn score_language(
 	score
 }
 
+/// Whether `bytes` holds a block comment's start with its end after it, both at the start of a line if `at_line_start`. Markers that share a byte with the other kind are neither, so `*/*` in a MIME type is no `/* */` comment.
+fn has_block_comment(bytes: &[u8], start: &Finder, end: &Finder, at_line_start: bool) -> bool {
+	let (open, close) = (start.needle(), end.needle());
+	let starts_line = |at: usize| !at_line_start || at == 0 || bytes[at - 1] == b'\n';
+	let Some(at) = start.find_iter(bytes).find(|&at| starts_line(at) && !bytes[..=at].ends_with(close)) else {
+		return false;
+	};
+	let after = at + open.len();
+	end.find_iter(&bytes[after..])
+		.any(|found| starts_line(after + found) && !bytes[after + found + close.len() - 1..].starts_with(open))
+}
+
 /// What scoring looks for in a sample, prepared the first time a language is a candidate.
 struct ScoringMatchers {
 	/// Keywords made of identifier characters, matched against whole tokens ignoring case, with their index in the language's keywords.
@@ -122,7 +134,8 @@ struct ScoringMatchers {
 	case_sensitive: bool,
 	/// Keywords containing other characters (`@interface`, `#include`), which tokenizing would split, so they're matched as substrings.
 	substrings: Vec<SubstringKeyword>,
-	block_comments: Vec<(Finder<'static>, Finder<'static>)>,
+	/// Each block comment's start and end, and whether they only count at the start of a line (Perl's POD).
+	block_comments: Vec<(Finder<'static>, Finder<'static>, bool)>,
 	symbol_only: bool,
 }
 
@@ -211,9 +224,9 @@ fn build_scoring_matchers(lang: &Language) -> ScoringMatchers {
 	let block_comments = lang
 		.block_comments
 		.iter()
-		.map(|&(start, end, _)| (start, end))
-		.chain(lang.line_block_comments.iter().copied())
-		.map(|(start, end)| (Finder::new(start), Finder::new(end)))
+		.map(|&(start, end, _)| (start, end, false))
+		.chain(lang.line_block_comments.iter().map(|&(start, end)| (start, end, true)))
+		.map(|(start, end, at_line_start)| (Finder::new(start), Finder::new(end), at_line_start))
 		.collect();
 	let max_word_len = words.iter().map(|(word, _)| word.len()).max().unwrap_or(0);
 	let mut words_by_start = vec![Vec::new(); 256];
@@ -454,9 +467,11 @@ pub(super) fn default_wins_outright(candidates: &[&'static Language], content: &
 	}
 	let matchers = scoring_matchers(win.default);
 	let bytes = content.as_bytes();
-	let has_comment =
-		matchers.block_comments.iter().any(|(start, end)| start.find(bytes).is_some() && end.find(bytes).is_some())
-			|| win.default.line_comments.iter().any(|marker| has_line_comment(content, marker));
+	let has_comment = matchers
+		.block_comments
+		.iter()
+		.any(|(start, end, at_line_start)| has_block_comment(bytes, start, end, *at_line_start))
+		|| win.default.line_comments.iter().any(|marker| has_line_comment(content, marker));
 	has_comment.then_some(win.default)
 }
 

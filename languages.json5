@@ -19,7 +19,7 @@
 // operator_symbols: Symbols that make a line comment marker part of an operator when they follow it and any more of its last character, as `-->` is an operator in Haskell.
 // operators: Operators that start with a block comment's opener, which are code, as `(*)` is F#'s multiplication.
 // heredoc: The language's heredocs, whose body runs from the next line to the line holding just the terminator named after the opener: "shell", "perl", "ruby", or "php".
-// embedding: Regions written in other languages, counted by those languages' rules: "html" for `<script>` and `<style>` elements, "astro" for those plus a TypeScript frontmatter, "markdown" for fenced code blocks and YAML or TOML frontmatter, "asciidoc" for source blocks and fenced code blocks, "org" for source blocks, "restructuredtext" for code block directives, "php" for the HTML outside PHP tags, "literate" for a literate program, whose lines starting with `>` and lines between `\begin{code}` and `\end{code}` are code in the language named after "Literate ", and whose prose counts as comment, or "notebook" for a Jupyter notebook, whose code cells are code in the kernel's language, whose Markdown and raw cells count as comment, and whose outputs aren't counted.
+// embedding: Regions written in other languages, counted by those languages' rules: "html" for `<script>` and `<style>` elements, "astro" for those plus a TypeScript frontmatter, "markdown" for fenced code blocks and YAML or TOML frontmatter, "asciidoc" for source blocks and fenced code blocks, "org" for source blocks, "restructuredtext" for code block directives, "php" for the HTML outside PHP tags, "literate" for a literate program, whose lines starting with `>` and lines between `\begin{code}` and `\end{code}` are code in the language named after "Literate ", and whose prose counts as comment, "notebook" for a Jupyter notebook, whose code cells are code in the kernel's language, whose Markdown and raw cells count as comment, and whose outputs aren't counted, or "cram" for a cram test, whose lines indented two spaces and starting `$ ` or `> ` are Bash commands, whose other indented lines are expected output, which counts as code, and whose unindented prose counts as comment.
 {
 	"1C Enterprise": {
 		file_patterns: ["*.bsl", "*.os"],
@@ -772,6 +772,12 @@
 		line_comments: ["--", "//"],
 		block_comments: [["/*", "*/"]],
 		strings: ["\""],
+	},
+	"Cram": {
+		file_patterns: ["*.t"],
+		// Commands, their continuations, and exit codes, as cram and dune write them, and Mercurial's test directory.
+		keywords: {words: ["  $ ", "  > ", "  [1]", "$TESTTMP"], required: "shared"},
+		embedding: "cram",
 	},
 	"Crystal": {
 		file_patterns: ["*.cr"],
@@ -2855,9 +2861,9 @@
 	"Perl": {
 		file_patterns: ["*.pl", "*.al", "*.perl", "*.plx", "*.pm", "rexfile", "cpanfile", "cpanfile.snapshot", "*.psgi", "*.t", "*.ph", "*.ack", "Rexfile", "latexmkrc", "*.plh"],
 		line_comments: ["#"],
-		line_block_comments: [["=pod", "=cut"], ["=head1", "=cut"], ["=head2", "=cut"], ["=head3", "=cut"], ["=head4", "=cut"], ["=begin", "=cut"], ["=over", "=cut"], ["=for", "=cut"], ["=encoding", "=cut"]],
+		line_block_comments: [["=pod", "=cut"], ["=head1", "=cut"], ["=head2", "=cut"], ["=head3", "=cut"], ["=head4", "=cut"], ["=head5", "=cut"], ["=head6", "=cut"], ["=begin", "=cut"], ["=end", "=cut"], ["=over", "=cut"], ["=item", "=cut"], ["=back", "=cut"], ["=for", "=cut"], ["=encoding", "=cut"]],
 		shebangs: ["#!/usr/bin/perl", "#!/usr/bin/env perl"],
-		keywords: ["use strict", "use warnings", "my", "sub", "Test::More", "done_testing"],
+		keywords: ["use strict", "use warnings", "my", "sub", "Test::More", "done_testing", "qw(", "->new", "@_", "=~", "__DATA__", "__END__"],
 		heredoc: "perl",
 	},
 	"Pest": {
@@ -3111,7 +3117,7 @@
 		strings: [{open: "```", multiline: true}, "\"", "'"],
 	},
 	"Python": {
-		file_patterns: ["*.py", "*.pyi", "*.pyw", "*.py2", "*.py3", "*.pyz", "*.pyzw", ".gclient", "SConscript", "SConstruct", "sconscript", "sconstruct", "requirements.txt", ".pythonrc", "*.gyp", "*.gypi", "*.wsgi", "*.tac", "*.pyde", "*.pyt", "*.pyp", "*.xpy", "*.lmi", "*.ipy", "*.jy", "*.vpy", "wscript", "DEPS", ".pythonstartup"],
+		file_patterns: ["*.py", "*.pyi", "*.pyw", "*.py2", "*.py3", "*.pyz", "*.pyzw", ".gclient", "SConscript", "SConstruct", "sconscript", "sconstruct", "requirements.txt", ".pythonrc", "*.gyp", "*.gypi", "*.wsgi", "*.tac", "*.pyde", "*.pyt", "*.pyp", "*.xpy", "*.lmi", "*.ipy", "*.jy", "*.vpy", "wscript", "DEPS", ".pythonstartup", "all.T"],
 		line_comments: ["#"],
 		shebangs: ["#!/usr/bin/python", "#!/usr/bin/env python", "#!/usr/bin/python3", "#!/usr/bin/env python3"],
 		strings: [{open: "\"\"\"", multiline: true, doc: true}, {open: "'''", multiline: true, doc: true}, "\"", "'"],
@@ -3183,10 +3189,13 @@
 		strings: [{open: "\"", multiline: true}],
 	},
 	"Raku": {
-		file_patterns: ["*.raku", "*.rakumod", "*.rakutest", "*.pm6", "*.pl6", "*.p6", "*.rakudoc", "*.6pl", "*.6pm", "*.p6l", "*.p6m"],
+		file_patterns: ["*.raku", "*.rakumod", "*.rakutest", "*.pm6", "*.pl6", "*.p6", "*.rakudoc", "*.6pl", "*.6pm", "*.p6l", "*.p6m", "*.t"],
 		line_comments: ["#", "#|"],
-		block_comments: [["#`(", ")"], ["=begin", "=end"], ["#`[", "]"], ["#`{", "}"], ["#`<", ">"]],
-		shebangs: ["#!/usr/bin/raku", "#!/usr/bin/perl6", "#!/usr/bin/env raku", "#!/usr/bin/env perl6"],
+		block_comments: [["#`((", "))"], ["#`(", ")"], ["#`[[", "]]"], ["#`[", "]"], ["#`{{", "}}"], ["#`{", "}"], ["#`<<", ">>"], ["#`<", ">"]],
+		line_block_comments: [["=begin", "=end"]],
+		// Raku's tests share `.t` with Perl's, and use its Test module's dashed names.
+		keywords: {words: ["my", "sub", "use v6", "use Test;", "done-testing", "is-deeply", "is-approx", "dies-ok", "lives-ok", "throws-like", "isa-ok", "cmp-ok", "is-run", "eval-dies-ok", "unit module", "unit class", "method", "my class", "??", "Nil", ".new", "use nqp", "use lib <"], required: "shared"},
+		shebangs: ["#!/usr/bin/raku", "#!/usr/bin/perl6", "#!/usr/bin/env raku", "#!/usr/bin/env perl6", "#!/usr/bin/env rakudo"],
 	},
 	"RAML": {
 		file_patterns: ["*.raml", "*.rml"],
@@ -3746,7 +3755,8 @@
 		file_patterns: ["*.t", "*.tl"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
-		keywords: ["modify", "replace", "DefineAction", "VerbRule", "Thing", "gameMain"],
+		// Perl's tests are far more common on `.t`.
+		keywords: {words: ["modify", "replace", "DefineAction", "VerbRule", "Thing", "gameMain"], required: "shared"},
 		strings: [{open: "\"", multiline: true}, {open: "'", multiline: true}],
 	},
 	"Talon": {
@@ -3762,7 +3772,7 @@
 	"Tcl": {
 		file_patterns: ["*.tcl", "*.tk", "*.itk", "*.tm", "*.adp", "*.sdc", "*.xdc", "*.tcl.in"],
 		line_comments: ["#"],
-		shebangs: ["#!/usr/bin/env tclsh", "#!/usr/bin/tclsh"],
+		shebangs: ["#!/usr/bin/env tclsh", "#!/usr/bin/tclsh", "#!/usr/bin/env wish", "#!/usr/bin/wish"],
 		strings: ["\""],
 	},
 	"Teal": {
@@ -3786,7 +3796,7 @@
 		file_patterns: ["*.t"],
 		line_comments: ["--"],
 		block_comments: [["--[[", "]]"]],
-		keywords: ["terra", "struct", "quote", "escape", "import"],
+		keywords: {words: ["terra", "struct", "quote", "escape", "import"], required: "shared"},
 		strings: ["\"", "'", {open: "[[", close: "]]", escape: null, multiline: true}, {open: "[=[", close: "]=]", escape: null, multiline: true}, {open: "[==[", close: "]==]", escape: null, multiline: true}],
 	},
 	"Terraform": {
@@ -3873,7 +3883,7 @@
 		file_patterns: ["*.t", "*.tu"],
 		line_comments: ["%"],
 		block_comments: [["/*", "*/"]],
-		keywords: ["var", "put", "get", "loop", "exit", "proc", "fcn", "module"],
+		keywords: {words: ["var", "put", "get", "loop", "exit", "proc", "fcn", "module"], required: "shared", case_sensitive: true},
 		strings: ["\"", {open: "'", char: true}],
 	},
 	"Turtle": {
