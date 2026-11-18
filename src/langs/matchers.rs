@@ -272,6 +272,8 @@ pub struct StringMatchers {
 	starts: Option<TokenStarts>,
 	kinds: Vec<Token>,
 	closes: Vec<Finder<'static>>,
+	/// For each string, the characters that make its closer an escape when they follow it (Nix's `''$`).
+	close_escapes: Vec<&'static [u8]>,
 	/// First bytes of string openers, for a fast check that a line can't contain a string.
 	open_bytes: ByteSet,
 	/// The characters that escape inside any of the language's strings (a backslash in a shell, a backtick in `PowerShell`), leaving out quotes that escape by doubling. Outside a string they keep a quote after them from opening one, as `\\'` writes an apostrophe in a shell.
@@ -362,8 +364,16 @@ impl StringMatchers {
 
 	fn find_close_start(&self, line: &[u8], from: usize, index: usize, escape: Option<u8>) -> Option<usize> {
 		let close = &self.closes[index];
+		let close_escapes = self.close_escapes[index];
 		let Some(escape) = escape else {
-			return close.find(&line[from..]).map(|pos| from + pos + close.needle().len());
+			let mut pos = from;
+			loop {
+				let end = pos + close.find(&line[pos..])? + close.needle().len();
+				match line.get(end) {
+					Some(next) if close_escapes.contains(next) => pos = end + 1,
+					_ => return Some(end),
+				}
+			}
 		};
 		let first = close.needle()[0];
 		let mut pos = from;
@@ -559,6 +569,7 @@ fn build_string_matchers(lang: &Language) -> StringMatchers {
 		.build(&patterns)
 		.expect("AhoCorasick should never fail to build with valid comment and string patterns");
 	let closes = lang.strings.iter().map(|delimiter| Finder::new(delimiter.close)).collect();
+	let close_escapes = lang.strings.iter().map(|delimiter| delimiter.close_escapes).collect();
 	let open_bytes = ByteSet::covering(
 		lang.strings
 			.iter()
@@ -588,7 +599,7 @@ fn build_string_matchers(lang: &Language) -> StringMatchers {
 			})
 		})
 		.collect();
-	StringMatchers { tokens, multiline_ending, quick, starts, kinds, closes, open_bytes, escapes }
+	StringMatchers { tokens, multiline_ending, quick, starts, kinds, closes, close_escapes, open_bytes, escapes }
 }
 
 #[cfg(test)]

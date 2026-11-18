@@ -173,6 +173,7 @@ impl StringSpec {
 				delimited: false,
 				attribute: false,
 				interpolation: None,
+				close_escapes: String::new(),
 			},
 			Self::Full(config) => config.clone(),
 		}
@@ -205,6 +206,9 @@ pub struct StringConfig {
 	/// What opens an interpolation hole in the string (`${`, `#{`, C#'s `{`, Swift's `\(`), which holds code up to the bracket that matches the opener's last one. A doubled one-character opener (`{{`) is a literal.
 	#[serde(default)]
 	pub interpolation: Option<String>,
+	/// Characters that, right after the closer, make it an escape instead of the string's end, as Nix's `''` strings write `'''`, `''$`, and `''\n`.
+	#[serde(default)]
+	pub close_escapes: String,
 }
 
 impl StringConfig {

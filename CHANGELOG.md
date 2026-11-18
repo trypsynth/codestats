@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fixed the escapes in Nix's `''` strings, `''$`, `'''`, and `''\n`, ending the string: nixpkgs counts 27,287 more lines of code, and its `perl-packages.nix` counts 213 lines of comment, not 23,551
+- GNU assembly's `#` and ARM's `@` open a comment in a line's first column, so `#----` banners and bare `#` lines aren't code. A directive like `#include` stays code, and `# error`, `# warning`, `# line`, `# elifdef`, and an `# else` with a comment after it count as directives. The Linux kernel's `.S` files count 3,965 more lines of comment
 - Fixed Free Pascal's `.pp` and `.inc` files being counted as Puppet, C++, or BitBake, or not at all, when they held declarations without `begin`: 1,848 more of FPC's files count as Pascal. Puppet's and BitBake's keywords match their case now, so `{$DEFINE}` and "Description:" aren't theirs
 - Added gforth's `.fs` to Forth, which was counted as F#, and a `\` that ends a line or comes before a tab opens a Forth comment too
 - Fixed Octave files being counted as MATLAB, with every `#` comment as code, once they used MATLAB's keywords: the Octave statistics package's 777 files are all Octave now. MATLAB files are no longer taken for Miranda, Limbo, or Mercury

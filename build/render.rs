@@ -49,6 +49,7 @@ const STRING_DELIMITER_FIELDS: &[(&str, &str)] = &[
 	("delimited", "bool"),
 	("attribute", "bool"),
 	("interpolation", "Option<&'static str>"),
+	("close_escapes", "&'static [u8]"),
 ];
 
 pub fn render_languages(languages: &[LanguageConfig]) -> String {
@@ -196,14 +197,15 @@ fn render_string_delimiter(spec: &StringSpec) -> String {
 	let interpolation =
 		config.interpolation.as_ref().map_or_else(|| "None".to_string(), |hole| format!("Some({hole:?})"));
 	format!(
-		"StringDelimiter {{ open: {:?}, close: {:?}, escape: {escape}, multiline: {}, char_literal: {}, doc: {}, delimited: {}, attribute: {}, interpolation: {interpolation} }}",
+		"StringDelimiter {{ open: {:?}, close: {:?}, escape: {escape}, multiline: {}, char_literal: {}, doc: {}, delimited: {}, attribute: {}, interpolation: {interpolation}, close_escapes: &{:?} }}",
 		config.open,
 		config.close(),
 		config.multiline,
 		config.char_literal,
 		config.doc,
 		config.delimited,
-		config.attribute
+		config.attribute,
+		config.close_escapes.as_bytes()
 	)
 }
 

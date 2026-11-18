@@ -250,8 +250,13 @@ fn is_preprocessor_directive(line: &str) -> bool {
 	let word_end = rest.find(|c: char| !c.is_ascii_alphanumeric() && c != '_').unwrap_or(rest.len());
 	let (word, after) = rest.split_at(word_end);
 	match word {
-		"define" | "undef" | "ifdef" | "ifndef" | "endif" | "include" | "pragma" => true,
-		"else" => after.trim().is_empty(),
+		"define" | "undef" | "ifdef" | "ifndef" | "endif" | "include" | "include_next" | "pragma" | "elifdef"
+		| "elifndef" | "error" | "warning" | "line" => true,
+		// `# else we fall back` is prose, but `# else /* !SYSV */` is a directive with a comment after it.
+		"else" => {
+			let after = after.trim();
+			after.is_empty() || after.starts_with("/*") || after.starts_with("//")
+		}
 		"if" | "elif" => {
 			let condition = after.trim_start();
 			condition.starts_with("defined")
@@ -342,12 +347,13 @@ pub fn classify_line(line: &str, lang: &Language, comment_state: &mut CommentSta
 	if is_first_line && is_shebang_for(trimmed, lang) {
 		return LineType::Shebang;
 	}
+	// A directive is code, even where its `#` in the first column would otherwise start a comment, as in GNU assembly.
+	if lang.c_preprocessor && clear && is_preprocessor_directive(trimmed) {
+		return LineType::Code;
+	}
 	// Markers like fixed-form Fortran's `C` only count in the first column, so check the untrimmed line.
 	if clear && lang.column_one_comments.iter().any(|marker| line.starts_with(marker)) {
 		return LineType::Comment;
-	}
-	if lang.c_preprocessor && clear && is_preprocessor_directive(trimmed) {
-		return LineType::Code;
 	}
 	let matchers = language_matchers(lang);
 	// Outside a comment or string, a line with no byte that could start one is code: every search below would come up empty.
@@ -736,6 +742,8 @@ mod tests {
 	#[case::vhdl_attribute_is_not_a_char("VHDL", &["for i in a'range loop -- c", "s <= \"/*\";", "x <= '1';"], &[LineType::Code, LineType::Code, LineType::Code])]
 	#[case::lisp_quote_character("Common Lisp", &["(char= c #\\\")", "; c", "(f \"#|\")", "(g)"], &[LineType::Code, LineType::Comment, LineType::Code, LineType::Code])]
 	#[case::smalltalk_quote_in_string("Smalltalk", &["s := 'say \"hi'.", "x := 1.", "\"c\""], &[LineType::Code, LineType::Code, LineType::Comment])]
+	#[case::nix_indented_string_escapes("Nix", &["a = ''", "  echo ''${x} '''", "  # still string", "''; # c", "# c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
+	#[case::assembly_column_one("Assembly", &["#", "#-----", "#include \"t.h\"", "# else /* x */", "# if you want", "@ arm comment", "\tmov r0, #1", "\t.type f, @function"], &[LineType::Comment, LineType::Comment, LineType::Code, LineType::Code, LineType::Comment, LineType::Comment, LineType::Code, LineType::Code])]
 	#[case::coffeescript_heading_is_no_block("CoffeeScript", &["#### Base", "class Base", "###", "block", "###", "y = 2"], &[LineType::Comment, LineType::Code, LineType::Comment, LineType::Comment, LineType::Comment, LineType::Code])]
 	#[case::idris_doc_comment("Idris", &["||| Adds one.", "addOne : Nat -> Nat"], &[LineType::Comment, LineType::Code])]
 	#[case::nim_doc_block("Nim", &["##[ Doc block", "still doc", "]##", "let a = 1"], &[LineType::Comment, LineType::Comment, LineType::Comment, LineType::Code])]
