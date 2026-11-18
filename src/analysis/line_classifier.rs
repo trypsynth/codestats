@@ -211,6 +211,12 @@ fn handle_block_comments<'a>(
 					line_remainder = &line_remainder[pos + len..];
 					continue;
 				}
+				// A character literal like Smalltalk's `$"` holds the opener's first byte.
+				if pos > 0 && lang.char_prefix == Some(line_remainder.as_bytes()[pos - 1]) {
+					has_code = true;
+					line_remainder = &line_remainder[pos + 1..];
+					continue;
+				}
 				if pos > 0 && contains_non_whitespace(&line_remainder[..pos]) {
 					has_code = true;
 				}
@@ -495,6 +501,10 @@ fn is_valid_line_comment_match(line: &str, start: usize, end: usize, token: &str
 	if is_word_char(first) && bytes.get(end).is_some_and(|&b| is_word_char(b)) {
 		return false;
 	}
+	// A character literal like Erlang's `$%` holds the marker.
+	if start > 0 && lang.char_prefix == Some(bytes[start - 1]) {
+		return false;
+	}
 	if lang.word_comments
 		&& start > 0
 		&& !matches!(bytes[start - 1], b' ' | b'\t' | b';' | b'&' | b'|' | b'(' | b')' | b'`')
@@ -742,6 +752,9 @@ mod tests {
 	#[case::vhdl_attribute_is_not_a_char("VHDL", &["for i in a'range loop -- c", "s <= \"/*\";", "x <= '1';"], &[LineType::Code, LineType::Code, LineType::Code])]
 	#[case::lisp_quote_character("Common Lisp", &["(char= c #\\\")", "; c", "(f \"#|\")", "(g)"], &[LineType::Code, LineType::Comment, LineType::Code, LineType::Code])]
 	#[case::smalltalk_quote_in_string("Smalltalk", &["s := 'say \"hi'.", "x := 1.", "\"c\""], &[LineType::Code, LineType::Code, LineType::Comment])]
+	#[case::smalltalk_quote_character("Smalltalk", &["\t^ self = $\"", "foo", "\"c\""], &[LineType::Code, LineType::Code, LineType::Comment])]
+	#[case::erlang_characters_and_doc_strings("Erlang", &["-doc \"\"\"", "% in a string", "\"\"\".", "g($%) -> p.", "% c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
+	#[case::elixir_quote_character("Elixir", &["x = ?\"", "# c"], &[LineType::Code, LineType::Comment])]
 	#[case::nix_indented_string_escapes("Nix", &["a = ''", "  echo ''${x} '''", "  # still string", "''; # c", "# c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
 	#[case::assembly_column_one("Assembly", &["#", "#-----", "#include \"t.h\"", "# else /* x */", "# if you want", "@ arm comment", "\tmov r0, #1", "\t.type f, @function"], &[LineType::Comment, LineType::Comment, LineType::Code, LineType::Code, LineType::Comment, LineType::Comment, LineType::Code, LineType::Code])]
 	#[case::coffeescript_heading_is_no_block("CoffeeScript", &["#### Base", "class Base", "###", "block", "###", "y = 2"], &[LineType::Comment, LineType::Code, LineType::Comment, LineType::Comment, LineType::Comment, LineType::Code])]

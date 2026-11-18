@@ -582,6 +582,7 @@ fn build_string_matchers(lang: &Language) -> StringMatchers {
 		.iter()
 		.filter_map(|delimiter| delimiter.escape)
 		.filter(|escape| !lang.strings.iter().any(|delimiter| delimiter.open.as_bytes().contains(escape)))
+		.chain(lang.char_prefix)
 		.collect();
 	escapes.sort_unstable();
 	escapes.dedup();

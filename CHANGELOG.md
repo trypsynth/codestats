@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added strings to Erlang: OTP 27's triple-quoted strings, strings that span lines, and quoted atoms, so a `%` line in a `-doc """` example isn't a comment. OTP counts 601 more lines of code
+- Fixed character literals holding a quote or a comment marker, like Smalltalk's and Erlang's `$"`, Erlang's `$%`, and Elixir's `?"`, opening a comment or a string that ran on
+- Pharo's Tonel files count as Smalltalk without a `.gitattributes` to say so: 2,513 more of Pharo's files count
 - Added strings to Starlark and Bazel, with docstrings that count as comment as Python's do, and to Meson, Gleam, CUE, KCL, Crystal, and Typst's raw text, so a comment marker inside one doesn't start a comment. bazel-skylib counts 1,359 more lines of comment, from its docstrings
 - Fixed PHP 8 attributes such as `#[Route('/x')]` being counted as comments: Laravel counts 2,134 more lines of code
 - KCL files without a `schema` are KCL, not K, and `kcl.mod` files are TOML

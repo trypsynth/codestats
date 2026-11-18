@@ -36,6 +36,9 @@ pub struct LanguageConfig {
 	pub line_splices: bool,
 	#[serde(default)]
 	pub word_comments: bool,
+	/// A character that makes the one after it a literal, so a quote or comment marker there opens nothing.
+	#[serde(default)]
+	pub char_prefix: String,
 	#[serde(default)]
 	pub operator_symbols: String,
 	#[serde(default)]

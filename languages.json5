@@ -15,6 +15,7 @@
 // line_block_comments: Block comments whose markers only count at the start of a line, with no indentation before them.
 // line_blocks_alone: The line block comments' markers also have to be alone on their line, spaces aside.
 // line_splices: A backslash ending a line joins it to the next, so a line comment ending in one carries on onto the next line.
+// char_prefix: A character that makes the one after it a literal character, so a quote or comment marker right after it opens nothing, as in Smalltalk's and Erlang's `$"` and Elixir's `?"`.
 // word_comments: Line comment markers only start a comment at the start of a word, as `#` does in shells, so `${#files}` and `a#b` are code.
 // operator_symbols: Symbols that make a line comment marker part of an operator when they follow it and any more of its last character, as `-->` is an operator in Haskell.
 // operators: Operators that start with a block comment's opener, which are code, as `(*)` is F#'s multiplication.
@@ -1066,6 +1067,8 @@
 		line_comments: ["#"],
 		shebangs: ["#!/usr/bin/env elixir"],
 		keywords: ["defmodule", "def", "defp", "do", "end", "|>"],
+		// `?"` and `?#` are characters.
+		char_prefix: "?",
 		strings: [{open: "\"", multiline: true}, {open: "\"\"\"", multiline: true}, {open: "'''", multiline: true}, {open: "'", multiline: true}],
 	},
 	"Elm": {
@@ -1109,6 +1112,9 @@
 		file_patterns: ["*.erl", "*.hrl", "*.app.src", "*.yrl", "*.xrl", "rebar.config", "Emakefile", "*.escript", "*.app", "rebar.lock"],
 		line_comments: ["%"],
 		shebangs: ["#!/usr/bin/env escript"],
+		// OTP 27's triple-quoted strings, strings that span lines, and quoted atoms. `$"` and `$%` are characters.
+		strings: [{open: "\"\"\"", escape: null, multiline: true}, {open: "\"", multiline: true}, "'"],
+		char_prefix: "$",
 	},
 	"Euphoria": {
 		file_patterns: ["*.e", "*.ex", "*.exw", "*.ew", "*.eu"],
@@ -3553,8 +3559,10 @@
 	"Smalltalk": {
 		file_patterns: ["*.st"],
 		block_comments: [["\"", "\""]],
-		keywords: ["Object subclass:", "instanceVariableNames:", "classVariableNames:", "poolDictionaries:", "self", "super", "nil"],
+		// The rest are what Pharo's Tonel files declare a class or package with.
+		keywords: ["Object subclass:", "instanceVariableNames:", "classVariableNames:", "poolDictionaries:", "self", "super", "nil", "#name :", "#superclass :", "#category :", "#instVars :", "Class {", "Extension {", "Package {", "Trait {"],
 		strings: [{open: "'", escape: "'", multiline: true}],
+		char_prefix: "$",
 	},
 	"Smarty": {
 		file_patterns: ["*.tpl", "*.smarty"],
