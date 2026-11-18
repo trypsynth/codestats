@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Added strings to Starlark and Bazel, with docstrings that count as comment as Python's do, and to Meson, Gleam, CUE, KCL, Crystal, and Typst's raw text, so a comment marker inside one doesn't start a comment. bazel-skylib counts 1,359 more lines of comment, from its docstrings
+- Fixed PHP 8 attributes such as `#[Route('/x')]` being counted as comments: Laravel counts 2,134 more lines of code
+- KCL files without a `schema` are KCL, not K, and `kcl.mod` files are TOML
+- Fixed strings that span lines in V, Tcl, Lean, and Elixir's `'''` heredocs, and V's raw strings, ending with their first line: V's standard library counts 6,977 more lines of code. A Tcl comment ending in `\` goes on to the next line, as `exec tclsh "$0"` restarts rely on
+- Koka's, WGSL's, WESL's, and Typst's block comments nest
 - Fixed the escapes in Nix's `''` strings, `''$`, `'''`, and `''\n`, ending the string: nixpkgs counts 27,287 more lines of code, and its `perl-packages.nix` counts 213 lines of comment, not 23,551
 - GNU assembly's `#` and ARM's `@` open a comment in a line's first column, so `#----` banners and bare `#` lines aren't code. A directive like `#include` stays code, and `# error`, `# warning`, `# line`, `# elifdef`, and an `# else` with a comment after it count as directives. The Linux kernel's `.S` files count 3,965 more lines of comment
 - Fixed Free Pascal's `.pp` and `.inc` files being counted as Puppet, C++, or BitBake, or not at all, when they held declarations without `begin`: 1,848 more of FPC's files count as Pascal. Puppet's and BitBake's keywords match their case now, so `{$DEFINE}` and "Description:" aren't theirs

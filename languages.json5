@@ -338,6 +338,7 @@
 	"Bazel": {
 		file_patterns: ["*.bzl", "*.bazel", "BUILD", "BUILD.bazel", "WORKSPACE", "WORKSPACE.bazel", "MODULE.bazel"],
 		line_comments: ["#"],
+		strings: [{open: "\"\"\"", multiline: true, doc: true}, {open: "'''", multiline: true, doc: true}, "\"", "'"],
 	},
 	"BBCode": {
 		file_patterns: ["*.bbcode"],
@@ -786,6 +787,7 @@
 		file_patterns: ["*.cr"],
 		line_comments: ["#"],
 		shebangs: ["#!/usr/bin/crystal"],
+		strings: [{open: "\"", multiline: true, interpolation: "#{"}, {open: "'", char: true}],
 		heredoc: "ruby",
 	},
 	"CSON": {
@@ -827,6 +829,7 @@
 	"CUE": {
 		file_patterns: ["*.cue"],
 		line_comments: ["//"],
+		strings: [{open: "#\"\"\"", close: "\"\"\"#", escape: null, multiline: true}, {open: "#\"", close: "\"#", escape: null}, {open: "\"\"\"", multiline: true, interpolation: "\\("}, {open: "'''", multiline: true}, {open: "\"", interpolation: "\\("}, "'"],
 	},
 	"Curl": {
 		file_patterns: ["*.curl"],
@@ -1063,7 +1066,7 @@
 		line_comments: ["#"],
 		shebangs: ["#!/usr/bin/env elixir"],
 		keywords: ["defmodule", "def", "defp", "do", "end", "|>"],
-		strings: [{open: "\"", multiline: true}, {open: "\"\"\"", multiline: true}],
+		strings: [{open: "\"", multiline: true}, {open: "\"\"\"", multiline: true}, {open: "'''", multiline: true}, {open: "'", multiline: true}],
 	},
 	"Elm": {
 		file_patterns: ["*.elm"],
@@ -1344,6 +1347,7 @@
 	"Gleam": {
 		file_patterns: ["*.gleam"],
 		line_comments: ["//", "///", "////"],
+		strings: [{open: "\"", multiline: true}],
 	},
 	"GLSL": {
 		file_patterns: ["*.glsl", "*.vert", "*.frag", "*.geom", "*.tesc", "*.tese", "*.comp", "*.rcall", "*.rmiss", "*.rchit", "*.fsh", "*.vsh", "*.fshader", "*.vshader", "*.gshader", "*.glslv", "*.frg", "*.rgen", "*.rint", "*.rahit", "*.vrx", "*.glslf", "*.geo", "*.fp", "*.vs", "*.fs"],
@@ -1885,8 +1889,10 @@
 	},
 	"KCL": {
 		file_patterns: ["*.kcl", "*.k"],
-		keywords: {words: ["schema", "mixin"], required: "shared"},
+		// KCL's main.k files may hold no schema, and K's are rare.
+		keywords: {words: ["schema", "mixin", "import", "lambda", "rule", "check:", "protocol", "Undefined"], required: "shared"},
 		line_comments: ["#"],
+		strings: [{open: "\"\"\"", multiline: true, doc: true}, {open: "'''", multiline: true, doc: true}, "\"", "'"],
 	},
 	"Kconfig": {
 		file_patterns: ["Kconfig", "Kconfig.*", "*.kconfig"],
@@ -1919,7 +1925,8 @@
 		file_patterns: ["*.kk", "*.kki"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
-		strings: ["\"", {open: "'", char: true}, {open: "r\"", close: "\"", escape: null}],
+		nested_blocks: true,
+		strings: ["\"", {open: "'", char: true}, {open: "r\"", close: "\"", escape: null, multiline: true}, {open: "r#\"", close: "\"#", escape: null, multiline: true}, {open: "r##\"", close: "\"##", escape: null, multiline: true}],
 	},
 	"Korn Shell": {
 		file_patterns: ["*.ksh"],
@@ -1998,7 +2005,7 @@
 		line_comments: ["--"],
 		block_comments: [["/-", "-/"]],
 		nested_blocks: true,
-		strings: ["\"", {open: "'", char: true}],
+		strings: [{open: "\"", multiline: true}, {open: "'", char: true}],
 	},
 	"Leo": {
 		file_patterns: ["*.leo"],
@@ -2296,6 +2303,7 @@
 	"Meson": {
 		file_patterns: ["meson.build", "meson_options.txt", "meson.options"],
 		line_comments: ["#"],
+		strings: [{open: "'''", escape: null, multiline: true}, "'"],
 	},
 	"METAFONT": {
 		file_patterns: ["*.mf"],
@@ -2885,6 +2893,8 @@
 	"PHP": {
 		file_patterns: ["*.php", "*.php3", "*.php4", "*.php5", "*.phps", "*.phpt", "*.phtml", "*.inc", "*.ctp", ".php_cs", ".php_cs.dist", "*.aw"],
 		line_comments: ["//", "#"],
+		// `#[` opens a PHP 8 attribute, not a comment.
+		operator_symbols: "[",
 		block_comments: [["/*", "*/"]],
 		shebangs: ["#!/usr/bin/php", "#!/usr/bin/env php"],
 		keywords: {words: ["<?php", "$this->", "?>", "array(", "public function", "private function"], required: "shared"},
@@ -3663,6 +3673,8 @@
 	"Starlark": {
 		file_patterns: ["*.star", "Tiltfile", "*.bxl", "WORKSPACE.bzlmod"],
 		line_comments: ["#"],
+		// Python's, docstrings and all, which Stardoc reads as Python does.
+		strings: [{open: "\"\"\"", multiline: true, doc: true}, {open: "'''", multiline: true, doc: true}, "\"", "'"],
 	},
 	"Stata": {
 		file_patterns: ["*.do", "*.ado", "*.mata", "*.matah", "*.doh", "*.ihlp", "*.sthlp"],
@@ -3786,7 +3798,9 @@
 		file_patterns: ["*.tcl", "*.tk", "*.itk", "*.tm", "*.adp", "*.sdc", "*.xdc", "*.tcl.in"],
 		line_comments: ["#"],
 		shebangs: ["#!/usr/bin/env tclsh", "#!/usr/bin/tclsh", "#!/usr/bin/env wish", "#!/usr/bin/wish"],
-		strings: ["\""],
+		// A comment ending in `\` goes on, which `# restart with tclsh \` above `exec tclsh "$0"` relies on.
+		line_splices: true,
+		strings: [{open: "\"", multiline: true}],
 	},
 	"Teal": {
 		file_patterns: ["*.tl"],
@@ -3873,7 +3887,7 @@
 		strings: ["\""],
 	},
 	"TOML": {
-		file_patterns: ["*.toml", "Cargo.lock", "poetry.lock", "uv.lock", "Pipfile", "Cargo.toml.orig", "*.toml.example"],
+		file_patterns: ["*.toml", "Cargo.lock", "poetry.lock", "uv.lock", "Pipfile", "Cargo.toml.orig", "*.toml.example", "kcl.mod", "kcl.mod.lock"],
 		line_comments: ["#"],
 		strings: [{open: "\"\"\"", multiline: true}, {open: "'''", escape: null, multiline: true}, "\"", {open: "'", escape: null}],
 	},
@@ -3939,6 +3953,9 @@
 		file_patterns: ["*.typ", "*.typst"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		nested_blocks: true,
+		// Raw text. A `"` in markup is a typographic quote, so it opens no string.
+		strings: [{open: "```", escape: null, multiline: true}, {open: "`", escape: null}],
 	},
 	"Uiua": {
 		file_patterns: ["*.uiua", "*.ua"],
@@ -4008,7 +4025,7 @@
 		block_comments: [["/*", "*/"]],
 		keywords: ["fn", "struct", "enum", "pub", "mut", "module", "match"],
 		nested_blocks: true,
-		strings: [{open: "\"", interpolation: "${"}, {open: "'", interpolation: "${"}],
+		strings: [{open: "r\"", close: "\"", escape: null, multiline: true}, {open: "r'", close: "'", escape: null, multiline: true}, {open: "\"", multiline: true, interpolation: "${"}, {open: "'", multiline: true, interpolation: "${"}, {open: "`", char: true}],
 	},
 	"Vala": {
 		file_patterns: ["*.vala", "*.vapi"],
@@ -4140,6 +4157,7 @@
 		file_patterns: ["*.wgsl"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		nested_blocks: true,
 	},
 	"WebIDL": {
 		file_patterns: ["*.webidl"],
@@ -4155,6 +4173,7 @@
 		file_patterns: ["*.wesl"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		nested_blocks: true,
 		strings: ["\""],
 	},
 	"Whiley": {
