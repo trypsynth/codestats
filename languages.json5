@@ -769,7 +769,7 @@
 		file_patterns: ["*.coq", "*.v"],
 		block_comments: [["(*", "*)"]],
 		nested_blocks: true,
-		keywords: ["Theorem", "Lemma", "Proof", "Qed", "Inductive", "Definition", "Require"],
+		keywords: {words: ["Theorem", "Lemma", "Proof", "Qed", "Inductive", "Definition", "Require", "Module", "End", "Notation", "Fixpoint", "Variant", "Section", "From", "Import", "Export", "Check", "Ltac", "Hint", "Record"], case_sensitive: true},
 		strings: [{open: "\"", escape: "\"", multiline: true}],
 	},
 	"CQL": {
@@ -2234,7 +2234,8 @@
 		file_patterns: ["*.mpl", "*.mm"],
 		line_comments: ["#"],
 		block_comments: [["(*", "*)"]],
-		keywords: ["proc", "end proc", "module", "end module", "local", "global"],
+		// Objective-C++ is far more common on `.mm`.
+		keywords: {words: ["proc", "end proc", "module", "end module", "local", "global"], required: "shared"},
 		strings: ["\"", {open: "`", escape: null}],
 	},
 	"Markdown": {
@@ -2318,7 +2319,7 @@
 		strings: ["\""],
 	},
 	"Metal Shading Language": {
-		file_patterns: ["*.metal"],
+		file_patterns: ["*.metal", "*.msl"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		strings: ["\"", {open: "'", char: true}],
@@ -2397,6 +2398,7 @@
 	"Module Definition": {
 		file_patterns: ["*.def"],
 		line_comments: [";"],
+		keywords: {words: ["EXPORTS", "LIBRARY", "DESCRIPTION", "HEAPSIZE", "STACKSIZE", "SECTIONS", "IMPORTS", "VERSION"], case_sensitive: true},
 	},
 	"Mojo": {
 		file_patterns: ["*.mojo", "*.🔥"],
@@ -2678,7 +2680,7 @@
 		file_patterns: ["*.mm"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
-		keywords: {words: ["@interface", "@implementation", "@protocol", "@property", "@synthesize", "@end", "#import", "NSString", "class", "template"], case_sensitive: true},
+		keywords: {words: ["@interface", "@implementation", "@protocol", "@property", "@synthesize", "@end", "#import", "NSString", "class", "template", "#include", "#ifndef", "#define", "std::", "namespace"], case_sensitive: true},
 		strings: ["\"", {open: "'", char: true}, {open: "R\"", close: "\"", escape: null, multiline: true, delimited: true}],
 		line_splices: true,
 	},
@@ -3021,8 +3023,10 @@
 		strings: ["\"", "'"],
 	},
 	"PostScript": {
-		file_patterns: ["*.ps", "*.eps"],
+		file_patterns: ["*.ps", "*.eps", "*.pro"],
 		line_comments: ["%"],
+		// dvips's `.pro` prologues share their extension with QMake, IDL, and Prolog.
+		keywords: {words: ["%!PS", "dict begin", "bind def", "exch", "setlinewidth", "moveto", "lineto", "showpage", "currentpoint", "gsave", "grestore"], required: "shared"},
 	},
 	"POV-Ray SDL": {
 		file_patterns: ["*.pov"],
@@ -3172,7 +3176,7 @@
 	"QMake": {
 		file_patterns: ["*.pro", "*.pri"],
 		line_comments: ["#"],
-		keywords: ["TEMPLATE", "CONFIG", "QT", "TARGET", "SOURCES", "HEADERS", "INCLUDEPATH"],
+		keywords: {words: ["TEMPLATE", "CONFIG", "QT", "TARGET", "SOURCES", "HEADERS", "INCLUDEPATH"], case_sensitive: true},
 	},
 	"QML": {
 		file_patterns: ["*.qml", "*.qbs"],
@@ -3843,8 +3847,10 @@
 		heredoc: "ruby",
 	},
 	"TeX/LaTeX": {
-		file_patterns: ["*.tex", "*.sty", "*.bbx", "*.cbx", "*.lbx", ".latexmkrc", "*.dtx", "*.ltx", "*.mkii", "*.mkiv", "*.mkvi", "*.ins"],
+		file_patterns: ["*.tex", "*.sty", "*.bbx", "*.cbx", "*.lbx", ".latexmkrc", "*.dtx", "*.ltx", "*.mkii", "*.mkiv", "*.mkvi", "*.ins", "*.cls", "*.def", "*.fd", "*.fdd", "*.lvt", "*.pvt"],
 		line_comments: ["%"],
+		// Classes, definition files, and configuration files share their extensions with other languages.
+		keywords: {words: ["\\ProvidesClass", "\\ProvidesFile", "\\ProvidesPackage", "\\ProvidesExplFile", "\\NeedsTeXFormat", "\\LoadClass", "\\RequirePackage", "\\documentclass", "\\usepackage", "\\newcommand", "\\renewcommand", "\\def\\", "\\makeatletter", "\\ExplSyntaxOn", "\\begin{", "\\input"], required: "shared"},
 	},
 	"Texinfo": {
 		file_patterns: ["*.texi", "*.texinfo", "*.txi"],
@@ -4031,7 +4037,7 @@
 		file_patterns: ["*.v"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
-		keywords: ["fn", "struct", "enum", "pub", "mut", "module", "match"],
+		keywords: {words: ["fn", "struct", "enum", "pub", "mut", "module", "match"], case_sensitive: true},
 		nested_blocks: true,
 		strings: [{open: "r\"", close: "\"", escape: null, multiline: true}, {open: "r'", close: "'", escape: null, multiline: true}, {open: "\"", multiline: true, interpolation: "${"}, {open: "'", multiline: true, interpolation: "${"}, {open: "`", char: true}],
 	},
@@ -4066,7 +4072,7 @@
 		file_patterns: ["*.v", "*.vh", "*.vg", "*.veo"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
-		keywords: ["module", "endmodule", "always", "assign", "posedge", "negedge", "wire", "reg"],
+		keywords: {words: ["module", "endmodule", "always", "assign", "posedge", "negedge", "wire", "reg"], case_sensitive: true},
 		strings: ["\""],
 	},
 	"Verilog-A": {
@@ -4112,7 +4118,8 @@
 	"Visual Basic/Visual Basic .NET": {
 		file_patterns: ["*.vb", "*.cls", "*.frm", "*.vba", "*.vbhtml", "*.vbs", "*.ctl", "*.dsr"],
 		line_comments: ["'", "REM", "Rem", "rem"],
-		keywords: ["Dim", "Sub", "Function", "End Sub", "End Function", "Private", "Public", "As", "For Each"],
+		// Editors write keywords capitalized, and matching their case keeps a LaTeX class's prose ("as", "public") from being Visual Basic.
+		keywords: {words: ["Dim", "Sub", "Function", "End Sub", "End Function", "Private", "Public", "As", "For Each"], case_sensitive: true},
 		strings: [{open: "\"", escape: null}],
 	},
 	"Visual FoxPro": {

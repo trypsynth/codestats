@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- TeX/LaTeX claims LaTeX classes (`.cls`), definition files (`.def`), font definitions (`.fd`, `.fdd`), and l3build tests (`.lvt`, `.pvt`) that use its commands. They were counted as Visual Basic, Module Definition, or not at all: LaTeX's own source counts 1,771 more TeX files. PostScript claims dvips's `.pro` prologues, which were QMake
+- Fixed Objective-C++ files without Objective-C in them being counted as Maple, Coq files being counted as V, and Metal shaders named `.msl` not being counted. Visual Basic's, QMake's, V's, Verilog's, and Coq's keywords match their case, so English prose doesn't match them
 - Added strings to Erlang: OTP 27's triple-quoted strings, strings that span lines, and quoted atoms, so a `%` line in a `-doc """` example isn't a comment. OTP counts 601 more lines of code
 - Fixed character literals holding a quote or a comment marker, like Smalltalk's and Erlang's `$"`, Erlang's `$%`, and Elixir's `?"`, opening a comment or a string that ran on
 - Pharo's Tonel files count as Smalltalk without a `.gitattributes` to say so: 2,513 more of Pharo's files count
