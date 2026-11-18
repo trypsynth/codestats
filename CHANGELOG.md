@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Fixed Free Pascal's `.pp` and `.inc` files being counted as Puppet, C++, or BitBake, or not at all, when they held declarations without `begin`: 1,848 more of FPC's files count as Pascal. Puppet's and BitBake's keywords match their case now, so `{$DEFINE}` and "Description:" aren't theirs
+- Added gforth's `.fs` to Forth, which was counted as F#, and a `\` that ends a line or comes before a tab opens a Forth comment too
+- Fixed Octave files being counted as MATLAB, with every `#` comment as code, once they used MATLAB's keywords: the Octave statistics package's 777 files are all Octave now. MATLAB files are no longer taken for Miranda, Limbo, or Mercury
+- In detection, each language looks for its keywords outside its own comments, so a C file's `// the interface` isn't Pascal's `interface`
 - Fixed Idris's `|||` documentation comments being counted as code: Idris 2 counts 9,172 more lines of comment
 - Julia's docstrings count as comment, as Python's do: Julia's own source counts 46,348 more lines of comment
 - Fixed Nim's `##[ ]##` documentation blocks ending after their first line, and CoffeeScript's `####` headings opening a block comment, which made everything up to the next heading comment: CoffeeScript's compiler counts 1,584 more lines of code

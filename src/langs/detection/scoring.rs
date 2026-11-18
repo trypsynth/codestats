@@ -72,7 +72,11 @@ fn score_language(
 	let limit = if matchers.symbol_only { usize::MAX } else { MAX_KEYWORD_OCCURRENCES };
 	let mut matched_chars: usize = 0;
 	for substring in &matchers.substrings {
-		let occurrences = seen.count(substring, code.as_bytes(), limit);
+		let occurrences = if substring.in_comments {
+			substring.count(content.as_bytes(), limit)
+		} else {
+			seen.count(substring, code.as_bytes(), limit)
+		};
 		matched_chars = matched_chars.saturating_add(occurrences.saturating_mul(substring.finder.needle().len()));
 		counts[substring.index] = occurrences;
 	}
@@ -144,6 +148,8 @@ struct SubstringKeyword {
 	index: usize,
 	/// A keyword ending in an identifier character must not be followed by one, so `@end` doesn't match inside Doxygen's `@endcode`.
 	ends_in_word: bool,
+	/// A keyword that opens with one of the language's comment markers, like Pascal's `{$` directives, is looked for in comments too, which stripping them would hide.
+	in_comments: bool,
 }
 
 impl SubstringKeyword {
@@ -218,7 +224,12 @@ fn build_scoring_matchers(lang: &Language) -> ScoringMatchers {
 			words.push((bytes, index));
 		} else {
 			let ends_in_word = bytes.last().is_some_and(|&b| is_word_byte(b));
-			substrings.push(SubstringKeyword { finder: Finder::new(keyword), index, ends_in_word });
+			let in_comments = lang
+				.line_comments
+				.iter()
+				.chain(lang.block_comments.iter().map(|(start, ..)| start))
+				.any(|marker| keyword.starts_with(marker));
+			substrings.push(SubstringKeyword { finder: Finder::new(keyword), index, ends_in_word, in_comments });
 		}
 	}
 	let block_comments = lang
@@ -359,18 +370,26 @@ pub(super) fn disambiguate<'a>(candidates: &[&'a Language], content: &str) -> (O
 		}
 		max_len = max_len.max(matchers.max_word_len);
 	}
-	// When every candidate writes comments the same way (C, C++ and Objective-C for a `.h`), what's in them is prose for all of them, so keywords are only looked for outside them. Otherwise one candidate's comment is another's code, so the whole sample counts.
-	let code = match candidates {
-		[first, rest @ ..] if rest.iter().all(|other| same_comments(first, other)) => strip_comments(content, first),
-		_ => Cow::Borrowed(content),
+	// When every candidate writes comments the same way (C, C++ and Objective-C for a `.h`), what's in them is prose for all of them, so keywords are only looked for outside them, once. Otherwise each candidate looks outside its own comments, since one's comment is another's code: a Pascal unit's `{ #define X }` isn't C++, and a C file's `// the interface` isn't Pascal.
+	let shared_code = match candidates {
+		[first, rest @ ..] if rest.iter().all(|other| same_comments(first, other)) => {
+			Some(strip_comments(content, first))
+		}
+		_ => None,
 	};
-	let tokens = tokenize(&code, &starts, max_len);
+	let shared = shared_code.as_deref().map(|code| (code, tokenize(code, &starts, max_len)));
 	let mut seen = Seen::default();
 	let mut runner_up = 0;
 	// On ties, prefer a candidate that doesn't need keyword evidence (C over C++ for a `.h`), then the one with fewer keywords, then the earliest. A language that extends another (e.g. Bison over Yacc) lists the base language's keywords plus its own, so without extension-specific keywords the base language is the better guess.
 	let mut best: Option<(&'a Language, i32)> = None;
 	for lang in candidates {
-		let score = score_language(lang, candidates, content, &code, &tokens, &mut seen);
+		let score = if let Some((code, tokens)) = &shared {
+			score_language(lang, candidates, content, code, tokens, &mut seen)
+		} else {
+			let code = strip_comments(content, lang);
+			let tokens = tokenize(&code, &starts, max_len);
+			score_language(lang, candidates, content, &code, &tokens, &mut Seen::default())
+		};
 		let beats_best = best.is_none_or(|(best_lang, best_score)| {
 			score > best_score || (score == best_score && tie_rank(lang) < tie_rank(best_lang))
 		});
@@ -631,7 +650,7 @@ mod tests {
 	#[case::symbol_keyword("a -> b -> c", "->", 2)]
 	fn test_count_substring_keyword(#[case] content: &str, #[case] keyword: &'static str, #[case] expected: usize) {
 		let ends_in_word = keyword.bytes().last().is_some_and(is_word_byte);
-		let substring = SubstringKeyword { finder: Finder::new(keyword), index: 0, ends_in_word };
+		let substring = SubstringKeyword { finder: Finder::new(keyword), index: 0, ends_in_word, in_comments: false };
 		assert_eq!(substring.count(content.as_bytes(), usize::MAX), expected);
 	}
 
