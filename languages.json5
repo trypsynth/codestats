@@ -19,7 +19,7 @@
 // operator_symbols: Symbols that make a line comment marker part of an operator when they follow it and any more of its last character, as `-->` is an operator in Haskell.
 // operators: Operators that start with a block comment's opener, which are code, as `(*)` is F#'s multiplication.
 // heredoc: The language's heredocs, whose body runs from the next line to the line holding just the terminator named after the opener: "shell", "perl", "ruby", or "php".
-// embedding: Regions written in other languages, counted by those languages' rules: "html" for `<script>` and `<style>` elements, "astro" for those plus a TypeScript frontmatter, "markdown" for fenced code blocks and YAML or TOML frontmatter, "asciidoc" for source blocks and fenced code blocks, "org" for source blocks, "restructuredtext" for code block directives, or "php" for the HTML outside PHP tags.
+// embedding: Regions written in other languages, counted by those languages' rules: "html" for `<script>` and `<style>` elements, "astro" for those plus a TypeScript frontmatter, "markdown" for fenced code blocks and YAML or TOML frontmatter, "asciidoc" for source blocks and fenced code blocks, "org" for source blocks, "restructuredtext" for code block directives, "php" for the HTML outside PHP tags, or "literate" for a literate program, whose lines starting with `>` and lines between `\begin{code}` and `\end{code}` are code in the language named after "Literate ", and whose prose counts as comment.
 {
 	"1C Enterprise": {
 		file_patterns: ["*.bsl", "*.os"],
@@ -77,7 +77,7 @@
 		strings: ["\""],
 	},
 	"Agda": {
-		file_patterns: ["*.agda", "*.lagda"],
+		file_patterns: ["*.agda"],
 		line_comments: ["--"],
 		block_comments: [["{-", "-}"]],
 		nested_blocks: true,
@@ -1511,7 +1511,7 @@
 		line_comments: ["//"],
 	},
 	"Haskell": {
-		file_patterns: ["*.hs", "*.lhs", "*.hsc", "*.hs-boot", ".ghci", "*.lhs-boot"],
+		file_patterns: ["*.hs", "*.hsc", "*.hs-boot", ".ghci"],
 		line_comments: ["--"],
 		// Two or more dashes followed by another symbol are an operator, like `-->`, not a comment.
 		operator_symbols: "!#$%&*+./<=>?@\\^|~:",
@@ -1604,7 +1604,7 @@
 		strings: ["\""],
 	},
 	"Idris": {
-		file_patterns: ["*.idr", "*.lidr"],
+		file_patterns: ["*.idr"],
 		line_comments: ["--"],
 		block_comments: [["{-", "-}"]],
 		nested_blocks: true,
@@ -2048,6 +2048,18 @@
 		file_patterns: ["*.liq"],
 		line_comments: ["#"],
 		strings: ["\""],
+	},
+	"Literate Agda": {
+		file_patterns: ["*.lagda"],
+		embedding: "literate",
+	},
+	"Literate Haskell": {
+		file_patterns: ["*.lhs", "*.lhs-boot"],
+		embedding: "literate",
+	},
+	"Literate Idris": {
+		file_patterns: ["*.lidr"],
+		embedding: "literate",
 	},
 	"LiveCode Script": {
 		file_patterns: ["*.livecodescript"],

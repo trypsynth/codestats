@@ -20,6 +20,8 @@ pub(super) struct Classifier<'a> {
 	region: Region,
 	embedded: Embedded,
 	closing_tags: ClosingTags,
+	/// A literate program's code language.
+	literate_code: Option<&'static Language>,
 }
 
 /// Where the rest of the file next closes each element, which saves looking again at each opening tag: without this, a file of opening tags that never close takes time quadratic in its size.
@@ -108,6 +110,8 @@ enum End {
 	Fence { marker: u8, len: usize },
 	/// A line of exactly `len` `marker`s, like the `----` that opened an `AsciiDoc` listing.
 	Delimiter { marker: u8, len: usize },
+	/// A literate program's `\end{code}`.
+	LiterateCode,
 	/// Org's `#+END_SRC`.
 	OrgSource,
 	/// A line indented no deeper than a reStructuredText directive, which isn't part of the region but follows it. Until the code starts, `preamble` is set: the directive's options (`:linenos:`) and the blank line after them are the host's. `blanks` counts the blank lines since the last line of code, which only belong to the region if more code follows.
@@ -126,6 +130,7 @@ impl End {
 				line.len() == len && line.bytes().all(|b| b == marker)
 			}
 			Self::OrgSource => starts_with_ignore_case(line.trim_start().as_bytes(), b"#+end_src"),
+			Self::LiterateCode => line.trim_start().as_bytes().starts_with(b"\\end{code}"),
 			Self::Dedent { indent, .. } => !is_blank(line.as_bytes()) && indentation(line) <= indent,
 		}
 	}
@@ -135,12 +140,16 @@ impl<'a> Classifier<'a> {
 	pub(super) fn new(language: &'a Language) -> Self {
 		// A PHP file is HTML until its first `<?php`.
 		let region = if language.embedding == Some(Embedding::Php) { Region::Markup(None) } else { Region::Host };
+		let literate_code = (language.embedding == Some(Embedding::Literate))
+			.then(|| language.name.strip_prefix("Literate ").and_then(language_named))
+			.flatten();
 		Self {
 			language,
 			state: CommentState::new(),
 			region,
 			embedded: Embedded::default(),
 			closing_tags: ClosingTags::default(),
+			literate_code,
 		}
 	}
 
@@ -181,8 +190,10 @@ impl<'a> Classifier<'a> {
 		is_first_line: bool,
 		following: Option<&str>,
 	) -> LineType {
-		if embedding == Embedding::Php {
-			return self.classify_php(line, is_first_line, following);
+		match embedding {
+			Embedding::Php => return self.classify_php(line, is_first_line, following),
+			Embedding::Literate => return self.classify_literate(line),
+			_ => {}
 		}
 		match &mut self.region {
 			Region::Host | Region::Markup(_) => {}
@@ -268,6 +279,40 @@ impl<'a> Classifier<'a> {
 		self.embedded
 	}
 
+	/// A line of a literate program: code where it starts with `>` or is between `\begin{code}` and `\end{code}` lines, and otherwise prose, which counts as comment, as do those lines themselves.
+	fn classify_literate(&mut self, line: &str) -> LineType {
+		if let Region::Embedded { language, state, end } = &mut self.region {
+			if end.closes(line) {
+				self.region = Region::Host;
+				return LineType::Comment;
+			}
+			return match *language {
+				Some(language) => {
+					let line_type = classify_line(line, language, state, false);
+					self.embedded.add(language, line_type);
+					line_type
+				}
+				None if is_blank(line.as_bytes()) => LineType::Blank,
+				None => LineType::Code,
+			};
+		}
+		if is_blank(line.as_bytes()) {
+			return LineType::Blank;
+		}
+		if let (Some(code), Some(language)) = (line.strip_prefix('>'), self.literate_code) {
+			let line_type = classify_line(code, language, &mut self.state, false);
+			self.embedded.add(language, line_type);
+			return line_type;
+		}
+		// Prose ends a run of `>` lines, and anything left open in them.
+		self.state = CommentState::new();
+		if line.trim_start().as_bytes().starts_with(b"\\begin{code}") {
+			self.region =
+				Region::Embedded { language: self.literate_code, state: CommentState::new(), end: End::LiterateCode };
+		}
+		LineType::Comment
+	}
+
 	/// A line of a PHP file: HTML until a `<?php` tag, whose line is PHP's, and PHP until a `?>` outside its strings and comments, whose line is too.
 	fn classify_php(&mut self, line: &str, is_first_line: bool, following: Option<&str>) -> LineType {
 		let in_markup = matches!(self.region, Region::Markup(_));
@@ -310,8 +355,8 @@ impl<'a> Classifier<'a> {
 		let trimmed = line.trim_start();
 		let embedded = |language, end| Region::Embedded { language, state: CommentState::new(), end };
 		match embedding {
-			// PHP's regions are followed by `classify_php`.
-			Embedding::Php => None,
+			// PHP's and literate programs' regions are followed by `classify_php` and `classify_literate`.
+			Embedding::Php | Embedding::Literate => None,
 			Embedding::Markdown | Embedding::AsciiDoc => {
 				if let Some((marker, len, info)) = fence(line) {
 					return Some(embedded(info_language(info), End::Fence { marker, len }));
@@ -457,7 +502,7 @@ pub(super) enum RegionStarts {
 /// Which lines might start a region in `embedding`'s files, or `None` where every line has to be classified.
 pub(super) const fn region_starts(embedding: Embedding) -> Option<RegionStarts> {
 	match embedding {
-		Embedding::Html | Embedding::Astro => None,
+		Embedding::Html | Embedding::Astro | Embedding::Literate => None,
 		Embedding::Markdown => Some(RegionStarts::LineStart(b"`~")),
 		Embedding::AsciiDoc => Some(RegionStarts::LineStart(b"`~[")),
 		Embedding::Org => Some(RegionStarts::LineStart(b"#")),
@@ -705,6 +750,14 @@ mod tests {
 	#[case::php_closer_in_a_one_line_string("PHP", "<?php\n$h = \"<?x ?>\";\n// c\n/* ?> */\n# c", &[Code, Code, Comment, Comment, Comment])]
 	#[case::php_closer_in_a_line_comment("PHP", "<?php\n// c ?>\n<!-- c -->", &[Code, Comment, Comment])]
 	#[case::php_inline_tags("PHP", "<?php\n?>\n<p><?= $x ?></p>\n<!-- c -->", &[Code, Code, Code, Comment])]
+	#[case::literate_bird_tracks("Literate Haskell", "Prose.\n\n> main = f -- c\n> -- c\n>\nMore prose.", &[Comment, Blank, Code, Comment, Blank, Comment])]
+	#[case::literate_code_block(
+		"Literate Haskell",
+		"Prose.\n\\begin{code}\n{- c\n-}\nx = 1\n\n\\end{code}\n> y = 2",
+		&[Comment, Comment, Comment, Comment, Code, Blank, Comment, Code]
+	)]
+	#[case::literate_prose_closes_bird_comment("Literate Haskell", "> {- c\nprose\n> x = 1", &[Comment, Comment, Code])]
+	#[case::literate_agda_options("Literate Agda", "\\begin{code}[hide]\nmodule A where\n\\end{code}", &[Comment, Code, Comment])]
 	fn embedded_regions(#[case] language: &str, #[case] text: &str, #[case] expected: &[LineType]) {
 		assert_eq!(classify_all(language, text), expected);
 	}
@@ -857,7 +910,11 @@ mod tests {
 				end: End::Dedent { indent: 0, preamble: false, blanks: 0 },
 				indent: "   ",
 			},
-			Embedding::Php => unreachable!("PHP files start in HTML, so they have tests of their own"),
+			Embedding::Php | Embedding::Literate => {
+				unreachable!(
+					"PHP files start in HTML, and literate programs' prose is comment, so they have tests of their own"
+				)
+			}
 		};
 		(syntax, language)
 	}
@@ -871,9 +928,9 @@ mod tests {
 			.iter()
 			.filter(|language| language.embedding.is_none() && info_language(language.name) == Some(*language))
 			.collect();
-		for host in
-			LANGUAGES.iter().filter(|language| language.embedding.is_some_and(|embedding| embedding != Embedding::Php))
-		{
+		for host in LANGUAGES.iter().filter(|language| {
+			language.embedding.is_some_and(|embedding| !matches!(embedding, Embedding::Php | Embedding::Literate))
+		}) {
 			let embedding = host.embedding.unwrap();
 			// Lines complete on their own, so they classify the same anywhere outside a region, and that can't be taken for one's start or end.
 			let host_lines: &[&str] = match embedding {

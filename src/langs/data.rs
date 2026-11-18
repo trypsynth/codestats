@@ -15,6 +15,8 @@ pub enum Embedding {
 	ReStructuredText,
 	/// HTML outside `<?php ... ?>` tags, with HTML's own elements inside it.
 	Php,
+	/// A literate program's code: lines starting with `>`, and lines between `\begin{code}` and `\end{code}`, in the language named after `Literate `. Everything else is prose, which counts as comment.
+	Literate,
 }
 
 /// When content has to show one of a language's keywords for a file to be that language.

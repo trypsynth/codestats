@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Added strings to 281 languages that had block comments but no strings, including D, CUDA, Solidity, Terraform, HCL, Verilog, VHDL, GLSL, Pascal, Haxe, Vala, Elm, CoffeeScript, Scheme, and Gradle, so a comment marker inside a string no longer starts a comment. Terraform and HCL heredocs are strings too. GHC's lexer, for one, now counts 2,346 more lines of code
+- Added Literate Haskell (`.lhs`), Literate Agda (`.lagda`), and Literate Idris (`.lidr`), whose prose counts as comment and whose code, in lines starting with `>` or between `\begin{code}` and `\end{code}`, counts by Haskell's, Agda's, or Idris's rules. They were counted as all code
 - The binary is about 160 KB smaller, as it no longer depends on encoding_rs and num-format
 
 ## 1.1.2
