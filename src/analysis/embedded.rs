@@ -356,7 +356,7 @@ impl<'a> Classifier<'a> {
 		let embedded = |language, end| Region::Embedded { language, state: CommentState::new(), end };
 		match embedding {
 			// PHP's and literate programs' regions are followed by `classify_php` and `classify_literate`.
-			Embedding::Php | Embedding::Literate => None,
+			Embedding::Php | Embedding::Literate | Embedding::Notebook => None,
 			Embedding::Markdown | Embedding::AsciiDoc => {
 				if let Some((marker, len, info)) = fence(line) {
 					return Some(embedded(info_language(info), End::Fence { marker, len }));
@@ -502,7 +502,7 @@ pub(super) enum RegionStarts {
 /// Which lines might start a region in `embedding`'s files, or `None` where every line has to be classified.
 pub(super) const fn region_starts(embedding: Embedding) -> Option<RegionStarts> {
 	match embedding {
-		Embedding::Html | Embedding::Astro | Embedding::Literate => None,
+		Embedding::Html | Embedding::Astro | Embedding::Literate | Embedding::Notebook => None,
 		Embedding::Markdown => Some(RegionStarts::LineStart(b"`~")),
 		Embedding::AsciiDoc => Some(RegionStarts::LineStart(b"`~[")),
 		Embedding::Org => Some(RegionStarts::LineStart(b"#")),
@@ -910,9 +910,10 @@ mod tests {
 				end: End::Dedent { indent: 0, preamble: false, blanks: 0 },
 				indent: "   ",
 			},
-			Embedding::Php | Embedding::Literate => {
+			Embedding::Php | Embedding::Literate | Embedding::Notebook => {
 				unreachable!(
-					"PHP files start in HTML, and literate programs' prose is comment, so they have tests of their own"
+					"PHP files start in HTML, literate programs' prose is comment, and notebooks are JSON, so they have \
+					 tests of their own"
 				)
 			}
 		};
@@ -929,7 +930,9 @@ mod tests {
 			.filter(|language| language.embedding.is_none() && info_language(language.name) == Some(*language))
 			.collect();
 		for host in LANGUAGES.iter().filter(|language| {
-			language.embedding.is_some_and(|embedding| !matches!(embedding, Embedding::Php | Embedding::Literate))
+			language.embedding.is_some_and(|embedding| {
+				!matches!(embedding, Embedding::Php | Embedding::Literate | Embedding::Notebook)
+			})
 		}) {
 			let embedding = host.embedding.unwrap();
 			// Lines complete on their own, so they classify the same anywhere outside a region, and that can't be taken for one's start or end.

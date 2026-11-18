@@ -125,6 +125,7 @@ pub enum Embedding {
 	ReStructuredText,
 	Php,
 	Literate,
+	Notebook,
 }
 
 /// Which block comment pairs nest: `true` for all of them, or a list of the start delimiters that do.

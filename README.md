@@ -16,6 +16,7 @@ codestats counts the code, comment, blank, and shebang lines in a codebase by la
   - The HTML around `<?php ... ?>` blocks in PHP files.
   - Code blocks in Markdown, AsciiDoc, Org, and reStructuredText.
   - The code in literate Haskell, Agda, and Idris programs, whose prose counts as comments.
+  - The code cells in Jupyter notebooks, in the notebook's kernel language or the language a cell magic such as `%%bash` names. Markdown cells count as comments, and outputs aren't counted.
 - Respects `.gitignore` and `.ignore` files.
 - Skips generated files, such as lockfiles, minified scripts and styles, translations, IDE project files, and files marked `DO NOT EDIT`.
 - Skips vendored code, such as Go's `vendor` directory and `third_party`, as GitHub does.

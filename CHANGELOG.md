@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added Jupyter notebooks (`.ipynb`), which weren't counted at all. Code cells count as code in the kernel's language, such as Python, R, or Julia, or in the language a cell magic like `%%bash` names, and show as that language's embedded code. Markdown and raw cells count as comment, and outputs aren't counted. Older notebooks, from nbformat 3, are read too. The fast.ai book's 44 notebooks, for one, now count 5,545 lines of Python
 - Added `--show-skipped`, which reports the files that codestats leaves out as generated, vendored, or documentation, and why, with the lines each reason leaves out and the flags that would count them. Pass `-v` to list each file
 - Vendored code is skipped, as GitHub skips it: files in `third_party`, `3rdparty`, `node_modules`, `bower_components`, `Pods`, and `Carthage` directories, and in a `vendor` directory beside `go.mod`, `composer.json`, `Gemfile`, or `Cargo.toml`. Pass `--include-vendored` to count them, along with files marked `linguist-vendored`. A file marked `-linguist-vendored` is counted wherever it is. kubernetes, for one, counts 4,437 fewer files and takes about 10% less time
 - Added strings to 281 languages that had block comments but no strings, including D, CUDA, Solidity, Terraform, HCL, Verilog, VHDL, GLSL, Pascal, Haxe, Vala, Elm, CoffeeScript, Scheme, and Gradle, so a comment marker inside a string no longer starts a comment. Terraform and HCL heredocs are strings too. GHC's lexer, for one, now counts 2,346 more lines of code

@@ -5,15 +5,22 @@ use super::{
 	encoding::{self, FileEncoding, decode_bytes},
 	line_classifier::{LineType, is_blank, is_plain_line_comment},
 	masks::BlockScanner,
+	notebook,
 	stats::{FileCounts, LineCounts},
 };
 use crate::langs::{
-	Language,
+	Embedding, Language,
 	matchers::{ByteSet, language_matchers},
 };
 
 /// Count the lines of a file's contents.
 pub(super) fn count_lines(language: &Language, encoding: FileEncoding, bytes: &[u8]) -> FileCounts {
+	// A notebook that isn't valid JSON is counted line by line, as plain text.
+	if language.embedding == Some(Embedding::Notebook)
+		&& let Some(counts) = notebook::count(bytes.get(encoding.bom_len..).unwrap_or_default())
+	{
+		return counts;
+	}
 	if encoding::is_utf16(encoding.encoding) {
 		return encoding::count_utf16(language, encoding, bytes);
 	}

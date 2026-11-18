@@ -18,6 +18,7 @@ mod line_classifier;
 mod line_counter;
 mod list;
 mod masks;
+mod notebook;
 mod pipeline;
 pub mod stats;
 mod vendored;

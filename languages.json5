@@ -19,7 +19,7 @@
 // operator_symbols: Symbols that make a line comment marker part of an operator when they follow it and any more of its last character, as `-->` is an operator in Haskell.
 // operators: Operators that start with a block comment's opener, which are code, as `(*)` is F#'s multiplication.
 // heredoc: The language's heredocs, whose body runs from the next line to the line holding just the terminator named after the opener: "shell", "perl", "ruby", or "php".
-// embedding: Regions written in other languages, counted by those languages' rules: "html" for `<script>` and `<style>` elements, "astro" for those plus a TypeScript frontmatter, "markdown" for fenced code blocks and YAML or TOML frontmatter, "asciidoc" for source blocks and fenced code blocks, "org" for source blocks, "restructuredtext" for code block directives, "php" for the HTML outside PHP tags, or "literate" for a literate program, whose lines starting with `>` and lines between `\begin{code}` and `\end{code}` are code in the language named after "Literate ", and whose prose counts as comment.
+// embedding: Regions written in other languages, counted by those languages' rules: "html" for `<script>` and `<style>` elements, "astro" for those plus a TypeScript frontmatter, "markdown" for fenced code blocks and YAML or TOML frontmatter, "asciidoc" for source blocks and fenced code blocks, "org" for source blocks, "restructuredtext" for code block directives, "php" for the HTML outside PHP tags, "literate" for a literate program, whose lines starting with `>` and lines between `\begin{code}` and `\end{code}` are code in the language named after "Literate ", and whose prose counts as comment, or "notebook" for a Jupyter notebook, whose code cells are code in the kernel's language, whose Markdown and raw cells count as comment, and whose outputs aren't counted.
 {
 	"1C Enterprise": {
 		file_patterns: ["*.bsl", "*.os"],
@@ -1847,6 +1847,10 @@
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
 		strings: ["\"", "'", {open: "`", multiline: true, interpolation: "${"}],
+	},
+	"Jupyter Notebook": {
+		file_patterns: ["*.ipynb"],
+		embedding: "notebook",
 	},
 	"Just": {
 		file_patterns: ["justfile", ".justfile", "*.just", "Justfile"],

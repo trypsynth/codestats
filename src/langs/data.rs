@@ -17,6 +17,8 @@ pub enum Embedding {
 	Php,
 	/// A literate program's code: lines starting with `>`, and lines between `\begin{code}` and `\end{code}`, in the language named after `Literate `. Everything else is prose, which counts as comment.
 	Literate,
+	/// A Jupyter notebook, which is JSON: its code cells count as code in the kernel's language, its Markdown and raw cells count as comment, and its outputs aren't counted.
+	Notebook,
 }
 
 /// When content has to show one of a language's keywords for a file to be that language.
