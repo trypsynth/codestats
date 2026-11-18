@@ -195,8 +195,15 @@ fn handle_block_comments<'a>(
 	while !line_remainder.is_empty() {
 		if !comment_state.is_in_comment() {
 			if let Some((pos, start_len, pair)) = block_matchers.find_block_start(line_remainder) {
-				// A block start after a line comment marker is part of that comment (`// see "src/*"`), so leave the line comment for the caller.
-				if find_line_comment(line_remainder, lang, matchers).is_some_and(|line_pos| line_pos < pos) {
+				// A block start after a line comment marker is part of that comment (`// see "src/*"`), and so is one inside a longer line comment marker (CoffeeScript's `####` heading isn't its `###` block), so leave the line comment for the caller.
+				let longer_line_comment = || {
+					lang.line_comments
+						.iter()
+						.any(|marker| marker.len() > start_len && line_remainder[pos..].starts_with(marker))
+				};
+				if find_line_comment(line_remainder, lang, matchers)
+					.is_some_and(|line_pos| line_pos < pos || (line_pos == pos && longer_line_comment()))
+				{
 					break;
 				}
 				if let Some(len) = operator_at(line_remainder, pos, lang) {
@@ -729,6 +736,10 @@ mod tests {
 	#[case::vhdl_attribute_is_not_a_char("VHDL", &["for i in a'range loop -- c", "s <= \"/*\";", "x <= '1';"], &[LineType::Code, LineType::Code, LineType::Code])]
 	#[case::lisp_quote_character("Common Lisp", &["(char= c #\\\")", "; c", "(f \"#|\")", "(g)"], &[LineType::Code, LineType::Comment, LineType::Code, LineType::Code])]
 	#[case::smalltalk_quote_in_string("Smalltalk", &["s := 'say \"hi'.", "x := 1.", "\"c\""], &[LineType::Code, LineType::Code, LineType::Comment])]
+	#[case::coffeescript_heading_is_no_block("CoffeeScript", &["#### Base", "class Base", "###", "block", "###", "y = 2"], &[LineType::Comment, LineType::Code, LineType::Comment, LineType::Comment, LineType::Comment, LineType::Code])]
+	#[case::idris_doc_comment("Idris", &["||| Adds one.", "addOne : Nat -> Nat"], &[LineType::Comment, LineType::Code])]
+	#[case::nim_doc_block("Nim", &["##[ Doc block", "still doc", "]##", "let a = 1"], &[LineType::Comment, LineType::Comment, LineType::Comment, LineType::Code])]
+	#[case::julia_docstring("Julia", &["\"\"\"", "    add(x, y)", "\"\"\"", "add(x, y) = x + y", "s = \"\"\"", "# text", "\"\"\""], &[LineType::Comment, LineType::Comment, LineType::Comment, LineType::Code, LineType::Code, LineType::Code, LineType::Code])]
 	fn config_strings(#[case] language: &str, #[case] lines: &[&str], #[case] expected: &[LineType]) {
 		assert_eq!(classify_all(language, lines), expected);
 	}

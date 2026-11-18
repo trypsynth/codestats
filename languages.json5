@@ -717,7 +717,8 @@
 	},
 	"CoffeeScript": {
 		file_patterns: ["*.coffee", "*.cjsx", "Cakefile", "*.iced", "*._coffee"],
-		line_comments: ["#"],
+		// `###` opens a block comment only when another `#` doesn't follow it, so a `####` heading is a line comment.
+		line_comments: ["#", "####"],
 		block_comments: [["###", "###"]],
 		strings: [{open: "\"\"\"", multiline: true, interpolation: "#{"}, {open: "'''", multiline: true}, {open: "\"", multiline: true, interpolation: "#{"}, {open: "'", multiline: true}],
 	},
@@ -1613,7 +1614,8 @@
 	},
 	"Idris": {
 		file_patterns: ["*.idr"],
-		line_comments: ["--"],
+		// `|||` opens a documentation comment.
+		line_comments: ["--", "|||"],
 		block_comments: [["{-", "-}"]],
 		nested_blocks: true,
 		strings: [{open: "\"\"\"", multiline: true}, "\"", {open: "'", char: true}],
@@ -1846,7 +1848,7 @@
 		block_comments: [["#=", "=#"]],
 		nested_blocks: true,
 		shebangs: ["#!/usr/bin/env julia", "#!/usr/local/bin/julia"],
-		strings: [{open: "\"\"\"", multiline: true}, {open: "\"", multiline: true}, {open: "'", char: true}],
+		strings: [{open: "\"\"\"", multiline: true, doc: true}, {open: "\"", multiline: true}, {open: "'", char: true}],
 	},
 	"Julius": {
 		file_patterns: ["*.julius"],
@@ -2560,7 +2562,8 @@
 	"Nim": {
 		file_patterns: ["*.nim", "*.nims", "*.nimble", "*.nimrod", "nim.cfg"],
 		line_comments: ["#", "##"],
-		block_comments: [["#[", "]#"]],
+		// `##[` opens a documentation block, which `##` and `#[` mustn't take for theirs.
+		block_comments: [["##[", "]##"], ["#[", "]#"]],
 		nested_blocks: true,
 		strings: [{open: "\"\"\"", escape: null, multiline: true}, "\"", {open: "'", char: true}],
 	},

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Fixed Idris's `|||` documentation comments being counted as code: Idris 2 counts 9,172 more lines of comment
+- Julia's docstrings count as comment, as Python's do: Julia's own source counts 46,348 more lines of comment
+- Fixed Nim's `##[ ]##` documentation blocks ending after their first line, and CoffeeScript's `####` headings opening a block comment, which made everything up to the next heading comment: CoffeeScript's compiler counts 1,584 more lines of code
 - Added cram tests (`.t`), as dune and Mercurial write them, which were counted as Turing, Terra, TADS, or Perl, or not at all: dune's 2,276 count now. Their `  $ ` and `  > ` command lines count as code, in Bash, their expected output counts as code, and their prose counts as comment
 - Fixed Raku's tests (`.t`) being counted as Perl: rakudo's 1,035 Raku files were 506. Raku's `=begin pod` blocks now end with their `=end` line, and `` #`(( )) `` comments with doubled brackets end at the doubled closer
 - Fixed Perl POD that opens with `=item`, `=back`, `=end`, `=head5`, or `=head6` being counted as code. ExtUtils::MakeMaker, for one, counts 2,140 more lines of comment
