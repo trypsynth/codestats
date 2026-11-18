@@ -734,6 +734,8 @@
 		file_patterns: ["*.cfm", "*.cfc", "*.cfml"],
 		line_comments: ["//"],
 		block_comments: [["<!---", "--->"], ["/*", "*/"]],
+		// A page's prose has apostrophes, so `'` only opens an attribute's value.
+		strings: [{open: "\"", escape: "\""}, {open: "'", escape: "'", attribute: true}],
 	},
 	"Common Lisp": {
 		file_patterns: ["*.lisp", "*.lsp", "*.asd", "*.cl", "*.sexp", "*.ny", "*.ros"],
@@ -2075,7 +2077,8 @@
 	},
 	"Liquid Templates": {
 		file_patterns: ["*.liquid"],
-		block_comments: [["<!--", "-->"], ["{% comment %}", "{% endcomment %}"]],
+		// Comment tags, with or without whitespace control, LiquidDoc's `{% doc %}` blocks, and inline `{% # %}` comments.
+		block_comments: [["<!--", "-->"], ["{% comment %}", "{% endcomment %}"], ["{%- comment -%}", "{%- endcomment -%}"], ["{%- comment %}", "{% endcomment %}"], ["{% doc %}", "{% enddoc %}"], ["{%- doc -%}", "{%- enddoc -%}"], ["{% #", "%}"], ["{%- #", "-%}"]],
 		embedding: "html",
 	},
 	"Liquidsoap": {
