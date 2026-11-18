@@ -752,6 +752,8 @@ mod tests {
 	#[case::vhdl_attribute_is_not_a_char("VHDL", &["for i in a'range loop -- c", "s <= \"/*\";", "x <= '1';"], &[LineType::Code, LineType::Code, LineType::Code])]
 	#[case::lisp_quote_character("Common Lisp", &["(char= c #\\\")", "; c", "(f \"#|\")", "(g)"], &[LineType::Code, LineType::Comment, LineType::Code, LineType::Code])]
 	#[case::smalltalk_quote_in_string("Smalltalk", &["s := 'say \"hi'.", "x := 1.", "\"c\""], &[LineType::Code, LineType::Code, LineType::Comment])]
+	#[case::one_line_string_opened_at_the_end("Python", &["x = \"", "# c", "y = 1"], &[LineType::Code, LineType::Comment, LineType::Code])]
+	#[case::one_line_string_continued_by_a_backslash("C", &["s = \"a\\", "// in the string\";", "// c"], &[LineType::Code, LineType::Code, LineType::Comment])]
 	#[case::smalltalk_quote_character("Smalltalk", &["\t^ self = $\"", "foo", "\"c\""], &[LineType::Code, LineType::Code, LineType::Comment])]
 	#[case::erlang_characters_and_doc_strings("Erlang", &["-doc \"\"\"", "% in a string", "\"\"\".", "g($%) -> p.", "% c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
 	#[case::elixir_quote_character("Elixir", &["x = ?\"", "# c"], &[LineType::Code, LineType::Comment])]

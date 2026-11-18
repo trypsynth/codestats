@@ -118,12 +118,7 @@ pub(super) fn classify_with_strings(
 				Token::BlockComment(pair) => has_code |= open_block_comment(state, lang, line, start, pair, &mut pos),
 				Token::Regex => {
 					has_code = true;
-					// Skip a whole regex literal so quotes, backticks and `/*` inside it don't open anything; otherwise it's division.
-					if regex_can_start(bytes, start)
-						&& let Some(regex_end) = find_regex_end(bytes, end)
-					{
-						pos = regex_end;
-					}
+					pos = past_regex(bytes, start, end);
 				}
 				Token::Heredoc => {
 					has_code = true;
@@ -150,13 +145,29 @@ pub(super) fn classify_with_strings(
 					if !escaped && !char_mismatch {
 						state.string = Some(i);
 						state.doc_string = doc_string;
+						if delimiter.run {
+							pos = open_run(state, bytes, start, end);
+						}
 					}
 				}
 			}
 		}
 	}
-	state.end_one_line_holes(lang);
+	finish_line(state, lang, pos >= bytes.len());
 	if has_code { LineType::Code } else { LineType::Comment }
+}
+
+/// Where to carry on after a `/` spanning `start..end`: past the whole regex literal it opens, so quotes, backticks and `/*` inside it don't open anything, or just past it, as division.
+fn past_regex(line: &[u8], start: usize, end: usize) -> usize {
+	if regex_can_start(line, start) { find_regex_end(line, end).unwrap_or(end) } else { end }
+}
+
+/// End what a line can't leave open for the next: a hole in a one-line string, and a one-line string opened by the line's last byte, `at_end`, which the scan stopped short of seeing end.
+fn finish_line(state: &mut CommentState, lang: &Language, at_end: bool) {
+	if at_end && state.string.is_some_and(|index| !lang.strings[index].multiline) {
+		state.string = None;
+	}
+	state.end_one_line_holes(lang);
 }
 
 /// In the innermost hole, follow the first of its brackets on `line` from `from`, if it comes before the next token at `token`: an opening one nests, and the closing one of the hole itself goes back into its string. Returns where to carry on, or `None` when the token comes first.
@@ -335,6 +346,18 @@ fn find_chosen_close(state: &mut CommentState, line: &[u8], from: usize) -> Opti
 	let end = from + memmem::find(&line[from..], close)? + close.len();
 	state.string_close = None;
 	Some(end)
+}
+
+/// For a raw string whose opener spans `start..end` and may go on as a longer run of its quote, which only as long a run closes: where its body starts. Rare, so kept out of the hot loop.
+#[cold]
+#[inline(never)]
+fn open_run(state: &mut CommentState, line: &[u8], start: usize, end: usize) -> usize {
+	let quote = line[start];
+	let run = start + line[start..].iter().take_while(|&&b| b == quote).count();
+	if run > end {
+		state.string_close = Some(vec![quote; run - start].into());
+	}
+	run
 }
 
 /// Open the delimited string `index` whose opener spans `start..end`, returning where to carry on scanning: inside its body, or at the quote when it's not a raw string after all (`DIR"/x"` pastes a macro to a string). Rare, so kept out of the hot loop.

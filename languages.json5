@@ -9,7 +9,7 @@
 // shebangs: Shebang prefixes that identify the language for files without a known extension.
 // keywords: Words or text that choose between languages sharing a pattern, which every language sharing one needs. Words match whole tokens case-insensitively, and anything with punctuation matches as text. On a tie, a language whose keywords aren't required wins, then the one with fewer keywords, so a language that extends another should list the base language's keywords plus its own. When all the languages sharing a pattern write comments the same way, keywords inside comments don't count. Either a list, or {words, required, case_sensitive}, where required is "shared" to only pick the language on a shared pattern when a keyword matches that not every other language sharing it has, or "always" to hold the language to that even on a pattern only it has, leaving files without a match uncounted, and case_sensitive makes words match only in the case they're written.
 // shebang_overrides: A file with this language's extension that starts with a shebang is the shebang's language.
-// strings: String literals, so comment markers inside them are ignored and their contents count as code. Either an opening quote, which is a one-line string with a backslash escape, or {open, close, escape, multiline, char, doc, delimited, attribute, interpolation, close_escapes}: close defaults to open; escape is `null` for raw strings, or the quote itself for doubled quotes; char only opens a string that looks like a character literal; doc makes a string that starts a line count as a comment; delimited puts a delimiter of the writer's choosing between the opener and a `(`, and the string ends at `)`, that delimiter, and the close; attribute only opens a string right after an `=`; interpolation names what opens a hole of code in the string, which runs to the bracket matching the opener's last one, with strings and comments in it read as code's, and a doubled one-character opener is text; close_escapes lists the characters that, right after the closer, make it an escape instead of the string's end, as Nix writes `'''`, `''$`, and `''\n` in its `''` strings.
+// strings: String literals, so comment markers inside them are ignored and their contents count as code. Either an opening quote, which is a one-line string with a backslash escape, or {open, close, escape, multiline, char, doc, delimited, attribute, interpolation, close_escapes, run}: close defaults to open; escape is `null` for raw strings, or the quote itself for doubled quotes; char only opens a string that looks like a character literal; doc makes a string that starts a line count as a comment; delimited puts a delimiter of the writer's choosing between the opener and a `(`, and the string ends at `)`, that delimiter, and the close; attribute only opens a string right after an `=`; interpolation names what opens a hole of code in the string, which runs to the bracket matching the opener's last one, with strings and comments in it read as code's, and a doubled one-character opener is text; close_escapes lists the characters that, right after the closer, make it an escape instead of the string's end, as Nix writes `'''`, `''$`, and `''\n` in its `''` strings; run makes the opener a run of its quote at least as long as open, closed only by as long a run, as in C#'s raw strings.
 // c_preprocessor: The file goes through the C preprocessor although `#` also starts comments, so directives count as code.
 // regex_literals: `/.../` regular expression literals, so quotes or comment markers inside them are ignored. A `/` starts one after an operator, opening bracket, or keyword, and is division otherwise.
 // line_block_comments: Block comments whose markers only count at the start of a line, with no indentation before them.
@@ -504,7 +504,7 @@
 			"\"",
 			{open: "'", char: true},
 			{open: "@\"", close: "\"", escape: "\"", multiline: true},
-			{open: "\"\"\"", escape: null, multiline: true},
+			{open: "\"\"\"", escape: null, multiline: true, run: true},
 			{open: "$\"", close: "\"", interpolation: "{"},
 			{open: "$@\"", close: "\"", escape: "\"", multiline: true, interpolation: "{"},
 			{open: "@$\"", close: "\"", escape: "\"", multiline: true, interpolation: "{"},
@@ -1542,7 +1542,8 @@
 		block_comments: [["{-", "-}"]],
 		nested_blocks: true,
 		shebangs: ["#!/usr/bin/env runhaskell"],
-		strings: ["\""],
+		// A character literal holds a quote (`'"'`) that would open a string, and only opens where it looks like one, so primed names like `x'` stay code.
+		strings: ["\"", {open: "'", char: true}],
 	},
 	"Haxe": {
 		file_patterns: ["*.hx", "*.hxsl"],
@@ -4120,7 +4121,8 @@
 		line_comments: ["'", "REM", "Rem", "rem"],
 		// Editors write keywords capitalized, and matching their case keeps a LaTeX class's prose ("as", "public") from being Visual Basic.
 		keywords: {words: ["Dim", "Sub", "Function", "End Sub", "End Function", "Private", "Public", "As", "For Each"], case_sensitive: true},
-		strings: [{open: "\"", escape: null}],
+		// Strings may span lines since Visual Basic 14.
+		strings: [{open: "\"", escape: null, multiline: true}],
 	},
 	"Visual FoxPro": {
 		file_patterns: ["*.prg"],

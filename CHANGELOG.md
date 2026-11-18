@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Fixed a one-line string whose opening quote ended its line running on into the next line, which turned a misread quote into miscounted lines in any language
+- Fixed C# raw strings opened with more than three quotes, like `""""`, ending at the first `"""` inside them, and Visual Basic strings that span lines, as Visual Basic 14 allows, ending with their first line. Roslyn counts 2,954 more lines of code, most of them test sources inside strings
+- Haskell's `'"'` character literal no longer opens a string
 - TeX/LaTeX claims LaTeX classes (`.cls`), definition files (`.def`), font definitions (`.fd`, `.fdd`), and l3build tests (`.lvt`, `.pvt`) that use its commands. They were counted as Visual Basic, Module Definition, or not at all: LaTeX's own source counts 1,771 more TeX files. PostScript claims dvips's `.pro` prologues, which were QMake
 - Fixed Objective-C++ files without Objective-C in them being counted as Maple, Coq files being counted as V, and Metal shaders named `.msl` not being counted. Visual Basic's, QMake's, V's, Verilog's, and Coq's keywords match their case, so English prose doesn't match them
 - Added strings to Erlang: OTP 27's triple-quoted strings, strings that span lines, and quoted atoms, so a `%` line in a `-doc """` example isn't a comment. OTP counts 601 more lines of code

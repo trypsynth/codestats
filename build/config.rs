@@ -177,6 +177,7 @@ impl StringSpec {
 				attribute: false,
 				interpolation: None,
 				close_escapes: String::new(),
+				run: false,
 			},
 			Self::Full(config) => config.clone(),
 		}
@@ -212,6 +213,9 @@ pub struct StringConfig {
 	/// Characters that, right after the closer, make it an escape instead of the string's end, as Nix's `''` strings write `'''`, `''$`, and `''\n`.
 	#[serde(default)]
 	pub close_escapes: String,
+	/// The opener is a run of its quote, at least as long as `open`, and only a run as long closes the string, as C#'s raw strings `""""` and `""""` hold `"""`.
+	#[serde(default)]
+	pub run: bool,
 }
 
 impl StringConfig {
