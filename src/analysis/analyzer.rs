@@ -90,6 +90,7 @@ impl CodeAnalyzer {
 			exclude: &self.config.analysis.exclude_languages,
 			include_generated: self.config.analysis.include_generated,
 			include_vendored: self.config.analysis.include_vendored,
+			report_skipped: self.config.analysis.show_skipped,
 			attributes: attributes.as_ref(),
 			extensions: &self.config.analysis.include_extensions,
 		};

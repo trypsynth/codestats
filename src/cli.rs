@@ -106,6 +106,10 @@ pub struct AnalyzeArgs {
 	/// Show a breakdown by directory instead of by language
 	#[arg(short = 'D', long)]
 	pub by_dir: bool,
+	/// Instead of the counts, report the files that codestats leaves out as generated, vendored, or documentation, and
+	/// how many lines each would add. Pass -v to list every file
+	#[arg(long, conflicts_with = "by_dir")]
+	pub show_skipped: bool,
 }
 
 /// Which files are counted: shared by the main command and `cs diff`.
@@ -215,6 +219,7 @@ pub fn merge_config(mut config: Config, args: &AnalyzeArgs, matches: &ArgMatches
 	apply!(matches, "sort_direction", config.display.sort_direction = args.sort_direction);
 	apply!(matches, "min_lines", config.display.min_lines = args.min_lines);
 	apply!(matches, "by_dir", config.display.by_dir = args.by_dir);
+	config.analysis.show_skipped = args.show_skipped;
 	merge_shared(config, &args.source, &args.format, matches)
 }
 

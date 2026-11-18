@@ -64,6 +64,9 @@ pub struct AnalysisConfig {
 	pub include_generated: bool,
 	/// Count vendored code: `third_party`, `node_modules`, and similar directories, and a `vendor` directory beside a manifest such as `go.mod`.
 	pub include_vendored: bool,
+	/// `--show-skipped`, which only the command line sets.
+	#[serde(skip)]
+	pub show_skipped: bool,
 	/// Only count files git tracks.
 	pub git_tracked_only: bool,
 	pub max_depth: Option<usize>,
@@ -85,6 +88,7 @@ impl Default for AnalysisConfig {
 			follow_symlinks: false,
 			include_generated: false,
 			include_vendored: false,
+			show_skipped: false,
 			git_tracked_only: false,
 			max_depth: None,
 			exclude_patterns: Vec::new(),
@@ -183,7 +187,9 @@ impl From<&Config> for AnalyzerConfig {
 	fn from(config: &Config) -> Self {
 		Self {
 			analysis: config.analysis.clone(),
-			collect_file_details: config.analysis.verbosity == Verbosity::Verbose || config.display.by_dir,
+			// `--show-skipped` reports the skipped files instead, which it keeps the paths of anyway.
+			collect_file_details: !config.analysis.show_skipped
+				&& (config.analysis.verbosity == Verbosity::Verbose || config.display.by_dir),
 		}
 	}
 }

@@ -102,7 +102,11 @@ fn run() -> Result<()> {
 	let view_options: ViewOptions = (&config).into();
 	// Standard output flushes at every newline, which costs a system call per line of a long report.
 	let mut stdout = io::BufWriter::new(io::stdout().lock());
-	display::write_output(config.display.output, &results, &roots, view_options, &mut stdout)?;
+	if config.analysis.show_skipped {
+		display::write_skipped(config.display.output, &results, view_options, &mut stdout)?;
+	} else {
+		display::write_output(config.display.output, &results, &roots, view_options, &mut stdout)?;
+	}
 	stdout.flush()?;
 	if config.analysis.fail_on_error && results.skipped_entries() > 0 {
 		let skipped = results.skipped_entries();

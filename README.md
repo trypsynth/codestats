@@ -178,6 +178,7 @@ If you don't give a path, codestats counts the current directory. If the path is
 - `--no-gitattributes`: ignore the linguist attributes in `.gitattributes` files. See [Linguist attributes](#linguist-attributes).
 - `--include-generated`: count generated files. See [Generated files](#generated-files).
 - `--include-vendored`: count vendored code. See [Vendored code](#vendored-code).
+- `--show-skipped`: instead of the counts, report the files that codestats leaves out as generated, vendored, or documentation, and how many lines each reason leaves out. With `-v`, it lists every file. It writes text or JSON. See [Skipped files](#skipped-files).
 - `--git`: count only the files that git tracks, including in submodules. `.gitignore` doesn't apply to tracked files.
 - `--max-depth <N>`: descend at most N directory levels.
 - `--min-lines <N>`: hide languages with fewer than N lines.
@@ -297,6 +298,25 @@ A file counts as vendored in any of these cases:
 - **It's in a `vendor` directory beside a manifest that fills it.** The manifests are `go.mod`, `composer.json`, `Gemfile`, and `Cargo.toml`. Other `vendor` directories, such as `arch/riscv/include/asm/vendor` in Linux, usually hold the project's own code, so they're counted.
 
 A directory you name on the command line is counted even if it's vendored, so `cs vendor` counts what's in `vendor`. Files listed on standard input are counted wherever they are. To count the files in one vendored directory, mark them `-linguist-vendored`.
+
+## Skipped files
+
+To see what codestats leaves out, and why, pass `--show-skipped`. It reports the files skipped for each reason, with the lines they hold and the flags that would count them. For example, in kubernetes:
+
+```
+$ cs --show-skipped
+Skipped 8931 files with 3020062 lines.
+
+Generated, by name: 13 files, 29760 lines. Pass --include-generated to count them.
+
+Generated, by header: 2598 files, 328015 lines. Pass --include-generated to count them.
+
+Generated, marked linguist-generated: 1449 files, 1104503 lines. Pass --include-generated or --no-gitattributes to count them.
+
+Vendored, in a vendored directory: 4871 files, 1557784 lines. Pass --include-vendored to count them, and --include-generated too for 434 of them, which are also generated.
+```
+
+Pass `-v` to list each file, with its language and lines, and `-o json` for JSON. A file left out for several reasons is listed once. A vendored file is listed as vendored, and the report says how many vendored files are also generated. Files that codestats doesn't count for other reasons, such as images, binaries, files in languages it doesn't know, and ignored files, aren't listed.
 
 ## Linguist attributes
 

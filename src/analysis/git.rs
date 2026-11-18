@@ -123,6 +123,7 @@ pub fn count_snapshot(
 		exclude: &config.exclude_languages,
 		include_generated: config.include_generated,
 		include_vendored: config.include_vendored,
+		report_skipped: config.show_skipped,
 		attributes: attributes.as_ref(),
 		extensions: &config.include_extensions,
 	};

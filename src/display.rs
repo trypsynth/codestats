@@ -29,6 +29,7 @@ mod markdown;
 mod options;
 mod report;
 mod separated_values;
+mod skipped;
 pub mod template_filters;
 
 use std::{io::Write, path::PathBuf};
@@ -45,6 +46,7 @@ pub use options::{IndentStyle, LanguageSortKey, NumberStyle, SizeStyle, SortDire
 pub use report::ReportData;
 pub use separated_values::{CsvFormatter, TsvFormatter};
 use serde::{Deserialize, Serialize};
+pub use skipped::write_skipped;
 
 use crate::analysis::AnalysisResults;
 

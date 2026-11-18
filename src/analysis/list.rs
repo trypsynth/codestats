@@ -49,6 +49,7 @@ pub fn count_listed(paths: &[PathBuf], config: &AnalyzerConfig) -> Result<Analys
 		exclude: &analysis.exclude_languages,
 		include_generated: analysis.include_generated,
 		include_vendored: analysis.include_vendored,
+		report_skipped: analysis.show_skipped,
 		attributes: attributes.as_ref(),
 		extensions: &analysis.include_extensions,
 	};

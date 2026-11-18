@@ -8,7 +8,7 @@ use super::{
 	file_io::{self, FileSource},
 	generated::{has_generated_header, is_generated_name, is_minified, is_visual_studio_project},
 	line_counter,
-	stats::{AnalysisResults, FileCounts},
+	stats::{AnalysisResults, FileCounts, SkipReason, SkippedFile},
 };
 use crate::langs::{self, Language, RequireKeywords};
 
@@ -22,6 +22,8 @@ pub struct FileFilter<'a> {
 	pub exclude: &'a [String],
 	pub include_generated: bool,
 	pub include_vendored: bool,
+	/// `--show-skipped`: count the files the filters above leave out too, so they can be reported, and say why each is left out.
+	pub report_skipped: bool,
 	pub attributes: Option<&'a Attributes>,
 	/// `--ext`: only files with these extensions count, when there are any.
 	pub extensions: &'a [String],
@@ -45,14 +47,22 @@ fn detection_name(path: &Path) -> Option<Cow<'_, str>> {
 	Some(path.extension().map_or(name, |ext| Cow::Owned(format!("file.{}", ext.to_string_lossy()))))
 }
 
-/// The languages a file named `name` at `path` could be, and the filter its contents are judged by, or `None` when its name and attributes leave it out: documentation, or generated or vendored and not included. `vendored` says whether it's in a vendored directory. A file whose attributes say it isn't generated is counted whatever its name or header say, one whose attributes say it isn't vendored is counted wherever it is, and one whose attributes name its language is that language, unless its name gives exactly one language.
+/// Why a file's name and attributes leave it out, for `--show-skipped`.
+#[derive(Clone, Copy)]
+struct Skip {
+	reason: SkipReason,
+	/// Whether a vendored file is generated too, so that counting it takes `--include-generated` as well.
+	also_generated: bool,
+}
+
+/// The languages a file named `name` at `path` could be, the filter its contents are judged by, and why its name and attributes leave it out, if they do: documentation, or generated or vendored and not included. `None` when it's left out and `--show-skipped` isn't asking, or `--ext` leaves it out. `vendored` says whether it's in a vendored directory. A file whose attributes say it isn't generated is counted whatever its name or header say, one whose attributes say it isn't vendored is counted wherever it is, and one whose attributes name its language is that language, unless its name gives exactly one language.
 fn judge_name<'a>(
 	path: &Path,
 	name: &str,
 	vendored: bool,
 	languages: FileFilter<'a>,
 	cache: &mut DirCache,
-) -> Option<(Vec<&'static Language>, FileFilter<'a>)> {
+) -> Option<(Vec<&'static Language>, FileFilter<'a>, Option<Skip>)> {
 	if !languages.extensions.is_empty() {
 		let extension = path.extension()?.to_str()?;
 		if !languages.extensions.iter().any(|wanted| wanted.eq_ignore_ascii_case(extension)) {
@@ -62,8 +72,20 @@ fn judge_name<'a>(
 	let verdict = languages.attributes.and_then(|attributes| attributes.verdict(path, cache)).unwrap_or_default();
 	let generated = verdict.generated.unwrap_or_else(|| is_generated_name(name));
 	let vendored = verdict.vendored.unwrap_or(vendored);
-	if verdict.documentation || (generated && !languages.include_generated) || (vendored && !languages.include_vendored)
-	{
+	let generated = (generated && !languages.include_generated)
+		.then(|| if verdict.generated.is_some() { SkipReason::GeneratedAttribute } else { SkipReason::GeneratedName });
+	let vendored = (vendored && !languages.include_vendored).then(|| {
+		if verdict.vendored.is_some() { SkipReason::VendoredAttribute } else { SkipReason::VendoredDirectory }
+	});
+	// A vendored file is reported as vendored, noting whether `--include-generated` is needed too.
+	let skip = if verdict.documentation {
+		Some(Skip { reason: SkipReason::Documentation, also_generated: false })
+	} else if let Some(reason) = vendored {
+		Some(Skip { reason, also_generated: generated.is_some() })
+	} else {
+		generated.map(|reason| Skip { reason, also_generated: false })
+	};
+	if skip.is_some() && !languages.report_skipped {
 		return None;
 	}
 	let include_generated = languages.include_generated || verdict.generated == Some(false);
@@ -72,7 +94,7 @@ fn judge_name<'a>(
 		(Some(language), candidates) if candidates.len() != 1 => vec![language],
 		(_, candidates) => candidates,
 	};
-	Some((candidates, FileFilter { include_generated, ..languages }))
+	Some((candidates, FileFilter { include_generated, ..languages }, skip))
 }
 
 /// The language and line counts of a file named `path` with contents `bytes`, or `None` if it isn't counted: unrecognized, binary, or filtered out.
@@ -84,15 +106,18 @@ pub fn count_bytes(
 	cache: &mut DirCache,
 ) -> Option<(&'static Language, FileCounts)> {
 	let name = detection_name(path)?;
-	let (candidates, languages) = judge_name(path, &name, vendored, languages, cache)?;
-	count_contents(&candidates, &name, bytes, languages)
+	let (candidates, languages, None) = judge_name(path, &name, vendored, languages, cache)? else { return None };
+	match count_contents(&candidates, &name, bytes, languages)? {
+		(language, counts, None) => Some((language, counts)),
+		(_, _, Some(_)) => None,
+	}
 }
 
 /// Whether a file named `path` could be counted, judging by its name and attributes alone: false when they leave it out, or its only possible language is filtered out and a shebang couldn't claim it, so its contents needn't be read.
 pub fn could_count(path: &Path, vendored: bool, languages: FileFilter, cache: &mut DirCache) -> bool {
 	detection_name(path)
 		.and_then(|name| judge_name(path, &name, vendored, languages, cache))
-		.is_some_and(|(candidates, languages)| worth_reading(&candidates, languages))
+		.is_some_and(|(candidates, languages, _)| worth_reading(&candidates, languages))
 }
 
 /// Whether a file with these candidates is worth reading: false when its only candidate is filtered out and a shebang couldn't claim it.
@@ -108,20 +133,25 @@ fn may_be_script(language: &Language, bytes: &[u8]) -> bool {
 	language.shebang_overrides && bytes.trim_ascii_start().starts_with(b"#!")
 }
 
+/// The language and line counts of a file with these candidates, and why its contents leave it out, if they do: a generated header, or minified code. `None` when it's left out and `--show-skipped` isn't asking, or it's binary, unrecognized, or filtered out.
 fn count_contents(
 	candidates: &[&'static Language],
 	name: &str,
 	bytes: &[u8],
 	languages: FileFilter,
-) -> Option<(&'static Language, FileCounts)> {
+) -> Option<(&'static Language, FileCounts, Option<SkipReason>)> {
 	if bytes.is_empty() {
 		let language = langs::detect_language(candidates, None).language?;
-		return languages.allows(language).then(|| (language, FileCounts::default()));
+		return languages.allows(language).then(|| (language, FileCounts::default(), None));
 	}
 	let sample_bytes = file_io::sample(bytes);
 	let encoding = detect_encoding(&sample_bytes);
-	let generated = || has_generated_header(bytes) || is_visual_studio_project(name, bytes);
-	if is_probably_binary(&sample_bytes, encoding) || (!languages.include_generated && generated()) {
+	if is_probably_binary(&sample_bytes, encoding) {
+		return None;
+	}
+	let generated =
+		!languages.include_generated && (has_generated_header(bytes) || is_visual_studio_project(name, bytes));
+	if generated && !languages.report_skipped {
 		return None;
 	}
 	let body = sample_bytes.get(encoding.bom_len..).unwrap_or_default();
@@ -143,10 +173,17 @@ fn count_contents(
 	let language =
 		xml_document_instead_of(detected, body, encoding.encoding).filter(|&language| languages.allows(language))?;
 	let counts = line_counter::count_lines(language, encoding, bytes);
-	if !languages.include_generated && is_minified(language.name, bytes.len() as u64, counts.lines.total) {
+	let skip = if generated {
+		Some(SkipReason::GeneratedHeader)
+	} else if !languages.include_generated && is_minified(language.name, bytes.len() as u64, counts.lines.total) {
+		Some(SkipReason::Minified)
+	} else {
+		None
+	};
+	if skip.is_some() && !languages.report_skipped {
 		return None;
 	}
-	Some((language, counts))
+	Some((language, counts, skip))
 }
 
 /// XML, for a file named like code that opens with an XML declaration (Qt's `.ts` translations aren't TypeScript), or else
@@ -180,7 +217,7 @@ pub fn process_file(
 	cache: &mut DirCache,
 ) -> Result<()> {
 	let filename = detection_name(file_path).context("Missing file name")?;
-	let Some((candidates, languages)) = judge_name(file_path, &filename, vendored, languages, cache) else {
+	let Some((candidates, languages, skip)) = judge_name(file_path, &filename, vendored, languages, cache) else {
 		return Ok(());
 	};
 	if !worth_reading(&candidates, languages) {
@@ -206,8 +243,27 @@ pub fn process_file(
 		file.rewind()?;
 	}
 	let source = FileSource::open(file, file_size, file_path)?;
-	if let Some((language, counts)) = count_contents(&candidates, &filename, &source, languages) {
-		results.add_file(language, counts, file_size, collect_details.then(|| display_path(file_path, display_root)));
+	if let Some((language, counts, by_contents)) = count_contents(&candidates, &filename, &source, languages) {
+		let skip = match (skip, by_contents) {
+			(None, None) => None,
+			(None, Some(reason)) => Some(Skip { reason, also_generated: false }),
+			(Some(Skip { reason, also_generated }), by_contents) => Some(Skip {
+				reason,
+				also_generated: also_generated
+					|| (by_contents.is_some()
+						&& matches!(reason, SkipReason::VendoredDirectory | SkipReason::VendoredAttribute)),
+			}),
+		};
+		match skip {
+			None => {
+				let path = collect_details.then(|| display_path(file_path, display_root));
+				results.add_file(language, counts, file_size, path);
+			}
+			Some(Skip { reason, also_generated }) => {
+				let path = display_path(file_path, display_root);
+				results.add_skipped(SkippedFile { path, reason, also_generated, language, lines: counts.lines.total });
+			}
+		}
 	}
 	Ok(())
 }
@@ -245,6 +301,7 @@ mod tests {
 					exclude: &[],
 					include_generated: true,
 					include_vendored: false,
+					report_skipped: false,
 					attributes: None,
 					extensions: &[],
 				};

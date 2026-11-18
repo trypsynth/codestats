@@ -220,6 +220,66 @@ impl LanguageStats {
 	}
 }
 
+/// Why a file codestats could count is left out, as `--show-skipped` reports it. In the order the report lists them.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum SkipReason {
+	/// A name that generated files have, such as `Cargo.lock` or `*.min.js`.
+	GeneratedName,
+	/// A header that a tool wrote, such as `// Code generated ... DO NOT EDIT.`, or a Visual Studio project's namespace.
+	GeneratedHeader,
+	/// JavaScript or CSS whose lines average 500 bytes or more.
+	Minified,
+	/// `linguist-generated` in `.gitattributes`.
+	GeneratedAttribute,
+	/// A directory of vendored code, such as `third_party`.
+	VendoredDirectory,
+	/// `linguist-vendored` in `.gitattributes`.
+	VendoredAttribute,
+	/// `linguist-documentation` in `.gitattributes`.
+	Documentation,
+}
+
+impl SkipReason {
+	/// What the reason is, as a heading.
+	#[must_use]
+	pub const fn describe(self) -> &'static str {
+		match self {
+			Self::GeneratedName => "Generated, by name",
+			Self::GeneratedHeader => "Generated, by header",
+			Self::Minified => "Minified",
+			Self::GeneratedAttribute => "Generated, marked linguist-generated",
+			Self::VendoredDirectory => "Vendored, in a vendored directory",
+			Self::VendoredAttribute => "Vendored, marked linguist-vendored",
+			Self::Documentation => "Documentation, marked linguist-documentation",
+		}
+	}
+
+	/// The flags that count the files left out for this reason.
+	#[must_use]
+	pub const fn counted_with(self) -> &'static [&'static str] {
+		match self {
+			Self::GeneratedName | Self::GeneratedHeader | Self::Minified => &["--include-generated"],
+			Self::GeneratedAttribute => &["--include-generated", "--no-gitattributes"],
+			Self::VendoredDirectory => &["--include-vendored"],
+			Self::VendoredAttribute => &["--include-vendored", "--no-gitattributes"],
+			Self::Documentation => &["--no-gitattributes"],
+		}
+	}
+}
+
+/// A file left out of the counts, for `--show-skipped`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SkippedFile {
+	pub path: String,
+	pub reason: SkipReason,
+	/// Whether a vendored file is generated too, so that counting it takes `--include-generated` as well.
+	pub also_generated: bool,
+	/// The language it would count as, and its lines.
+	pub language: &'static Language,
+	pub lines: u64,
+}
+
 /// Results of a code analysis operation
 #[derive(Debug, Default)]
 pub struct AnalysisResults {
@@ -228,6 +288,8 @@ pub struct AnalysisResults {
 	total_size: u64,
 	skipped_entries: u64,
 	language_stats: Vec<LanguageStats>,
+	/// Files left out of the counts, kept only for `--show-skipped`.
+	skipped_files: Vec<SkippedFile>,
 }
 
 impl AnalysisResults {
@@ -247,7 +309,19 @@ impl AnalysisResults {
 		self.language_stats[language.index].add_file(counts, size, path);
 	}
 
+	/// Record a file left out of the counts, for `--show-skipped`.
+	pub(crate) fn add_skipped(&mut self, file: SkippedFile) {
+		self.skipped_files.push(file);
+	}
+
+	/// The files left out of the counts, when `--show-skipped` asked for them, in no particular order.
+	#[must_use]
+	pub fn skipped_files(&self) -> &[SkippedFile] {
+		&self.skipped_files
+	}
+
 	pub(crate) fn merge(&mut self, other: Self) {
+		self.skipped_files.extend(other.skipped_files);
 		self.total_files += other.total_files;
 		self.counts.merge(&other.counts);
 		self.total_size += other.total_size;
