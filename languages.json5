@@ -1629,7 +1629,7 @@
 		strings: ["\""],
 	},
 	"Idris": {
-		file_patterns: ["*.idr"],
+		file_patterns: ["*.idr", "*.ipkg"],
 		// `|||` opens a documentation comment.
 		line_comments: ["--", "|||"],
 		block_comments: [["{-", "-}"]],
@@ -2214,7 +2214,7 @@
 		strings: ["\""],
 	},
 	"Makefile": {
-		file_patterns: ["*.mak", "*.make", "*.mk", "*.mkfile", "BSDmakefile", "GNUmakefile", "Kbuild", "Makefile", "Makefile.boot", "Makefile.frag", "Makefile.in", "Makefile.inc", "Makefile.wat", "makefile", "makefile.bcc", "makefile.gcc", "makefile.sco", "makefile.unx", "makefile.vc", "mkfile", "*.inc", "*.d", "Gnumakefile", "Makefile.pc", "OCamlMakefile"],
+		file_patterns: ["*.mak", "*.make", "*.mk", "*.mkfile", "BSDmakefile", "GNUmakefile", "Kbuild", "Makefile", "Makefile.boot", "Makefile.frag", "Makefile.in", "Makefile.inc", "Makefile.wat", "makefile", "makefile.bcc", "makefile.gcc", "makefile.sco", "makefile.unx", "makefile.vc", "mkfile", "*.inc", "*.d", "Gnumakefile", "Makefile.pc", "OCamlMakefile", "*.Makefile"],
 		line_comments: ["#"],
 		shebangs: ["#!/usr/bin/make", "#!/usr/bin/env make"],
 		keywords: {words: [":=", "$(", "ifeq", "ifneq", ".PHONY", "$@"], required: "shared"},
@@ -2289,12 +2289,13 @@
 		strings: ["\""],
 	},
 	"Menhir": {
-		file_patterns: ["*.menhir"],
+		file_patterns: ["*.menhir", "*.mly"],
+		// The grammar's comments are C's, and the OCaml in its actions has OCaml's, which nest.
 		line_comments: ["//"],
 		block_comments: [["(*", "*)"], ["/*", "*/"]],
-		nested_blocks: true,
+		nested_blocks: ["(*"],
 		keywords: ["%%", "%token", "%start", "%left", "%right", "%nonassoc"],
-		strings: ["\"", {open: "'", char: true}],
+		strings: [{open: "\"", multiline: true}, {open: "'", char: true}],
 	},
 	"Mercury": {
 		file_patterns: ["*.m"],
@@ -2692,7 +2693,7 @@
 		strings: ["\"", "'"],
 	},
 	"OCaml": {
-		file_patterns: ["*.ml", "*.mli", "*.mll", "*.mly", "*.eliom", "*.eliomi", "*.ml4"],
+		file_patterns: ["*.ml", "*.mli", "*.mll", "*.eliom", "*.eliomi", "*.ml4"],
 		block_comments: [["(*", "*)"]],
 		nested_blocks: true,
 		strings: [{open: "\"", multiline: true}, {open: "'", char: true}, {open: "{|", close: "|}", escape: null, multiline: true}],
@@ -2748,6 +2749,12 @@
 		file_patterns: ["*.opal"],
 		line_comments: ["--"],
 		strings: ["\""],
+	},
+	"opam": {
+		file_patterns: ["*.opam", "opam"],
+		line_comments: ["#"],
+		block_comments: [["(*", "*)"]],
+		strings: [{open: "\"\"\"", multiline: true}, "\""],
 	},
 	"OpenCL": {
 		file_patterns: ["*.ocl", "*.cl", "*.opencl"],
@@ -3215,7 +3222,7 @@
 		strings: [{open: "\"", multiline: true}, {open: "'", multiline: true}],
 	},
 	"Racket": {
-		file_patterns: ["*.rkt", "*.rktd", "*.rktl", "*.rktm", "*.scrbl", "*.zuo"],
+		file_patterns: ["*.rkt", "*.rktd", "*.rktl", "*.rktm", "*.zuo"],
 		line_comments: [";"],
 		block_comments: [["#|", "|#"]],
 		nested_blocks: true,
@@ -3460,6 +3467,12 @@
 		block_comments: [["(*", "*)"]],
 		strings: ["\""],
 	},
+	"Scribble": {
+		file_patterns: ["*.scrbl"],
+		// Racket's documentation language, whose `@;` opens a comment, while a `;` in its prose is text.
+		line_comments: ["@;"],
+		strings: [{open: "\"", multiline: true}],
+	},
 	"SCSS": {
 		file_patterns: ["*.scss"],
 		line_comments: ["//"],
@@ -3671,7 +3684,8 @@
 		strings: ["\""],
 	},
 	"Standard ML": {
-		file_patterns: ["*.sml", "*.sig", "*.fun"],
+		// ML Basis and SML/NJ's CM files, and ML-Yacc grammars, write comments as SML does.
+		file_patterns: ["*.sml", "*.sig", "*.fun", "*.mlb", "*.cm", "*.grm"],
 		line_comments: [],
 		block_comments: [["(*", "*)"]],
 		nested_blocks: true,
@@ -3998,7 +4012,7 @@
 		strings: ["\""],
 	},
 	"Unison": {
-		file_patterns: ["*.u", "*.uu"],
+		file_patterns: ["*.u"],
 		line_comments: ["--"],
 		block_comments: [["{-", "-}"]],
 		nested_blocks: true,

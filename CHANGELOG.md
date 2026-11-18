@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added opam package files, and Scribble, Racket's documentation language, whose `@;` comments were counted as code. Menhir claims `.mly` grammars, which were OCaml with their `/* */` comments counted as code: OCaml's compiler counts 642 lines of Menhir comment. Idris package files (`.ipkg`), ML Basis, CM, and ML-Yacc files for Standard ML, and `*.Makefile` files count too, and uuencoded `.uu` files aren't taken for Unison
 - Fixed a one-line string whose opening quote ended its line running on into the next line, which turned a misread quote into miscounted lines in any language
 - Fixed C# raw strings opened with more than three quotes, like `""""`, ending at the first `"""` inside them, and Visual Basic strings that span lines, as Visual Basic 14 allows, ending with their first line. Roslyn counts 2,954 more lines of code, most of them test sources inside strings
 - Haskell's `'"'` character literal no longer opens a string

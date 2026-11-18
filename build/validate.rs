@@ -9,6 +9,19 @@ use crate::{
 	config::{LanguageConfig, NestedBlocks},
 };
 
+/// Refuse a language named twice, which parsing the file into a map would quietly keep only the last of. Languages are the entries indented once.
+pub fn check_unique_names(json: &str) -> Result<()> {
+	let mut seen = HashSet::new();
+	for line in json.lines() {
+		if let Some(name) = line.strip_prefix("\t\"").and_then(|rest| rest.split_once("\": {")).map(|(name, _)| name)
+			&& !seen.insert(name)
+		{
+			return Err(format!("Language '{name}' is defined twice").into());
+		}
+	}
+	Ok(())
+}
+
 /// Turn the parsed map into a list, checking names and enforcing alphabetical order so generated indices stay stable across edits.
 pub fn normalize_languages(entries: IndexMap<String, LanguageConfig>) -> Result<Vec<LanguageConfig>> {
 	let mut errors = Vec::new();

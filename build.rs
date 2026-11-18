@@ -16,7 +16,7 @@ use indexmap::IndexMap;
 use crate::{
 	config::LanguageConfig,
 	render::render_languages,
-	validate::{normalize_languages, validate_languages},
+	validate::{check_unique_names, normalize_languages, validate_languages},
 };
 
 type Result<T> = result::Result<T, Box<dyn Error>>;
@@ -31,6 +31,7 @@ fn main() -> Result<()> {
 	let json_content = fs::read_to_string(&json_path)?;
 	let language_map: IndexMap<String, LanguageConfig> =
 		json5::from_str(&json_content).map_err(|e| format!("Failed to parse languages.json5: {e}"))?;
+	check_unique_names(&json_content)?;
 	let languages = normalize_languages(language_map)?;
 	validate_languages(&languages)?;
 	let out_dir = env::var("OUT_DIR")?;
