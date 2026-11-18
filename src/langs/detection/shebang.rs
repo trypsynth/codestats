@@ -42,12 +42,25 @@ pub(super) fn detect_from_shebang(content: &str) -> Option<&'static Language> {
 	}
 	let normalized = normalize_shebang(trimmed);
 	// Iterating in reverse makes `max_by_key` keep the earliest language on a tie.
-	LANGUAGES
+	let language = LANGUAGES
 		.iter()
 		.rev()
 		.filter_map(|lang| shebang_match_len(&normalized, lang).map(|len| (len, lang)))
 		.max_by_key(|&(len, _)| len)
-		.map(|(_, lang)| lang)
+		.map(|(_, lang)| lang)?;
+	Some(restarted_as(content, language).unwrap_or(language))
+}
+
+/// The language a shell script restarts itself in, as Tcl scripts written for systems without `/usr/bin/env` do, under a comment the shell ends at a `\` but Tcl doesn't: `exec tclsh "$0" "$@"` in one of its first lines.
+fn restarted_as(content: &str, language: &'static Language) -> Option<&'static Language> {
+	if language.name != "Bash" {
+		return None;
+	}
+	let restarts = content.lines().take(5).any(|line| {
+		let line = line.trim_start();
+		["exec tclsh", "exec wish", "exec jimsh"].iter().any(|exec| line.starts_with(exec))
+	});
+	restarts.then(|| crate::langs::language_named("Tcl")).flatten()
 }
 
 #[cfg(test)]
@@ -73,6 +86,11 @@ mod tests {
 	#[case::interpreter_must_end("#!/usr/bin/env nodemon\nx", None)]
 	#[case::no_shebang("print('hello')\n# not a shebang", None)]
 	#[case::empty("", None)]
+	#[case::tcl_restart(
+		"#!/bin/sh\n# the next line restarts using tclsh \\\nexec tclsh \"$0\" \"$@\"\nputs hi",
+		Some("Tcl")
+	)]
+	#[case::shell_running_tclsh_later("#!/bin/sh\nset -e\necho a\necho b\necho c\nexec tclsh build.tcl", Some("Bash"))]
 	fn test_detect_from_shebang(#[case] content: &str, #[case] expected_name: Option<&str>) {
 		let result = detect_from_shebang(content);
 		assert_eq!(result.map(|l| l.name), expected_name);

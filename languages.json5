@@ -1113,6 +1113,7 @@
 		file_patterns: ["*.fs", "*.fsi", "*.fsx", "*.fsscript"],
 		line_comments: ["//"],
 		block_comments: [["(*", "*)"]],
+		keywords: ["let", "module", "open", "namespace", "match", "member", "printfn", "|>", "fun"],
 		nested_blocks: true,
 		operators: ["(*)"],
 		strings: [
@@ -1333,9 +1334,10 @@
 		line_comments: ["//", "///", "////"],
 	},
 	"GLSL": {
-		file_patterns: ["*.glsl", "*.vert", "*.frag", "*.geom", "*.tesc", "*.tese", "*.comp", "*.rcall", "*.rmiss", "*.rchit", "*.fsh", "*.vsh", "*.fshader", "*.vshader", "*.gshader", "*.glslv", "*.frg", "*.rgen", "*.rint", "*.rahit", "*.vrx", "*.glslf", "*.geo", "*.fp", "*.vs"],
+		file_patterns: ["*.glsl", "*.vert", "*.frag", "*.geom", "*.tesc", "*.tese", "*.comp", "*.rcall", "*.rmiss", "*.rchit", "*.fsh", "*.vsh", "*.fshader", "*.vshader", "*.gshader", "*.glslv", "*.frg", "*.rgen", "*.rint", "*.rahit", "*.vrx", "*.glslf", "*.geo", "*.fp", "*.vs", "*.fs"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		keywords: {words: ["#version", "uniform", "varying", "precision", "gl_FragColor", "gl_FragCoord", "vec2", "vec3", "vec4", "sampler2D", "texture2D"], required: "shared", case_sensitive: true},
 		strings: ["\""],
 	},
 	"GML": {
@@ -1738,9 +1740,10 @@
 		block_comments: [["<%--", "--%>"], ["<!--", "-->"]],
 	},
 	"JavaScript": {
-		file_patterns: ["*.js", "*.cjs", "*.jsx", "*.jscad", "*.jsfl", "*.mjs", "*.njs", "*.sjs", "*.ssjs", "*.xsjs", "*.xsjslib", "*.es", "*.es6", "*.jake", "Jakefile", "*.jsm", "*.gjs", "*.pac", "*.jsb", "*.jslib", "*.jspre", "*._js", "*.bones"],
+		file_patterns: ["*.js", "*.cjs", "*.jsx", "*.jscad", "*.jsfl", "*.mjs", "*.njs", "*.sjs", "*.ssjs", "*.xsjs", "*.xsjslib", "*.es", "*.es6", "*.jake", "Jakefile", "*.jsm", "*.gjs", "*.pac", "*.jsb", "*.jslib", "*.jspre", "*._js", "*.bones", "*.gs"],
 		line_comments: ["//"],
 		block_comments: [["/*", "*/"]],
+		keywords: {words: ["function", "var", "const", "let", "=>", "SpreadsheetApp", "Logger.log"], case_sensitive: true},
 		shebangs: ["#!/usr/bin/node", "#!/usr/bin/env node", "#!/usr/bin/env bun"],
 		strings: ["\"", "'", {open: "`", multiline: true, interpolation: "${"}],
 		regex_literals: true,
@@ -3036,6 +3039,11 @@
 	"Procfile": {
 		file_patterns: ["Procfile"],
 		line_comments: ["#"],
+	},
+	"ProGuard": {
+		file_patterns: ["proguard-rules.pro", "proguard-project.txt", "proguard.cfg", "*.pro"],
+		line_comments: ["#"],
+		keywords: {words: ["-keep", "-keepclassmembers", "-keepattributes", "-keepnames", "-dontwarn", "-dontobfuscate", "-assumenosideeffects"], required: "shared"},
 	},
 	"Prolog": {
 		file_patterns: ["*.pro", "*.P", "*.prolog", "*.yap", "*.pl"],
