@@ -329,14 +329,15 @@ codestats counts files on several threads, each keeping its own totals, and comb
 
 Every change is checked in CI against [LineJudge](https://github.com/loc-conformance/linejudge), a collection of tricky files: comment markers in strings, raw strings, heredocs, languages embedded in other languages, and more. LineJudge checks codestats against the counting rules declared in [`.linejudge`](.linejudge).
 
-Each tool is judged against its own declared rules, so a failure means that the tool breaks its own rules. Results with LineJudge 0.3.0:
+Each tool is judged against its own declared rules, so a failure means that the tool breaks its own rules. Results with LineJudge 0.4.0, using each tool's default rules:
 
-| Tool | Cases that agree, out of 95 |
+| Tool | Cases that agree, out of 107 |
 | --- | ---: |
-| codestats | **95** |
-| mezura 3.4.0 | 89 |
-| scc 4.1.0 | 71 |
-| tokei 15.0.0 | 45 |
+| codestats 1.1.2 | **107** |
+| mezura 3.5.0 | **107** |
+| scc 4.1.0 | 77 |
+| cloc 2.10 | 53 |
+| tokei 15.0.0 | 50 |
 
 codestats' answers are recorded in [`.linejudge/recorded/codestats.toml`](.linejudge/recorded/codestats.toml), and CI fails if any of them changes.
 
