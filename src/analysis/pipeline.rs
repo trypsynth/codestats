@@ -6,7 +6,7 @@ use super::{
 	attributes::{Attributes, DirCache},
 	encoding::{Encoding, decode_bytes, detect_encoding, is_probably_binary},
 	file_io::{self, FileSource},
-	generated::{has_generated_header, is_generated_name, is_visual_studio_project},
+	generated::{has_generated_header, is_generated_name, is_minified, is_visual_studio_project},
 	line_counter,
 	stats::{AnalysisResults, FileCounts},
 };
@@ -137,7 +137,11 @@ fn count_contents(
 	let detected = detection.language?;
 	let language =
 		xml_document_instead_of(detected, body, encoding.encoding).filter(|&language| languages.allows(language))?;
-	Some((language, line_counter::count_lines(language, encoding, bytes)))
+	let counts = line_counter::count_lines(language, encoding, bytes);
+	if !languages.include_generated && is_minified(language.name, bytes.len() as u64, counts.lines.total) {
+		return None;
+	}
+	Some((language, counts))
 }
 
 /// XML, for a file named like code that opens with an XML declaration (Qt's `.ts` translations aren't TypeScript), or else

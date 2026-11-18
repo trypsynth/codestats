@@ -88,6 +88,14 @@ pub fn is_generated_name(name: &str) -> bool {
 	}
 }
 
+/// How long a minified file's lines are on average, at least: hand-written JavaScript and CSS average under 350 bytes a line even in their longest files, and minified ones over 1,000.
+const MINIFIED_LINE_BYTES: u64 = 500;
+
+/// Whether a JavaScript or CSS file's size and line count say it's minified: over 4 KB, in lines averaging 500 bytes or more. Names without `.min.` (`dist/bundle.js`) are minified too.
+pub fn is_minified(language: &str, bytes: u64, lines: u64) -> bool {
+	matches!(language, "JavaScript" | "CSS") && bytes > 4096 && bytes >= lines.saturating_mul(MINIFIED_LINE_BYTES)
+}
+
 /// The namespace of the project files Visual Studio writes. SDK-style projects, which people write by hand, leave it out.
 const VISUAL_STUDIO_NAMESPACE: &[u8] = b"schemas.microsoft.com/developer/msbuild/2003";
 
@@ -281,7 +289,18 @@ fn find_ignoring_case(haystack: &[u8], needle: &[u8]) -> Option<usize> {
 mod tests {
 	use rstest::rstest;
 
-	use super::{has_generated_header, is_generated_name, is_visual_studio_project};
+	use super::{has_generated_header, is_generated_name, is_minified, is_visual_studio_project};
+
+	#[rstest]
+	#[case::bundle("JavaScript", 160_000, 1, true)]
+	#[case::a_few_long_lines("CSS", 135_000, 4, true)]
+	#[case::small("JavaScript", 3_000, 1, false)]
+	#[case::long_but_written_by_hand("JavaScript", 3_700, 11, false)]
+	#[case::not_web("JSON", 300_000, 1, false)]
+	#[case::empty("JavaScript", 0, 0, false)]
+	fn minified_files(#[case] language: &str, #[case] bytes: u64, #[case] lines: u64, #[case] expected: bool) {
+		assert_eq!(is_minified(language, bytes, lines), expected);
+	}
 
 	#[rstest]
 	#[case("Cargo.lock", true)]
