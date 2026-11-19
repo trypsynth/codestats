@@ -27,6 +27,7 @@ const LANGUAGE_FIELDS: &[(&str, &str)] = &[
 	("line_splices", "bool"),
 	// Line comment markers only start a comment at the start of a word.
 	("word_comments", "bool"),
+	("sequence_area", "bool"),
 	("char_prefix", "Option<u8>"),
 	// Bytes that, right after a line comment marker and any more of its last byte, make it an operator instead.
 	("operator_symbols", "&'static [u8]"),
@@ -172,6 +173,7 @@ fn render_language(output: &mut String, index: usize, lang: &LanguageConfig) {
 	write_field(output, "regex_literals", lang.regex_literals);
 	write_field(output, "line_splices", lang.line_splices);
 	write_field(output, "word_comments", lang.word_comments);
+	write_field(output, "sequence_area", lang.sequence_area);
 	write_field(
 		output,
 		"char_prefix",

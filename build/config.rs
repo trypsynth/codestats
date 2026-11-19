@@ -36,6 +36,9 @@ pub struct LanguageConfig {
 	pub line_splices: bool,
 	#[serde(default)]
 	pub word_comments: bool,
+	/// Fixed-format COBOL's sequence area: a line whose first character past the sequence numbers in columns 1 to 6 is a `*` or `/` in its indicator column is a comment.
+	#[serde(default)]
+	pub sequence_area: bool,
 	/// A character that makes the one after it a literal, so a quote or comment marker there opens nothing.
 	#[serde(default)]
 	pub char_prefix: String,

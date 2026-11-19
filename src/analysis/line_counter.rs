@@ -50,7 +50,7 @@ fn count_text(text: &str, language: &Language, counts: &mut LineCounts, classifi
 	let (can_sweep, region_starts) = language.embedding.map_or((true, None), |embedding| {
 		region_starts(embedding).map_or((false, None), |starts| (true, Some(starts)))
 	});
-	let can_sweep = can_sweep && language.column_one_comments.is_empty();
+	let can_sweep = can_sweep && language.column_one_comments.is_empty() && !language.sequence_area;
 	// A line starting with a marker isn't always a comment where the preprocessor reads it (`# define` in assembly).
 	let plain_comments = language.embedding.is_none() && !language.line_comments.is_empty() && !language.c_preprocessor;
 	let quick = matchers

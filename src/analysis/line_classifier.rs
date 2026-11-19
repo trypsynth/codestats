@@ -361,6 +361,9 @@ pub fn classify_line(line: &str, lang: &Language, comment_state: &mut CommentSta
 	if clear && lang.column_one_comments.iter().any(|marker| line.starts_with(marker)) {
 		return LineType::Comment;
 	}
+	if lang.sequence_area && clear && is_indicator_comment(line) {
+		return LineType::Comment;
+	}
 	let matchers = language_matchers(lang);
 	// Outside a comment or string, a line with no byte that could start one is code: every search below would come up empty.
 	if clear && !matchers.openers.any_in(trimmed.as_bytes()) {
@@ -383,6 +386,15 @@ fn is_line_block_marker(line: &str, trimmed: &str, marker: &str, lang: &Language
 	} else {
 		line.strip_prefix(marker).is_some_and(|rest| !rest.as_bytes().first().is_some_and(|&b| is_word_char(b)))
 	}
+}
+
+/// Whether a line of fixed-format COBOL is a comment: its first character past the sequence numbers, in the indicator column or before it, is a `*` or `/`. A `*` further along starts a continued expression's multiplication.
+fn is_indicator_comment(line: &str) -> bool {
+	let bytes = line.as_bytes();
+	let Some(at) = bytes.iter().take(7).position(|&b| !b.is_ascii_digit() && b != b' ') else {
+		return false;
+	};
+	matches!(bytes[at], b'*' | b'/') && !bytes[at + 1..].starts_with(b">")
 }
 
 /// Whether `line` starts with whitespace that trimming took off, leaving `trimmed`.
@@ -754,6 +766,7 @@ mod tests {
 	#[case::smalltalk_quote_in_string("Smalltalk", &["s := 'say \"hi'.", "x := 1.", "\"c\""], &[LineType::Code, LineType::Code, LineType::Comment])]
 	#[case::one_line_string_opened_at_the_end("Python", &["x = \"", "# c", "y = 1"], &[LineType::Code, LineType::Comment, LineType::Code])]
 	#[case::one_line_string_continued_by_a_backslash("C", &["s = \"a\\", "// in the string\";", "// c"], &[LineType::Code, LineType::Code, LineType::Comment])]
+	#[case::cobol_indicator_column("COBOL", &["000200* A COMMENT", "      / EJECT", "           COMPUTE A = B", "             * C.", "      *> free", "           DISPLAY \"*> x\"."], &[LineType::Comment, LineType::Comment, LineType::Code, LineType::Code, LineType::Comment, LineType::Code])]
 	#[case::smalltalk_quote_character("Smalltalk", &["\t^ self = $\"", "foo", "\"c\""], &[LineType::Code, LineType::Code, LineType::Comment])]
 	#[case::erlang_characters_and_doc_strings("Erlang", &["-doc \"\"\"", "% in a string", "\"\"\".", "g($%) -> p.", "% c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
 	#[case::elixir_quote_character("Elixir", &["x = ?\"", "# c"], &[LineType::Code, LineType::Comment])]

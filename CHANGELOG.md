@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Fixed fixed-format COBOL's comment lines with sequence numbers in columns 1 to 6, like `000200* A COMMENT`, and `/` page-eject lines, being counted as code, and a continued line starting with `* C.` being counted as comment. AWS's CardDemo counts 651 more lines of comment. COBOL has strings, so `*>` inside one opens nothing
 - Liquid's `{%- comment -%}` tags, LiquidDoc's `{% doc %}` blocks, and `{% # %}` comments count as comment: Shopify's Dawn theme counts 381 more lines of comment. ColdFusion has strings, so `"/stubs/**"` doesn't open a comment
 - Added opam package files, and Scribble, Racket's documentation language, whose `@;` comments were counted as code. Menhir claims `.mly` grammars, which were OCaml with their `/* */` comments counted as code: OCaml's compiler counts 642 lines of Menhir comment. Idris package files (`.ipkg`), ML Basis, CM, and ML-Yacc files for Standard ML, and `*.Makefile` files count too, and uuencoded `.uu` files aren't taken for Unison
 - Fixed a one-line string whose opening quote ended its line running on into the next line, which turned a misread quote into miscounted lines in any language

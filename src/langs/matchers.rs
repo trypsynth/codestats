@@ -138,7 +138,7 @@ pub struct QuickLines {
 
 impl QuickLines {
 	fn new(lang: &Language, tokens: &[(&'static str, Token)]) -> Option<Self> {
-		if !lang.line_block_comments.is_empty() || !lang.column_one_comments.is_empty() {
+		if !lang.line_block_comments.is_empty() || !lang.column_one_comments.is_empty() || lang.sequence_area {
 			return None;
 		}
 		let mut strings = vec![None; 256];
