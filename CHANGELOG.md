@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Pascal's compiler directives, like `{$IFDEF UNIX}` and `(*$I defs.inc*)`, count as code, as C's `#ifdef` does, instead of as comment. Free Pascal's source counts 307,903 more lines of code
 - Fixed a triple-quoted string that opens the line after an open bracket, a comma, or a backslash, like an argument written below `render(`, being counted as a docstring. cpython counts 1,910 more lines of code, Julia 2,033, and Jinja 686
 - Fixed a `<<` inside a Ruby regex, like `/\A<<next>>\z/`, starting a heredoc that made the rest of the file code. Lua's long brackets of any level up to `[====[` and D's `q"(...)"` strings are read too
 - Fixed fixed-format COBOL's comment lines with sequence numbers in columns 1 to 6, like `000200* A COMMENT`, and `/` page-eject lines, being counted as code, and a continued line starting with `* C.` being counted as comment. AWS's CardDemo counts 651 more lines of comment. COBOL has strings, so `*>` inside one opens nothing

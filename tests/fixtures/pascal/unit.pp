@@ -1,4 +1,4 @@
-// expect: lang="Pascal" total=21 code=12 comment=3 blank=6 shebang=0
+// expect: lang="Pascal" total=21 code=13 comment=2 blank=6 shebang=0
 unit MathUtils;
 
 {$mode objfpc}

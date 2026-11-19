@@ -668,6 +668,7 @@ mod tests {
 	#[rstest]
 	#[case::fsharp_multiplication("F#", &["let p = List.fold (*) 1 xs", "let x = 2"], &[LineType::Code, LineType::Code])]
 	#[case::fsharp_comment("F#", &["let p = 1 (* a", "comment *)"], &[LineType::Code, LineType::Comment])]
+	#[case::pascal_directives("Pascal", &["{$IFDEF UNIX}", "(*$I defs.inc*)", "{ a comment }", "(* another *)", "{$ENDIF} // done"], &[LineType::Code, LineType::Code, LineType::Comment, LineType::Comment, LineType::Code])]
 	#[case::haskell_arrow("Haskell", &["f = a --> b {- a", "comment -}"], &[LineType::Code, LineType::Comment])]
 	#[case::swift_quote_in_extended_string("Swift", &["let s = #\"say \"hi\"#; /* a", "comment */"], &[LineType::Code, LineType::Comment])]
 	#[case::shell_length_before_heredoc("Bash", &["echo ${#files[@]} <<'EOF'", "# data", "EOF"], &[LineType::Code, LineType::Code, LineType::Code])]

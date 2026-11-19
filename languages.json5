@@ -19,7 +19,7 @@
 // sequence_area: Fixed-format COBOL's columns 1 to 6 hold sequence numbers, and a `*` or `/` as the first character after them, in the indicator column, makes the line a comment.
 // word_comments: Line comment markers only start a comment at the start of a word, as `#` does in shells, so `${#files}` and `a#b` are code.
 // operator_symbols: Symbols that make a line comment marker part of an operator when they follow it and any more of its last character, as `-->` is an operator in Haskell.
-// operators: Operators that start with a block comment's opener, which are code, as `(*)` is F#'s multiplication.
+// operators: Operators that start with a block comment's opener, which are code, as `(*)` is F#'s multiplication, or other code written that way, as Pascal's compiler directives start `{$`.
 // heredoc: The language's heredocs, whose body runs from the next line to the line holding just the terminator named after the opener: "shell", "perl", "ruby", or "php".
 // embedding: Regions written in other languages, counted by those languages' rules: "html" for `<script>` and `<style>` elements, "astro" for those plus a TypeScript frontmatter, "markdown" for fenced code blocks and YAML or TOML frontmatter, "asciidoc" for source blocks and fenced code blocks, "org" for source blocks, "restructuredtext" for code block directives, "php" for the HTML outside PHP tags, "literate" for a literate program, whose lines starting with `>` and lines between `\begin{code}` and `\end{code}` are code in the language named after "Literate ", and whose prose counts as comment, "notebook" for a Jupyter notebook, whose code cells are code in the kernel's language, whose Markdown and raw cells count as comment, and whose outputs aren't counted, or "cram" for a cram test, whose lines indented two spaces and starting `$ ` or `> ` are Bash commands, whose other indented lines are expected output, which counts as code, and whose unindented prose counts as comment.
 {
@@ -2874,6 +2874,8 @@
 		// Units and include files of declarations alone have no `begin`, but they have these.
 		keywords: {words: [":=", "end;", "begin", "procedure", "program", "unit", "interface", "implementation", "uses", "end.", "{$", "cdecl", "stdcall", "external", "record", "then"], required: "shared"},
 		strings: [{open: "'", escape: "'"}],
+		// Compiler directives, like `{$IFDEF X}` and `(*$I file.inc*)`, are code, as C's `#ifdef` is.
+		operators: ["{$", "(*$"],
 	},
 	"Pawn": {
 		file_patterns: ["*.pwn", "*.pawn", "*.sma"],
