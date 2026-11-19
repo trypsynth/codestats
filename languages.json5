@@ -239,7 +239,8 @@
 		// In the first column, `#` is a comment or a directive, and ARM's `@` a comment, but later on a line they're ARM's immediates and GAS's `@function`.
 		column_one_comments: ["#", "@"],
 		block_comments: [["/*", "*/"]],
-		keywords: {words: ["%macro", "%endmacro", "%define", "%include", "%ifdef", "section ."], required: "shared"},
+		// Mnemonics and data directives that prose doesn't use, for include files of plain instructions.
+		keywords: {words: ["%macro", "%endmacro", "%define", "%include", "%ifdef", "section .", "mov", "movzx", "jmp", "jne", "jnz", "lea", "equ", "resb", "resw", "resd", "resq", " db ", "\tdb\t", "\tdb ", " dw ", "\tdw\t", "\tdw "], required: "shared"},
 		c_preprocessor: true,
 		strings: ["\"", {open: "'", char: true}],
 	},
@@ -2872,7 +2873,8 @@
 		line_comments: ["//"],
 		block_comments: [["(*", "*)"], ["{", "}"]],
 		// Units and include files of declarations alone have no `begin`, but they have these.
-		keywords: {words: [":=", "end;", "begin", "procedure", "program", "unit", "interface", "implementation", "uses", "end.", "{$", "cdecl", "stdcall", "external", "record", "then"], required: "shared"},
+		// `then` is left out: Tcl's doctools and other prose in `.inc` files write it as English.
+		keywords: {words: [":=", "end;", "begin", "procedure", "program", "unit", "interface", "implementation", "uses", "end.", "{$", "cdecl", "stdcall", "external", "record", "asm"], required: "shared"},
 		strings: [{open: "'", escape: "'"}],
 		// Compiler directives, like `{$IFDEF X}` and `(*$I file.inc*)`, are code, as C's `#ifdef` is.
 		operators: ["{$", "(*$"],
@@ -3146,7 +3148,7 @@
 		line_comments: ["#"],
 		block_comments: [["/*", "*/"]],
 		// Case matters, so Pascal's `{$DEFINE}` isn't Puppet's `define`.
-		keywords: {words: ["class", "define", "node", "package", "service", "file", "exec", "=>"], case_sensitive: true},
+		keywords: {words: ["class", "define", "node", "package", "service", "file", "exec", "=>", "ensure", "$facts", "Optional[", "Variant[", "Struct[", "Boolean $"], case_sensitive: true},
 		strings: [{open: "\"", multiline: true, interpolation: "${"}, {open: "'", multiline: true}],
 	},
 	"PureBasic": {
