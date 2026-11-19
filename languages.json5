@@ -879,7 +879,7 @@
 		shebangs: ["#!/usr/bin/env rdmd", "#!/usr/bin/rdmd"],
 		// `.d` is also the dependency files compilers write for Make, which are lists of paths, so these keywords carry punctuation that paths don't. Doc comments count, since some modules open with pages of them.
 		keywords: {words: ["module ", "import ", "void ", "return ", "auto ", "struct ", "class ", "enum ", "alias ", "immutable ", "writeln(", ";", "@safe", "@nogc", "/**", "/++", "///"], required: "shared"},
-		strings: [{open: "\"", multiline: true}, {open: "'", char: true}, {open: "`", escape: null, multiline: true}, {open: "r\"", close: "\"", escape: null, multiline: true}],
+		strings: [{open: "\"", multiline: true}, {open: "'", char: true}, {open: "`", escape: null, multiline: true}, {open: "r\"", close: "\"", escape: null, multiline: true}, {open: "q\"", close: "\"", escape: null, multiline: true, delimited: true}],
 	},
 	"D2": {
 		file_patterns: ["*.d2"],
@@ -2179,14 +2179,14 @@
 	"Lua": {
 		file_patterns: ["*.lua", "*.wlua", "*.rockspec", ".luacheckrc", "*.nse", "*.rbxs", "*.pd_lua", "*.p8"],
 		line_comments: ["--"],
-		block_comments: [["--[[", "]]"], ["--[=[", "]=]"], ["--[==[", "]==]"]],
+		block_comments: [["--[[", "]]"], ["--[=[", "]=]"], ["--[==[", "]==]"], ["--[===[", "]===]"], ["--[====[", "]====]"]],
 		shebangs: ["#!/usr/bin/lua", "#!/usr/bin/env lua"],
-		strings: ["\"", "'", {open: "[[", close: "]]", escape: null, multiline: true}, {open: "[=[", close: "]=]", escape: null, multiline: true}, {open: "[==[", close: "]==]", escape: null, multiline: true}],
+		strings: ["\"", "'", {open: "[[", close: "]]", escape: null, multiline: true}, {open: "[=[", close: "]=]", escape: null, multiline: true}, {open: "[==[", close: "]==]", escape: null, multiline: true}, {open: "[===[", close: "]===]", escape: null, multiline: true}, {open: "[====[", close: "]====]", escape: null, multiline: true}],
 	},
 	"Luau": {
 		file_patterns: ["*.luau"],
 		line_comments: ["--"],
-		block_comments: [["--[[", "]]"], ["--[=[", "]=]"], ["--[==[", "]==]"]],
+		block_comments: [["--[[", "]]"], ["--[=[", "]=]"], ["--[==[", "]==]"], ["--[===[", "]===]"], ["--[====[", "]====]"]],
 		shebangs: ["#!/usr/bin/env luau"],
 		strings: ["\"", "'", {open: "[[", close: "]]", escape: null, multiline: true}, {open: "[=[", close: "]=]", escape: null, multiline: true}, {open: "[==[", close: "]==]", escape: null, multiline: true}, {open: "`"}],
 	},
@@ -3398,7 +3398,9 @@
 		line_comments: ["#"],
 		block_comments: [["=begin", "=end"]],
 		shebangs: ["#!/usr/bin/ruby", "#!/usr/bin/env ruby"],
+		// A regex's `<<` or quotes open no heredoc or string. Strings can span lines, but `%r{}` and `/x` regexes that span lines aren't read, and a quote in one would run on.
 		strings: [{open: "\"", interpolation: "#{"}, "'"],
+		regex_literals: true,
 		heredoc: "ruby",
 	},
 	"Rust": {
@@ -3841,7 +3843,7 @@
 		line_comments: ["--"],
 		block_comments: [["--[[", "]]"]],
 		keywords: ["local", "global", "record", "enum", "type", "function", "end", "require"],
-		strings: ["\"", "'", {open: "[[", close: "]]", escape: null, multiline: true}, {open: "[=[", close: "]=]", escape: null, multiline: true}, {open: "[==[", close: "]==]", escape: null, multiline: true}],
+		strings: ["\"", "'", {open: "[[", close: "]]", escape: null, multiline: true}, {open: "[=[", close: "]=]", escape: null, multiline: true}, {open: "[==[", close: "]==]", escape: null, multiline: true}, {open: "[===[", close: "]===]", escape: null, multiline: true}, {open: "[====[", close: "]====]", escape: null, multiline: true}],
 	},
 	"Templ": {
 		file_patterns: ["*.templ"],
@@ -3858,7 +3860,7 @@
 		line_comments: ["--"],
 		block_comments: [["--[[", "]]"]],
 		keywords: {words: ["terra", "struct", "quote", "escape", "import"], required: "shared"},
-		strings: ["\"", "'", {open: "[[", close: "]]", escape: null, multiline: true}, {open: "[=[", close: "]=]", escape: null, multiline: true}, {open: "[==[", close: "]==]", escape: null, multiline: true}],
+		strings: ["\"", "'", {open: "[[", close: "]]", escape: null, multiline: true}, {open: "[=[", close: "]=]", escape: null, multiline: true}, {open: "[==[", close: "]==]", escape: null, multiline: true}, {open: "[===[", close: "]===]", escape: null, multiline: true}, {open: "[====[", close: "]====]", escape: null, multiline: true}],
 	},
 	"Terraform": {
 		file_patterns: ["*.tf", "*.tfvars", "*.tf.json", "*.tfvars.json", "*.tofu"],
