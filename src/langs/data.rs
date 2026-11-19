@@ -45,6 +45,8 @@ pub enum Heredoc {
 	Ruby,
 	/// `<<<EOT`, `<<< "EOT"`: spaces allowed, as `<<<` is nothing else.
 	Php,
+	/// `@(END)`, `@("END":json/L)`, ended by a line like `| - END`.
+	Puppet,
 }
 
 impl Heredoc {
@@ -52,6 +54,7 @@ impl Heredoc {
 	pub const fn opener(self) -> &'static str {
 		match self {
 			Self::Php => "<<<",
+			Self::Puppet => "@(",
 			Self::Shell | Self::Perl | Self::Ruby => "<<",
 		}
 	}

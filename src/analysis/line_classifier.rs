@@ -55,6 +55,8 @@ struct HeredocEnd {
 	terminator: Box<str>,
 	/// Whether that word may be indented (`<<~EOF` and `<<-EOF`, and any heredoc in PHP), or must start its line.
 	indented: bool,
+	/// Whether a `|` margin and a `-` may come before the word, as Puppet writes `| - END`.
+	marked: bool,
 }
 
 /// Tracks block comment state across lines: how deeply nested we are, and which delimiter pair opened the comment.
@@ -777,6 +779,9 @@ mod tests {
 	#[case::d_block_opener_in_string("D", &["auto x = \"/*\";", "int y = 1;", "auto z = \"*/\";"], &[LineType::Code, LineType::Code, LineType::Code])]
 	#[case::solidity_single_quoted("Solidity", &["string a = '/*';", "uint b = 1;", "string c = '*/';"], &[LineType::Code, LineType::Code, LineType::Code])]
 	#[case::terraform_heredoc("Terraform", &["policy = <<-EOT", "  # not a comment", "  EOT", "# c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
+	#[case::puppet_heredoc("Puppet", &["$s = @(END)", "# not a comment", "END", "# c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
+	#[case::puppet_heredoc_with_margin_and_syntax("Puppet", &["  content => @(\"EOT\":json/L),", "    # data", "    | - EOT", "# c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
+	#[case::puppet_heredoc_needs_its_own_tag("Puppet", &["$s = @(END)", "ENDING", "# data", "END", "# c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
 	#[case::terraform_hole("Terraform", &["name = \"${var.a}/*\"", "count = 1"], &[LineType::Code, LineType::Code])]
 	#[case::pascal_doubled_quote("Pascal", &["s := 'it''s {';", "x := 1;", "{ c }"], &[LineType::Code, LineType::Code, LineType::Comment])]
 	#[case::vhdl_attribute_is_not_a_char("VHDL", &["for i in a'range loop -- c", "s <= \"/*\";", "x <= '1';"], &[LineType::Code, LineType::Code, LineType::Code])]

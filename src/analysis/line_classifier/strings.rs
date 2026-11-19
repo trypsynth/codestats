@@ -203,13 +203,30 @@ fn hole_bracket(
 /// Where a line in a heredoc's body ends the heredoc: past its terminator, if the line starts with it, indented only where the heredoc allows it. Otherwise the line is all string.
 fn heredoc_end(line: &str, indented: bool, state: &mut CommentState) -> Option<usize> {
 	let heredoc = state.heredoc.as_ref()?;
-	let rest = line.strip_prefix(&*heredoc.terminator).filter(|_| heredoc.indented || !indented)?;
+	let unmarked = if heredoc.marked { strip_puppet_marks(line) } else { line };
+	let rest = unmarked.strip_prefix(&*heredoc.terminator).filter(|_| heredoc.indented || !indented)?;
 	if rest.as_bytes().first().is_some_and(|&b| is_word_char(b)) {
 		return None;
 	}
-	let end = heredoc.terminator.len();
+	let end = line.len() - rest.len();
 	state.heredoc = None;
 	Some(end)
+}
+
+/// A Puppet heredoc's end line without the `|` that marks its margin and the `-` that trims its last line break, either of which may come before the terminator.
+fn strip_puppet_marks(line: &str) -> &str {
+	let line = line.strip_prefix('|').map_or(line, |rest| rest.trim_start_matches([' ', '\t']));
+	line.strip_prefix('-').map_or(line, |rest| rest.trim_start_matches([' ', '\t']))
+}
+
+/// For a Puppet heredoc whose `@(` ends at `end`, what ends it: the tag before the `)`, without the quotes that make it interpolate or the syntax and flags after a `:` or `/`.
+fn puppet_heredoc(line: &[u8], end: usize) -> Option<HeredocEnd> {
+	let len = line[end..].iter().take(80).position(|&b| b == b')')?;
+	let inner = &line[end..end + len];
+	let tag = inner.split(|&b| b == b':' || b == b'/').next().unwrap_or_default().trim_ascii();
+	let tag = tag.strip_prefix(b"\"").and_then(|tag| tag.strip_suffix(b"\"")).unwrap_or(tag);
+	let valid = !tag.is_empty() && tag.iter().all(|&b| b.is_ascii_alphanumeric() || matches!(b, b'_' | b'-' | b' '));
+	valid.then(|| HeredocEnd { terminator: String::from_utf8_lossy(tag).into(), indented: true, marked: true })
 }
 
 /// Where the open string `index` ends on `line` after `from`: the position past its closer, or past the opener of an interpolation hole, with whether it's a hole.
@@ -298,6 +315,9 @@ fn find_regex_end(line: &[u8], start: usize) -> Option<usize> {
 
 /// The terminator of a heredoc whose opener (`<<`) spans `start..end`: `EOF` in `<<EOF`, `<<-EOF`, `<<~EOF`, `<<'EOF'` or `<<\EOF`, and in `<< EOF` where `syntax` allows the space. `None` when it's a shift or append (`1 << n`, `x << y`) or a here-string (`<<<`).
 fn heredoc_terminator(line: &[u8], start: usize, end: usize, syntax: Heredoc) -> Option<HeredocEnd> {
+	if syntax == Heredoc::Puppet {
+		return puppet_heredoc(line, end);
+	}
 	let before = line[..start].trim_ascii_end();
 	let follows_value = before.last().is_some_and(|&b| b.is_ascii_digit() || matches!(b, b')' | b']'));
 	// Ruby's `class <<self` opens the singleton class, written with or without a space.
@@ -324,7 +344,7 @@ fn heredoc_terminator(line: &[u8], start: usize, end: usize, syntax: Heredoc) ->
 	};
 	let spaced_ok = spaces == 0
 		|| match syntax {
-			Heredoc::Php => true,
+			Heredoc::Php | Heredoc::Puppet => true,
 			Heredoc::Perl => quoted,
 			Heredoc::Ruby => false,
 			// `(( x << y ))` shifts, so a bare word after a space only counts in capitals, as terminators are usually written.
@@ -334,8 +354,11 @@ fn heredoc_terminator(line: &[u8], start: usize, end: usize, syntax: Heredoc) ->
 						&& terminator.iter().any(u8::is_ascii_uppercase))
 			}
 		};
-	(spaced_ok && !terminator.is_empty())
-		.then(|| HeredocEnd { terminator: String::from_utf8_lossy(terminator).into(), indented })
+	(spaced_ok && !terminator.is_empty()).then(|| HeredocEnd {
+		terminator: String::from_utf8_lossy(terminator).into(),
+		indented,
+		marked: false,
+	})
 }
 
 /// Where the open string closes on `line` after `from`, at the closer its writer chose (C++'s `)xy"`), forgetting that closer once it's found. Rare, so kept out of the hot loop.

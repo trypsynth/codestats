@@ -117,6 +117,7 @@ pub enum Heredoc {
 	Perl,
 	Ruby,
 	Php,
+	Puppet,
 }
 
 /// How a language embeds others; mirrors `Embedding` in `src/langs/data.rs`.
