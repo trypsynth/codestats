@@ -140,7 +140,7 @@ pub(super) fn classify_with_strings(
 					let char_mismatch = (delimiter.char_literal && !looks_like_char(bytes, end))
 						|| (delimiter.attribute && bytes[..start].trim_ascii_end().last() != Some(&b'='));
 					// A docstring is a string that starts its line; after code (`x = """`) it's an ordinary string.
-					let doc_string = delimiter.doc && !has_code;
+					let doc_string = delimiter.doc && !has_code && !state.continued;
 					has_code |= !doc_string;
 					if !escaped && !char_mismatch {
 						state.string = Some(i);

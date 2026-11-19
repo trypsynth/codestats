@@ -66,6 +66,8 @@ pub struct CommentState {
 	string: Option<usize>,
 	/// Whether the open string is a docstring, whose contents count as comment.
 	doc_string: bool,
+	/// Whether the last line of code ended with an open bracket, a comma, or a backslash, so that a string starting the next line is an argument or a value, not a docstring.
+	pub(super) continued: bool,
 	/// The interpolation holes the next line is in, innermost last, as in JavaScript's `` `a ${f(`b ${c}`)} d` ``. Inside one, code is lexed until the bracket that closes it.
 	holes: Vec<Hole>,
 	/// What closes the open string when its writer chose it (`)xy"` for C++'s `R"xy(`), rather than the language.
@@ -322,6 +324,21 @@ pub(super) fn is_plain_line_comment(line: &str, lang: &Language) -> bool {
 /// Classify a line as code, comment, blank, or shebang.
 #[inline]
 pub fn classify_line(line: &str, lang: &Language, comment_state: &mut CommentState, is_first_line: bool) -> LineType {
+	let line_type = classify_any_line(line, lang, comment_state, is_first_line);
+	if lang.doc_strings && line_type == LineType::Code {
+		comment_state.continued = ends_continued(line.as_bytes()) == Some(true);
+	}
+	line_type
+}
+
+/// Whether text ending in these bytes carries on to the next line, which a docstring can't start: an open bracket, a comma, or a backslash. `None` if the text is all whitespace.
+#[inline]
+pub(super) fn ends_continued(bytes: &[u8]) -> Option<bool> {
+	bytes.iter().rev().find(|byte| !byte.is_ascii_whitespace()).map(|byte| b"([{,\\".contains(byte))
+}
+
+#[inline]
+fn classify_any_line(line: &str, lang: &Language, comment_state: &mut CommentState, is_first_line: bool) -> LineType {
 	let trimmed = trim_ascii(line);
 	// Outside every comment and string, the common case, which the checks below need to know.
 	let clear = comment_state.is_clear();
@@ -767,6 +784,7 @@ mod tests {
 	#[case::one_line_string_opened_at_the_end("Python", &["x = \"", "# c", "y = 1"], &[LineType::Code, LineType::Comment, LineType::Code])]
 	#[case::one_line_string_continued_by_a_backslash("C", &["s = \"a\\", "// in the string\";", "// c"], &[LineType::Code, LineType::Code, LineType::Comment])]
 	#[case::cobol_indicator_column("COBOL", &["000200* A COMMENT", "      / EJECT", "           COMPUTE A = B", "             * C.", "      *> free", "           DISPLAY \"*> x\"."], &[LineType::Comment, LineType::Comment, LineType::Code, LineType::Code, LineType::Comment, LineType::Code])]
+	#[case::python_string_argument_is_no_docstring("Python", &["def f():", "    \"\"\"Doc.\"\"\"", "    t = render(", "        \"\"\"a", "        b\"\"\"", "    )"], &[LineType::Code, LineType::Comment, LineType::Code, LineType::Code, LineType::Code, LineType::Code])]
 	#[case::smalltalk_quote_character("Smalltalk", &["\t^ self = $\"", "foo", "\"c\""], &[LineType::Code, LineType::Code, LineType::Comment])]
 	#[case::erlang_characters_and_doc_strings("Erlang", &["-doc \"\"\"", "% in a string", "\"\"\".", "g($%) -> p.", "% c"], &[LineType::Code, LineType::Code, LineType::Code, LineType::Code, LineType::Comment])]
 	#[case::elixir_quote_character("Elixir", &["x = ?\"", "# c"], &[LineType::Code, LineType::Comment])]

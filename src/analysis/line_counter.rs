@@ -3,7 +3,7 @@ use memchr::memchr;
 use super::{
 	embedded::{Classifier, RegionStarts, contains_pair, region_starts},
 	encoding::{self, FileEncoding, decode_bytes},
-	line_classifier::{LineType, is_blank, is_plain_line_comment},
+	line_classifier::{LineType, ends_continued, is_blank, is_plain_line_comment},
 	masks::BlockScanner,
 	notebook,
 	stats::{FileCounts, LineCounts},
@@ -63,10 +63,13 @@ fn count_text(text: &str, language: &Language, counts: &mut LineCounts, classifi
 	let openers_suit = BlockScanner::suits(openers.bytes());
 	let mut next_opener = 0;
 	let mut pos = 0;
+	// Whether the last line of code swept past without classifying carries on to the next line, which the classifier reads from the lines it classifies itself.
+	let mut swept_continued = None;
 	while pos < bytes.len() {
 		// The first line goes through the classifier, which checks it for a shebang.
 		if can_sweep && pos > 0 && classifier.is_clear() {
 			loop {
+				let swept_from = pos;
 				let at_stop = if let Some(scanner) = scanner.as_mut().filter(|_| openers_suit) {
 					let (next, at_stop) = scanner.sweep(pos, openers.bytes(), LineType::Code, counts);
 					pos = next;
@@ -74,6 +77,10 @@ fn count_text(text: &str, language: &Language, counts: &mut LineCounts, classifi
 				} else {
 					sweep_by_search(bytes, openers, region_starts, &mut next_opener, &mut pos, counts)
 				};
+				// Outside comments and strings, the lines swept are code or blank.
+				if language.doc_strings {
+					swept_continued = ends_continued(&bytes[swept_from..pos]).or(swept_continued);
+				}
 				// A line stopped at only for its strings, which all close on it, is code like the others, and the sweep carries on after it.
 				let end = line_end(bytes, pos);
 				if at_stop {
@@ -84,6 +91,9 @@ fn count_text(text: &str, language: &Language, counts: &mut LineCounts, classifi
 						continue;
 					}
 					if quick.is_some_and(|(quick, strings)| quick.is_plain_code(&bytes[pos..end], strings)) {
+						if language.doc_strings {
+							swept_continued = ends_continued(&bytes[pos..end]);
+						}
 						counts.add(LineType::Code);
 						pos = end;
 						continue;
@@ -103,12 +113,20 @@ fn count_text(text: &str, language: &Language, counts: &mut LineCounts, classifi
 			&& let Some((searched, with_text)) = classifier.what_ends_this(matchers)
 			&& BlockScanner::suits(searched.bytes())
 		{
+			let swept_from = pos;
 			(pos, _) = scanner.sweep(pos, searched.bytes(), with_text, counts);
+			// Lines inside a string are code, and lines inside a comment leave what the code before them did.
+			if language.doc_strings && with_text == LineType::Code {
+				swept_continued = ends_continued(&bytes[swept_from..pos]).or(swept_continued);
+			}
 			if pos >= bytes.len() {
 				break;
 			}
 		}
 		let end = line_end(bytes, pos);
+		if let Some(continued) = swept_continued.take() {
+			classifier.set_continued(continued);
+		}
 		// Lines end at a `\n`, which is never inside a multi-byte character, so each is valid UTF-8 on its own.
 		counts.add(classifier.classify_before(&text[pos..end], pos == 0, Some(&text[end..])));
 		pos = end;

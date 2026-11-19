@@ -174,6 +174,11 @@ impl<'a> Classifier<'a> {
 		self.classify_before(line, is_first_line, None)
 	}
 
+	/// Say whether the text before the next line carries on to it, which a docstring can't start, for lines swept past without classifying them.
+	pub(super) const fn set_continued(&mut self, continued: bool) {
+		self.state.continued = continued;
+	}
+
 	/// Classify `line`, followed in its file by `following`, when the rest of the file is at hand: an element's opening tag only starts a region if its closing tag comes later, since a `<script>` that never closes is text written in the page.
 	#[inline]
 	pub(super) fn classify_before(&mut self, line: &str, is_first_line: bool, following: Option<&str>) -> LineType {
