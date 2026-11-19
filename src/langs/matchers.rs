@@ -550,7 +550,7 @@ fn build_string_matchers(lang: &Language) -> StringMatchers {
 	}
 	for (i, delimiter) in lang.strings.iter().enumerate() {
 		patterns.push(delimiter.open);
-		kinds.push(if delimiter.delimited { Token::DelimitedString(i) } else { Token::String(i) });
+		kinds.push(if delimiter.delimited.is_some() { Token::DelimitedString(i) } else { Token::String(i) });
 	}
 	if lang.regex_literals {
 		// Leftmost-longest matching lets `//` and `/*` win over a lone `/`.

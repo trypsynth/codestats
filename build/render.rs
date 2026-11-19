@@ -50,7 +50,7 @@ const STRING_DELIMITER_FIELDS: &[(&str, &str)] = &[
 	("multiline", "bool"),
 	("char_literal", "bool"),
 	("doc", "bool"),
-	("delimited", "bool"),
+	("delimited", "Option<u8>"),
 	("attribute", "bool"),
 	("interpolation", "Option<&'static str>"),
 	("close_escapes", "&'static [u8]"),
@@ -208,14 +208,14 @@ fn render_string_delimiter(spec: &StringSpec) -> String {
 	let escape = config.escape.as_ref().map_or_else(|| "None".to_string(), |e| format!("Some({:?})", e.as_bytes()[0]));
 	let interpolation =
 		config.interpolation.as_ref().map_or_else(|| "None".to_string(), |hole| format!("Some({hole:?})"));
+	let delimited = config.delimited.map_or_else(|| "None".to_string(), |before| format!("Some(b{before:?})"));
 	format!(
-		"StringDelimiter {{ open: {:?}, close: {:?}, escape: {escape}, multiline: {}, char_literal: {}, doc: {}, delimited: {}, attribute: {}, interpolation: {interpolation}, close_escapes: &{:?}, run: {} }}",
+		"StringDelimiter {{ open: {:?}, close: {:?}, escape: {escape}, multiline: {}, char_literal: {}, doc: {}, delimited: {delimited}, attribute: {}, interpolation: {interpolation}, close_escapes: &{:?}, run: {} }}",
 		config.open,
 		config.close(),
 		config.multiline,
 		config.char_literal,
 		config.doc,
-		config.delimited,
 		config.attribute,
 		config.close_escapes.as_bytes(),
 		config.run

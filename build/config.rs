@@ -176,7 +176,7 @@ impl StringSpec {
 				multiline: false,
 				char_literal: false,
 				doc: false,
-				delimited: false,
+				delimited: None,
 				attribute: false,
 				interpolation: None,
 				close_escapes: String::new(),
@@ -204,9 +204,9 @@ pub struct StringConfig {
 	/// A docstring delimiter (Python's `"""`): when it starts a line, its contents count as comment rather than code.
 	#[serde(default)]
 	pub doc: bool,
-	/// The opener is followed by a delimiter the writer picks, up to a `(`, and the string ends at `)`, that delimiter and `close` (C++'s `R"xy(...)xy"`).
-	#[serde(default)]
-	pub delimited: bool,
+	/// The opener is followed by a delimiter the writer picks, up to a `(`, and the string ends at `)`, that delimiter and `close` (C++'s `R"xy(...)xy"`): `true` in languages.json5, read as `(`. `"|"` is OCaml's form instead, ending the delimiter at a `|` and the string at `|`, the delimiter and `close` (`{id|...|id}`).
+	#[serde(default, deserialize_with = "deserialize_delimited")]
+	pub delimited: Option<char>,
 	/// The string only opens right after an `=`, spaces aside, as an HTML attribute's value does, so an apostrophe in a page's text opens nothing.
 	#[serde(default)]
 	pub attribute: bool,
@@ -231,6 +231,24 @@ impl StringConfig {
 #[expect(clippy::unnecessary_wraps, reason = "serde's `default` must match the field type, Option<String>")]
 fn default_escape() -> Option<String> {
 	Some("\\".to_string())
+}
+
+/// `true` for C++'s delimiter up to a `(`, or `"|"` for OCaml's up to a `|`.
+fn deserialize_delimited<'de, D>(deserializer: D) -> result::Result<Option<char>, D::Error>
+where
+	D: Deserializer<'de>,
+{
+	#[derive(Deserialize)]
+	#[serde(untagged)]
+	enum Delimited {
+		Flag(bool),
+		Before(String),
+	}
+	match Delimited::deserialize(deserializer)? {
+		Delimited::Flag(flag) => Ok(flag.then_some('(')),
+		Delimited::Before(text) if text == "|" => Ok(Some('|')),
+		Delimited::Before(text) => Err(de::Error::custom(format!("delimited is `true` or \"|\", not {text:?}"))),
+	}
 }
 
 fn deserialize_file_patterns<'de, D>(deserializer: D) -> result::Result<Vec<String>, D::Error>

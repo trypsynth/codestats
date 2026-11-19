@@ -129,7 +129,7 @@ impl Validator {
 			if config.interpolation.as_ref().is_some_and(|hole| !matches!(hole.chars().last(), Some('{' | '('))) {
 				self.error(lang, "an interpolation opener has to end with `{` or `(`");
 			}
-			if config.delimited && (config.escape.is_some() || !config.multiline) {
+			if config.delimited.is_some() && (config.escape.is_some() || !config.multiline) {
 				self.error(lang, "delimited strings are raw and multiline");
 			}
 			if lang.line_comments.contains(&config.open) || lang.block_comments.iter().any(|(s, _)| s == &config.open) {

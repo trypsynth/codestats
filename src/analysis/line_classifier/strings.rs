@@ -7,7 +7,7 @@ use super::{
 	operator_at,
 };
 use crate::langs::{
-	Heredoc, Language,
+	Heredoc, Language, StringDelimiter,
 	matchers::{LanguageMatchers, NestedSearch, StringMatchers, Token},
 };
 
@@ -129,7 +129,7 @@ pub(super) fn classify_with_strings(
 				}
 				Token::DelimitedString(i) => {
 					has_code = true;
-					pos = open_delimited_string(state, bytes, start, end, i, lang.strings[i].close);
+					pos = open_delimited_string(state, bytes, start, end, i, &lang.strings[i]);
 				}
 				Token::String(i) => {
 					let delimiter = &lang.strings[i];
@@ -369,9 +369,14 @@ fn open_delimited_string(
 	start: usize,
 	end: usize,
 	index: usize,
-	close: &str,
+	string: &StringDelimiter,
 ) -> usize {
-	delimited_string(line, start, end, close).map_or(start + 1, |(body, close)| {
+	let found = if string.delimited == Some(b'|') {
+		quoted_string(line, end, string.close)
+	} else {
+		delimited_string(line, start, end, string.close)
+	};
+	found.map_or(start + 1, |(body, close)| {
 		state.string = Some(index);
 		state.string_close = Some(close);
 		body
@@ -390,6 +395,27 @@ fn delimited_string(line: &[u8], start: usize, end: usize, close: &str) -> Optio
 		return None;
 	}
 	Some((end + len + 1, [b")", delimiter, close.as_bytes()].concat().into()))
+}
+
+/// For OCaml's quoted string whose opening `{` ends at `end`, the position its body starts at and what closes it: `|id}` for `{id|`. An extension's name, as in `{%sql|` or `{%sql id|`, isn't part of the closer. `None` when no `|` follows a lowercase identifier or an extension.
+fn quoted_string(line: &[u8], end: usize, close: &str) -> Option<(usize, Box<[u8]>)> {
+	let len = line[end..].iter().take(65).position(|&b| b == b'|')?;
+	let delimiter = &line[end..end + len];
+	let id = match delimiter.strip_prefix(b"%") {
+		Some(extension) => {
+			let name_len = extension.iter().position(|&b| b == b' ').unwrap_or(extension.len());
+			let name = &extension[..name_len];
+			if name.is_empty() || !name.iter().all(|&b| b.is_ascii_alphanumeric() || matches!(b, b'_' | b'.')) {
+				return None;
+			}
+			extension.get(name_len + 1..).unwrap_or_default()
+		}
+		None => delimiter,
+	};
+	if !id.iter().all(|&b| b.is_ascii_lowercase() || b == b'_') {
+		return None;
+	}
+	Some((end + len + 1, [b"|", id, close.as_bytes()].concat().into()))
 }
 
 /// Whether the text after an opening `'` looks like a char literal: one character or an escape, then a closing `'`.
