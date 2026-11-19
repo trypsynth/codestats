@@ -86,4 +86,6 @@ jobs:
           gh release download "$LINEJUDGE_VERSION" -R loc-conformance/linejudge -p "linejudge-$LINEJUDGE_VERSION-linux-x86_64.tar.gz" -O - | tar xz
           echo "$PWD/linejudge-$LINEJUDGE_VERSION-linux-x86_64" >> "$GITHUB_PATH"
       - name: Check against the recorded answers
-        run: linejudge check --counter codestats
+        # Case 2100's triple-quoted argument counts as code now, which LineJudge's codestats dialect
+        # says once loc-conformance/linejudge#19 is released. Drop --disabled then.
+        run: linejudge check --counter codestats --disabled 2100-triple_quoted_data_not_documentation
