@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Fypp templates (`.fypp`) count as Fortran, with their `#!` comments: the Fortran standard library counts 482,808 more lines of code. odoc's documentation pages (`.mld`) count too
 - Include files of plain assembly, like fasm's and NASM's `.inc` files, count as Assembly by their mnemonics and data directives: fasm's 30 include files count, where 10 were Pascal, 1 was C++, and 19 weren't counted. `then` no longer makes a file Pascal, since Tcl's doctools and other prose in `.inc` files write it: 25 of tcllib's files aren't taken for Pascal. Puppet files count by more of Puppet's own words, like `ensure` and `Optional[`
 - Pascal's compiler directives, like `{$IFDEF UNIX}` and `(*$I defs.inc*)`, count as code, as C's `#ifdef` does, instead of as comment. Free Pascal's source counts 307,903 more lines of code
 - Fixed a triple-quoted string that opens the line after an open bracket, a comma, or a backslash, like an argument written below `render(`, being counted as a docstring. cpython counts 1,910 more lines of code, Julia 2,033, and Jinja 686

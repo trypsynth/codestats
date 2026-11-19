@@ -1253,8 +1253,9 @@
 		strings: [{open: "\"", escape: null}],
 	},
 	"Fortran": {
-		file_patterns: ["*.f90", "*.f95", "*.f03", "*.f08", "*.f15", "*.f18", "*.f23", "*.fpp"],
-		line_comments: ["!"],
+		// Fypp templates are Fortran with preprocessor lines, whose own comments start `#!`.
+		file_patterns: ["*.f90", "*.f95", "*.f03", "*.f08", "*.f15", "*.f18", "*.f23", "*.fpp", "*.fypp"],
+		line_comments: ["!", "#!"],
 	},
 	"Fortran (Fixed Form)": {
 		file_patterns: ["*.f", "*.for", "*.f77", "*.ftn", "*.pfo"],
@@ -2724,6 +2725,10 @@
 		block_comments: [["/*", "*/"]],
 		nested_blocks: true,
 		strings: ["\"", {open: "'", char: true}, {open: "`", escape: null, multiline: true}],
+	},
+	// OCaml's documentation pages, which have no comments.
+	"odoc": {
+		file_patterns: ["*.mld"],
 	},
 	"Oforth": {
 		file_patterns: ["*.of"],
